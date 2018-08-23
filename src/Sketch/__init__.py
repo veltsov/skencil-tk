@@ -26,9 +26,10 @@ for _dir in ('Modules', 'Base'):
     __path__.insert(0, os.path.join(_pkgdir, _dir))
 
 
-dir = os.path.join(_pkgdir, 'Modules')
-if os.path.isdir(dir):
-    sys.path.insert(1, dir)
+for _dir in ('Modules',):
+    dir = os.path.abspath(os.path.join(_pkgdir, _dir))
+    if os.path.isdir(dir):
+        sys.path.insert(1, dir)
 
 
 message_dir = os.path.join(_parentdir, 'Resources/Messages')
@@ -205,4 +206,3 @@ def init_modules_from_widget(root):
     Graphics.color.InitFromWidget(tkwin, root)
     Graphics.graphics.InitFromWidget(tkwin)
     UI.skpixmaps.InitFromWidget(tkwin)
-

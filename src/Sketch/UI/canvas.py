@@ -147,6 +147,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
         self.ignore_key_press_events = 0
         self.start_drag = 0
         self.start_pos = None
+        self.scroll_by_drag = 0
         self.dragging = 0	# true if dragging with left button down
         self.current = None	# currently dragged/edited object
         self.correction = Point(0, 0)
@@ -486,10 +487,12 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
                 self.popup_context_menu(event.x_root, event.y_root,
                                         button, event.state)
                 self.ignore_key_press_events = 0
+            elif button == const.Button2 and not self.dragging:
+                self.scroll_by_drag_start(event)
             elif button == const.Button4:
-                self.ScrollYUnits(-3)
+                self.zoom_in_place(1.2,event)
             elif button == const.Button5:
-                self.ScrollYUnits(3)
+                self.zoom_in_place(0.8,event)
         finally:
             self.end_transaction()
 
@@ -500,7 +503,9 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
         self.last_event = event
         p = self.WinToDoc(event.x, event.y)
         self.set_current_pos(p, snap = 1)
-        if self.start_drag or self.dragging:
+        if self.scroll_by_drag:
+            self.scroll_by_drag_do(event)
+        elif self.start_drag or self.dragging:
             self.mode.mouse_move(p, event.state)
             self.update_current_info_text()
         else:
@@ -522,7 +527,9 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
             if event.button == const.Button1:
                 self.mode.button_up(p, event.button, event.state)
                 self.dragging = 0
-            elif event.button == const.Button2:
+            elif event.button == const.Button2 and self.scroll_by_drag:
+                self.scroll_by_drag_end(event)
+            elif event.button == const.Button3:
                 self.mode.button_up(p, event.button, event.state,
                                     force_stop = stop_regular)
                 self.dragging = 0
@@ -534,14 +541,20 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
             self.end_transaction()
 
     def MapKeystroke(self, stroke):
+        #print "stroke",stroke
         if self.object_keymap:
             cmd = self.object_keymap.MapKeystroke(stroke)
+            #print "from object_keymap", cmd
             if cmd:
                 return cmd
         cmd = self.keymap.MapKeystroke(stroke)
+        #print "from keymap", cmd
         if cmd:
             return cmd
 
+        #cmd = self.main_window.MapKeystroke(stroke)
+        #print "from main_window",cmd
+        #return cmd
         return self.main_window.MapKeystroke(stroke)
 
     def KeyPressEvent(self, event):
@@ -680,6 +693,23 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
     def GetCurrentPos(self):
         return self.current_pos
 
+    def scroll_by_drag_start(self,event):
+        self.drag_x0 = self.virtual_x + event.x
+        self.drag_y0 = self.virtual_y + event.y
+        self.scroll_by_drag = 1
+        
+    def scroll_by_drag_do(self,event):
+        self.set_origin(self.drag_x0 - event.x, self.drag_y0 - event.y)
+        
+    def scroll_by_drag_end(self,event):
+        self.scroll_by_drag = 0
+        # avoid artefacts by redraw
+        #if self.virtual_x + event.x != self.drag_x0 or self.virtual_y + event.y != self.drag_y0:
+        #    self.ForceRedraw()
+
+    def zoom_in_place(self,relscale,event):
+        self.SetScale(relscale*self.scale/self.pixel_per_point,(event.x,event.y))
+        
     #
     #	Report the current state of the dragged object.
     #
@@ -1816,7 +1846,41 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
     AddCmd('TogglePageOutlineMode', _("Draw Page Outline"),
            value = 0, value_cb = 'IsPageOutlineMode', subscribe_to = VIEW,
            is_check = 1)
+    
+    AddSelCmd('MoveSelectedUp', _("Move Selection Up"),
+              'MoveSelected', args = (0,preferences.kbd_move_normal), key_stroke = 'Up')
+    AddSelCmd('MoveSelectedDown', _("Move Selection Down"),
+              'MoveSelected', args = (0,-preferences.kbd_move_normal), key_stroke = 'Down')
+    AddSelCmd('MoveSelectedLeft', _("Move Selection Left"),
+              'MoveSelected', args = (-preferences.kbd_move_normal,0), key_stroke = 'Left')
+    AddSelCmd('MoveSelectedRight', _("Move Selection Right"),
+              'MoveSelected', args = (preferences.kbd_move_normal,0), key_stroke = 'Right')
+    AddSelCmd('MoveSelectedUpFine', _("Move Selection Up Fine"),
+              'MoveSelected', args = (0,preferences.kbd_move_fine), key_stroke = ('Alt+Up','M-Up'))
+    AddSelCmd('MoveSelectedDownFine', _("Move Selection Down Fine"),
+              'MoveSelected', args = (0,-preferences.kbd_move_fine), key_stroke = ('Alt+Down','M-Down'))
+    AddSelCmd('MoveSelectedLeftFine', _("Move Selection Left Fine"),
+              'MoveSelected', args = (-preferences.kbd_move_fine,0), key_stroke = ('Alt+Left','M-Left'))
+    AddSelCmd('MoveSelectedRightFine', _("Move Selection Right Fine"),
+              'MoveSelected', args = (preferences.kbd_move_fine,0), key_stroke = ('Alt+Right','M-Right'))
+    AddSelCmd('MoveSelectedUpBig', _("Move Selection Up Big"),
+              'MoveSelected', args = (0,preferences.kbd_move_big), key_stroke = ('Shift+Up','S-Up'))
+    AddSelCmd('MoveSelectedDownBig', _("Move Selection Down Big"),
+              'MoveSelected', args = (0,-preferences.kbd_move_big), key_stroke = ('Shift+Down','S-Down'))
+    AddSelCmd('MoveSelectedLeftBig', _("Move Selection Left Big"),
+              'MoveSelected', args = (-preferences.kbd_move_big,0), key_stroke = ('Shift+Left','S-Left'))
+    AddSelCmd('MoveSelectedRightBig', _("Move Selection Right Big"),
+              'MoveSelected', args = (preferences.kbd_move_big,0), key_stroke = ('Shift+Right','S-Right'))
 
+    def MoveSelected(self, shiftx, shifty):
+        if not self.document.HasSelection():
+            return
+        self.begin_transaction()
+        try:
+            self.document.TranslateSelected(Point(shiftx,shifty)/self.scale)
+        finally:
+            self.end_transaction()
+        
     #
     #
     #

@@ -210,12 +210,18 @@ class Viewport:
     #	Managing the displayed area
     #
 
-    def SetCenter(self, center, move_contents = 1):
-        # set origin so that center (in doc-coords) is in the center of the
-        # widget
+    def SetCenter(self, center, move_contents = 1, at_point = None):
+        # set origin so that center (in doc-coords) is in the place
+        # at_point of the widget (default center)
+        if at_point:
+            wx, wy = at_point
+        else:
+            wx = self.tkwin.width / 2
+            wy = self.tkwin.height / 2
+            
         cx, cy = self.DocToWin(center)
-        self.set_origin(self.virtual_x + cx - self.tkwin.width / 2,
-                        self.virtual_y + cy - self.tkwin.height / 2,
+        self.set_origin(self.virtual_x + cx - wx,
+                        self.virtual_y + cy - wy,
                         move_contents = move_contents)
 
     def SetScale(self, scale, do_center = 1):
@@ -232,14 +238,18 @@ class Viewport:
         self.virtual_width = width
         self.virtual_height = height
         if do_center:
-            cx = self.tkwin.width / 2
-            cy = self.tkwin.height / 2
+            if isinstance(do_center, tuple):
+                cx,cy = do_center
+            else:
+                cx = self.tkwin.width / 2
+                cy = self.tkwin.height / 2
             center = self.WinToDoc(cx, cy)
+            at_point = (cx,cy)
 
         self.compute_win_to_doc()
 
         if do_center:
-            self.SetCenter(center, move_contents = 0)
+            self.SetCenter(center, move_contents = 0, at_point = at_point)
         else:
             self.set_origin(0, 0, move_contents = 0)
 

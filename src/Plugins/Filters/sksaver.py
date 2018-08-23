@@ -518,7 +518,7 @@ class SKSaver:
                 from streamfilter import Base64Encode
                 write('bm(%d)\n' % id(image))
                 file = Base64Encode(self.file)
-                image.image.save(file, 'PPM')
+                image.image.save(file, 'PNG')
                 file.close()
                 write('-\n')
             else:

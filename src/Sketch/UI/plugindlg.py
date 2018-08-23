@@ -46,9 +46,14 @@
 #
 #	length	(MIN, MAX)	A length in pt. The user can change the unit.
 #
-#	text	ignored		A text string (the range should be None for
-#				now)
+#       ptlength (MIN, MAX)	Same as length, but initial unit is always pt.
 #
+#	text	(width,height)	A text field (the range can be None for
+#		                default values)
+#
+#       choice  (choice1,choice2,...) Choice of a few alternatives
+#
+#       check   ignored         Checkbutton (on = 1, off = 0)
 
 from string import split, join, capitalize
 
@@ -56,8 +61,9 @@ from Sketch.warn import warn, USER
 from Sketch.const import SELECTION
 from Sketch import _
 
-from Tkinter import Label, IntVar, DoubleVar, StringVar, RIGHT, E
-from tkext import MyEntry
+from Tkinter import Label, IntVar, DoubleVar, StringVar, RIGHT, E, W, Text, \
+    WORD, Checkbutton, Radiobutton
+from tkext import MyEntry, MyOptionMenu
 from miniscroll import MiniScroller
 
 from sketchdlg import PropertyPanel
@@ -80,8 +86,11 @@ class Parameter:
 
 
     def build_widgets(self, master, row):
-        label = Label(master, text = self.label)
-        label.grid(row = row, column = 0, sticky = E)
+        label = Label(master, text = self.label + ':')
+        label.grid(row = row, column = 0, sticky = W)
+
+    def number_of_rows(self):
+        return 1
 
     def __call__(self, *args):
         if args:
@@ -155,10 +164,12 @@ class FloatParameter(NumberParameter):
 parameter_types['float'] = FloatParameter
 
 class LengthParameter(NumberParameter):
+    default_unit = None
 
     def build_widgets(self, master, row):
         self.var, entry, scroll, menu = create_length_widgets(master, master,
-                                                              self.var_changed)
+                                                              self.var_changed,
+                                                              self.default_unit)
         NumberParameter.build_widgets(self, master, row, build_entry = 0)
         entry.grid(row = row, column = 1, sticky = 'ew')
         scroll.grid(row = row, column = 2, sticky = 'ns')
@@ -166,22 +177,130 @@ class LengthParameter(NumberParameter):
 
 parameter_types['length'] = LengthParameter
 
+class PtLengthParameter(LengthParameter):
+    default_unit = 'pt'
+
+parameter_types['ptlength'] = PtLengthParameter
+
+class StringVarForText:
+    def __init__(self,txtfield):
+        self.txtf = txtfield
+
+    def set(self,newval):
+        self.txtf.delete('1.0', 'end')
+        self.txtf.insert('end', newval)
+
+    def get(self):
+        return self.txtf.get('1.0', 'end')[:-1]
+
 class TextParameter(Parameter):
 
+    def number_of_rows(self):
+        return 2
+
     def build_widgets(self, master, row):
-        Parameter.build_widgets(self, master, row)
-        self.var = StringVar(master)
+        # XXX make special one-line entry for h=1
+        label = Label(master, text = self.label + ':')
+        label.grid(row = row, columnspan = 4, sticky = W)
+        if self.range is None:
+            w = 30
+            h = 3
+        else:
+            w,h = self.range
+	txtfield = Text(master, width=w, height=h, background='white', wrap=WORD)
+	self.var = StringVarForText(txtfield)
         self.var.set(self.value)
-        entry = MyEntry(master, textvariable = self.var, width = 0,
-                        command = self.var_changed)
-        entry.grid(row = row, column = 1, columnspan = 3, sticky = 'ew')
+	txtfield.grid(row = row+1, columnspan = 4, sticky = 'news')
+        master.grid_rowconfigure(row+1,weight=1)
 
     def var_changed(self, *rest):
         self.panel.set_parameter(self)
 
 parameter_types['text'] = TextParameter
 
-class PluginPanel(PropertyPanel):
+class ChoiceParameter(Parameter):
+
+    def init_var(self):
+        choices = self.range
+        value = self.value
+        if value <0 or value >= len(choices):
+            warn(USER,
+                 'Initial value in parameter %s of plugin %s out of range',
+                 self.name, self.panel.title)
+        self.var.set(value)
+
+    def var_changed(self, *rest):
+        self.panel.set_parameter(self)
+
+    def number_of_rows(self):
+        return 1+len(self.range)
+
+    def build_widgets(self, master, row):
+        self.var = IntVar(master)
+        self.init_var()
+        label = Label(master, text = self.label + ':')
+        label.grid(row = row, columnspan = 4, sticky = W)
+        choices = self.range
+        for j in range(len(choices)):
+            # XXX Translatable text
+            b = Radiobutton(master, text=choices[j], command = self.var_changed,
+                            variable = self.var, value = j, indicatoron = 1)
+            b.grid(row = row+j+1, column = 1, columnspan = 3, sticky = W)
+            
+parameter_types['choice'] = ChoiceParameter
+
+class CheckParameter(Parameter):
+
+    def init_var(self):
+        value = self.value
+        if value not in (0, 1) :
+            warn(USER,
+                 'Initial value in parameter %s of plugin %s out of range',
+                 self.name, self.panel.title)
+        self.var.set(value)
+
+    def var_changed(self, *rest):
+        self.panel.set_parameter(self)
+
+    def build_widgets(self, master, row):
+        self.var = IntVar(master)
+        self.init_var()
+        chbut = Checkbutton(master, text = self.label,
+                            command = self.var_changed,
+                            variable = self.var)
+        chbut.grid(row = row, column =1, columnspan = 3, sticky = 'w')
+            
+parameter_types['check'] = CheckParameter
+
+class PluginDlg:
+    
+    def build_plugin_dlg(self):
+        top = self.top
+        row = 0
+
+        for param in self.info.parameters:
+            name, type, value, prange, label = param
+            try:
+                #print name, type, value, prange, label
+                var = parameter_types[type](self, name, value, prange, label)
+                var.build_widgets(top, row)
+                row = row + var.number_of_rows()
+                self.vars.append(var)
+            except KeyError:
+                warn(USER, 'Unknown plugin parameter type %s' % type)
+                continue
+            
+        row = row + 1
+        top.columnconfigure(0, weight = 0)
+        top.columnconfigure(1, weight = 1)
+        top.columnconfigure(2, weight = 0)
+        top.columnconfigure(3, weight = 0)
+
+
+        frame = self.create_std_buttons(top)
+        frame.grid(row = row, columnspan = 4, sticky = 'ew')
+        
+class PluginPanel(PropertyPanel,PluginDlg):
 
     def __init__(self, master, main_window, doc, info):
         self.var_auto_update = IntVar(master)
@@ -193,28 +312,7 @@ class PluginPanel(PropertyPanel):
         PropertyPanel.__init__(self, master, main_window, doc, name = name)
 
     def build_dlg(self):
-        top = self.top
-        row = 0
-
-        for row in range(len(self.info.parameters)):
-            name, type, value, prange, label = self.info.parameters[row]
-            try:
-                #print name, type, value, prange, label
-                var = parameter_types[type](self, name, value, prange, label)
-                var.build_widgets(top, row)
-                self.vars.append(var)
-            except KeyError:
-                warn(USER, 'Unknown plugin parameter type %s' % type)
-                continue
-        row = row + 1
-        top.columnconfigure(0, weight = 0)
-        top.columnconfigure(1, weight = 1)
-        top.columnconfigure(2, weight = 0)
-        top.columnconfigure(3, weight = 0)
-
-
-        frame = self.create_std_buttons(top)
-        frame.grid(row = row, columnspan = 4, sticky = 'ew')
+        self.build_plugin_dlg()
 
     def set_parameter(self, var):
         if not self.current_is_plugin():

@@ -24,7 +24,7 @@ from Sketch import _, config, load, plugins, SketchVersion
 from Sketch import Publisher, Point, EmptyFillStyle, EmptyLineStyle, \
      EmptyPattern, Document, GuideLine, PostScriptDevice, SketchError
 import Sketch
-from Sketch.Graphics import image, eps
+from Sketch.Graphics import image, eps, external
 import Sketch.Scripting
 
 from Sketch.const import DOCUMENT, CLIPBOARD, CLOSED, COLOR1, COLOR2
@@ -92,6 +92,8 @@ class SketchMainWindow(Publisher):
         self.canvas = None
         self.document = None
         self.commands = None
+        self.auto_reload_id = None
+        self.exporttype = Tkinter.StringVar()
         self.NewDocument()
         self.create_commands()
         self.build_window()
@@ -99,6 +101,8 @@ class SketchMainWindow(Publisher):
         self.build_toolbar()
         self.build_status_bar()
         self.__init_dlgs()
+        if config.preferences.image_auto_reload:
+            self.start_image_monitoring()
 
     def issue_document(self):
         self.issue(DOCUMENT, self.document)
@@ -157,7 +161,7 @@ class SketchMainWindow(Publisher):
         if self.commands:
             self.commands.Update()
 
-    AddCmd('NewDocument', _("New"), bitmap = pixmaps.NewDocument)
+    AddCmd('NewDocument', _("New"), bitmap = pixmaps.NewDocument, key_stroke = ('Ctrl+N','C-n'))
     def NewDocument(self):
         if self.save_doc_if_edited(_("New Document")) == tkext.Cancel:
             return
@@ -212,9 +216,11 @@ class SketchMainWindow(Publisher):
 
 
     AddCmd('SaveToFile', _("Save"), 'SaveToFileInteractive',
-           bitmap = pixmaps.Save, key_stroke = ('Ctrl+S','C-s', 'F2'))
+           bitmap = pixmaps.Save, key_stroke = ('Ctrl+S','C-s'))
     AddCmd('SaveToFileAs', _("Save As..."), 'SaveToFileInteractive', args = 1,
-           key_stroke = ('Ctrl+W','C-w', 'F3'))
+           key_stroke = ('Shift+Ctrl+S','C-S-S'))
+    AddCmd('ExportTo', _("Export..."), 'SaveToFileInteractive', args = 2,
+           key_stroke = ('Shift+Ctrl+E','C-S-E'))
     def SaveToFileInteractive(self, use_dialog = 0):
         filename =  self.document.meta.fullpathname
         native_format = self.document.meta.native_format
@@ -229,15 +235,25 @@ class SketchMainWindow(Publisher):
             basename, ext = os.path.splitext(name)
             if not native_format:
                 name = basename + '.sk'
-            filename = app.GetSaveFilename(filetypes = skapp.savefiletypes(),
-                                           initialdir = dir,
-                                           initialfile = name)
+            if use_dialog == 1:
+                filename = app.GetSaveFilename(filetypes = skapp.nativefiletypes(),
+                                               initialdir = dir, initialfile = name,
+                                               title = _("Save As..."))
+            else:
+                filename = app.GetSaveFilename(filetypes = skapp.exportfiletypes(),
+                                               initialdir = dir, initialfile = basename,
+                                               title = _("Export To..."),
+                                               typevariable = self.exporttype)
             if not filename:
                 return
-            extension = os.path.splitext(filename)[1]
-            fileformat = plugins.guess_export_plugin(extension)
-            if not fileformat:
+            if use_dialog == 1:
                 fileformat = plugins.NativeFormat
+            else:
+                fileformat = plugins.select_export_plugin_by_tktype(self.exporttype.get())
+                if not fileformat:
+                    fileformat = plugins.NativeFormat
+                self.document.meta.last_export_filename = filename
+                self.document.meta.last_export_format = fileformat
             compressed_file = '' # guess compression from filename
             compressed = ''
         else:
@@ -299,27 +315,41 @@ class SketchMainWindow(Publisher):
             self.remove_mru_file(filename)
             return
 
+        dir, name = os.path.split(filename)
         if fileformat == plugins.NativeFormat:
-            dir, name = os.path.split(filename)
             # XXX should meta.directory be set for non-native formats as well
             self.document.meta.directory = dir
             self.document.meta.filename = name
             self.document.meta.fullpathname = filename
             self.document.meta.file_type = plugins.NativeFormat
             self.document.meta.native_format = 1
+            if compressed_file:
+                self.add_mru_file(compressed_file)
+            else:
+                self.add_mru_file(filename)
         if not compressed_file:
             self.document.meta.compressed_file = ''
             self.document.meta.compressed = ''
-        if compressed_file:
-            self.add_mru_file(compressed_file)
-        else:
-            self.add_mru_file(filename)
+
+        self.show_status_message(_("Wrote to %s") % name)
 
         self.set_window_title()
 
+    AddCmd('ExportAgain', '', key_stroke = ('Ctrl+E','C-e'),
+           sensitive_cb = 'CanExportAgain',
+           name_cb = 'export_again_name')
+    def ExportAgain(self):
+        filename = self.document.meta.last_export_filename
+        if filename:
+            self.SaveToFile(filename,self.document.meta.last_export_format)
 
+    def CanExportAgain(self):
+        return len(self.document.meta.last_export_filename) > 0
 
-    AddCmd('SavePS', _("Save as PostScript..."), key_stroke = ('Alt+P','M-p'))
+    def export_again_name(self):
+        return _("Export to %s") % os.path.basename(self.document.meta.last_export_filename)
+
+    AddCmd('SavePS', _("Save as PostScript..."))
     def SavePS(self, filename = None):
         app = self.application
         bbox = self.document.BoundingRect(visible = 0, printable = 1)
@@ -373,13 +403,14 @@ class SketchMainWindow(Publisher):
             self.update_mru_files()
 
     def update_mru_files(self):
+        self.commands.ExportAgain.Update()
         self.commands.LoadMRU0.Update()
         self.commands.LoadMRU1.Update()
         self.commands.LoadMRU2.Update()
         self.commands.LoadMRU3.Update()
         self.file_menu.RebuildMenu()
 
-    AddCmd('InsertFile', _("Insert Document..."))
+    AddCmd('InsertFile', _("Insert Document..."), key_stroke = ('Ctrl+I','C-i'))
     def InsertFile(self, filename = None):
         app = self.application
         if not filename:
@@ -478,7 +509,7 @@ class SketchMainWindow(Publisher):
            'CreateDialog', args = ('layerdlg', 'LayerPanel'),
            key_stroke = 'F5')
     AddCmd('CreateAlignDialog', _("Align..."),
-           'CreateDialog', args = ('aligndlg', 'AlignPanel'))
+           'CreateDialog', args = ('aligndlg', 'AlignPanel'), key_stroke = ('Shift+Ctrl+A','C-S-A'))
     AddCmd('CreateGridDialog', _("Grid..."),
            'CreateDialog', args = ('griddlg', 'GridPanel'))
     AddCmd('CreateLineStyleDialog', _("Line..."),
@@ -488,18 +519,18 @@ class SketchMainWindow(Publisher):
            'CreateDialog', args = ('filldlg', 'FillPanel'),
            key_stroke = 'F6')
     AddCmd('CreateFontDialog', _("Font..."),
-           'CreateDialog', args = ('fontdlg', 'FontPanel'))
+           'CreateDialog', args = ('fontdlg', 'FontPanel'), key_stroke = 'F8')
     AddCmd('CreateStyleDialog', _("Styles..."),
            'CreateDialog', args = ('styledlg', 'StylePanel'))
     AddCmd('CreateBlendDialog', _("Blend..."),
            'CreateDialog', args = ('blenddlg', 'BlendPanel'),
-           key_stroke = ('Ctrl+B','C-b'))
+           key_stroke = ('Shift+Ctrl+B','C-S-B'))
     AddCmd('CreateLayoutDialog', _("Page Layout..."),
            'CreateDialog', args = ('layoutdlg', 'LayoutPanel'))
     #AddCmd('CreateExportDialog', 'Export...',
 #	   'CreateDialog', args = ('export', 'ExportPanel'))
     AddCmd('CreateCurveDialog', _("Curve Commands..."),
-           'CreateDialog', args = ('curvedlg', 'CurvePanel'))
+           'CreateDialog', args = ('curvedlg', 'CurvePanel'), key_stroke = 'F9')
     AddCmd('CreateGuideDialog', _("Guide Lines..."),
            'CreateDialog', args = ('guidedlg', 'GuidePanel'))
     AddCmd('CreatePrintDialog', _("Print..."),
@@ -564,7 +595,7 @@ class SketchMainWindow(Publisher):
                 warn_tb(USER, _("Error running script `%s'"), self.run_script)
         self.application.Mainloop()
 
-    AddCmd('Exit', _("Exit"), key_stroke = ('Alt+F4','M-Q', 'M-F4'))
+    AddCmd('Exit', _("Exit"), key_stroke = ('Ctrl+Q','C-q', 'M-F4'))
     def Exit(self):
         if self.save_doc_if_edited(_("Exit")) != tkext.Cancel:
             self.commands = None
@@ -575,26 +606,26 @@ class SketchMainWindow(Publisher):
         self.mbar = Frame(root, name = 'menubar')
         self.mbar.pack(fill=X)
         
-        line = tkext.HSeparator(root)
-        line.pack(fill = X)
+        #line = tkext.HSeparator(root)
+        #line.pack(fill = X)
         
         self.tbar = Frame(root, name = 'toolbar')
-        self.tbar.pack(fill = X, pady = 3)
+        self.tbar.pack(fill = X, pady = 0)
         
-        line = tkext.HSeparator(root)
-        line.pack(fill = X)
+        #line = tkext.HSeparator(root)
+        #line.pack(fill = X)
         
-        space = Frame(root, height = 3)
-        space.pack(fill = X)
+        #space = Frame(root, height = 3)
+        #space.pack(fill = X)
         
-        self.status_bar = Frame(root, name = 'statusbar')
+        self.status_bar = Frame(root, name = 'statusbar', highlightthickness = 0)
         self.status_bar.pack(side = BOTTOM, fill=X)
 
         palette_frame = Frame(root, name = 'palette_frame')
-        palette_frame.pack(side = BOTTOM, fill = X, pady = 5)
+        palette_frame.pack(side = BOTTOM, fill = X, pady = 0)
 
         frame = Frame(root, name = 'canvas_frame')
-        frame.pack(side = TOP, fill = BOTH, expand = 1, padx = 4)
+        frame.pack(side = TOP, fill = BOTH, expand = 1, padx = 0)
         vbar = Scrollbar(frame)
         vbar.grid(in_ = frame, column = 2, row = 1, sticky = 'ns')
         hbar = Scrollbar(frame, orient = HORIZONTAL)
@@ -666,7 +697,8 @@ class SketchMainWindow(Publisher):
                     cmds.LoadFromFile,
                     cmds.SaveToFile,
                     cmds.SaveToFileAs,
-                    cmds.SavePS,
+                    cmds.ExportTo,
+                    cmds.ExportAgain,
                     cmds.CreatePrintDialog,
                     None,
                     cmds.InsertFile,
@@ -698,9 +730,6 @@ class SketchMainWindow(Publisher):
                     None,
                     self.commands.DuplicateSelected,
                     None,
-                    [(_("Create"), {'auto_rebuild':self.creation_entries}),
-                     []],
-                    None,
                     cmds.SelectionMode, cmds.EditMode,
                     ])
 
@@ -711,7 +740,11 @@ class SketchMainWindow(Publisher):
                    cmds.CreatePolyBezier,
                    cmds.CreatePolyLine,
                    cmds.CreateSimpleText,
+                   None,
                    self.commands.CreateImage,
+                   self.commands.ReloadImage,
+                   self.commands.ReloadAllImages,
+                   self.commands.ToggleAutoReload,
                    None]
         items = plugins.object_plugins.items()
         items.sort()
@@ -740,6 +773,8 @@ class SketchMainWindow(Publisher):
         return map(MakeCommand,
                    [self.commands.FlipHorizontal,
                     self.commands.FlipVertical,
+                    self.commands.RotateCW,
+                    self.commands.RotateCCW,
                     None,
                     self.commands.RemoveTransformation,
                     None,
@@ -839,6 +874,7 @@ class SketchMainWindow(Publisher):
                     None,
                     self.commands.LineNone,
                     self.commands.CreateLineStyleDialog,
+                    self.commands.ToggleLineWidthScaling,
                     None,
                     self.commands.CreateStyleFromSelection,
                     self.commands.CreateStyleDialog,
@@ -899,6 +935,7 @@ class SketchMainWindow(Publisher):
         mbar = self.mbar
         self.file_menu = AppendMenu(mbar, _("File"), self.make_file_menu())
         AppendMenu(mbar, _("Edit"), self.make_edit_menu())
+        AppendMenu(mbar, _("Create"), self.creation_entries())
         AppendMenu(mbar, _("View"), self.make_view_menu())
         AppendMenu(mbar, _("Arrange"), self.make_arrange_menu())
         AppendMenu(mbar, _("Effects"), self.make_effects_menu())
@@ -929,6 +966,8 @@ class SketchMainWindow(Publisher):
                 self.commands.DuplicateSelected,
                 self.commands.FlipHorizontal,
                 self.commands.FlipVertical,
+                self.commands.RotateCW,
+                self.commands.RotateCCW,
                 None,
                 self.commands.MoveSelectedToTop,
                 self.commands.MoveSelectionUp,
@@ -972,42 +1011,49 @@ class SketchMainWindow(Publisher):
 
         canvas.Subscribe(STATE, state_changed)
 
+    def show_status_message(self, text):
+        self.message_area['text'] = text
+        self.root.after(2000,self.message_area.Update)
+
     def build_status_bar(self):
         status_bar = self.status_bar
         canvas = self.canvas
         stat_mode = UpdatedLabel(status_bar, name = 'mode', text = '',
                                  updatecb = canvas.ModeInfoText)
-        stat_mode.pack(side = 'left', padx = 2)
+        stat_mode.pack(side = 'left', padx = 0)
         stat_mode.Update()
         canvas.Subscribe(MODE, stat_mode.Update)
 
         stat_edited = UpdatedLabel(status_bar, name = 'edited', text = '',
                                    updatecb = self.EditedInfoText)
-        stat_edited.pack(side = 'left', padx = 2)
+        stat_edited.pack(side = 'left', padx = 0)
         stat_edited.Update()
         self.Subscribe(UNDO, stat_edited.Update)
 
         stat_zoom = UpdatedLabel(status_bar, name = 'zoom', text = '',
                                  updatecb = canvas.ZoomInfoText)
-        stat_zoom.pack(side = 'left', padx = 2)
+        stat_zoom.pack(side = 'left', padx = 0)
         stat_zoom.Update()
         canvas.Subscribe(VIEW, stat_zoom.Update)
 
         stat_pos = PositionLabel(status_bar, name = 'position', text = '',
                                  updatecb = canvas.GetCurrentPos)
-        stat_pos.pack(side = 'left', padx = 2)
+        stat_pos.pack(side = 'left', padx = 0)
         stat_pos.Update()
         canvas.Subscribe(POSITION, stat_pos.Update)
 
         stat_sel = UpdatedLabel(status_bar, name = 'selection', text = '',
                                 updatecb = canvas.CurrentInfoText)
-        stat_sel.pack(side = 'left', fill = X, expand = 1, padx = 2)
+        stat_sel.pack(side = 'left', fill = X, expand = 1, padx = 0)
         stat_sel.Update()
         update = stat_sel.Update
         canvas.Subscribe(SELECTION, update)
         canvas.Subscribe(CURRENTINFO, update)
         canvas.Subscribe(EDITED, update)
 
+        self.message_area = stat_sel
+
+        
     def EditedInfoText(self):
         if self.document.WasEdited():
             return _("modified")
@@ -1017,7 +1063,9 @@ class SketchMainWindow(Publisher):
     AddCmd('AboutBox', _("About..."))
     def AboutBox(self):
         abouttext = _("Skencil (%(version)s)\n"
-                      "(c) 1996-2007 by Bernhard Herzog\n\n"
+                      "(c) 1996-2007 by Bernhard Herzog\n"
+                      "(c) 2009-2010 by Igor E. Novikov\n"
+                      "(c) 2018 by Vladimir Eltsov\n\n"
                       "Versions:\n"
                       "Python:\t%(py)s\tTcl:\t%(tcl)s\n"
                       "Tkinter:\t%(tkinter)s\tTk:\t%(tk)s") \
@@ -1035,7 +1083,7 @@ class SketchMainWindow(Publisher):
     #
     #	Special methods. Mainly interesting for debugging
     #
-    AddCmd('DocumentInfo', "Document Info...", key_stroke = 'F12')
+    AddCmd('DocumentInfo', "Document Info...")
     def DocumentInfo(self):
         text = self.document.DocumentInfo()
 
@@ -1067,7 +1115,7 @@ class SketchMainWindow(Publisher):
 #	import export
 #	export.export_bitmap(self.document)
 
-    AddCmd('python_prompt', 'Python Prompt', key_stroke = 'F11')
+    AddCmd('python_prompt', 'Python Prompt')
     def python_prompt(self):
         if config.preferences.show_special_menu:
             import prompt
@@ -1126,9 +1174,9 @@ class SketchMainWindow(Publisher):
                                             icon = 'warning')
 
     AddCmd('AddHorizGuideLine', _("Add Horizontal Guide Line"), 'AddGuideLine',
-           args = 1)
+           args = 1, key_stroke = ('Ctrl+_','C-S-underscore','C-underscore'))
     AddCmd('AddVertGuideLine', _("Add Vertical Guide Line"), 'AddGuideLine',
-           args = 0)
+           args = 0, key_stroke = ('Ctrl+|','C-S-bar','C-bar'))
     def AddGuideLine(self, horizontal = 1):
         self.canvas.PlaceObject(GuideLine(Point(0, 0), horizontal))
 
@@ -1167,13 +1215,13 @@ class SketchMainWindow(Publisher):
     #
 
     AddDocCmd('SelectAll', _("Select All"), sensitive_cb = 'IsSelectionMode',
-              subscribe_to = MODE)
-    AddDocCmd('SelectNextObject', _("Select Next"), key_stroke = ('Alt+Right','M-Right'))
+              subscribe_to = MODE, key_stroke = ('Ctrl+A','C-a'))
+    AddDocCmd('SelectNextObject', _("Select Next"), key_stroke = ('TAB','Tab'))
     AddDocCmd('SelectPreviousObject', _("Select Previous"),
-              key_stroke = 'M-Left')
+              key_stroke = ('Shift+TAB','S-ISO_Left_Tab'))
     AddDocCmd('SelectFirstChild', _("Select First Child"),
-              key_stroke = 'M-Down')
-    AddDocCmd('SelectParent', _("Select Parent"), key_stroke = ('Alt+Up','M-Up'))
+              key_stroke = ('Alt+Shift+Down','M-S-Down'))
+    AddDocCmd('SelectParent', _("Select Parent"), key_stroke = ('Alt+Shift+Up','M-S-Up'))
 
     # rearrange object
 
@@ -1186,10 +1234,10 @@ class SketchMainWindow(Publisher):
     AddDocCmd('MoveSelectedToBottom', _("Move to Bottom"),
               bitmap = pixmaps.MoveToBottom, key_stroke = 'End')
 
-    AddDocCmd('MoveSelectionUp', _("Move One Up"), bitmap = pixmaps.MoveOneUp,
+    AddDocCmd('MoveSelectionUp', _("Move Upper"), bitmap = pixmaps.MoveOneUp,
               key_stroke = ('Shift+PageUp', 'S-Prior'))
 
-    AddDocCmd('MoveSelectionDown', _("Move One Down"),
+    AddDocCmd('MoveSelectionDown', _("Move Lower"),
               bitmap = pixmaps.MoveOneDown, key_stroke = ('Shift+PageDown','S-Next'))
 
     AddDocCmd('DuplicateSelected', _("Duplicate"), bitmap = pixmaps.Duplicate,
@@ -1206,7 +1254,7 @@ class SketchMainWindow(Publisher):
     #
 
     AddDocCmd('ConvertToCurve', _("Convert To Curve"),
-              sensitive_cb = 'CanConvertToCurve', key_stroke = ('Ctrl+Q','C-q'))
+              sensitive_cb = 'CanConvertToCurve', key_stroke = ('Shift+Ctrl+Q','C-S-Q'))
 
     AddDocCmd('CombineBeziers', _("Combine Beziers"),
               sensitive_cb = 'CanCombineBeziers')
@@ -1226,6 +1274,11 @@ class SketchMainWindow(Publisher):
     AddDocCmd('FlipVertical', _("Flip Vertical"), 'FlipSelected',
               args = (0, 1), bitmap = pixmaps.FlipVertical)
 
+    AddDocCmd('RotateCW', _("Rotate Right"), 'RotateSelected',
+              args = (-90,), bitmap = pixmaps.RotateCW)
+    
+    AddDocCmd('RotateCCW', _("Rotate Left"), 'RotateSelected',
+              args = (90,), bitmap = pixmaps.RotateCCW)
 
     # effects
     AddDocCmd('CancelBlend', _("Cancel Blend"),
@@ -1252,18 +1305,54 @@ class SketchMainWindow(Publisher):
 
     AddCmd('CopySelected', _("Copy"), 'CutCopySelected',
            args= ('CopyForClipboard',), subscribe_to = SELECTION,
-           sensitive_cb = ('document', 'HasSelection'))
+           sensitive_cb = ('document', 'HasSelection'), key_stroke = ('Ctrl+C','C-c'))
     AddCmd('CutSelected', _("Cut"), 'CutCopySelected',
            args= ('CutForClipboard',), subscribe_to = SELECTION,
-           sensitive_cb = ('document', 'HasSelection'))
+           sensitive_cb = ('document', 'HasSelection'), key_stroke = ('Ctrl+X','C-x'))
     AddCmd('PasteClipboard', _("Paste"),
            subscribe_to = ('application', CLIPBOARD),
-           sensitive_cb = ('application', 'ClipboardContainsData'))
+           sensitive_cb = ('application', 'ClipboardContainsData'), key_stroke = ('Ctrl+V','C-v'))
     def PasteClipboard(self):
         if self.application.ClipboardContainsData():
             obj = self.application.GetClipboard().Object()
             obj = obj.Duplicate()
             self.canvas.PlaceObject(obj)
+
+
+    #
+    #   Image reloading
+    #
+    AddDocCmd('ReloadImage', _("Update Linked Image"),
+              sensitive_cb = 'CanReloadImage', key_stroke = ('Ctrl+L','C-l'))
+
+    AddCmd('ReloadAllImages',_("Update All Links"), sensitive_cb = 'CanReloadAllImages')
+    def ReloadAllImages(self):
+        external.reload_all_images()
+
+    def CanReloadAllImages(self):
+        return external.can_reload_all_images()
+
+    AddCmd('ToggleAutoReload', _("Update Links Automatically"),
+           value_cb = 'IsAutoReloading', is_check = 1)
+    
+    def IsAutoReloading(self):
+        return self.auto_reload_id is not None
+
+    def ToggleAutoReload(self):
+        if self.auto_reload_id:
+            self.root.after_cancel(self.auto_reload_id)
+            self.auto_reload_id = None
+        else:
+            self.start_image_monitoring()
+
+    def start_image_monitoring(self):
+        self.auto_reload_id = self.root.after(2000,self.check_image_reload)
+
+    def check_image_reload(self):
+        if not self.document.transaction and self.CanReloadAllImages():
+            external.reload_all_images(really_all = 0)
+        self.auto_reload_id = self.root.after(300,self.check_image_reload)
+        
     #
     #	Undo/Redo
     #
@@ -1284,8 +1373,16 @@ class SketchMainWindow(Publisher):
     #
     #	Styles
     #
-    AddDocCmd('FillNone', _("No Fill"), 'AddStyle', args = EmptyFillStyle)
-    AddDocCmd('LineNone', _("No Line"), 'AddStyle', args = EmptyLineStyle)
+    AddDocCmd('FillNone', _("No Fill"), 'AddStyle', args = EmptyFillStyle, key_stroke = ('Shift+F6','S-F6'))
+    AddDocCmd('LineNone', _("No Line"), 'AddStyle', args = EmptyLineStyle, key_stroke = ('Shift+F7','S-F7'))
     AddDocCmd('UpdateStyle', _("Update Style"), 'UpdateDynamicStyleSel')
 
+    AddCmd('ToggleLineWidthScaling', _("Scale Line Width"),
+              value_cb = 'IsLineWidthScaled', is_check = 1,
+              key_stroke = ('Ctrl+F7','C-F7'))
+    
+    def IsLineWidthScaled(self):
+        return config.preferences.scale_line_width
 
+    def ToggleLineWidthScaling(self):
+        config.preferences.scale_line_width = not config.preferences.scale_line_width

@@ -47,6 +47,8 @@ meta_defaults = [
     ('compressed', ''),			# was compressed (by gzip or bzip2)
     ('compressed_file', ''),		# filename of compressed file
     ('load_messages', ''),		# (warning) messages
+    ('last_export_filename', ''),
+    ('last_export_format', None),
 ]
 
 for key, val in meta_defaults:
@@ -66,11 +68,18 @@ def openfiletypes():
     return types
 
 def savefiletypes():
-    types = [(_("Skencil/Sketch Document"), '.sk')]
+    return nativefiletypes() + exportfiletypes()
+
+def exportfiletypes():
+    types = []
     for info in plugins.export_plugins:
         types.append(info.tk_file_type)
     types = tuple(types)
     return types
+
+def nativefiletypes():
+    return ((_("Skencil/Sketch Document"), '.sk'),
+    )
 
 psfiletypes = (('PostScript', '.ps'),)
 
@@ -238,3 +247,10 @@ class SketchApplication(TkApplication, Publisher):
     def SavePreferences(self, *args):
         config.save_user_preferences()
 
+    def after(self, *args):
+        return self.root.after(*args)
+
+    def after_idle(self, *args):
+        return self.root.after_idle(*args)
+
+    

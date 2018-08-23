@@ -203,6 +203,7 @@ def font_file_name(ps_name):
     return filename
 
 
+_warned_about_outlines = {}
 def read_outlines(ps_name):
     filename = font_file_name(ps_name)
     if filename:
@@ -212,7 +213,18 @@ def read_outlines(ps_name):
         import Sketch.Lib.type1
         return Sketch.Lib.type1.read_outlines(filename)
     else:
-        raise SketchInternalError('Cannot find file for font %s' % ps_name)
+        if not _warned_about_outlines.get(ps_name):
+            warn(USER,
+                 _("I cannot find the outlines for the font %(ps_name)s.\n"
+                   "The file with basename(s) %(filename)s is not found in the font_path.\n"
+                   "I'll use the outlines for %(fallback)s instead."),
+                 ps_name = ps_name, filename = ps_to_filename[ps_name],
+                 fallback = config.preferences.fallback_font)
+            _warned_about_outlines[ps_name] = 1
+        if ps_name != config.preferences.fallback_font:
+            return read_outlines(config.preferences.fallback_font)
+        else:
+            raise SketchInternalError('Cannot find file for font %s' % ps_name)
 
 def convert_outline(outline):
     paths = []
@@ -319,7 +331,9 @@ class Font:
         family, font_attrs, xlfd_start, encoding_name = info
         self.family = family
         self.font_attrs = font_attrs
-        self.xlfd_start = lower(xlfd_start)
+        if xlfd_start:
+            xlfd_start = lower(xlfd_start)
+        self.xlfd_start = xlfd_start
         self.encoding_name = encoding_name
         self.metric, self.encoding = read_metric(self.PostScriptName())
         self.outlines = None
@@ -335,6 +349,8 @@ class Font:
         return "<Font %s>" % self.name
 
     def GetXLFD(self, size_trafo):
+        if not self.xlfd_start:
+            return 'fixed'
         if type(size_trafo) == TrafoType:
             if size_trafo.m11 == size_trafo.m22 > 0\
                and size_trafo.m12 == size_trafo.m21 == 0:
@@ -348,6 +364,12 @@ class Font:
         return xlfd_template % (self.xlfd_start, int(round(size_trafo)),
                                 self.encoding_name)
 
+    def ClearXLFD(self):
+        self.xlfd_start = None
+        family, font_attrs, xlfd_start, encoding_name = fontmap[self.name]
+        xlfd_start = None
+        fontmap[self.name] = (family, font_attrs, xlfd_start, encoding_name)
+    
     def PostScriptName(self):
         return self.name
 

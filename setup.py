@@ -128,6 +128,8 @@ def get_files_tree(path='.', ext='*'):
  
 #Generates *.mo files Resources/Messages
 def generate_locales():
+    print 'ignoring LOCALES BUILD'
+    return
     print 'LOCALES BUILD'
     files = get_files('po', 'po')
     if len(files):
@@ -171,16 +173,15 @@ if __name__ == "__main__":
     dirs = get_dirs_tree('src/Resources/Messages')
     messages_dirs = []
     for item in dirs:
-        messages_dirs.append(os.path.join(item[4:], '*.*'))
+        messages_dirs.append(os.path.join(item[14:], '*.*'))
         
-    
     from distutils.core import setup, Extension
 
     src_path = 'src/'
     
     filter_src = src_path + 'extensions/Filter/'
                 
-    filter_module = Extension('skencil.Sketch.Modules.streamfilter',
+    filter_module = Extension('Sketch.Modules.streamfilter',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '6')],
             sources=[filter_src + 'streamfilter.c', filter_src + 'filterobj.c', filter_src + 'linefilter.c',
@@ -189,25 +190,25 @@ if __name__ == "__main__":
     
     intl_src = src_path + 'extensions/Pax/'
                 
-    intl_module = Extension('skencil.Sketch.Modules.intl',
+    intl_module = Extension('Sketch.Modules.intl',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '6')],
             sources=[intl_src + 'intl.c'])
     
     type1mod_src = src_path + 'extensions/Modules/'                
-    type1mod_module = Extension('skencil.Sketch.Modules._type1module',
+    type1mod_module = Extension('Sketch.Modules._type1module',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '6')],
             sources=[type1mod_src + '_type1module.c'])
     
     skread_src = src_path + 'extensions/Modules/'                
-    skread_module = Extension('skencil.Sketch.Modules.skreadmodule',
+    skread_module = Extension('Sketch.Modules.skreadmodule',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '9')],
             sources=[skread_src + 'skreadmodule.c'])
     
     pstokenize_src = src_path + 'extensions/Modules/'                
-    pstokenize_module = Extension('skencil.Sketch.Modules.pstokenize',
+    pstokenize_module = Extension('Sketch.Modules.pstokenize',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '6')],
             include_dirs=[filter_src],
@@ -242,7 +243,7 @@ if __name__ == "__main__":
     
     
     paxtkinter_src = src_path + 'extensions/Pax/'                
-    paxtkinter_module = Extension('skencil.Sketch.Modules.paxtkinter',
+    paxtkinter_module = Extension('Sketch.Modules.paxtkinter',
             define_macros=[('MAJOR_VERSION', '1'),
                         ('MINOR_VERSION', '0')],
             sources=[paxtkinter_src + 'paxtkinter.c'],
@@ -251,7 +252,7 @@ if __name__ == "__main__":
     
     
     pax_src = src_path + 'extensions/Pax/'
-    pax_module = Extension('skencil.Sketch.Modules.paxmodule',
+    pax_module = Extension('Sketch.Modules.paxmodule',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '6')],
             sources=[pax_src + 'borderobject.c', pax_src + 'clipmask.c', pax_src + 'cmapobject.c',
@@ -263,7 +264,7 @@ if __name__ == "__main__":
             libraries=['X11', 'Xext', 'tk' + tcl_ver, 'tcl' + tcl_ver])
     
     skmod_src = src_path + 'extensions/Modules/'    
-    skmod_module = Extension('skencil.Sketch.Modules._sketchmodule',
+    skmod_module = Extension('Sketch.Modules._sketchmodule',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '6')],
             include_dirs=[src_path + 'extensions/Pax/'],
@@ -307,37 +308,46 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
             "Topic :: Multimedia :: Graphics :: Editors :: Vector-Based",
             ],
 
-            packages=['skencil',
-                'skencil.Plugins',
-                'skencil.Script',
-                'skencil.Plugins.Filters',
-                'skencil.Plugins.Filters.Lib',
-                'skencil.Plugins.Objects',
-                'skencil.Plugins.Objects.Lib',
-                'skencil.Plugins.Objects.Lib.multilinetext',
-                'skencil.Sketch',
-                'skencil.Sketch.Base',
-                'skencil.Sketch.Graphics',
-                'skencil.Sketch.Lib',
-                'skencil.Sketch.Modules',
-                'skencil.Sketch.Scripting',
-                'skencil.Sketch.UI',
+            packages=[
+                'Sketch',
+                'Sketch.Base',
+                'Sketch.Graphics',
+                'Sketch.Lib',
+                'Sketch.Modules',
+                'Sketch.Scripting',
+                'Sketch.UI',
+                'Plugins',
+                'Plugins.Filters',
+                'Plugins.Filters.Lib',
+                'Plugins.Objects',
+                'Plugins.Objects.Lib',
+                'Plugins.Objects.Lib.multilinetext',
+                'Plugins.Objects.Lib.autoshapes',
+                'Script',
+                'Resources'
             ],
             
-            package_dir={'skencil': 'src',
-            'skencil.Sketch': 'src/Sketch',
-            'skencil.Sketch.Modules': 'src/Sketch/Modules',
+            package_dir={
+                'Sketch': 'src/Sketch',
+                'Sketch.Modules': 'src/Sketch/Modules',
+                'Plugins': 'src/Plugins',
+                'Script': 'src/Script',
+                'Resources': 'src/Resources',
             },
             
-            package_data={'skencil.Sketch': ['VERSION', ],
-            'skencil': ['Resources/Fontmetrics/*.*',
-                        'Resources/Misc/*.*',
-                        'Resources/Misc/tkdefaults',
-                        'Resources/Pixmaps/*.*',
-                        'Resources/Pixmaps/New12/*.*'] + messages_dirs
+            package_data={'Sketch': ['VERSION', ],
+                          'Resources': ['Fontmetrics/*.*',
+                                        'Misc/*.*',
+                                        'Misc/tkdefaults',
+                                        'Pixmaps/*.*',
+                                        'Pixmaps/New12/*.*'] + messages_dirs,
+                          'Plugins.Objects.Lib.autoshapes': ['icons/*.*'],
+                          
             },
-
-            scripts=['src/skencil'],
+           
+            #scripts=['src/skencil.py','src/skconvert.py','src/sk2ps.py',
+            #         'src/sk2ps.py','src/skshow.py',],
+            scripts=['src/skencil', 'src/sk2ps'],
                     
             data_files=[
                     ('/usr/share/applications', ['src/skencil.desktop', ]),

@@ -63,7 +63,7 @@ fontmetric_dir = resource_dir + '/Fontmetrics'
 # directories. (non-existing dirs are automatically removed)
 font_path = ['/usr/X11R6/lib/X11/fonts/Type1',
 	     '/usr/share/ghostscript/fonts',
-	     '/usr/lib/ghostscript/fonts']
+	     '/usr/lib/ghostscript/fonts','/usr/share/fonts/type1/gsfonts']
 
 
 # List of directories, where Sketch searches for resource files like
@@ -244,6 +244,10 @@ class ProgramDefaults(connector.Publisher):
     #   0       don't
     set_default_properties = 1
 
+    #   Whether to scale line width when transforming
+    #   (should be per-object property, but that will change file format)
+    scale_line_width = 0
+
     #	Font dialog sample text. Can be changed by simply editing it in
     #	the font dialog.
     sample_text = 'ABCD abcd'
@@ -288,12 +292,23 @@ class ProgramDefaults(connector.Publisher):
     #	doesn't specify it itself. (not implemented yet)
     default_image_resolution = 72
 
+    #   Enable automatic image reloading
+    image_auto_reload = 0
+
     #
     #	EPS Files
     #
     #	The resoulution in pixel/inch of the preview image Sketch
     #	renders for preview. (using gs). Leave this at 72 for now.
     eps_preview_resolution = 72
+
+    #
+    #   PDF export
+    #
+    #   Resolution to pass to ghostscript
+    pdf_export_resolution = 600
+    #   Compatibility level
+    pdf_compatibility_level = '1.4'
 
     #
     #	Warning Messages
@@ -369,6 +384,7 @@ class ProgramDefaults(connector.Publisher):
     #
     #	Menus
     #
+    menu_enable_tearoff = 0
     menu_tearoff_fix = 1
 
     #
@@ -436,6 +452,14 @@ class ProgramDefaults(connector.Publisher):
     #   dashed lines with a width of 0 are drawn solid. Set
     #   editor_line_width to 1 in those cases.
     editor_line_width = 0
+
+    #   Move selection by keyboard keys, step sizes in pixels:
+    #   normal - arrows
+    kbd_move_normal = 5
+    #   fine   - Alt + arrows
+    kbd_move_fine   = 1
+    #   big    - Shift + arrows
+    kbd_move_big    = 25
 
     #   Load these standard scripts at runtime in interactive mode. This
     #   is really just a list of module names that are passed to

@@ -59,9 +59,6 @@ class ImageData(ExternalData):
         else:
             return self
 
-    def IsEmbedded(self):
-        return not self.filename
-
     def Size(self):
         return self.size
 
@@ -76,6 +73,9 @@ class ImageData(ExternalData):
 
     def Invert(self):
         return ImageData(PIL.ImageChops.invert(self.image))
+
+    def new_from_file(self):
+        return load_image(self.filename)
 
 
 
@@ -124,16 +124,10 @@ class Image(ExternalGraphics):
     def SaveToFile(self, file):
         file.Image(self.data, self.trafo)
 
-    def IsEmbedded(self):
-        return self.data.IsEmbedded()
-
-    def CanEmbed(self):
-        return not self.IsEmbedded()
-
     def Embed(self):
         return self.SetData(self.data.AsEmbedded())
     AddCmd(commands, 'EmbedImage', _("Embed Image"), Embed,
-           sensitive_cb = 'CanEmbed')
+           sensitive_cb = 'IsLinked')
 
     def CallImageFunction(self, function, args = ()):
         if type(args) != type(()):

@@ -28,12 +28,43 @@ from Sketch import config, _
 from Sketch.Graphics import font, text, properties
 from Sketch.const import SELECTION
 
+from Sketch import Document, SimpleText, Identity
+from Sketch.Graphics.pagelayout import PageLayout
+
 from tkext import UpdatedListbox, MyEntry
 from sketchdlg import StylePropertyPanel
 from miniscroll import MiniScroller
+from view import SketchView
 
-std_sizes = (8, 9, 10, 12, 14, 18, 24, 36, 48, 72)
+std_sizes = (8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 25, 28, 32, 36, 48, 72)
 
+class FontPreview(SketchView):
+
+    def __init__(self, top):
+        doc = Document(create_layer = 1)
+        doc.SetLayout(PageLayout(width = 100, height = 30))
+        self.sample = SimpleText(Identity, config.preferences.sample_text)
+        self.sample.SetFontSize(30)
+        doc.Insert(self.sample)
+        bg = 'white'
+        SketchView.__init__(self, top, document = doc,
+                            width=100, height=30, background = bg)
+        self.SetPageOutlineMode(0)
+
+    def SetFont(self, fname):
+        self.sample.SetFont(font.Font(fname))
+        #self.redraw_doc(all=1)
+        self.FitToWindow(save_viewport = 0)
+
+    def Text(self):
+        return self.sample.Text()
+    
+    def ResizedMethod(self, width, height):
+        SketchView.ResizedMethod(self, width, height)
+        self.FitToWindow(save_viewport = 0)
+
+    def FitPageToWindow(self, save_viewport = 0):
+        self.FitToWindow(0,save_viewport = save_viewport)
 
 def get_from_list(item, list):
     # If item in list, return item, else try to find some standard items in
@@ -63,11 +94,7 @@ class FontPanel(StylePropertyPanel):
         buttons = self.create_std_buttons(top)
         buttons.grid(row = 3, column = 4, columnspan = 2, sticky = "news")
 
-        self.sample_text = StringVar(top)
-        self.sample_text.set(config.preferences.sample_text)
-        self.sample = Entry(top, textvariable = self.sample_text,
-                            relief = FLAT, bg = top['bg'],
-                            width = len(config.preferences.sample_text))
+        self.sample = FontPreview(top)
         self.sample.grid(column = 0, row = 3, columnspan = 4, sticky = "news")
         # XXX: the background color of the sample text should be
         # configurable
@@ -180,10 +207,7 @@ class FontPanel(StylePropertyPanel):
             self.size_list.SelectNone()
 
     def update_sample(self):
-        xlfd = self.current_font_xlfd()
-        if not xlfd:
-            xlfd = 'fixed'
-        self.sample['font'] = xlfd
+        self.sample.SetFont(self.current_font_ps())
 
     def set_font_attrs(self, attrs):
         self.font_attrs = attrs
@@ -210,14 +234,14 @@ class FontPanel(StylePropertyPanel):
     def family_selected(self):
         sel = self.family_list.curselection()
         if sel:
-            index = string.atoi(sel[0])
+            index = sel[0]
             self.font_family = self.families[index]
             self.update_from_family(set_view = 0)
 
     def attr_selected(self):
         sel = self.font_attr_list.curselection()
         if sel:
-            index = string.atoi(sel[0])
+            index = sel[0]
             self.font_attr = self.font_attrs[index]
             self.update_sample()
 
@@ -235,4 +259,4 @@ class FontPanel(StylePropertyPanel):
 
     def save_prefs(self):
         StylePropertyPanel.save_prefs(self)
-        config.preferences.sample_text = self.sample_text.get()
+        config.preferences.sample_text = self.sample.Text()

@@ -20,6 +20,8 @@ CHANGED = const.CHANGED
 from Sketch.connector import Publisher
 from Sketch import CreateListUndo, UndoAfter, NullUndo, SketchInternalError, _
 from Sketch.warn import pdebug, INTERNAL
+from Sketch import config, Point
+from math import sqrt
 
 from pattern import SolidPattern, EmptyPattern
 from color import StandardColors
@@ -302,20 +304,30 @@ class PropertyStack:
     def Transform(self, trafo, rects):
         # XXX hardcoding which properties may need to be transformed is
         # not really a good idea, but it's significantly faster.
-        undo = NullUndo
+        undo = ()
         if len(self.stack) == 1 and not self.stack[0].is_dynamic:
             if self.fill_transform:
                 pattern = self.fill_pattern
                 if pattern.is_procedural:
-                    undo = pattern.Transform(trafo, rects)
+                    undo = undo + (pattern.Transform(trafo, rects),)
         elif self.fill_transform:
             pattern = self.fill_pattern
             if pattern.is_procedural:
                 pattern = pattern.Duplicate()
                 if pattern.Transform(trafo, rects) is not NullUndo:
-                    undo = self.set_property('fill_pattern', pattern)
-        if undo is not NullUndo:
-            undo = (UndoAfter, undo, self._clear_cache())
+                    undo = undo + (self.set_property('fill_pattern', pattern),)
+        if config.preferences.scale_line_width:
+            lw = self.line_width
+            x0,y0 = trafo(0,0)
+            x1,y1 = trafo(0,lw)
+            x2,y2 = trafo(lw,0)
+            lwn = (sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)) +
+                   sqrt((x2-x0)*(x2-x0)+(y2-y0)*(y2-y0)))/2
+            undo = undo + (self.set_property('line_width',lwn),)
+        if len(undo) > 0:
+            undo = (UndoAfter,) + undo + (self._clear_cache(),)
+        else:
+            undo = NullUndo
         return undo
 
     def CreateStyle(self, which_properties):

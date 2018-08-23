@@ -33,6 +33,8 @@
 
 from types import ListType, IntType, StringType, TupleType
 from string import join
+import math
+import sys
 
 from Sketch.warn import pdebug, warn, warn_tb, USER, INTERNAL
 from Sketch import SketchInternalError
@@ -43,7 +45,7 @@ from Sketch.connector import Issue, RemovePublisher, Connect, Disconnect, \
      QueueingPublisher, Connector
 from Sketch.undodict import UndoDict
 
-from Sketch import Rect, Point, UnionRects, InfinityRect, Trafo
+from Sketch import Rect, Point, UnionRects, InfinityRect, Trafo, Rotation
 from Sketch import UndoRedo, Undo, CreateListUndo, NullUndo, UndoAfter
 
 import color, selinfo, pagelayout
@@ -81,6 +83,7 @@ class SketchDocument(Protocols):
         self.snap_grid.SetDocument(self)
         self.guide_layer = GuideLayer(_("Guide Lines"))
         self.guide_layer.SetDocument(self)
+        self.options = {}
         if create_layer:
             # a new empty document
             self.active_layer = Layer(_("Layer 1"))
@@ -487,11 +490,13 @@ class EditDocument(SketchDocument, QueueingPublisher):
                         self.__real_add_undo(self.transaction_name, undo,
                                              self.transaction_sel,
                                              self.transaction_sel_mode)
+                #print >>sys.stderr, 'XXX'
                 self.flush_message_queue()
                 self.issue_redraw()
                 self.cleanup_transaction()
                 self.reset_transaction()
                 self.reset_clear()
+                #print >>sys.stderr, 'YYY'
             elif self.transaction < 0:
                 raise SketchInternalError('transaction < 0')
 
@@ -1664,6 +1669,24 @@ class EditDocument(SketchDocument, QueueingPublisher):
             finally:
                 self.end_transaction()
 
+    def RotateSelected(self, angle  = 0):
+        if self.selection and angle:
+            self.begin_transaction()
+            try:
+                try:
+                    rect = self.selection.coord_rect
+                    cx = (rect.left + rect.right)/2
+                    cy = (rect.top + rect.bottom)/2
+                    text = _("Rotate by %(angle)d degrees") % {'angle': angle}
+                    # XXX bug: skimage.c/transform_to_ximage segfaults
+                    #          for exactly 90 degree rotations
+                    trafo = Rotation(angle/180.0*math.pi*0.999999, cx, cy)
+                    self.TransformSelected(trafo, text)
+                except:
+                    self.abort_transaction()
+            finally:
+                self.end_transaction()
+
     #
     #
     #
@@ -1809,6 +1832,22 @@ class EditDocument(SketchDocument, QueueingPublisher):
             finally:
                 self.end_transaction()
 
+    #
+    #   External image reload
+    #
+
+    def CanReloadImage(self):
+        if len(self.selection) == 1:
+            obj = self.selection.GetObjects()[0]
+            if obj.has_links:
+                return obj.IsLinked()
+        return 0
+
+    def ReloadImage(self):
+        if self.CanReloadImage():
+            object = self.selection.GetObjects()[0]
+            object.UpdateLink()
+                    
     #
     #	Clone (under construction...)
     #

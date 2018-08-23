@@ -110,10 +110,12 @@ def create_unit_menu(master, command, variable = None,
     optmenu.configure(options)
     return optmenu
 
-def create_length_widgets(top, master, command):
+def create_length_widgets(top, master, command, default_unit = None):
     var_number = DoubleVar(top)
     var_unit = StringVar(top)
-    var_length = LengthVar(1.0, config.preferences.default_unit, var_number,
+    if default_unit is None:
+        default_unit = config.preferences.default_unit
+    var_length = LengthVar(1.0, default_unit, var_number,
                            var_unit, command = command)
     entry = MyEntry(master, textvariable = var_number, justify = RIGHT,
                     width = 6, command = var_length.UpdateNumber)

@@ -38,7 +38,7 @@ _builtin = ['NewDocument', 'Open', 'Save',
             'GridOn', 'Zoom',
             'JoinMiter', 'JoinRound', 'JoinBevel',
             'CapButt', 'CapRound', 'CapProjecting',
-            'FlipVertical', 'FlipHorizontal',
+            'FlipVertical', 'FlipHorizontal', 'RotateCW', 'RotateCCW',
             'Duplicate',
 
             'fill_gradient', 'fill_hatch', 'fill_solid', 'fill_tile',

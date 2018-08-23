@@ -114,6 +114,8 @@ class EpsData(ExternalData):
         finally:
             infile.close()
 
+    def new_from_file(self):
+        return load_eps(self.filename)
 
 def load_eps(filename):
     eps = get_cached(filename)

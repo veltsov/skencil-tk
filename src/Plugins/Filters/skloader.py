@@ -247,7 +247,8 @@ class SKLoader(GenericLoader):
         self.style.line_dashes = dashes
 
     functions.append('la1')
-    def la1(self, args = None):
+    def la1(self, args = None, head=None):
+        #print head
         if args is not None:
             self.style.line_arrow1 = apply(Arrow, args)
         else:

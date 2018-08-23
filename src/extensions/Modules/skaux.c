@@ -340,7 +340,7 @@ SKCache_ass_sub(SKCacheObject * self, PyObject * v, PyObject * w)
 }
 
 static PyMappingMethods SKCache_as_mapping = {
-	(inquiry)SKCache_length,	/*mp_length*/
+	(lenfunc)SKCache_length,	/*mp_length*/
 	(binaryfunc)SKCache_subscript,  /*mp_subscript*/
 	(objobjargproc)SKCache_ass_sub, /*mp_ass_subscript*/
 };

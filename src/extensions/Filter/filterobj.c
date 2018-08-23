@@ -854,6 +854,7 @@ filter_close(PyObject * self, PyObject * args)
     return Py_None;
 }
 
+//#include <stdio.h>
 static PyObject *
 filter_seek(FilterObject * self, PyObject * args)
 {
@@ -865,6 +866,9 @@ filter_seek(FilterObject * self, PyObject * args)
 
     cur_pos = self->streampos - (self->end - self->current);
     offset = pos - cur_pos;
+    //fprintf(stderr,"pos=%d cur_pos=%ld offset=%ld\n",pos,cur_pos,offset);
+
+    if (offset != 0) {
 
     if (self->base - self->current <= offset
 	&& offset < self->end - self->current)
@@ -878,6 +882,7 @@ filter_seek(FilterObject * self, PyObject * args)
     {
 	PyErr_SetString(PyExc_IOError, "cannot seek to specified position");
 	return NULL;
+    }
     }
     
     Py_INCREF(Py_None);

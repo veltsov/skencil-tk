@@ -278,6 +278,7 @@ class Protocols:
     has_line		= 0	# True, iff object can have line properties
     has_font		= 0	# True, iff object can have a font
     has_properties	= 0
+    has_links           = 0     # True, iff object can link to external files
 
     is_Bezier		= 0
     is_Rectangle	= 0

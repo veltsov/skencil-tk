@@ -174,6 +174,8 @@ class ColorScheme:
     editfieldbackground = '#ffffff'
     editfieldforeground = '#000000'
     treelinescolor = '#000000'
+
+    radiobuttonselectcolor = '#ffffff'
     
     d3_light = '#ffffff'
     d3_dark = '#b0ada6'
@@ -232,7 +234,7 @@ class ColorScheme:
             colors[type + ' selected'] = gtk_to_tk_color(line[3])
             colors[type + ' insensitive'] = gtk_to_tk_color(line[4])
         tmpfile.close()
-        
+
         self.map_gtk_colors(colors)
     
     def map_gtk_colors(self, gtk_colors):
@@ -259,6 +261,8 @@ class ColorScheme:
         self.editfieldbackground = gtk_colors['base normal']
         self.editfieldforeground = gtk_colors['text normal']
         self.treelinescolor = gtk_colors['text normal']
+
+        self.radiobuttonselectcolor = gtk_colors['fg selected']
         
         self.d3_light = middle_color('#ffffff', gtk_colors['bg normal'])
         self.d3_dark = middle_color(gtk_colors['bg active'], gtk_colors['fg insensitive'])
@@ -297,6 +301,8 @@ def set_ui_colors(widget, color_scheme):
     widget.tk.call('option', 'add', '*Menu.background', color_scheme.menubackground, 'interactive')
     widget.tk.call('option', 'add', '*Menu*background', color_scheme.menubackground, 'interactive')
     widget.tk.call('option', 'add', '*Menu.highlightColor', color_scheme.menubordercolor, 'interactive')
+
+    widget.tk.call('option', 'add', '*Radiobutton.selectColor', color_scheme.radiobuttonselectcolor, 'interactive')
     
     widget.tk.call('option', 'add', '*canvas_frame.highlightColor', color_scheme.normal_border, 'interactive')
     widget.tk.call('option', 'add', '*canvas_frame.highlightBackground', color_scheme.normal_border, 'interactive')

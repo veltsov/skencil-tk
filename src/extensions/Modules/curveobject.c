@@ -1390,7 +1390,7 @@ curve_set_segment(SKCurveObject * self, PyObject * args)
     int idx, type;
     PyObject * p, *p1, *p2, *tuple;
     
-    if (!PyArg_ParseTuple(args, "iOO|i", &idx, &type, &tuple, &p, &cont))
+    if (!PyArg_ParseTuple(args, "iiOO|i", &idx, &type, &tuple, &p, &cont))
 	return NULL;
 
     if (!skpoint_extract_xy(p, &x, &y))
@@ -1405,7 +1405,7 @@ curve_set_segment(SKCurveObject * self, PyObject * args)
     if (idx < 0)
 	return NULL;
 
-    self->segments[idx].type = CurveLine;
+    self->segments[idx].type = type;
     self->segments[idx].cont = cont;
     self->segments[idx].x = x;
     self->segments[idx].y = y;

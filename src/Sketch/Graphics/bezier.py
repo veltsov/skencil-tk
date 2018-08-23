@@ -15,7 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
-from math import pi, floor, atan2, ceil
+from math import pi, floor, atan2, ceil, sqrt
 
 from traceback import print_stack
 
@@ -61,6 +61,9 @@ class PolyBezier(Primitive):
     is_clip	  = 1
 
     script_access = Primitive.script_access.copy()
+
+    _lazy_attrs = Primitive._lazy_attrs.copy()
+    _lazy_attrs['apaths'] = 'retract_for_arrows'
 
     def __init__(self, paths = None, properties = None, duplicate = None):
         if duplicate is not None:
@@ -127,7 +130,10 @@ class PolyBezier(Primitive):
 
     def DrawShape(self, device, rect = None, clip = 0):
         Primitive.DrawShape(self, device)
-        device.MultiBezier(self.paths, rect, clip)
+        if device.outline_mode or not self.apaths:
+            device.MultiBezier(self.paths, rect, clip)
+        else:
+            device.MultiBezier(self.apaths, rect, clip)
 
     def GetObjectHandle(self, multiple):
         if self.paths:
@@ -172,7 +178,7 @@ class PolyBezier(Primitive):
             arrow2 = self.properties.line_arrow2
             if arrow1 or arrow2:
                 width = self.properties.line_width
-                for path in self.paths:
+                for path in self.apaths or self.paths:
                     if not path.closed and path.len > 1:
                         if arrow1 is not None:
                             type, controls, p3, cont = path.Segment(1)
@@ -193,6 +199,48 @@ class PolyBezier(Primitive):
                                               arrow2.BoundingRect(p,dir,width))
         return rect
 
+    def retract_for_arrows(self):
+        apaths = []
+        if self.properties.HasLine():
+            arrow1 = self.properties.line_arrow1
+            arrow2 = self.properties.line_arrow2
+            if (arrow1 and arrow1.Head()) or (arrow2 and arrow2.Head()):
+                width = self.properties.line_width
+                if width < 1:
+                    width = 1
+                for path in self.paths:
+                    if not path.closed and path.len > 1:
+                        apath = path.Duplicate()
+                        if arrow1 and arrow1.Head():
+                            type, controls, p3, cont = path.Segment(1)
+                            p = path.Node(0)
+                            if type == Bezier:
+                                dir = p - controls[0]
+                            else:
+                                dir = p - p3
+                            n = sqrt(dir.x*dir.x+dir.y*dir.y)
+                            if n > 1e-8:
+                                pn = p - arrow1.Head().x*width/n*dir
+                                type, controls, p3, cont = apath.Segment(0)
+                                apath.SetSegment(0,type, controls, pn, cont)
+                        if arrow2 and arrow2.Head():
+                            type, controls, p, cont = path.Segment(-1)
+                            if type == Bezier:
+                                dir = p - controls[1]
+                            else:
+                                dir = p - path.Node(-2)
+                            n = sqrt(dir.x*dir.x+dir.y*dir.y)
+                            if n > 1e-8:
+                                pn = p - arrow2.Head().x*width/n*dir
+                                apath.SetSegment(-1,type, controls, pn, cont)
+                        apaths.append(apath)
+                    else:
+                        apaths.append(path)
+        if apaths:
+            self.apaths = tuple(apaths)
+        else:
+            self.apaths = None
+            
     def Info(self):
         nodes = 0
         for path in self.paths:

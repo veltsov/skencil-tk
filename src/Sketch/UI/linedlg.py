@@ -92,9 +92,15 @@ def draw_arrow_bitmap(gc, arrow, which = 2):
     if which == 1:
         gc.PushTrafo()
         gc.Concat(_mirror)
+    gc.SetLineAttributes(width = 3, dashes = None)
     gc.DrawLineXY(0, 0, -1000, 0)
     if arrow is not None:
         arrow.Draw(gc)
+        xh,yh = arrow.Head()
+        gc.SetLineAttributes(width = 1, dashes = (2,2))
+        gc.DrawLineXY(xh,-1000, xh, 1000)
+        if yh != 0:
+            gc.DrawLineXY(-1000, yh, 1000, yh)
     if which == 1:
         gc.PopTrafo()
 
@@ -102,7 +108,7 @@ def create_arrow_images(tk, tkwin, arrows):
     arrows = [None] + arrows
     bitmap = tkwin.CreatePixmap(_arrow_width, _arrow_height, 1)
     gc = SimpleGC()
-    gc.init_gc(bitmap, foreground = 1, background = 0, line_width = 3)
+    gc.init_gc(bitmap, foreground = 1, background = 0)
     gc.Translate(_arrow_width / 2, _arrow_height / 2)
     gc.Scale(2)
     images1 = []

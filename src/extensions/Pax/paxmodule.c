@@ -427,8 +427,8 @@ paxwidget_widget_cmd(ClientData data, Tcl_Interp * interp,
     length = strlen(argv[1]);
     if (c == 'b' && strncmp(argv[1], "bgpixel", length) == 0)
     {
-	sprintf(Tcl_GetStringResult(interp), "%ld",
-		Tk_3DBorderColor(paxwidget->background)->pixel);
+      Tcl_SetObjResult(interp, Tcl_NewLongObj(
+		       Tk_3DBorderColor(paxwidget->background)->pixel));
     }
     else if ((c == 'c') && (strncmp(argv[1], "cget", length) == 0)
 	     && (length >= 2))

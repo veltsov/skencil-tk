@@ -274,9 +274,9 @@ def Read_X_RGB_TXT(filename):
 
 class PaletteWidget(PyWidget, Publisher):
 
-    def __init__(self, master=None, palette = None, cell_size = 37, **kw):
+    def __init__(self, master=None, palette = None, cell_size = 16, **kw):
         if not kw.has_key('height'):
-            kw['height'] = 18
+	     kw['height'] = cell_size
         apply(PyWidget.__init__, (self, master), kw)
 
         self.cell_size = cell_size
@@ -300,7 +300,7 @@ class PaletteWidget(PyWidget, Publisher):
         Publisher.Destroy(self)
 
     def compute_num_cells(self):
-        self.num_cells = self.tkwin.width / self.cell_size + 1
+	 self.num_cells = self.tkwin.width / self.cell_size + 1
 
     def MapMethod(self):
         self.compute_num_cells()
@@ -392,7 +392,7 @@ class PaletteWidget(PyWidget, Publisher):
         width = win.width
         height = win.height
         self.gc.StartDblBuffer()
-        self.gc.SetFillColor(StandardColors.black)
+        self.gc.SetFillColor(StandardColors.white)
         self.gc.FillRectangle(0, 0, width, height)
 
         x = 0
@@ -403,8 +403,8 @@ class PaletteWidget(PyWidget, Publisher):
         rgbs = rgbs[self.start_idx:self.start_idx + self.num_cells]
         for rgb in rgbs:
             SetFillColor(apply(create_color, rgb))
-            FillRectangle(x + 1, 1, x + self.cell_size, height - 1)
-            x = x + self.cell_size
+	    FillRectangle(x, 0, x + height, height)
+	    x = x + height
         self.gc.EndDblBuffer()
 
     def ResizedMethod(self, width, height):

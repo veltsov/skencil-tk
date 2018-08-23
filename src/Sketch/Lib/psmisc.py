@@ -25,13 +25,15 @@ import operator
 def make_ps_quote_table():
     table = [''] * 256
     quote = (ord('('), ord(')'), ord('\\'))
-    for i in range(128):
+    for i in range(127):
         if i in quote:
             table[i] = '\\' + chr(i)
         else:
             table[i] = chr(i)
-    for i in range(128, 256):
+    for i in range(127, 256):
         table[i] = '\\' + oct(i)[1:]
+    for i in range(0, 32):
+	table[i] = '\\' + oct(512+i)[2:]
     return table
 
 quote_table = make_ps_quote_table()

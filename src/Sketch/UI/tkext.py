@@ -302,6 +302,7 @@ class UpdatedMenu:
         if auto_rebuild is not None:
             rest['postcommand'] = MakeMethodCommand(self.RebuildMenu)
             self.rebuild_func = auto_rebuild
+        rest['tearoff'] = config.preferences.menu_enable_tearoff
         rest['tearoffcommand'] = MakeMethodCommand(self._tearoff)
         self.menu = apply(Menu, (master,), rest)
         self.SetEntries(entries)
@@ -454,6 +455,11 @@ class UpdatedLabel(Tkinter.Label, AutoUpdate):
 
     def __init__(self, master, **kw):
         AutoUpdate.__init__(self, kw = kw)
+        #kw['relief'] = 'sunken'
+        kw['borderwidth'] = 0
+        kw['padx'] = 0
+        kw['pady'] = 0
+        kw['highlightthickness'] = 0
         apply(Tkinter.Label.__init__, (self, master), kw)
 
     def destroy(self):

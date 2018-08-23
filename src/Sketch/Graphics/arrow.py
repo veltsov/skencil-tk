@@ -26,7 +26,7 @@ from math import atan2, sin, cos
 
 from Sketch.warn import warn_tb, USER, pdebug
 from Sketch import config
-from Sketch import _, Trafo, CreatePath
+from Sketch import _, Trafo, CreatePath, Point
 
 from Sketch.loadres import read_resource_file
 
@@ -34,12 +34,17 @@ class Arrow:
 
     def __init__(self, path, closed = 0):
         self.path = CreatePath()
+        self.head = Point(0,0)
         if type(path) in (ListType, TupleType):
+            oldseg = None
             for segment in path:
                 if len(segment) == 2:
+                    if oldseg and oldseg[-2:] == segment:
+                        self.head = Point(segment)
                     apply(self.path.AppendLine, segment)
                 else:
                     apply(self.path.AppendBezier, segment)
+                oldseg = segment
         else:
             self.path = path
         if closed:
@@ -68,6 +73,9 @@ class Arrow:
 
     def IsFilled(self):
         return self.path.closed
+
+    def Head(self):
+        return self.head
 
     def SaveRepr(self):
         path = map(lambda t: t[:-1], self.path.get_save())

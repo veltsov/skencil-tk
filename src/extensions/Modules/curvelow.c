@@ -23,6 +23,7 @@
 
 
 #include "math.h"
+#include "stdlib.h"
 #include "X11/Xlib.h"
 #include "curvelow.h"
 

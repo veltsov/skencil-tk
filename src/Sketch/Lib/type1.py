@@ -204,8 +204,10 @@ class CharStringInterpreter:
                         stack.append(-(code - 251) * 256 - cs[0] - 108)
                         del cs[0]
                     else:
-                        stack.append(cs[0] * 0x01000000 + cs[1] * 0x10000
-                                     + cs[2] * 0x100 + cs[3])
+                        val = cs[0] * 0x01000000 + cs[1] * 0x10000 + cs[2] * 0x100 + cs[3]
+                        if(val & 0x80000000):
+                            val = -0x100000000 + val
+                        stack.append(val)
                         del cs[:4]
                 else:
                     if code == 12:

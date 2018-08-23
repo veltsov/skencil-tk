@@ -23,38 +23,95 @@
 # bitmapped images or encapsulated PostScript files.
 
 
-from Sketch import Rect, Trafo, IdentityMatrix, NullUndo, SKCache
+from Sketch import Rect, Trafo, IdentityMatrix, NullUndo, SKCache, main
 
 from base import GraphicsObject, RectangularObject
 from properties import EmptyProperties
 
+from Sketch.const import SELECTION
 
-instance_cache = SKCache()
+import os
+import time
+
+instance_cache = dict() #SKCache()
 
 class ExternalData:
 
     # default instance variables
     stored_in_cache = 0
     filename = ''
+    fstat = None
 
     def __init__(self, filename = '', do_cache = 1):
-        if filename and do_cache:
-            self.stored_in_cache = 1
-            instance_cache[filename] = self
+        self.user_list = []
         if filename:
             self.filename = filename
+            self.fstat = os.stat(filename)
+            if do_cache:
+                self.insert_into_cache()
 
     def __del__(self):
-        if self.stored_in_cache and instance_cache.has_key(self.filename):
-            del instance_cache[self.filename]
+        self.remove_from_cache()
 
     def Filename(self):
         return self.filename
 
+    def IsEmbedded(self):
+        return not self.filename
 
+    def IsLinked(self):
+        return not self.IsEmbedded()
+
+    def insert_into_cache(self):
+        self.stored_in_cache = 1
+        instance_cache[self.filename] = self
+
+    def remove_from_cache(self):
+        if self.stored_in_cache and instance_cache.has_key(self.filename):
+            del instance_cache[self.filename]
+            self.stored_in_cache = 0
+
+    def AddUser(self, user):
+        self.user_list.append(user)
+
+    def RmUser(self, user):
+        self.user_list.remove(user)
+
+    def reload_file(self, finalize = 1):
+        docs = []
+        self.remove_from_cache()
+        try:
+            newdata = self.new_from_file()
+        except:
+            self.insert_into_cache()
+            return docs
+        users = list(self.user_list)
+        for obj in users:
+            doc = obj.document
+            oldrect = obj.bounding_rect
+            obj.SetData(newdata)
+            doc.AddClearRect(oldrect)
+            doc.AddClearRect(obj.bounding_rect)
+            docs.append(doc)
+        if finalize:
+            finalize_doc_change(docs)
+        return docs
+
+    def need_reload(self):
+        try:
+            nstat = os.stat(self.filename)
+        except:
+            return False
+        now = time.time()
+        changed = (self.fstat.st_ino != nstat.st_ino or
+                   self.fstat.st_mtime < nstat.st_mtime) and \
+                   nstat.st_mtime <= now - 0.2
+        return changed
+            
     # to be supplied by derived classes
     #
     #    Size() return the size as a tuple (width, height)
+    #    new_from_file() make new external data object from the same filename
 
 
 def get_cached(filename):
@@ -62,12 +119,38 @@ def get_cached(filename):
         return instance_cache[filename]
     return None
 
+def finalize_doc_change(docs):
+    seen_docs = []
+    for doc in docs:
+        if doc not in seen_docs:
+            doc.issue_redraw()
+            if doc.HasSelection():
+                doc.selection.ResetRectangle()
+                doc.issue(SELECTION)
+            doc.reset_clear()
+            seen_docs.append(doc)
+
+def can_reload_all_images():
+    global instance_cache
+    return len(instance_cache) > 0
+
+def reload_all_images(really_all = 1):
+    docs = []
+    fnames = instance_cache.keys()
+    for fname in fnames:
+        obj = instance_cache[fname]
+        if really_all or obj.need_reload():
+            docs.extend(obj.reload_file(finalize = 0))
+    finalize_doc_change(docs)
+
+
 
 class ExternalGraphics(RectangularObject, GraphicsObject):
 
     has_edit_mode = 0
     # by default this has no properties:
     has_fill = has_line = has_font = 0
+    has_links = 1
 
     data = None
 
@@ -77,15 +160,31 @@ class ExternalGraphics(RectangularObject, GraphicsObject):
         if duplicate is not None:
             data = duplicate.data
         self.data = data
+        data.AddUser(self)
+
+    def __del__(self):
+        self.data.RmUser(self)
 
     def Data(self):
         return self.data
 
     def SetData(self, data):
         undo = self.SetData, self.data
+        self.data.RmUser(self)
         self.data = data
-        # XXX issue_changed() here ?
+        data.AddUser(self)
+        self._changed()
         return undo
+
+    def IsEmbedded(self):
+        return self.data.IsEmbedded()
+
+    def IsLinked(self):
+        return self.data.IsLinked()
+
+    def UpdateLink(self):
+        if self.IsLinked():
+            self.data.reload_file()
 
     def Hit(self, p, rect, device, clip = 0):
         width, height = self.data.Size()
@@ -151,3 +250,4 @@ class ExternalGraphics(RectangularObject, GraphicsObject):
             return (abs(p - p2), p2)
         except SingularMatrix:
             return (1e200, p)
+

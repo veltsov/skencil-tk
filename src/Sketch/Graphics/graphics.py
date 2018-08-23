@@ -393,11 +393,13 @@ class CommonDevice:
 
     # some methods common to GraphicsDevice and PostScriptDevice
 
+    outline_mode = 0
+
     def draw_arrow(self, arrow, width, pos, dir, rect = None):
         self.PushTrafo()
         self.Translate(pos.x, pos.y)
         self.Rotate(dir.polar()[1])
-        if width >= 1.0:
+        if True: #width >= 1.0:
             self.Scale(width)
         self.SetLineSolid()
         arrow.Draw(self) #, rect)
@@ -797,6 +799,21 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             self.draw_arrows(paths, rect)
 
     def draw_text_on_gc(self, gc, text, trafo, font, font_size, cache = None):
+        psname = font.PostScriptName()
+        if self.unknown_fonts.has_key(psname):
+            # broken font, user was warned
+            return
+        try:
+            pos = font.TypesetText(text)
+        except:
+            # broken font seen first time, warn user
+            # Should we use Times-Roman instead of giving up?
+            warn(USER, _("Font %(font)s is not found!\n"
+                         "Text with this font from now on\n"
+                         "will be INVISIBLE"), font = psname, text = val)
+            self.unknown_fonts[psname] = 1
+            return
+            
         self.PushTrafo()
         try:
             self.Concat(trafo)
@@ -805,38 +822,47 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             if abs(up) >= config.preferences.greek_threshold:
                 ptrafo = FlipY(self.doc_to_win)
                 xlfd = font.GetXLFD(ptrafo)
-                if (ptrafo and (ptrafo.m12 != 0 or ptrafo.m21 != 0
-                                or ptrafo.m11 > 40 or ptrafo.m11 < 0
-                                or ptrafo.m22 > 40 or ptrafo.m22 < 0)):
-                    xlfd = '%s[%s]' % (xlfd, _sketch.xlfd_char_range(text))
-                try:
+                if xlfd == 'fixed':
+                    xfont = None
+                else:
+                    if (ptrafo and (ptrafo.m12 != 0 or ptrafo.m21 != 0
+                                    or ptrafo.m11 > 40 or ptrafo.m11 < 0
+                                    or ptrafo.m22 > 40 or ptrafo.m22 < 0)):
+                        xlfd = '%s[%s]' % (xlfd, _sketch.xlfd_char_range(text))
+                    
                     xfont = self.load_font(xlfd, cache)
-                except RuntimeError, val:
-                    # We must be careful here when reporting this to the
-                    # user. If warn pops up a message box and the user
-                    # clicks OK, the window gets another expose event
-                    # and sketch tries to draw the text again which will
-                    # also fail. To avoid infinite loops we try to
-                    # report unknown fonts only once for a given font.
-                    if not self.unknown_fonts.has_key(font.PostScriptName()):
-                        warn(USER, _("Cannot load %(font)s:\n%(text)s"),
-                             font = `xlfd`, text = val)
-                        self.unknown_fonts[font.PostScriptName()] = 1
-                    # Use a font that will hopefully be always available.
-                    # XXX Is there a better way to handle this situation?
-                    # We might try times roman with the same size and trafo
-                    xfont = self.load_font('fixed', None)
-                gc.SetFont(xfont)
 
-                pos = font.TypesetText(text)
-                pos = map(self.DocToWin, pos)
-                for i in range(len(text)):
-                    x, y = pos[i]
-                    gc.DrawString(x, y, text[i])
+                if not xfont:
+                    # Draw as beziers
+                    if xlfd != 'fixed':
+                        font.ClearXLFD()  # do not try xfonts again
+                    #print "draw text '%s' with font '%s' as curve" %(text,psname)
+                    for i in range(len(text)):
+                        outline = font.GetOutline(text[i])
+                        otrafo = Translation(pos[i])
+                        paths = []
+                        for path in outline:
+                            path.Transform(otrafo)
+                            paths.append(path)
+                   
+                        _sketch.draw_multipath(gc, self.doc_to_win, None, self.activate_fill,
+                                               self.PushClip, self.PopClip, self.ClipRegion,
+                                               None, tuple(paths), CreateRegion(), self.proc_fill,
+                                               0)
+
+                    #xfont = self.load_font('fixed',cache)
+
+                if xfont:
+                    # Draw as text
+                    gc.SetFont(xfont)
+
+                    pos = map(self.DocToWin, pos)
+                    for i in range(len(text)):
+                        x, y = pos[i]
+                        gc.DrawString(x, y, text[i])
             else:
                 # 'greek'. XXX is this really necessary. It avoids
                 # rendering fonts that are too small to read.
-                pos = font.TypesetText(text)
                 pos = map(self.DocToWin, pos)
                 ux, uy = up
                 lx = ux / 2; ly = uy / 2
@@ -897,7 +923,8 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             # the same xlfd failed before. use fixed as fallback
             # immediately to avoid delays. some servers apparantly take
             # very long to decide that they can't load a font.
-            xlfd = 'fixed'
+            #xlfd = 'fixed'
+            return None
 
         if cache and cache.has_key(id(self)):
             old_xlfd, old_font = cache[id(self)]
@@ -921,9 +948,13 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             #print 'load font', xlfd
             try:
                 font = self.widget.LoadQueryFont(xlfd)
-            except RuntimeError:
+            except RuntimeError, val:
                 self.failed_fonts[xlfd] = 1
-                raise
+                print  _("Cannot load %(font)s:\n%(text)s") % {'font': xlfd, 'text': val}
+                #warn(USER, _("Cannot load %(font)s:\n%(text)s"),
+                #     font = `xlfd`, text = val)
+                return None
+                
 
         if font_cache is not None:
             font_cache[xlfd] = font
@@ -1080,8 +1111,10 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             h = ey - sy
 
             region = self.widget.CreateRegion()
+            #print >>sys.stderr, 'YYY'
             _sketch.transform_to_ximage(self.visual, inverse,
                                         image.im, ximage, sx, sy, w, h, region)
+            #print >>sys.stderr, 'XXX'
             if not clip:
                 self.PushClip()
             self.ClipRegion(region)

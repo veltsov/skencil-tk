@@ -17,7 +17,7 @@
 
 ###Sketch Config
 #type = Export
-#tk_file_type = ("Portable Document Format (PDF)", '.pdf')
+#tk_file_type = ("Portable Document Format (PDF) via ReportLab", '.pdf')
 #extensions = '.pdf'
 #format_name = 'PDF-Reportlab'
 #unload = 1

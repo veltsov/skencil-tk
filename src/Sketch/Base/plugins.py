@@ -170,13 +170,20 @@ class ImportInfo(ConfigInfo):
 export_plugins = []
 export_formats = {}
 
+def translate_parameters(params,mygettext):
+        parameters = []
+        for parameter in params:
+            parameters.append(parameter[:-1] + (mygettext(parameter[-1]),))
+        return tuple(parameters)
+
 class ExportInfo(ConfigInfo):
 
     plugin_list = export_plugins
 
     def __init__(self, module_name, dir, format_name, tk_file_type = (),
                  extensions = (), version = '1.0.0', unload = None,
-                 load_immediately = 0, standard_messages = 0):
+                 load_immediately = 0, standard_messages = 0,
+                 preopen_output = 1, parameters = ()):
         ConfigInfo.__init__(self, module_name, dir, version = version,
                             unload = unload,
                             load_immediately = load_immediately,
@@ -186,29 +193,49 @@ class ExportInfo(ConfigInfo):
         if type(extensions) != type(()):
             extensions = (extensions,)
         self.extensions = extensions
+        self.preopen_output = preopen_output
+        self.parameters = parameters
+        self.translate()
         export_formats[format_name] = self
 
     def translate(self):
         name, ext = self.tk_file_type
         name = self.gettext(name)
         self.tk_file_type = name, ext
+        self.parameters = translate_parameters(self.parameters,self.gettext)
+
+    def get_default_options(self):
+        opts = {}
+        for param in self.parameters:
+            opts[param[0]] = param[2]
+        return opts
+
+    def ask_options(self, myoptions):
+        print myoptions
 
     def __call__(self, document, filename, file = None, options = None):
+        poptkey = 'Export.' + self.format_name
+        if poptkey not in document.options:
+            document.options[poptkey] = self.get_default_options()
+        myoptions = document.options[poptkey]
         if options is None:
-            options = {}
+            if len(self.parameters):
+                self.ask_options(myoptions)
+        elif len(options):
+            myoptions.update(options)
         try:
             module = self.load_module()
         except:
             warn_tb(INTERNAL, 'When importing plugin %s', self.module_name)
             raise SketchError(_("Cannot load filter %(name)s")
                               % {'name':self.module_name})
-        if file is None:
+        if file is None and self.preopen_output:
             file = open(filename, 'w')
             close = 1
         else:
             close = 0
         if module is not None:
-            module.save(document, file, filename, options)
+            module.save(document, file, filename, myoptions)
         if close:
             file.close()
         if self.format_name == NativeFormat:
@@ -225,6 +252,13 @@ def find_export_plugin(name):
 def guess_export_plugin(extension):
     for plugin in export_plugins:
         if extension in plugin.extensions:
+            return plugin.format_name
+    return ''
+
+def select_export_plugin_by_tktype(tktype):
+    for plugin in export_plugins:
+        # different Tk versions have different tktype format?
+        if tktype == plugin.tk_file_type[0] or tktype == "%s (*%s)" % plugin.tk_file_type:
             return plugin.format_name
     return ''
 
@@ -253,10 +287,7 @@ class PluginCompoundInfo(ConfigInfo):
     def translate(self):
         gettext = self.gettext
         self.menu_text = gettext(self.menu_text)
-        parameters = []
-        for parameter in self.parameters:
-            parameters.append(parameter[:-1] + (gettext(parameter[-1]),))
-        self.parameters = parameters
+        self.parameters = translate_parameters(self.parameters,self.gettext)
 
     def load_module_attr(self, attr):
         try:

@@ -80,7 +80,7 @@ from math import sin, cos, atan2, hypot, pi, fmod, floor
 
 from Sketch import _, Rect, UnionRects, EmptyRect, NullPoint, Polar, \
      IdentityMatrix, SingularMatrix, Identity, Trafo, Scale, Translation, \
-     Rotation, NullUndo, CreateMultiUndo, RegisterCommands
+     Rotation, NullUndo, CreateMultiUndo, RegisterCommands, EmptyLineStyle
 from Sketch.UI.command import AddCmd
 from Sketch import const, config
 
@@ -347,9 +347,12 @@ class SimpleText(CommonText, RectangularPrimitive):
         return NullUndo
 
     def DrawShape(self, device, rect = None, clip = 0):
+        #for b in self.AsBezier().GetObjects():
+        #    b.DrawShape(device,rect,clip)
+        #return
         RectangularPrimitive.DrawShape(self, device)
         # Workaround for a bug in my Xserver.
-        text = split(self.text, '\n')[0]
+        #text = split(self.text, '\n')[0]
         device.DrawText(self.text, self.trafo(self.atrafo), clip,
                         cache = self.cache)
 
@@ -414,8 +417,10 @@ class SimpleText(CommonText, RectangularPrimitive):
             for i in range(len(self.text)):
                 paths = self.properties.font.GetOutline(self.text[i])
                 if paths:
+                    props = self.properties.Duplicate()
+                    props.AddStyle(EmptyLineStyle)
                     obj = PolyBezier(paths = paths,
-                                     properties = self.properties.Duplicate())
+                                     properties = props)
                     trafo = base_trafo(Translation(pos[i]))
                     obj.Transform(trafo)
                     objects.append(obj)
