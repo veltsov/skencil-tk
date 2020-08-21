@@ -18,7 +18,7 @@
 #License along with this library; if not, write to the Free Software
 #Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import os, string, copy
+import os, string, copy, sys
 from tempfile import NamedTemporaryFile
 
 
@@ -39,10 +39,12 @@ def get_gtk_fonts():
     """
     
     tmpfile = NamedTemporaryFile()
-    command = "import gtk;w = gtk.Window();w.realize();style=w.get_style(); print style.font_desc.to_string();"
-    os.system('python -c "%s" >%s 2>/dev/null' % (command, tmpfile.name))
+    command = "import gi;from gi.repository import Gtk;print(Gtk.Settings.get_default().get_property('gtk-font-name'))"
+    os.system(sys.executable +' -c "%s" >%s 2>/dev/null' % (command, tmpfile.name))
     
     font = tmpfile.readline().strip()
+    if not font:
+            font = 'Sans 10'
     
     normal_font = process_gtk_font_string(font)
     small_font = copy.deepcopy(normal_font)
@@ -188,7 +190,7 @@ class ColorScheme:
     
     name = BUILTIN_SCHEME
     
-    def __init__(self, scheme=SYSTEM_SCHEME):
+    def __init__(self, scheme=BUILTIN_SCHEME):
         self.name = scheme
         if scheme == BUILTIN_SCHEME:
             return  
