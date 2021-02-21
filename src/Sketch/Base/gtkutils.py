@@ -235,9 +235,12 @@ class ColorScheme:
                 colors[type + ' prelight'] = gtk_to_tk_color(line[2])
                 colors[type + ' selected'] = gtk_to_tk_color(line[3])
                 colors[type + ' insensitive'] = gtk_to_tk_color(line[4])
+
+            self.map_gtk_colors(colors)
+
         tmpfile.close()
 
-        self.map_gtk_colors(colors)
+        
     
     def map_gtk_colors(self, gtk_colors):
         """
