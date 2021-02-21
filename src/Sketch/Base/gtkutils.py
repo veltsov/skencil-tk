@@ -190,7 +190,7 @@ class ColorScheme:
     
     name = BUILTIN_SCHEME
     
-    def __init__(self, scheme=BUILTIN_SCHEME):
+    def __init__(self, scheme=SYSTEM_SCHEME):
         self.name = scheme
         if scheme == BUILTIN_SCHEME:
             return  
@@ -226,15 +226,15 @@ class ColorScheme:
             " style.bg[gtk.STATE_SELECTED].to_string()," + \
             " style.bg[gtk.STATE_INSENSITIVE].to_string();"
     
-        os.system('python -c "%s" >%s 2>/dev/null' % (command, tmpfile.name))    
+        if os.system(sys.executable +' -c "%s" >%s 2>/dev/null' % (command, tmpfile.name)) == 0:   
 
-        for type in ["base", "text", "fg", "bg"]:
-            line = tmpfile.readline().strip().split()
-            colors[type + ' normal'] = gtk_to_tk_color(line[0])
-            colors[type + ' active'] = gtk_to_tk_color(line[1])
-            colors[type + ' prelight'] = gtk_to_tk_color(line[2])
-            colors[type + ' selected'] = gtk_to_tk_color(line[3])
-            colors[type + ' insensitive'] = gtk_to_tk_color(line[4])
+            for type in ["base", "text", "fg", "bg"]:
+                line = tmpfile.readline().strip().split()
+                colors[type + ' normal'] = gtk_to_tk_color(line[0])
+                colors[type + ' active'] = gtk_to_tk_color(line[1])
+                colors[type + ' prelight'] = gtk_to_tk_color(line[2])
+                colors[type + ' selected'] = gtk_to_tk_color(line[3])
+                colors[type + ' insensitive'] = gtk_to_tk_color(line[4])
         tmpfile.close()
 
         self.map_gtk_colors(colors)
