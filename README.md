@@ -12,6 +12,12 @@ apt install python2 python2-dev python-tk python-pil python-pil.imagetk \
         tcl-dev tk-dev python-gi
 ```
 
+To get proper color scheme also:
+```
+wget http://archive.ubuntu.com/ubuntu/pool/universe/p/pygtk/python-gtk2_2.24.0-5.1ubuntu2_amd64.deb
+sudo apt-get install ./python-gtk2_2.24.0-5.1ubuntu2_amd64.deb
+```
+
 This work is heavily based on skencil-1.0alpha by Igor E. Novikov.
 
 ### New features:
