@@ -2,9 +2,11 @@
 #type = PluginCompound
 #class_name = 'Autoshape'
 #menu_text = 'Autoshapes'
-#load_immediately = 1
+#standard_messages = 1
 #custom_dialog = 'AutoshapeDlg'
 ###End
+
+(''"Autoshapes")
 
 _verbose = 0
 _debug   = 0
