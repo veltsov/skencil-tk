@@ -1,7 +1,9 @@
 *.patch
 *.sav*
-build
+fonts/
 tests/
+usr/
+appimagetool*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

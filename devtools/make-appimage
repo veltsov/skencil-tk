@@ -1,0 +1,7 @@
+#!/bin/sh
+./build-command devtools/collect-app-dir
+if [ ! -x ./appimagetool-x86_64.AppImage ] ; then
+    wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+    chmod +x appimagetool-x86_64.AppImage
+fi
+./appimagetool-x86_64.AppImage ../AppDir ../build/Skencil-x86_64.AppImage

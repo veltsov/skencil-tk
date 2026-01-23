@@ -1,0 +1,31 @@
+#!/bin/bash
+b=AppDir/build
+mkdir -p $b
+rsync -av --delete build/lib*  build/scripts* $b
+
+bin=AppDir/usr/bin
+mkdir -p $bin
+cp -a /usr/bin/python2.7 $bin
+
+lib=AppDir/usr/lib
+mkdir -p $lib
+rsync -av --delete /usr/lib/python2.7 /usr/lib/tcl8.6 /usr/lib/tk8.6 \
+  /usr/lib/libBLT.2.5.so.8.6 $lib
+
+mkdir -p $lib/x86_64-linux-gnu
+rsync -av --delete /usr/lib/x86_64-linux-gnu/libXss.so.1* \
+  /usr/lib/x86_64-linux-gnu/libimagequant.so.0 \
+  /usr/lib/x86_64-linux-gnu/libjpeg.so.8* \
+  /usr/lib/x86_64-linux-gnu/libjbig* \
+  /usr/lib/x86_64-linux-gnu/libpython2.7.so.1* \
+  /usr/lib/x86_64-linux-gnu/libtcl8.6.so* \
+  /usr/lib/x86_64-linux-gnu/libtiff.so.5* \
+  /usr/lib/x86_64-linux-gnu/libtk8.6.so* \
+  /usr/lib/x86_64-linux-gnu/libwebp.so.6* \
+  $lib/x86_64-linux-gnu
+
+share=AppDir/usr/share
+mkdir -p $share
+rsync -av --delete /usr/share/tcltk $share
+
+rsync -av --exclude '*.pfm' /usr/share/fonts/type1/gsfonts/ build/lib.linux-x86_64-2.7/Resources/Fontmetrics/

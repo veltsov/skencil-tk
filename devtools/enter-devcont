@@ -1,0 +1,2 @@
+#!/bin/sh
+podman run -it  -v ..:/skdev skdev /bin/bash

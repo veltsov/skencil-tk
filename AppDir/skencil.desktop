@@ -1,0 +1,8 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Type=Application
+Name=Skencil
+Exec=skencil %F
+Icon=skencil
+MimeType=image/x-skencil;
+Categories=Graphics;

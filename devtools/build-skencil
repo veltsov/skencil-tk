@@ -1,0 +1,2 @@
+#!/bin/sh
+./build-command python2 setup.py build

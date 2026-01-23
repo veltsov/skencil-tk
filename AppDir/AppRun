@@ -1,0 +1,35 @@
+#!/bin/bash
+HERE="$(dirname "$(readlink -f "${0}")")"
+
+# Allow symlinking to run different scripts
+
+if [ ! -z $APPIMAGE ] ; then
+    MAIN=$(basename "$ARGV0")
+else
+    MAIN=$(basename "$0")
+fi
+
+export PATH="${HERE}"/usr/bin/:"${HERE}"/bin/:"${PATH}"
+export PYTHONHOME="$HERE/usr/"
+
+export TCL_LIBRARY="$HERE/usr/share/tcltk/tcl8.6"
+
+export LD_LIBRARY_PATH="${HERE}"/usr/lib/:"${HERE}"/usr/lib/x86_64-linux-gnu/:"${HERE}"/lib/:"${HERE}"/lib/x86_64-linux-gnu/:"${LD_LIBRARY_PATH}"
+
+if [ -d "${HERE}/fonts" ] ; then
+    export SKETCH_FONTPATH="${HERE}/fonts"
+    export GS_LIB="$SKETCH_FONTPATH":"$GS_LIB"
+fi
+
+case $MAIN in
+    sk-*)
+	tryexec="${MAIN:3}"
+	which "$tryexec" >& /dev/null && exec "$tryexec" "$@"
+	;;
+esac
+
+if [ ! -e "${HERE}/build/scripts-2.7/$MAIN" ] ; then
+    MAIN=skencil
+fi
+
+exec "${HERE}"/usr/bin/python2.7 "${HERE}/build/scripts-2.7/$MAIN" "$@"

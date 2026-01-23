@@ -61,7 +61,7 @@ fontmetric_dir = resource_dir + '/Fontmetrics'
 #
 # On platforms other than Linux this probably needs a few additional
 # directories. (non-existing dirs are automatically removed)
-font_path = ['/usr/X11R6/lib/X11/fonts/Type1',
+font_path = ['/usr/X11R6/lib/X11/fonts/Type1', '/usr/share/fonts/X11/Type1',
 	     '/usr/share/ghostscript/fonts',
 	     '/usr/lib/ghostscript/fonts','/usr/share/fonts/type1/gsfonts']
 
