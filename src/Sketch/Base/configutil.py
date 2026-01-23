@@ -39,6 +39,9 @@ def init_directories(base_dir):
     for dir in dirs:
         setattr(config, dir, join(base_dir, getattr(config, dir)))
     config.font_path.append(config.fontmetric_dir)
+    envfp = os.getenv('SKETCH_FONTPATH')
+    if envfp:
+        config.font_path.extend(envfp.split(':'))
     check_path(config.font_path)
 
     config.plugin_path.append(config.plugin_dir)
