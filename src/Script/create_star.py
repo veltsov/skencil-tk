@@ -159,6 +159,6 @@ def create_star(context):
 
     
 Sketch.Scripting.AddFunction('create_star', _("Create Star"),
-                             create_star,
+                             create_star, menu = _("Create Objects"),
                              script_type = Sketch.Scripting.AdvancedScript)
 

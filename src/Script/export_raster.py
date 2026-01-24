@@ -54,21 +54,21 @@ class CreateRasterParametersDlg(SKModal):
     def build_dlg(self):
         self.var_ppi = IntVar(self.top)
         self.var_ppi.set(72)
-        label = Label(self.top, text=_("ppi"))
+        label = Label(self.top, text=_("Resolution (ppi)"))
         label.grid(column=0, row=0, sticky=E)
         entry = Entry(self.top, width=15, textvariable=self.var_ppi)
         entry.grid(column=1, row=0)
 
-        self.var_alpha = BooleanVar(self.top)
+        self.var_alpha = IntVar(self.top)
         self.var_alpha.set(1)
-        label = Label(self.top, text=_("w. Transparency"))
+        label = Label(self.top, text=_("With transparency"))
         label.grid(column=0, row=1, sticky=E)
         entry = Checkbutton(self.top, variable=self.var_alpha)
         entry.grid(column=1, row=1)
 
-        self.var_use_bbox = BooleanVar(self.top)
+        self.var_use_bbox = IntVar(self.top)
         self.var_use_bbox.set(0)
-        label = Label(self.top, text=_("use BB information"))
+        label = Label(self.top, text=_("Use bounding box"))
         label.grid(column=0, row=2, sticky=E)
         entry = Checkbutton(self.top, variable=self.var_use_bbox)
         entry.grid(column=1, row=2)
@@ -245,15 +245,17 @@ def export_raster_interactive(context, alpha = 0, use_bbox = 0, render_ppi=72):
 
 
 
-Sketch.Scripting.AddFunction('export_raster', _("Export Raster"),
+Sketch.Scripting.AddFunction('export_raster',"With parameters",
                              export_raster_more_interactive,
+                             menu = _("Export Raster"),
                              script_type = Sketch.Scripting.AdvancedScript)
 #Sketch.Scripting.AddFunction('export_raster', 'Export Raster Alpha (Default)',
 #                             export_raster_interactive, args = (1,0),
 #                             script_type = Sketch.Scripting.AdvancedScript)
 Sketch.Scripting.AddFunction('export_raster',
-                             _("Export Raster Alpha (100ppi)"),
+                             "With transparency 100ppi",
                              export_raster_interactive, args = (1,0,100),
+                             menu = _("Export Raster"),
                              script_type = Sketch.Scripting.AdvancedScript)
 #Sketch.Scripting.AddFunction('export_raster', 'Export Raster Alpha (120ppi)',
 #                             export_raster_interactive, args = (1,0,120),

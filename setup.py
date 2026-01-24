@@ -330,6 +330,7 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
                 'Plugins.Objects.Lib.multilinetext',
                 'Plugins.Objects.Lib.autoshapes',
                 'Script',
+                'Script.pathutils',
                 'Resources'
             ],
             

@@ -468,6 +468,11 @@ class ProgramDefaults(connector.Publisher):
                         "Script.spread", "Script.reload_image",
                         "Script.create_star", "Script.create_star_outline",
                         "Script.create_spiral", "Script.read_gimp_path",
+                        "Script.save_selection", "Script.inspect_beziers",
+                        "Script.select_same_fill_color", "Script.select_same_line_color",
+                        "Script.average_points", "Script.TeX",
+                        "Script.transform", "Script.curvetext",
+                        "Script.pathutils"
                         ]
 
 
