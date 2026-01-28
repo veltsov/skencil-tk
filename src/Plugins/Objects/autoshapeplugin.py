@@ -26,7 +26,7 @@ import sys
 import string
 from math import pi
 from ScrolledText import ScrolledText
-from Sketch.Plugins.Objects.Lib.autoshapes.autoshapelib import VERSION, Autoshape
+from Lib.autoshapes.autoshapelib import VERSION, Autoshape
         
 
 def byte(v):
@@ -82,7 +82,7 @@ class AutoshapeDlg(SketchPanel):
                              name = 'autoshapedlg')
 
     def build_dlg(self):
-        from Sketch.Plugins.Objects.Lib.autoshapes.icons import icons
+        from Lib.autoshapes.icons import icons
         
         top = self.top
         frame = Tkinter.Frame(top)

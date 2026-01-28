@@ -300,7 +300,7 @@ class ProgramDefaults(connector.Publisher):
     #
     #	The resoulution in pixel/inch of the preview image Sketch
     #	renders for preview. (using gs). Leave this at 72 for now.
-    eps_preview_resolution = 72
+    eps_preview_resolution = 144
 
     #
     #   PDF export

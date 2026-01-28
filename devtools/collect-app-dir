@@ -5,12 +5,13 @@ rsync -av --delete build/lib*  build/scripts* $b
 
 bin=AppDir/usr/bin
 mkdir -p $bin
-cp -a /usr/bin/python2.7 $bin
+rsync -av /usr/bin/python2.7 $bin
 
 lib=AppDir/usr/lib
 mkdir -p $lib
 rsync -av --delete /usr/lib/python2.7 /usr/lib/tcl8.6 /usr/lib/tk8.6 \
-  /usr/lib/libBLT.2.5.so.8.6 $lib
+      /usr/lib/libBLT.2.5.so.8.6 \
+      $lib
 
 mkdir -p $lib/x86_64-linux-gnu
 rsync -av --delete /usr/lib/x86_64-linux-gnu/libXss.so.1* \
