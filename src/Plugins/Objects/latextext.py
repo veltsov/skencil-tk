@@ -50,6 +50,7 @@
 
 from Sketch import Scale, TrafoPlugin, PolyBezier, CreatePath, main
 from Sketch import load, Group, SketchError
+from Sketch import config
 from tempfile import mkdtemp
 
 import os
@@ -167,9 +168,9 @@ def FontSizeCommand(size):
 def create_tex_sk(text,fontsz,doc=None):
     # default preamble
     preamb='''
-\\usepackage{amssymb}
-\\usepackage{txfonts}
-\\usepackage{bm}
+\\IfFileExists{amssymb.sty}{\\usepackage{amssymb}}{}
+\\IfFileExists{txfonts.sty}{\\usepackage{txfonts}}{}
+\\IfFileExists{bm.sty}{\\usepackage{bm}}{}
 \\renewcommand{\\baselinestretch}{1.3}'''
 
     cwd = getcwd();
@@ -182,7 +183,7 @@ def create_tex_sk(text,fontsz,doc=None):
         else:
             docdir = cwd
 
-        for dpre in [docdir,os.path.dirname(docdir)]:
+        for dpre in [docdir,os.path.dirname(docdir),config.user_config_dir]:
             try:
                 with open(os.path.join(dpre,'sk-ltx.tex'),'r') as fpre:
                     preamb=fpre.read()
@@ -278,9 +279,13 @@ def create_tex_sk(text,fontsz,doc=None):
 
 
 def exec_command(command):
-    po = Popen(command.split(),stdout=PIPE,stderr=PIPE)
-    out,err = po.communicate()
-    return out+err
+    try:
+        po = Popen(command.split(),stdout=PIPE,stderr=PIPE,stdin=PIPE)
+        out,err = po.communicate()
+        return out+err
+    except Exception as val:
+        raise cm_exc('Error executing external command',
+                     'When running %s:\n%s' % (command,str(val)))
 
 def write_error(btitle,bmessage):
     main.application.MessageBox(title = btitle, message=bmessage)
