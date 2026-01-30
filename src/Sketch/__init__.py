@@ -55,7 +55,6 @@ except ImportError:
 _ = gettext
 
 import gtkutils
-ui_fonts = gtkutils.get_gtk_fonts()
 ui_colors = gtkutils.ColorScheme()
 
 import _sketch

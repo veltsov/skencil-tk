@@ -4,6 +4,7 @@ fonts/
 tests/
 usr/
 appimagetool*
+old/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

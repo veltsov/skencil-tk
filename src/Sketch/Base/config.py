@@ -475,6 +475,12 @@ class ProgramDefaults(connector.Publisher):
                         "Script.pathutils"
                         ]
 
+    #   UI font. If None, used Tk default. In modern Tk, it usually adapts to the desktop
+    ui_font = None
+
+    #   UI colors. If None, use built-in color scheme.
+    ui_color_scheme = None
+
 
 preferences = ProgramDefaults()
 

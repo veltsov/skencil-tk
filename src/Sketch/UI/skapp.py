@@ -114,8 +114,8 @@ class TkApplication:
                        baseName = self.tk_basename,
                        className = self.tk_class_name)
         
-        gtkutils.set_ui_fonts(self.root, Sketch.ui_fonts)
-        gtkutils.set_ui_colors(self.root, Sketch.ui_colors)
+        gtkutils.set_ui_font(self.root, config.preferences.ui_font)
+        gtkutils.set_ui_colors(self.root, config.preferences.ui_color_scheme)
         
         # Reset locale again to make sure we get properly translated
         # messages if desired by the user. For some reason it may
