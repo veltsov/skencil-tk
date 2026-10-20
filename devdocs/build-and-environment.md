@@ -21,7 +21,7 @@ package is no longer strictly required (`gtkutils.py` is Tk-only now).
 python2 setup.py build
 ```
 
-- Builds the 7 C extension modules (into
+- Builds the 6 C extension modules (into
   `build/lib.linux-x86_64-2.7/Sketch/Modules/`) and copies the Python
   tree into `build/lib.linux-x86_64-2.7/`, plus `compileall` on it.
 - Also regenerates locale `.mo` files from `po/` into
@@ -50,7 +50,7 @@ script), `skconvert.py`, `sk2ppm.py`, `skshow.py`.
 ### Development shortcut
 
 `setup.py` supports `python2 setup.py build&copy` — builds and then copies
-the freshly built `.so` files (`paxmodule, intl, pstokenize,
+the freshly built `.so` files (`paxmodule, pstokenize,
 _sketchmodule, skreadmodule, streamfilter, _type1module`) into
 `src/Sketch/Modules/` so that the app can also be started from `src/` via
 `src/skencil.py` (which imports `Sketch` from the source tree).

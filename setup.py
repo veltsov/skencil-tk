@@ -187,13 +187,11 @@ if __name__ == "__main__":
             sources=[filter_src + 'streamfilter.c', filter_src + 'filterobj.c', filter_src + 'linefilter.c',
                     filter_src + 'subfilefilter.c', filter_src + 'base64filter.c', filter_src + 'nullfilter.c',
                     filter_src + 'stringfilter.c', filter_src + 'binfile.c', filter_src + 'hexfilter.c'])
-    
-    intl_src = src_path + 'extensions/Pax/'
-                
-    intl_module = Extension('Sketch.Modules.intl',
-            define_macros=[('MAJOR_VERSION', '0'),
-                        ('MINOR_VERSION', '6')],
-            sources=[intl_src + 'intl.c'])
+
+    # The former 'intl' extension (a libintl binding) is no longer
+    # built; localization uses the standard gettext module. intl.c is
+    # also no longer compiled into the pax module (pax never calls
+    # gettext itself).
     
     type1mod_src = src_path + 'extensions/Modules/'                
     type1mod_module = Extension('Sketch.Modules._type1module',
@@ -258,7 +256,7 @@ if __name__ == "__main__":
                         ('MINOR_VERSION', '6')],
             sources=[pax_src + 'borderobject.c', pax_src + 'clipmask.c', pax_src + 'cmapobject.c',
                     pax_src + 'fontobject.c', pax_src + 'gcobject.c', #  pax_src+'gcmethods.c',
-                    pax_src + 'imageobject.c', pax_src + 'intl.c', pax_src + 'paxmodule.c',
+                    pax_src + 'imageobject.c', pax_src + 'paxmodule.c',
                     pax_src + 'paxutil.c', pax_src + 'pixmapobject.c', pax_src + 'regionobject.c',
                     pax_src + 'tkwinobject.c'],
             include_dirs=tcl_include_dirs,
@@ -356,7 +354,7 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
                     ('/usr/share/pixmaps', ['src/skencil.png', 'src/skencil.xpm', ]),
                     ],
 
-            ext_modules=[filter_module, intl_module, skread_module, type1mod_module,
+            ext_modules=[filter_module, skread_module, type1mod_module,
                          pstokenize_module, pax_module, skmod_module])
     
 #################################################
@@ -380,9 +378,6 @@ if COPY:
     
     shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/paxmodule.so', 'src/Sketch/Modules/')
     print '\n paxmodule.so has been copied to src/ directory'
-    
-    shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/intl.so', 'src/Sketch/Modules/')
-    print '\n intl.so has been copied to src/ directory'
     
     shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/pstokenize.so', 'src/Sketch/Modules/')
     print '\n pstokenize.so has been copied to src/ directory'

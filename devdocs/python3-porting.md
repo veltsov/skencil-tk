@@ -103,7 +103,7 @@ Additional py3 semantics to audit everywhere (no reliable grep):
    `python-future` imports so both interpreters can run it during
    the transition.
 4. **Stage 2 — C extensions:** port `streamfilter`, `skreadmodule`,
-   `pstokenize`, `_type1module`, `intl`, `_sketchmodule` first (mostly
+   `pstokenize`, `_type1module`, `_sketchmodule` first (mostly
    plain C-API), then `pax`, and decide the fate of `paxtkinter` (see
    risks). Update `setup.py` (it hardcodes
    `/usr/include/python2.7/Imaging`, and launcher/devtools assume the
@@ -130,7 +130,7 @@ Additional py3 semantics to audit everywhere (no reliable grep):
   `setup.py` (`build&copy`, DEBIAN section), `devtools/collect-app-dir`.
 - `Sketch/VERSION` = `1.0`; `PKG-INFO` records the fork's history
   (Herzog 1996–2007, Novikov 2010, Eltsov 2018).
-- gettext goes through the custom `intl` C module — a py3 port could
-  switch to the standard `gettext` module and drop `intl` entirely
-  (the Python fallback in `Sketch/__init__.py` already exists).
+- Localization now uses the standard `gettext` module (the custom
+  `intl` C extension was dropped on the `modernize` branch) — nothing
+  to port here; in py3 the shim's `ugettext` calls become `gettext`.
 

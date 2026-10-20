@@ -80,7 +80,8 @@ from GTK to **Tk** and added many features (see `README.md`).
 - After changing C extensions or `setup.py`, rebuild with
   `python2 setup.py build` and test from the build tree.
 - Localization: user-visible strings should go through `_()` from `Sketch`
-  (gettext via the `intl` extension; falls back to identity if missing).
+  (standard `gettext` module; per-domain caching shim in
+  `Sketch/__init__.py` — the former `intl` C extension was dropped).
 
 ## Entry points (runtime flow)
 

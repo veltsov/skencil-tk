@@ -33,25 +33,57 @@ for _dir in ('Modules',):
 
 
 message_dir = os.path.join(_parentdir, 'Resources/Messages')
+
+# Localization is done with the standard gettext module; the former
+# custom 'intl' C extension (a libintl binding from Pax) is no longer
+# needed. Unlike C gettext, Python's gettext finds the .mo files
+# without a generated libc locale, and the messages are returned as
+# unicode (decoded using the charset of the .mo file), which stock
+# _tkinter converts correctly.
+import gettext as _gettext
+import locale
+
 try:
-    from intl import gettext, dgettext, bindtextdomain
-    import intl, locale
-    try:
-        locale.setlocale(locale.LC_ALL, "")
-    except:
-        # if we can't set the locale we might not be able to get
-        # properly translated messages
-        print "Can't set locale." \
-              " Please check your LANG and LC_* environment variables"
-    intl.textdomain("skencil")
-    bindtextdomain("skencil", message_dir)
-except ImportError:
-    def gettext(text):
-        return text
-    def dgettext(domain, text):
-        return text
-    def bindtextdomain(*args):
-        pass
+    locale.setlocale(locale.LC_ALL, "")
+except locale.Error:
+    # if we can't set the locale we might not be able to get
+    # properly translated messages
+    print "Can't set locale." \
+          " Please check your LANG and LC_* environment variables"
+
+_textdomains = {'skencil': message_dir}
+_current_domain = ['skencil']
+_translations = {}
+
+def _get_translation(domain):
+    translation = _translations.get(domain)
+    if translation is None:
+        try:
+            translation = _gettext.translation(domain,
+                                               _textdomains.get(domain))
+        except (IOError, OSError):
+            # no .mo file for this domain: fall back to the message ids
+            translation = _gettext.NullTranslations()
+        _translations[domain] = translation
+    return translation
+
+def bindtextdomain(domain, dirname=None):
+    if dirname is not None:
+        _textdomains[domain] = dirname
+        _translations.pop(domain, None)	# a domain may be re-bound
+    return _textdomains.get(domain)
+
+def textdomain(domain=None):
+    if domain is not None:
+	_current_domain[0] = domain
+    return _current_domain[0]
+
+def gettext(text):
+    return _get_translation(_current_domain[0]).ugettext(text)
+
+def dgettext(domain, text):
+    return _get_translation(domain).ugettext(text)
+
 _ = gettext
 
 import gtkutils

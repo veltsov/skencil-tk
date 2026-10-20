@@ -10,9 +10,10 @@ The `Sketch` package is unusual and central to understanding the code:
   (`import config`, not `import Sketch.Base.config`).
 - It inserts `Modules/` into `sys.path[1:]`, so the C extensions
   (`_sketch`, `pax`, `streamfilter`, `pstokenize`,
-  `skreadmodule`, `_type1module`, `intl`) are importable top-level too.
-- It sets up gettext through the custom `intl` extension (fallback:
-  identity functions), defines `_`.
+  `skreadmodule`, `_type1module`) are importable top-level too.
+- It sets up localization with the standard `gettext` module
+  (per-domain caching shim; the former `intl` C extension was
+  dropped), defines `_`.
 - It imports and re-exports almost the whole graphics model so user code
   does `from Sketch import Trafo, PolyBezier, ...`.
 - `_import_PIL()` imports PIL (package or old top-level `Image`) and
@@ -125,7 +126,11 @@ appear here only after `build&copy`.
   `canvas.py`, `ruler.py`, `miniscroll.py`, `gradientedit.py`.
   See `devdocs/paxtkinter-analysis.md` and
   `devdocs/modernize-paxtkinter.md` for the full story.
-- `Pax/intl.c` — gettext bindings (`Sketch.Modules.intl`).
+- `Pax/intl.c` — former gettext bindings (`Sketch.Modules.intl`);
+  **dropped on the `modernize` branch** — localization now uses the
+  standard `gettext` module (shim in `Sketch/__init__.py`); the file
+  is no longer built (it was also listed among the pax sources
+  although pax never calls gettext itself).
 - `Pax/Generate/` — code generator script (`mkgc.py`) for GC methods.
 - Small patches exist: `skcolor.c.patch`, `skpoint.c.patch`,
   `skrect.c.patch` (leftovers; check whether applied before using).
