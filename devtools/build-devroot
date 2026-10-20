@@ -1,0 +1,28 @@
+#!/bin/bash
+cd $(dirname $(dirname $(dirname $(readlink -f "$BASH_SOURCE[0]"))))
+dr=devroot
+mkdir -p $dr
+fakechroot fakeroot debootstrap --variant=minbase \
+	   --include=fakeroot \
+	   focal $dr http://archive.ubuntu.com/ubuntu/
+
+# bug with symbolic links
+dd=$(realpath $dr)
+find $dr -type l -exec bash -c '
+  for link; do
+    target=$(readlink "$link")
+    if [[ "$target" == '$dd'* ]]; then
+      new_target="${target#'$dd'}"
+      ln -sf "$new_target" "$link"
+    fi
+  done
+' _ {} +
+
+mkdir -p $dr/$HOME $dr/skdev
+getent passwd $USER >> $dr/etc/passwd
+getent group $(id -g) >> $dr/etc/group
+
+sed -i 's/main$/main universe/' $dr/etc/apt/sources.list
+
+cp -a skencil-tk/devtools/devcont/install-dev-packages $dr/usr/local/bin
+fakechroot fakeroot chroot $dr /usr/local/bin/install-dev-packages

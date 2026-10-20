@@ -1,0 +1,9 @@
+#!/bin/bash
+dd=$(dirname $(dirname $(dirname $(readlink -f "$BASH_SOURCE[0]"))))
+p=${1:-/bin/bash}
+shift
+bwrap --bind $dd/devroot / \
+      --proc /proc --dev /dev \
+      --bind /tmp /tmp --bind /run /run \
+      --bind $dd/skencil-tk /skdev --chdir /skdev \
+      $p "$@"

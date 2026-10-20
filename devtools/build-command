@@ -1,2 +1,1 @@
-#!/bin/sh
-podman run -v ..:/skdev skdev "$@"
+enter-devroot
