@@ -17,8 +17,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 from math import floor, ceil, hypot
-from string import atoi
-from types import TupleType
 import operator
 
 import pax
@@ -80,7 +78,7 @@ VFONT = {'.': (2, [(0, 0, 0, 0),]),
 class Ruler(PyWidget):
 
     def __init__(self, master=None, orient = HORIZONTAL, canvas = None, **kw):
-        apply(PyWidget.__init__, (self, master), kw)
+        PyWidget.__init__(*(self, master), **kw)
         self.orient = orient
         self.canvas = canvas
         

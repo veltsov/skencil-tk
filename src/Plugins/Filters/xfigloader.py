@@ -46,7 +46,6 @@ format_name = 'XFig'
 
 
 import sys
-from string import strip, atoi, split, atof, lower
 from operator import getitem
 from math import atan2
 
@@ -133,7 +132,7 @@ class XFigLoader(SimplifiedLoader):
     def __init__(self, file, filename, match):
         SimplifiedLoader.__init__(self, file, filename, match)
         self.layout = None
-        self.format_version = atof(match.group('version'))
+        self.format_version = float(match.group('version'))
         self.trafo = Trafo(1.0, 0.0, 0.0, -1.0, 0.0, 800)
         self.colors = std_colors + [StandardColors.black] * 512
         self.depths = {} # map object ids to depth
@@ -155,8 +154,8 @@ class XFigLoader(SimplifiedLoader):
         self.depths[id(self.object)] = -depth
 
     def define_color(self, line):
-        idx, color = split(line, None, 1)
-        self.colors[atoi(idx)] = XRGBColor(color)
+        idx, color = line.split(None, 1)
+        self.colors[int(idx)] = XRGBColor(color)
 
     def get_pattern(self, color, style = None):
         if style == -1:
@@ -291,7 +290,7 @@ class XFigLoader(SimplifiedLoader):
         trafo = Trafo(radius.x, 0, 0, radius.y)
         trafo = Rotation(angle)(trafo)
         trafo = Translation(center)(trafo)
-        apply(self.ellipse, trafo.coeff())
+        self.ellipse(*trafo.coeff())
         self.set_depth(depth)
 
     def read_polyline(self, line):
@@ -458,21 +457,21 @@ class XFigLoader(SimplifiedLoader):
     def read_header(self):
         format = orientation = None
         if self.format_version >= 3.0:
-            line = strip(self.readline())
+            line = self.readline().strip()
             if line:
                 # portrait/landscape
-                if lower(line) == 'landscape':
+                if line.lower() == 'landscape':
                     orientation = pagelayout.Landscape
                 else:
                     orientation = pagelayout.Portrait
             else:
                 raise SketchLoadError('No format specification')
-            line = strip(self.readline())
+            line = self.readline().strip()
             if line:
                 # centering
-                line = lower(line)
+                line = line.lower()
                 if line == 'center' or line == 'flush left':
-                    line = lower(strip(self.readline()))
+                    line = self.readline().strip().lower()
             if not line:
                 raise SketchLoadError(
                     'No Center/Flushleft or Units specification')
@@ -484,10 +483,10 @@ class XFigLoader(SimplifiedLoader):
                 self.readline() # magnification
                 self.readline() # pages
                 self.readline() # transparent color
-        line = strip(self.readline())
+        line = self.readline().strip()
         if line:
             try:
-                ppi, coord = map(atoi, split(line))
+                ppi, coord = map(int, line.split())
             except:
                 raise SketchLoadError('Invalid Resolution specification')
             self.trafo = self.trafo(Scale(72.0 / ppi))
@@ -517,18 +516,16 @@ class XFigLoader(SimplifiedLoader):
                         function(rest)
                 line = self.readline()
 
-        except SketchLoadError, value:
+        except SketchLoadError as value:
             warn_tb(INTERNAL)
-            raise SketchLoadError('%d:%s' % (self.lineno, str(value))), None,\
-                  sys.exc_traceback
+            raise SketchLoadError('%d:%s' % (self.lineno, str(value))).with_traceback(sys.exc_traceback)
         except:
             if load._dont_handle_exceptions:
                 warn(INTERNAL, 'XFigLoader: error reading line %d:%s',
-                     self.lineno, `line`)
+                     self.lineno, repr(line))
                 raise
             raise SketchLoadError(_("error in line %d:\n%s")
-                                  % (self.lineno, `line`)), None,\
-                  sys.exc_traceback
+                                  % (self.lineno, repr(line))).with_traceback(sys.exc_traceback)
         self.end_all()
         self.object.load_Completed()
         return self.object

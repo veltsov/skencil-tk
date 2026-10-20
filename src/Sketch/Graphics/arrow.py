@@ -21,7 +21,6 @@
 #
 
 import os
-from types import TupleType, ListType
 from math import atan2, sin, cos
 
 from Sketch.warn import warn_tb, USER, pdebug
@@ -35,15 +34,15 @@ class Arrow:
     def __init__(self, path, closed = 0):
         self.path = CreatePath()
         self.head = Point(0,0)
-        if type(path) in (ListType, TupleType):
+        if isinstance(path, (list, tuple)):
             oldseg = None
             for segment in path:
                 if len(segment) == 2:
                     if oldseg and oldseg[-2:] == segment:
                         self.head = Point(segment)
-                    apply(self.path.AppendLine, segment)
+                    self.path.AppendLine(*segment)
                 else:
-                    apply(self.path.AppendBezier, segment)
+                    self.path.AppendBezier(*segment)
                 oldseg = segment
         else:
             self.path = path
@@ -84,12 +83,18 @@ class Arrow:
     def __hash__(self):
         return hash(id(self.path))
 
-    def __cmp__(self, other):
-        if __debug__:
-            pdebug(None, 'Arrow.__cmp__, %s', other)
+    # rich comparisons; the old __cmp__ compared the path objects by
+    # identity, and that is preserved
+    def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return cmp(self.path, other.path)
-        return cmp(id(self), id(other))
+            return self.path is other.path
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        return id(self) < id(other)
 
 
 def read_arrows(filename):

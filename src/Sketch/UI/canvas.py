@@ -23,7 +23,6 @@
 #
 
 import string
-from types import TupleType
 
 from Sketch.Lib.util import Empty, format
 
@@ -64,24 +63,24 @@ def AddCmd(name, menu_name, method_name = None, subscribe_to = STATE, **kw):
     kw['subscribe_to'] = subscribe_to
     if not method_name:
         method_name = name
-    cmd = apply(command.CommandClass, (name, method_name), kw)
+    cmd = command.CommandClass(*(name, method_name), **kw)
     command_list.append(cmd)
 
 def AddSelCmd(*args, **kw):
-    if not kw.has_key('sensitive_cb'):
+    if 'sensitive_cb' not in kw:
         kw['sensitive_cb'] = ('document', 'HasSelection')
-    if not kw.has_key('subscribe_to'):
+    if 'subscribe_to' not in kw:
         kw['subscribe_to'] = SELECTION
-    apply(AddCmd, args, kw)
+    AddCmd(*args, **kw)
 
 def AddModeCmd(*args, **kw):
-    if not kw.has_key('value_cb'):
+    if 'value_cb' not in kw:
         kw['value_cb'] = 'ModeName'
-    if not kw.has_key('subscribe_to'):
+    if 'subscribe_to' not in kw:
         kw['subscribe_to'] = MODE
-    if not kw.has_key('is_check'):
+    if 'is_check' not in kw:
         kw['is_check'] = 1
-    apply(AddCmd, args, kw)
+    AddCmd(*args, **kw)
 
 class CanvasError(SketchInternalError):
     pass
@@ -136,7 +135,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
         self.snap_to_guide = 0
         self.snap_correction_rect = 1
         self.snap_move_relative = 0 #1
-        apply(SketchView.__init__, (self, master, toplevel, document), kw)
+        SketchView.__init__(*(self, master, toplevel, document), **kw)
         CursorStack.__init__(self, const.CurStd, self.set_handle_cursor)
 
         self.main_window = main_window
@@ -383,7 +382,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
 
     def call_document_method(self, method, *args, **kwargs):
         method = getattr(self.document, method)
-        apply(method, args, kwargs)
+        method(*args, **kwargs)
 
     #
     #	receivers for channels
@@ -428,7 +427,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
                     self.issue_mode()
             if recompute:
                 self.update_snap_points()
-        apply(SketchView.layer_changed, (self,) + args)
+        SketchView.layer_changed(*(self,) + args)
 
     #
     #	Widget Methods (Redraw, ... )
@@ -714,14 +713,14 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
 
     def CurrentInfoText(self):
         if self.current is not None and self.current_info_text:
-            if type(self.current_info_text) == TupleType:
+            if isinstance(self.current_info_text, tuple):
                 template, dict = self.current_info_text
                 self.current_info_text = format(template, converters, dict)
             return self.current_info_text
         else:
             if self.selection_info_text is None:
                 text = self.document.SelectionInfoText()
-                if type(text) == TupleType:
+                if isinstance(text, tuple):
                     template, dict = text
                     text = format(template, converters, dict)
                 self.selection_info_text = text
@@ -742,7 +741,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
         self.issue_mode()
 
     def enter_mode(self, mode, *args):
-        apply(WidgetWithModes.enter_mode, (self, mode) + args)
+        WidgetWithModes.enter_mode(*(self, mode) + args)
         self.issue_mode()
 
 
@@ -912,7 +911,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
             # XXX it sometimes happens that self.start_pos has not been
             # set yet. Why?
             if abs(self.start_pos[0] - p) * self.scale > 3:
-                apply(self.mode.start_drag, self.start_pos)
+                self.mode.start_drag(*self.start_pos)
                 self.start_drag = 0
             else:
                 return
@@ -1241,7 +1240,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
         cb, args = self.pick_object_cb
         self.pick_object_cb = None
         args = (object,) + args
-        apply(cb, args)
+        cb(*args)
 
     #
     #		Zoom mode
@@ -1372,7 +1371,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
     #
 
     def set_correction(self, correct):
-        if type(correct) == TupleType:
+        if isinstance(correct, tuple):
             correct, rect = correct
         else:
             rect = None
@@ -1477,7 +1476,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
                     if dist < mindist:
                         pobj = pmin
                         mindist = dist
-            if type(pobj) != TupleType:
+            if not isinstance(pobj, tuple):
                 pobj = (abs(pobj - p), pobj)
 
         result = min(pgrid, pguide, pobj, pmax)
@@ -1561,7 +1560,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
         if self.snap_to_guide:
             snap.append(_("Guide"))
         if snap:
-            return _("Snap: ") + string.join(snap, '/')
+            return _("Snap: ") + '/'.join(snap)
         return _("No Snap")
 
     #
@@ -1674,7 +1673,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
                 win = self.DocToWin(p)
                 if cursor:
                     points.append(win + (cursor, handle))
-                if not used.has_key(win):
+                if win not in used:
                     funcs.append((self.draw_handle_funcs[handle_type],
                                   (p, handle_type & 1)))
                     used[win] = 0
@@ -1703,7 +1702,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
 
     def draw_handles(self):
         for f, args in self.handle_funcs:
-            apply(f, args)
+            f(*args)
 
 
     handle_hit_radius = 4

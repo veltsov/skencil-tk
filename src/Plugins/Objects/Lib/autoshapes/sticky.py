@@ -1,3 +1,4 @@
+from __future__ import print_function
 from Sketch import const
 
 class Sticky:
@@ -19,7 +20,7 @@ class Sticky:
         self.rebuild_bond_list()
         
     def rebuild_bond_list(self, verbose=1):
-        print "rebuilding bond list"
+        print("rebuilding bond list")
         doc = self.document
         if doc is None:
             return
@@ -34,17 +35,17 @@ class Sticky:
         for item in old:
             if item not in new:
                 obj, i, j = item
-                print "unsubscribing ", obj
+                print("unsubscribing ", obj)
                 obj.Unsubscribe(const.CHANGED, self.client_changed, i, j)
 
         for item in new:
             if item not in old:
                 obj, i, j = item
                 obj.Subscribe(const.CHANGED, self.client_changed, i, j)
-                print "subscribing to ", obj, i, j
+                print("subscribing to ", obj, i, j)
 
     def client_changed(self, obj, i, j):
-        print "client changed: ", obj
+        print("client changed: ", obj)
         p = obj.GetSnapPoints()[i]
         self.bond_changed(j, p)
                                 
@@ -53,7 +54,7 @@ class Sticky:
         # as one of self's sticky points. Matches are appended to bonds.
 
         if verbose:
-            print "investigating ", obj
+            print("investigating ", obj)
             
         if isinstance(obj, StickyObject):
             return

@@ -33,7 +33,7 @@ class PositionLabel(UpdatedLabel):
     context_menu = None
 
     def __init__(self, *args, **kw):
-        apply(UpdatedLabel.__init__, (self,) + args, kw)
+        UpdatedLabel.__init__(*(self,) + args, **kw)
         self.bind('<ButtonPress-3>', self.popup_context_menu)
         self.set_unit(config.preferences.default_unit)
         config.preferences.Subscribe(CHANGED, self.preference_changed)

@@ -61,7 +61,7 @@ def create_spiral(context):
     args = CreateStarDlg(context.application.root).RunDialog()
     if args is None:
         return
-    path = apply(create_spiral_path, args)
+    path = create_spiral_path(*args)
     bezier = PolyBezier((path,))
     context.main_window.PlaceObject(bezier)
 

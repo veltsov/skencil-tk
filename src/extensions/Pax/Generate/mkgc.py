@@ -12,7 +12,7 @@ def drawfn(pname, *argtypes):
 	write('{\n')
 	#
 	# -- declare result
-	if returntype <> 'void':
+	if returntype != 'void':
 		write('\t', returntype, ' result;\n')
 	#
 	# -- declare arguments, collect argument info
@@ -88,7 +88,7 @@ def gcfn(pname, *argtypes):
 	write('{\n')
 	#
 	# -- declare result
-	if returntype <> 'void':
+	if returntype != 'void':
 		write('\t', returntype, ' result;\n')
 	#
 	# -- declare arguments, collect argument info

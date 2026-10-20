@@ -82,12 +82,12 @@ class Viewport:
 
     def DocToWin(self, *args):
         # returns a tuple of ints
-        return apply(self.doc_to_win.DocToWin, args)
+        return self.doc_to_win.DocToWin(*args)
 
     #	window to document coordinates
 
     def WinToDoc(self, *args):
-        return apply(self.win_to_doc, args)
+        return self.win_to_doc(*args)
 
     def LengthToDoc(self, len):
         return len / self.scale
@@ -160,8 +160,8 @@ class Viewport:
             clear_area = self.tkwin.ClearArea
             union = region.UnionRectWithRegion
             for rect in self.clear_rects:
-                apply(clear_area, rect + (0,))
-                apply(union, rect)
+                clear_area(*rect + (0,))
+                union(*rect)
         else:
             self.tkwin.ClearArea(0, 0, 0, 0, 0)
             region = None
@@ -335,10 +335,10 @@ class Viewport:
             self.vruler.SetRange(start.y, self.scale, force = force)
 
     def xview(self, *args):
-        apply(self.tk.call, (self._w, 'xview') + args)
+        self.tk.call(*(self._w, 'xview') + args)
 
     def yview(self, *args):
-        apply(self.tk.call, (self._w, 'yview') + args)
+        self.tk.call(*(self._w, 'yview') + args)
 
     def ScrollXMove(self, fraction):
         vw = self.virtual_width

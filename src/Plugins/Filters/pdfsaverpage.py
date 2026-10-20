@@ -45,7 +45,7 @@ def save(document, file, filename, options = {}):
     height = (ury-lly)*resolution/72
 
     filename = util.sh_quote(filename)
-    file = os.popen(gs_command % locals(),'w')
+    file = util.popen_write(gs_command % locals())
     ps = PostScriptDevice(file, document = document, as_eps = 0, embed_fonts = 1,
                           bounding_box = bbox,
                           Title = os.path.basename(filename),

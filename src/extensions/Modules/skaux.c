@@ -339,6 +339,26 @@ SKCache_ass_sub(SKCacheObject * self, PyObject * v, PyObject * w)
     }
 }
 
+static int
+SKCache_contains(SKCacheObject * self, PyObject * key)
+{
+    return PyDict_GetItem(self->dict, key) != NULL;
+}
+
+static PySequenceMethods SKCache_as_sequence = {
+    0,				/*sq_length*/
+    0,				/*sq_concat*/
+    0,				/*sq_repeat*/
+    0,				/*sq_item*/
+    0,				/*sq_slice*/
+    0,				/*sq_ass_item*/
+    0,				/*sq_ass_slice*/
+    (objobjproc)SKCache_contains, /*sq_contains*/
+    0,				/*sq_inplace_concat*/
+    0,				/*sq_inplace_repeat*/
+};
+
+
 static PyMappingMethods SKCache_as_mapping = {
 	(lenfunc)SKCache_length,	/*mp_length*/
 	(binaryfunc)SKCache_subscript,  /*mp_subscript*/
@@ -359,10 +379,15 @@ PyTypeObject SKCacheType = {
 	0,				/*tp_compare*/
 	0,				/*tp_repr*/
 	0,				/*tp_as_number*/
-	0,				/*tp_as_sequence*/
+	&SKCache_as_sequence,		/*tp_as_sequence*/
 	&SKCache_as_mapping,		/*tp_as_mapping*/
 	0,				/*tp_hash*/
 	0,				/* tp_call */
+	0,				/* tp_str */
+	0,				/* tp_getattro */
+	0,				/* tp_setattro */
+	0,				/* tp_as_buffer */
+	Py_TPFLAGS_HAVE_SEQUENCE_IN,	/* tp_flags */
 };
 
 

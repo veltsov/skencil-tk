@@ -16,7 +16,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-from types import ListType
 
 from Sketch import _
 from Sketch.const import SCRIPT_UNDO, SCRIPT_GET, SCRIPT_OBJECT, \
@@ -30,7 +29,7 @@ class UndoMethodWrapper:
         self.document = document
 
     def __call__(self, *args, **kw):
-        self.document.AddUndo(apply(self.method, args, kw))
+        self.document.AddUndo(self.method(*args, **kw))
 
 class ObjectMethodWrapper:
 
@@ -39,7 +38,7 @@ class ObjectMethodWrapper:
         self.document = document
 
     def __call__(self, *args, **kw):
-        return ObjectWrapper(apply(self.method, args, kw), self.document)
+        return ObjectWrapper(self.method(*args, **kw), self.document)
 
 class ObjectListMethodWrapper:
 
@@ -48,7 +47,7 @@ class ObjectListMethodWrapper:
         self.document = document
 
     def __call__(self, *args, **kw):
-        objects = apply(self.method, args, kw)
+        objects = self.method(*args, **kw)
         return map(ObjectWrapper, objects, (self.document,) * len(objects))
 
 
@@ -76,7 +75,7 @@ class Wrapper:
             if not safe_special_methods.get(attr):
                 warn(USER,'Cant access attribute %s of %s in safe user script',
                      attr, self._object)
-            raise AttributeError, attr
+            raise AttributeError(attr)
         if access == SCRIPT_UNDO:
             return UndoMethodWrapper(getattr(self._object, attr),
                                      self._document)
@@ -89,10 +88,16 @@ class Wrapper:
             return ObjectListMethodWrapper(getattr(self._object, attr),
                                            self._document)
         else:
-            raise AttributeError, attr
+            raise AttributeError(attr)
 
-    def __cmp__(self, other):
-        return cmp(self._object, strip_wrapper(other))
+    def __eq__(self, other):
+        return self._object == strip_wrapper(other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        return self._object < strip_wrapper(other)
 
 def strip_wrapper(wrapped):
     if isinstance(wrapped, Wrapper):
@@ -107,7 +112,7 @@ class DocumentWrapper(Wrapper):
         Wrapper.__init__(self, document, document)
 
     def SelectObject(self, objects, mode = SelectSet):
-        if type(objects) == ListType:
+        if isinstance(objects, list):
             objects = map(strip_wrapper, objects)
         else:
             objects = strip_wrapper(objects)

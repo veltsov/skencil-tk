@@ -24,8 +24,8 @@
 # need not know whether output goes to a window or a printer, etc.
 #
 
+from __future__ import print_function
 import sys
-from types import TupleType
 import operator, string
 from math import pi
 
@@ -164,7 +164,7 @@ class GCDevice:
 
     def ClipRect(self, recttuple):
         region = self.widget.CreateRegion()
-        apply(region.UnionRectWithRegion, recttuple)
+        region.UnionRectWithRegion(*recttuple)
         self.ClipRegion(region)
 
     def ClipPolygon(self, pts):
@@ -187,7 +187,7 @@ class GCDevice:
 
     def DocToWin(self, *args):
         # Return the point in window coords as a tuple of ints
-        return apply(self.doc_to_win.DocToWin, args)
+        return self.doc_to_win.DocToWin(*args)
 
     def DocToWinPoint(self, p):
         # Return the point in window coords as a point object
@@ -203,7 +203,7 @@ class GCDevice:
         return len / self.scale
 
     def WinToDoc(self, *args):
-        return apply(self.win_to_doc, args)
+        return self.win_to_doc(*args)
 
     def init_trafo_stack(self):
         self.trafo_stack = ()
@@ -230,7 +230,7 @@ class GCDevice:
             pass
 
     def Translate(self, *args):
-        self.Concat(apply(Translation, args))
+        self.Concat(Translation(*args))
 
     def Scale(self, factor):
         self.Concat(Scale(factor))
@@ -331,24 +331,24 @@ class SimpleGC(GCDevice):
         # draw the outline of the rectangle whose opposite corners are
         # start and end.
         pts = TransformRectangle(self.doc_to_win, Rect(start, end))
-        if type(pts) == TupleType:
-            apply(self.gc.DrawRectangle, pts)
+        if isinstance(pts, tuple):
+            self.gc.DrawRectangle(*pts)
         else:
             self.gc.DrawLines(pts, X.CoordModeOrigin)
 
     def FillRectangle(self, left, top, right, bottom):
         pts = TransformRectangle(self.doc_to_win,
                                  Rect(left, top, right, bottom))
-        if type(pts) == TupleType:
-            apply(self.gc.FillRectangle, pts)
+        if isinstance(pts, tuple):
+            self.gc.FillRectangle(*pts)
         else:
             self.gc.FillPolygon(pts, X.Convex, X.CoordModeOrigin)
 
     def DrawEllipse(self, start, end):
         pts = TransformRectangle(self.doc_to_win, Rect(start, end))
 
-        if type(pts) == TupleType:
-            apply(self.gc.DrawArc, pts + (0, 360 * 64))
+        if isinstance(pts, tuple):
+            self.gc.DrawArc(*pts + (0, 360 * 64))
         else:
             d = end - start
             self.PushTrafo()
@@ -360,8 +360,8 @@ class SimpleGC(GCDevice):
         rect = Rect(center.x - radius, center.y - radius,
                     center.x + radius, center.y + radius)
         pts = TransformRectangle(self.doc_to_win, rect)
-        if type(pts) == TupleType:
-            apply(self.gc.DrawArc, pts + (0, 360 * 64))
+        if isinstance(pts, tuple):
+            self.gc.DrawArc(*pts + (0, 360 * 64))
         else:
             self.PushTrafo()
             self.Concat(Trafo(radius, 0, 0, radius, center.x, center.y))
@@ -372,8 +372,8 @@ class SimpleGC(GCDevice):
         rect = Rect(center.x - radius, center.y - radius,
                     center.x + radius, center.y + radius)
         pts = TransformRectangle(self.doc_to_win, rect)
-        if type(pts) == TupleType:
-            apply(self.gc.FillArc, pts + (0, 360 * 64))
+        if isinstance(pts, tuple):
+            self.gc.FillArc(*pts + (0, 360 * 64))
         else:
             self.PushTrafo()
             self.Concat(Trafo(radius, 0, 0, radius, center.x, center.y))
@@ -697,7 +697,7 @@ class GraphicsDevice(SimpleGC, CommonDevice):
         self.Concat(trafo)
         pts = TransformRectangle(self.doc_to_win, UnitRect)
         self.PopTrafo()
-        if type(pts) == TupleType:
+        if isinstance(pts, tuple):
             if self.proc_fill:
                 if not clip:
                     self.PushClip()
@@ -708,10 +708,10 @@ class GraphicsDevice(SimpleGC, CommonDevice):
                 clip = 0
             elif self.fill:
                 self.properties.ExecuteFill(self, self.fill_rect)
-                apply(self.gc.FillRectangle, pts)
+                self.gc.FillRectangle(*pts)
             if self.line:
                 self.properties.ExecuteLine(self)
-                apply(self.gc.DrawRectangle, pts)
+                self.gc.DrawRectangle(*pts)
         else:
             if self.proc_fill:
                 if not clip:
@@ -728,7 +728,7 @@ class GraphicsDevice(SimpleGC, CommonDevice):
                 self.properties.ExecuteLine(self)
                 self.gc.DrawLines(pts, X.CoordModeOrigin)
         if clip:
-            if type(pts) == TupleType:
+            if isinstance(pts, tuple):
                 self.ClipRect(pts)
             else:
                 self.ClipPolygon(pts)
@@ -800,7 +800,7 @@ class GraphicsDevice(SimpleGC, CommonDevice):
 
     def draw_text_on_gc(self, gc, text, trafo, font, font_size, cache = None):
         psname = font.PostScriptName()
-        if self.unknown_fonts.has_key(psname):
+        if psname in self.unknown_fonts:
             # broken font, user was warned
             return
         try:
@@ -866,7 +866,7 @@ class GraphicsDevice(SimpleGC, CommonDevice):
                 pos = map(self.DocToWin, pos)
                 ux, uy = up
                 lx = ux / 2; ly = uy / 2
-                uppercase = string.uppercase
+                uppercase = string.ascii_uppercase
                 draw = gc.DrawLine # we should draw rectangles...
                 for i in range(len(text)):
                     x, y = pos[i]
@@ -919,14 +919,14 @@ class GraphicsDevice(SimpleGC, CommonDevice):
         font_cache = self.font_cache
         complex_text = self.complex_text
 
-        if self.failed_fonts.has_key(xlfd):
+        if xlfd in self.failed_fonts:
             # the same xlfd failed before. use fixed as fallback
             # immediately to avoid delays. some servers apparantly take
             # very long to decide that they can't load a font.
             #xlfd = 'fixed'
             return None
 
-        if cache and cache.has_key(id(self)):
+        if cache and id(self) in cache:
             old_xlfd, old_font = cache[id(self)]
             if old_xlfd == xlfd:
                 font_cache[xlfd] = old_font
@@ -935,22 +935,22 @@ class GraphicsDevice(SimpleGC, CommonDevice):
         if complex_text is not None:
             cache = complex_text.cache
             key = id(self), complex_text.idx
-            if cache.has_key(key):
+            if key in cache:
                 old_xlfd, old_font = cache[key]
                 if old_xlfd == xlfd:
                     font_cache[xlfd] = old_font
                     return old_font
             cache = None
 
-        if font_cache is not None and font_cache.has_key(xlfd):
+        if font_cache is not None and xlfd in font_cache:
             font = font_cache[xlfd]
         else:
             #print 'load font', xlfd
             try:
                 font = self.widget.LoadQueryFont(xlfd)
-            except RuntimeError, val:
+            except RuntimeError as val:
                 self.failed_fonts[xlfd] = 1
-                print  _("Cannot load %(font)s:\n%(text)s") % {'font': xlfd, 'text': val}
+                print(_("Cannot load %(font)s:\n%(text)s") % {'font': xlfd, 'text': val})
                 #warn(USER, _("Cannot load %(font)s:\n%(text)s"),
                 #     font = `xlfd`, text = val)
                 return None
@@ -1295,7 +1295,7 @@ class InvertingDevice(GraphicsDevice):
     def Bezier(self, p1, p2, p3, p4):
         dtw = self.DocToWin
         pts = dtw(p1) + dtw(p2) + dtw(p3) + dtw(p4)
-        apply(_sketch.DrawBezier, (self.gc,) + pts)
+        _sketch.DrawBezier(*(self.gc,) + pts)
 
     def Line(self, p1, p2):
         if self.line:
@@ -1655,18 +1655,18 @@ def check_for_shm_images(widget):
     shm_images_supported = 0
     try:
         img = widget.ShmCheckExtension()
-    except RuntimeError, exc:
-        print "Exception in ShmCheckExtension:", exc
+    except RuntimeError as exc:
+        print("Exception in ShmCheckExtension:", exc)
         img = None
     if img is not None:
         if img.depth not in (15, 16, 24, 32, 8):
             # XXX: warn
-            print 'depth =', img.depth
+            print('depth =', img.depth)
             return
 
         if img.format != X.ZPixmap:
             # XXX: warn
-            print 'format =', img.format
+            print('format =', img.format)
             return
 
         shm_images_supported = 1

@@ -67,7 +67,7 @@ class ExternalData:
         instance_cache[self.filename] = self
 
     def remove_from_cache(self):
-        if self.stored_in_cache and instance_cache.has_key(self.filename):
+        if self.stored_in_cache and self.filename in instance_cache:
             del instance_cache[self.filename]
             self.stored_in_cache = 0
 
@@ -115,7 +115,7 @@ class ExternalData:
 
 
 def get_cached(filename):
-    if instance_cache.has_key(filename):
+    if filename in instance_cache:
         return instance_cache[filename]
     return None
 
@@ -195,7 +195,7 @@ class ExternalGraphics(RectangularObject, GraphicsObject):
         # Used by the place mode in SketchCanvas. Currently no undo
         # needed since this is called *before* self is a part of a
         # document.
-        self.trafo = apply(Trafo, self.trafo.coeff()[:4] + tuple(corner))
+        self.trafo = Trafo(*self.trafo.coeff()[:4] + tuple(corner))
         self.del_lazy_attrs()
 
     def RemoveTransformation(self):

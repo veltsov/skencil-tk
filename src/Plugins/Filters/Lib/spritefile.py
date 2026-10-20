@@ -438,7 +438,7 @@ class spritefile:
             mode = mode & 0x3f
 
             # Information on commonly used modes
-            if self.mode_info.has_key(mode):
+            if mode in self.mode_info:
 
                 log2bpp, xscale, yscale = self.mode_info[mode]
                 #xdpi = int(180/xscale)      # was 90
@@ -447,7 +447,7 @@ class spritefile:
                 ydpi = int(90/yscale)        # 90 dots per inch.
                 bpp = 1 << log2bpp
             else:
-                raise spritefile_error, 'Unknown mode number.'
+                raise spritefile_error('Unknown mode number.')
 
         else:
             if bpp == 1:
@@ -601,7 +601,7 @@ class spritefile:
         bpp = data['bpp']
 
         # If the sprite didn't have a palette then use a standard one
-        if data.has_key('palette'):
+        if 'palette' in data:
 
             # Explicitly defined palette
             has_palette = 1
@@ -886,8 +886,7 @@ class spritefile:
         elif data['bpp'] == 32:
             log2bpp = 5
         else:
-            raise spritefile_error, \
-                  'Invalid number of bits per pixel in sprite.'
+            raise spritefile_error('Invalid number of bits per pixel in sprite.')
 
         mode = (log2bpp << 27) | (int(180/data['dpi x'] << 1)) | \
              (int(180/data['dpi y']) << 14)

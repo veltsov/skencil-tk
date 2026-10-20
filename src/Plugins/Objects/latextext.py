@@ -44,6 +44,7 @@
 #standard_messages = 1
 ###End
 
+from __future__ import print_function
 (''"LaTeX Text")
 (''"Text")
 (''"Size")
@@ -57,7 +58,6 @@ import os
 from os.path import exists
 from os import getcwd, chdir
 from posix import system
-from string import replace
 from shutil import rmtree
 from subprocess import Popen, PIPE
 
@@ -262,7 +262,7 @@ def create_tex_sk(text,fontsz,doc=None):
             doc.meta.load_messages = ''
 
     except cm_exc as val:
-        print(val[0], val[1])
+        print((val[0], val[1]))
         write_error(val[0], val[1])
 
     except SketchError as value:
@@ -273,7 +273,7 @@ def create_tex_sk(text,fontsz,doc=None):
         remove_temp_files(tdir)
 
     if print_messages:
-        print msgs
+        print(msgs)
     
     return group
 

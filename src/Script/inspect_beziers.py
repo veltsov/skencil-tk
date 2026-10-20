@@ -54,7 +54,7 @@ class Viewer(Toplevel):
             for i in range(len(paths)):
                 self.text.insert(END, "  path #%d\n" % (i + 1))
                 for j in range(paths[i].len):
-                    s = apply(self.format_segment, paths[i].Segment(j))
+                    s = self.format_segment(*paths[i].Segment(j))
                     self.text.insert(END, "    #%d %s\n" % ((j + 1), s))
             self.text.insert(END, "\n")
             n = n + 1

@@ -15,7 +15,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
-from types import TupleType
 
 import pax
 
@@ -31,9 +30,9 @@ class MiniScroller(PyWidget, Publisher):
 
     def __init__(self, master=None, min = None, max = None, step = 1,
                  variable = None, command = None, args = (), **kw):
-        if not kw.has_key('width'):
+        if 'width' not in kw:
             kw['width'] = 8
-        apply(PyWidget.__init__, (self, master), kw)
+        PyWidget.__init__(*(self, master), **kw)
         self.SetRange(min, max, step)
         self.variable = variable
         self.state = 0		# 1: up; 2: drag; 3: down
@@ -60,9 +59,9 @@ class MiniScroller(PyWidget, Publisher):
         self.step = step
 
     def set_command(self, command, args):
-        if type(args) != TupleType:
+        if not isinstance(args, tuple):
             args = (args,)
-        apply(self.Subscribe, (COMMAND, command,) + args)
+        self.Subscribe(*(COMMAND, command,) + args)
 
     def invoke(self):
         self.issue(COMMAND)

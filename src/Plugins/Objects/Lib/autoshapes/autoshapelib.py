@@ -1,3 +1,4 @@
+from __future__ import print_function
 import Sketch
 from Sketch import _, Trafo, Translation, TrafoPlugin, const, Rotation, \
      RegisterCommands, NullUndo, PolyBezier
@@ -16,9 +17,9 @@ _debug  = 0
 def note(msg, *args):
     if _debug:
         if len(args):
-            print msg % map(str, args)
+            print(msg % map(str, args))
         else:
-            print msg
+            print(msg)
         
 def report_error(title, message):
     app = Sketch.main.application
@@ -30,7 +31,7 @@ def Loader(name):
     note("loading %s ", name)
     try:
         module = __import__(name, globals(), locals(), [])
-    except Exception, e:
+    except Exception as e:
         report_error(_('Warning'), _('Failed to load autoshape \'%s\': %s') %
                      (name, e))
         return UnknownShape
@@ -46,7 +47,7 @@ class Autoshape(TrafoPlugin):
     def __init__(self, name=None, *args,  **kw):
         self.__class__ = Loader(name)
         self.name = name
-        apply(self.__init__, args, kw)
+        self.__init__(*args, **kw)
 
 
 class AutoshapeBase(TrafoPlugin):
@@ -314,7 +315,7 @@ class HelpWindow(SKModal):
     title = _('Help')
     def __init__(self, master, help_text, **kw):
         self.help_text = help_text
-        apply(SKModal.__init__, (self, master), kw)
+        SKModal.__init__(*(self, master), **kw)
 
     def build_dlg(self):
         top = self.top
@@ -365,7 +366,7 @@ Modifier:
         self.bond_list = []
         self.watch_list = []
         self.connections = {}
-        apply(AutoshapeBase.__init__, (self,)+args, kw)
+        AutoshapeBase.__init__(*(self,)+args, **kw)
 
     def _changed(self, *args):        
         # This is called when the self is transformed. It is not called when
@@ -395,12 +396,12 @@ Modifier:
                 object = data[0]
                 note("trying to unconnect %s", data)
                 try:
-                    apply(object.Unsubscribe, data[1:])
+                    object.Unsubscribe(*data[1:])
                     disconnected = disconnected + 1
-                except Exception, e:
+                except Exception as e:
                     failed = failed + 1
                     if _debug:
-                        print "Warning: ",e
+                        print("Warning: ",e)
 
             #print "unsubscribed %s of %s" % (disconnected, disconnected+failed)
         self.connections = {}
@@ -408,7 +409,7 @@ Modifier:
     def subscription_info(self):
         for obj_id, data_list in self.connections.items():
             for data in data_list:
-                print obj_id, data[1:]
+                print(obj_id, data[1:])
                         
     def SetDocument(self, doc):
         note("SetDocument %s", self)

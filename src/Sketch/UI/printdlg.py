@@ -160,7 +160,7 @@ class PrintPanel(SketchPanel):
                 file = filename
                 title = os.path.basename(filename)
             else:
-                file = os.popen(self.print_command.get(), 'w')
+                file = util.popen_write(self.print_command.get())
                 title = 'sketch'
             try:
                 dev = Sketch.PostScriptDevice
@@ -181,11 +181,11 @@ class PrintPanel(SketchPanel):
                 if hasattr(file, "close"):
                     file.close()
 
-        except IOError, value:
+        except IOError as value:
             app.MessageBox(title = _("Save As PostScript"),
                            message = _("Cannot save %(filename)s:\n"
                                        "%(message)s") \
-                           % {'filename':`os.path.split(filename)[1]`,
+                           % {'filename':repr(os.path.split(filename)[1]),
                               'message':value[1]},
                            icon = 'warning')
             return

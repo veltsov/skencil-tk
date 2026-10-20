@@ -83,7 +83,7 @@ class EpsData(ExternalData):
             except IOError:
                 pass
         else:
-            raise TypeError, '%s has no BoundingBox' % filename
+            raise TypeError('%s has no BoundingBox' % filename)
 
         ExternalData.__init__(self, filename)
 
@@ -98,8 +98,8 @@ class EpsData(ExternalData):
 
         try:
             infile = open(self.filename, 'r')
-        except IOError, val:
-            raise IOError, (filename, val)
+        except IOError as val:
+            raise IOError(filename, val)
         try:
             readline = infile.readline
 
@@ -132,7 +132,7 @@ class EpsImage(ExternalGraphics):
     def __init__(self, filename = '', trafo = None, duplicate = None):
         if duplicate is None:
             if not filename:
-                raise ValueError, 'filename must be provided'
+                raise ValueError('filename must be provided')
             data = load_eps(filename)
         else:
             data = None

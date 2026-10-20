@@ -364,7 +364,7 @@ class Bounded:
             # recursion if the method is buggy
             try:
                 return self.__dict__[attr]
-            except KeyError, msg:
+            except KeyError as msg:
                 warn(INTERNAL, '%s did not compute %s for %s.',
                      method, attr, self)
         if attr[:2] == attr[-2:] == '__':
@@ -374,7 +374,7 @@ class Bounded:
         else:
             warn(INTERNAL, "%s instance doesn't have an attribute %s",
                  self.__class__, attr)
-        raise AttributeError, attr
+        raise AttributeError(attr)
 
     def LayoutPoint(self):
         return Point(self.coord_rect.left, self.coord_rect.bottom)
@@ -455,7 +455,7 @@ class HierarchyNode:
 
     def Issue(self, channel, *args):
         if self.document is not None:
-            apply(self.document.connector.Issue, (self, channel,) + args)
+            self.document.connector.Issue(*(self, channel,) + args)
 
     def issue_changed(self):
         self.Issue(CHANGED, self)
@@ -504,8 +504,16 @@ class GraphicsObject(Bounded, HierarchyNode, Selectable, Protocols):
         # whenever it changes (normally via the issue_changed method)
         pass
 
-    def __cmp__(self, other):
-        return cmp(id(self), id(other))
+    # rich comparisons; identity semantics as before, but explicit so
+    # that this also works under Python 3 (which has no __cmp__)
+    def __eq__(self, other):
+        return self is other
+
+    def __ne__(self, other):
+        return self is not other
+
+    def __lt__(self, other):
+        return id(self) < id(other)
 
     def _changed(self):
         self.del_lazy_attrs()
@@ -741,8 +749,7 @@ class Primitive(GraphicsObject):
                 for key in kw.keys():
                     if prop_types[key] == FontProperty:
                         del kw[key]
-        return self.properties_changed(apply(self.properties.SetProperty, (),
-                                             kw))
+        return self.properties_changed(self.properties.SetProperty(*(), **kw))
     script_access['SetProperties'] = SCRIPT_UNDO
 
     def LineWidth(self):

@@ -13,14 +13,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
+from __future__ import print_function
 from ScrolledText import ScrolledText
 from iterator import Style, StyletextError, Pool
-from string import atoi, replace, split
 
 class StyleText(ScrolledText):
 
     def __init__(self, master, **kw):
-        apply(ScrolledText.__init__, (self, master), kw)
+        ScrolledText.__init__(*(self, master), **kw)
 
         self.pool = Pool(self)
         self.sorts = {}
@@ -62,18 +62,18 @@ class StyleText(ScrolledText):
         }
         """
         self._old_w = '.old'+self._w
-        tclstr = replace(tclstr, '_old_w', self._old_w)
-        tclstr = replace(tclstr, '_w', self._w)
-        tclstr = replace(tclstr, 'insert_tcl', insert_tcl)
-        tclstr = replace(tclstr, 'delete_tcl', delete_tcl)
+        tclstr = tclstr.replace('_old_w', self._old_w)
+        tclstr = tclstr.replace('_w', self._w)
+        tclstr = tclstr.replace('insert_tcl', insert_tcl)
+        tclstr = tclstr.replace('delete_tcl', delete_tcl)
         self.tk.eval(tclstr)
 
     def copyevent(self, event):
         range = self.tag_ranges('sel')
         if len(range) !=2:
             return
-        self.clip_text = apply(self.get, range)
-        self.clip_styling = apply(self.styling_get, range)
+        self.clip_text = self.get(*range)
+        self.clip_styling = self.styling_get(*range)
 
     def pasteevent(self, event):
         self.delselection()
@@ -84,17 +84,17 @@ class StyleText(ScrolledText):
     def delselection(self):
         sel = self.tag_ranges('sel')
         if len(sel) == 2:
-            apply(self.delete, sel)
+            self.delete(*sel)
 
     def register_sort(self, sortid, function, default):
-        defaultstyle = apply(Style,(),{sortid : default})
+        defaultstyle = Style(*(), **{sortid : default})
         self.sorts[sortid] = (function, defaultstyle)
         self.sorts_order.insert(0, sortid)
 
     def print_current_style(self,event=None):
-        print "_____ current style %s ______" % self.index('insert')
+        print("_____ current style %s ______" % self.index('insert'))
         for style in self.style_get('insert'):
-            print self.index('insert'),"\t", style
+            print(self.index('insert'),"\t", style)
 
     def mark_dump(self):
         list = []
@@ -103,13 +103,13 @@ class StyleText(ScrolledText):
         list.sort()
 
 
-        print "============== mark dump ================="
+        print("============== mark dump =================")
         for pos, name in list:
 #            if name[0] == '_':
-            print pos,"\t", name
+            print(pos,"\t", name)
 
     def tag_dump(self):
-        print "============== tag dump ==================="
+        print("============== tag dump ===================")
         names = list(self.tag_names())
         out = []
         for tag in names:
@@ -118,7 +118,7 @@ class StyleText(ScrolledText):
                 out.append((ranges, tag))
         out.sort()
         for ranges, tag in out:
-            print tag,"\t\t", ranges
+            print(tag,"\t\t", ranges)
 
     def delete(self, index1, index2=None):
         index1 = self.index(index1)
@@ -133,7 +133,7 @@ class StyleText(ScrolledText):
         dict = {}
         while (not it.outofboundary) and self.compare(it, '==', index1):
             sort = it.current.sort
-            if dict.has_key(sort):
+            if sort in dict:
                 it.delete()
             else:
                 dict[sort] = 1
@@ -189,11 +189,11 @@ class StyleText(ScrolledText):
                 dict[it.current.sort] = it.current
                 while (not it.is_first()) and len(dict)<len(self.sorts):
                     it.prev()
-                    if not dict.has_key(it.current.sort):
+                    if it.current.sort not in dict:
                         dict[it.current.sort] = it.current
             # if incomplete: fill up with defaults
             for sort in self.sorts.keys():
-                if not dict.has_key(sort):
+                if sort not in dict:
                     dict[sort] = self.sorts[sort][1]
             ret = []
 
@@ -251,9 +251,9 @@ class StyleText(ScrolledText):
 
         # relocate indizes
         ret = []
-        bline, bchar = map(atoi, split(begin, '.'))
+        bline, bchar = map(int, begin.split("."))
         for style, indexstr in styling:
-            line, char = map(atoi, split(indexstr, '.'))
+            line, char = map(int, indexstr.split("."))
             if line == bline:
                 char = char-bchar
             line = line-bline
@@ -265,7 +265,7 @@ class StyleText(ScrolledText):
         if styling is None or len(styling) == 0:
             return
         index = self.index(index)
-        iline, ichar = map(atoi, split(index, '.'))
+        iline, ichar = map(int, index.split("."))
         it = self.pool.iterator()
 
         # determine end
@@ -294,7 +294,7 @@ class StyleText(ScrolledText):
         range = self.tag_ranges('sel')
         if len(range) != 2:
             return
-        print apply(self.styling_get, range)
+        print(self.styling_get(*range))
 
     def fontify(self, begin, end):
         for name in self.tag_names():
@@ -325,7 +325,7 @@ class StyleText(ScrolledText):
 
             for sort in self.sorts_order:
                 func = self.sorts[sort][0]
-                apply(func, (options, _dict))
+                func(*(options, _dict))
 
             self.tag_configure(name, options)
 
@@ -398,7 +398,7 @@ if __name__=='__main__':
                            (xlfd_start, kw['size'], encoding)
 
             kw['attr'] = 'Roman'
-            return apply(self.xlfd, (), kw)
+            return self.xlfd(*(), **kw)
 
         def ps(self, **kw):
             props = {}
@@ -422,7 +422,7 @@ if __name__=='__main__':
         return tagoptions
 
     def SizeSort(tagoptions, dict):
-        xfont = apply(FONTS.xlfd, (), dict)
+        xfont = FONTS.xlfd(*(), **dict)
         tagoptions['font'] = xfont
         return tagoptions
 

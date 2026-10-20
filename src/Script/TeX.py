@@ -8,7 +8,6 @@ from re import search
 from os import mkdir
 from Tkinter import StringVar, Entry, Label, Button, Frame, Text, END
 import Sketch.Scripting
-from types import StringType
 from Sketch.Graphics import image, eps
 from Sketch.UI.sketchdlg import SKModal
 from Sketch.Scripting.script import Context
@@ -19,7 +18,7 @@ class TeXDlg(SKModal):
     title = "TeX insert"
 
     def __init__(self, master, **kw):
-	apply(SKModal.__init__, (self, master), kw)
+	SKModal.__init__(*(self, master), **kw)
 
     def build_dlg(self):
         top = self.top
@@ -60,7 +59,7 @@ class TeXmathDlg(SKModal):
     title = "TeX insert"
 
     def __init__(self, master, **kw):
-	apply(SKModal.__init__, (self, master), kw)
+	SKModal.__init__(*(self, master), **kw)
 
     def build_dlg(self):
         top = self.top
@@ -102,7 +101,7 @@ class TeX_error_Dlg(SKModal):
     title = "TeX error"
 
     def __init__(self, master, **kw):
-	apply(SKModal.__init__, (self, master), kw)
+	SKModal.__init__(*(self, master), **kw)
 
     def build_dlg(self):
         top = self.top

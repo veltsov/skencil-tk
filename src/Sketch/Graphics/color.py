@@ -19,7 +19,6 @@
 #	Color Handling
 #
 
-from string import atoi
 
 from Sketch.warn import warn, INTERNAL, USER
 from Sketch._sketch import RGBColor, XVisual
@@ -36,9 +35,9 @@ def XRGBColor(s):
     # component. e.g. `#00FF00'
     if s[0] != '#':
         raise ValueError("Color %s dosn't start with a '#'" % s)
-    r = atoi(s[1:3], 16) / 255.0
-    g = atoi(s[3:5], 16) / 255.0
-    b = atoi(s[5:7], 16) / 255.0
+    r = int(s[1:3], 16) / 255.0
+    g = int(s[3:5], 16) / 255.0
+    b = int(s[5:7], 16) / 255.0
     return CreateRGBColor(r, g, b)
 
 def CreateCMYKColor(c, m, y, k):
@@ -113,7 +112,7 @@ def fill_colormap(cmap):
             cmap = cmap.CopyColormapAndFree()
             for idx in range(len(color_idx)):
                 if color_idx[idx] is None:
-                    color_idx[idx] = apply(cmap.AllocColor, colors[idx])[0]
+                    color_idx[idx] = cmap.AllocColor(*colors[idx])[0]
         else:
             #print "don't reduce color flashing"
             cmap = cmap.CopyColormapAndFree()

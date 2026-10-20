@@ -1,5 +1,6 @@
 # Tamito KAJIYAMA <21 June 2002>
 
+from __future__ import print_function
 import math
 import UserDict
 
@@ -129,7 +130,7 @@ def intersect_objects(objects):
     for i in range(len(objects)):
         paths = objects[i].Paths()
         for j in range(len(paths)):
-            if not table.has_key(i) or not table[i].has_key(j):
+            if i not in table or j not in table[i]:
                 untouched_paths.append((i, copy(paths[j])))
     return new_paths, untouched_paths
 
@@ -282,9 +283,9 @@ def contained(path, object):
     return count % 2 == 1
 
 def join(paths):
-    print "join()"
+    print("join()")
     for cp1, path, cp2 in paths:
-        print cp1, "--", path.len, "--", cp2
+        print(cp1, "--", path.len, "--", cp2)
     buffer = []
     paths = list(paths)
     while paths:
@@ -310,7 +311,7 @@ def join(paths):
                     last_control = control
                 start = cp1
             else:
-                raise RuntimeError, "should not reach here"
+                raise RuntimeError("should not reach here")
             paths[i] = None
         new_path.ClosePath()
         buffer.append(new_path)

@@ -19,7 +19,6 @@
 #	Edit the guide lines
 #
 
-from string import atoi
 
 from Tkinter import Frame, Label, DoubleVar, StringVar, Scrollbar
 from Tkinter import BOTTOM, BOTH, LEFT, RIGHT, TOP, X, Y, E, W
@@ -96,7 +95,7 @@ class GuidePanel(SketchPanel):
         button.pack(side = RIGHT)
 
     def set_unit(self, *rest):
-        apply(self.var_pos.UpdateUnit, rest)
+        self.var_pos.UpdateUnit(*rest)
         self.update_list()
 
     receivers.append((GUIDE_LINES, 'init_from_doc'))
@@ -138,7 +137,7 @@ class GuidePanel(SketchPanel):
     def select_guide(self, *rest):
         sel = self.guides.curselection()
         if sel:
-            self.selected = atoi(sel[0])
+            self.selected = int(sel[0])
             pos, horizontal = self.guide_lines[self.selected].Coordinates()
             self.var_pos.set(pos)
             if horizontal:

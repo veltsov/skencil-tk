@@ -74,7 +74,7 @@ class CreateStarDlg(SKModal):
         #
         # The parameter master is the window this dialog belongs to. It
         # should normally be the top-level application window.
-        apply(SKModal.__init__, (self, master), kw)
+        SKModal.__init__(*(self, master), **kw)
 
     def build_dlg(self):
         # The SKModal constructor automatically calls this method to

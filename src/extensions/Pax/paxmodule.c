@@ -719,17 +719,6 @@ name_to_window(PyObject * self, PyObject * args)
 }
 
 static PyObject *
-do_one_event(PyObject * self, PyObject * args)
-{
-    int flags;
-
-    if (!PyArg_ParseTuple(args, "i", &flags))
-	return NULL;
-
-    return PyInt_FromLong(Tcl_DoOneEvent(flags));
-}
-
-static PyObject *
 key_for_object(PyObject *obj)
 {
     char id[20];
@@ -960,7 +949,6 @@ static PyMethodDef pax_methods[] = {
     {"register_object",	register_object,		1},
     {"unregister_object",	unregister_object,	1},
     {"name_to_window",	name_to_window,			1},
-    {"do_one_event",	do_one_event,			1},
     {"call_py_method",	(PyCFunction) pax_call_py_method, METH_VARARGS},
     {"region_from_ptr",	pax_region_from_ptr,		1},
     {"create_tcl_commands",	create_tcl_commands,	1},

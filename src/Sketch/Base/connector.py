@@ -19,7 +19,8 @@
 #	The Connector
 #
 
-from types import MethodType
+from __future__ import print_function
+import types
 
 from skexceptions import SketchInternalError
 from warn import warn_tb, INTERNAL
@@ -35,12 +36,12 @@ class Connector:
 
     def Connect(self, object, channel, function, args):
         idx = id(object)
-        if self.connections.has_key(idx):
+        if idx in self.connections:
             channels = self.connections[idx]
         else:
             channels = self.connections[idx] = {}
 
-        if channels.has_key(channel):
+        if channel in channels:
             receivers = channels[channel]
         else:
             receivers = channels[channel] = []
@@ -56,14 +57,12 @@ class Connector:
         try:
             receivers = self.connections[id(object)][channel]
         except KeyError:
-            raise ConnectorError, \
-                  'no receivers for channel %s of %s' % (channel, object)
+            raise ConnectorError('no receivers for channel %s of %s' % (channel, object))
         try:
             receivers.remove((function, args))
         except ValueError:
-            raise ConnectorError,\
-                  'receiver %s%s is not connected to channel %s of %s' \
-                  % (function, args, channel, object)
+            raise ConnectorError('receiver %s%s is not connected to channel %s of %s' \
+                  % (function, args, channel, object))
 
         if not receivers:
             # the list of receivers is empty now, remove the channel
@@ -81,13 +80,13 @@ class Connector:
             return
         for func, fargs in receivers:
             try:
-                apply(func, args + fargs)
+                func(*args + fargs)
             except:
                 warn_tb(INTERNAL, "%s.%s: %s%s", object, channel, func, fargs)
 
     def RemovePublisher(self, object):
         i = id(object)
-        if self.connections.has_key(i):
+        if i in self.connections:
             del self.connections[i]
         # don't use try: del ... ; except KeyError here. That would create a
         # new reference of object in a traceback object and this method should
@@ -95,19 +94,19 @@ class Connector:
         # Python 1.5)
 
     def HasSubscribers(self, object):
-        return self.connections.has_key(id(object))
+        return id(object) in self.connections
 
     def print_connections(self):
         # for debugging
         for id, channels in self.connections.items():
             for name, subscribers in channels.items():
-                print id, name
+                print(id, name)
                 for func, args in subscribers:
-                    if type(func) == MethodType:
-                        print '\tmethod %s of %s' % (func.im_func.func_name,
-                                                     func.im_self)
+                    if isinstance(func, types.MethodType):
+                        print('\tmethod %s of %s' % (func.__func__.__name__,
+                                                     func.__self__))
                     else:
-                        print '\t', func
+                        print('\t', func)
 
 
 
@@ -139,7 +138,7 @@ class Publisher:
 
     def issue(self, channel, *args):
         if not self.ignore_issue:
-            apply(Issue, (self, channel,) + args)
+            Issue(*(self, channel,) + args)
 
     def Destroy(self):
         RemovePublisher(self)
@@ -170,7 +169,7 @@ class QueueingPublisher(Publisher):
             queue = self.message_queue
             self.message_queue = []
             for channel, args in queue:
-                apply(Issue, (self, channel) + args)
+                Issue(*(self, channel) + args)
 
     def clear_message_queue(self):
         self.message_queue = []

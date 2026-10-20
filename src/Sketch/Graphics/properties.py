@@ -48,7 +48,7 @@ class Style(Publisher):
 
     def SetProperty(self, prop, value):
         dict = self.__dict__
-        if dict.has_key(prop):
+        if prop in dict:
             undo = (self.SetProperty, prop, dict[prop])
         else:
             undo = (self.DelProperty, prop)
@@ -139,7 +139,7 @@ class PropertyStack:
         try:
             return self.__dict__[attr]
         except KeyError:
-            raise AttributeError, attr
+            raise AttributeError(attr)
 
     def _clear_cache(self):
         self.__dict__ = {'stack' : self.stack}
@@ -220,7 +220,7 @@ class PropertyStack:
             self._clear_cache()
             return undo
         else:
-            return apply(self.SetProperty, (), style.__dict__)
+            return self.SetProperty(*(), **style.__dict__)
 
 
     def HasFill(self):
@@ -299,7 +299,7 @@ class PropertyStack:
                                     frac1, frac2)
             else:
                 result[prop] = getattr(self, prop)
-        return PropertyStack(apply(Style, (), result))
+        return PropertyStack(Style(*(), **result))
 
     def Transform(self, trafo, rects):
         # XXX hardcoding which properties may need to be transformed is
@@ -336,7 +336,7 @@ class PropertyStack:
             if property_types[prop] == FontProperty and not self.HasFont():
                 continue
             properties[prop] = getattr(self, prop)
-        return apply(Style, (), properties)
+        return Style(*(), **properties)
 
     def DynamicStyleNames(self):
         names = []

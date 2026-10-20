@@ -372,17 +372,17 @@ class CMXFile:
     def append_color(self, colors, model, data):
         if model == 2: # CMYK
             c, m, y, k = map(ord, data)
-            self._print(`c, m, y, k`)
+            self._print(repr((c, m, y, k)))
             colors.append(CreateCMYKColor(c / 100.0, m / 100.0, y / 100.0,
                                           k /100.0))
         elif model == 3: # CMYK 255
             c, m, y, k = map(ord, data)
-            self._print(`c, m, y, k`)
+            self._print(repr((c, m, y, k)))
             colors.append(CreateCMYKColor(c / 255.0, m / 255.0, y / 255.0,
                                           k /255.0))
         elif model == 5: # RGB
             r, g, b = map(ord, data)
-            self._print(`r, g, b`)
+            self._print(repr((r, g, b)))
             colors.append(CreateRGBColor(r / 255.0, g / 255.0, b / 255.0))
         elif model == 9:
             g = ord(data)
@@ -393,7 +393,7 @@ class CMXFile:
             self.warn(_("Color model %s not implemented. Using black")
                       % color_models[model])
             colors.append(StandardColors.black)
-            self._print(`data`)
+            self._print(repr(data))
 
     def read_colors(self, chunk):
         self._print('Colors\n------\n')
@@ -636,7 +636,7 @@ class CMXFile:
                 length, reflist, offset = unpack('<hll', self.file.read(10))
                 unknown = self.file.read(length - 8)
                 self._print('length %d, reflist %d, offset %d, unknown %s\n',
-                            length, reflist, offset, `unknown`)
+                            length, reflist, offset, repr(unknown))
                 procindex.append((reflist, offset))
                 self._print('\n')
         return procindex
@@ -745,7 +745,7 @@ class CMXFile:
 
     def GetBitmap(self, index):
         offset = self.bitmapindex[index]
-        if type(offset) is types.InstanceType:
+        if not isinstance(offset, (int, long)):
             return offset
         image = self.load_image(offset)
         if image is not None:
@@ -754,7 +754,7 @@ class CMXFile:
 
     def GetImage(self, index):
         image = self.embeddedindex[index]
-        if type(image) == types.InstanceType:
+        if not isinstance(image, (int, long)):
             return image
         offset, image_type = image
         image = self.load_image(offset)
@@ -1151,9 +1151,9 @@ class CMXInterpreter16(CMXInterpreter):
                             width, height, xoff, yoff, inter, 0) #flags)
                 self._print('    bbox %s\n', bbox)
                 self._print('    resolution %d, max edge %d\n', res, max_edge)
-                self._print('    library %s\n', `lib`)
-                self._print('    name    %s\n', `name`)
-                self._print('    style   %s\n', `stl`)
+                self._print('    library %s\n', repr(lib))
+                self._print('    name    %s\n', repr(name))
+                self._print('    style   %s\n', repr(stl))
                 self._print('    params:\n')
                 for param in params:
                     self._print('        %s\n', param)
@@ -1198,15 +1198,15 @@ class CMXInterpreter16(CMXInterpreter):
 
         if mask & 0x04: # lens attributes
             #self._print("	can't handle lens\n")
-            raise TypeError, "can't handle lens"
+            raise TypeError("can't handle lens")
 
         if mask & 0x08: # canvas
             #self._print("	can't handle canvas\n")
-            raise TypeError, "can't handle canvas"
+            raise TypeError("can't handle canvas")
 
         if mask & 0x10: # container
             #self._print("	can't handle container\n")
-            raise TypeError, "can't handle container"
+            raise TypeError("can't handle container")
 
     def PolyCurve(self):
         get_struct = self.source.read_struct; trafo = self.trafo
@@ -1549,7 +1549,7 @@ class CMXInterpreter32(CMXInterpreter):
 
                 elif tag != 255:
                     self._print('Unknown tag %d\n', tag)
-                    self._print(`self.source.stream` + '\n')
+                    self._print(repr(self.source.stream) + '\n')
             finally:
                 if tag != 255:
                     self.pop_source()
@@ -1571,7 +1571,7 @@ class CMXInterpreter32(CMXInterpreter):
                     tiling = width, height, xoff, yoff, inter, flags
                 elif tag != 255:
                     self._print('Unknown tag %d\n', tag)
-                    self._print(`self.source.stream` + '\n')
+                    self._print(repr(self.source.stream) + '\n')
             finally:
                 if tag != 255:
                     self.pop_source()
@@ -1612,7 +1612,7 @@ class CMXInterpreter32(CMXInterpreter):
         if index == 0:
             return None
         offset = self.cmxfile.arrowindex[index]
-        if type(offset) == types.InstanceType:
+        if not isinstance(offset, (int, long)):
             return offset
         file = self.cmxfile.file
         file.seek(offset)
@@ -1651,7 +1651,7 @@ class CMXInterpreter32(CMXInterpreter):
                                     procedure, transform)
                     elif tag != 255:
                         self._print('Unknown tag %d\n', tag)
-                        self._print(`self.source.stream` + '\n')
+                        self._print(repr(self.source.stream) + '\n')
                 finally:
                     if tag != 255:
                         self.pop_source()
@@ -1680,7 +1680,7 @@ class CMXInterpreter32(CMXInterpreter):
                     args = args + (self.trafo(x, y),)
                 elif tag != 255:
                     self._print('get_lens: Unknown tag %d\n', tag)
-                    self._print(`self.source.stream` + '\n')
+                    self._print(repr(self.source.stream) + '\n')
             finally:
                 if tag != 255:
                     self.pop_source()
@@ -1803,12 +1803,12 @@ class CMXInterpreter32(CMXInterpreter):
                         width, height = image.size
                         trafo = Trafo(real_width / float(width), 0,
                                       0, real_height / float(height), 0, 0)
-                        trafo = apply(Trafo, matrix[:4])(trafo)
+                        trafo = Trafo(*matrix[:4])(trafo)
                         trafo = Translation(self.trafo(matrix[-2:]))(trafo)
                         self.loader.image(image, trafo)
                 elif tag != 255:
                     self._print('Unknown tag %d\n', tag)
-                    self._print(`self.source.stream` + '\n')
+                    self._print(repr(self.source.stream) + '\n')
             finally:
                 if tag != 255:
                     self.pop_source()

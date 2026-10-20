@@ -142,10 +142,10 @@ class Reencoder:
         if mapping == range(256):
             self.mapping = ''
         else:
-            self.mapping = string.join(map(chr, mapping), '')
+            self.mapping = ''.join(map(chr, mapping))
 
     def __call__(self, text):
         if self.mapping:
-            return string.translate(text, self.mapping)
+            return text.translate(self.mapping)
         else:
             return text

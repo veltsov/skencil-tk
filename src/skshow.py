@@ -84,7 +84,7 @@ class ShowView(Sketch.UI.view.SketchView):
 
     def __init__(self, master=None, toplevel = None, double_buffer = 1,
                  show_page_outline = 0, **kw):
-	apply(Sketch.UI.view.SketchView.__init__, (self, master), kw)
+	Sketch.UI.view.SketchView.__init__(*(self, master), **kw)
         self.double_buffer = double_buffer
         self.show_page_outline = show_page_outline
 

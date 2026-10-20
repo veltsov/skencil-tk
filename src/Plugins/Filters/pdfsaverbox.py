@@ -48,7 +48,7 @@ def save(document, file, filename, options = {}):
     offy = -lly
 
     filename = util.sh_quote(filename)
-    file = os.popen(gs_command % locals(),'w')
+    file = util.popen_write(gs_command % locals())
     ps = PostScriptDevice(file, document = document, as_eps = 1, embed_fonts = 1,
                           bounding_box = bbox,
                           Title = os.path.basename(filename),

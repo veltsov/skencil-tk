@@ -38,7 +38,7 @@ def make_button(*args, **kw):
         else:
             del kw['bitmap']
             kw['image'] = bitmap
-    return apply(Radiobutton, args, kw)
+    return Radiobutton(*args, **kw)
 
 class AlignPanel(CommandPanel):
 

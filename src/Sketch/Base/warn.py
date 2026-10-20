@@ -17,7 +17,6 @@
 
 
 import sys, string
-from types import StringType, DictionaryType
 import traceback
 
 import config
@@ -42,9 +41,9 @@ def flexible_format(format, args, kw):
             text = format
     except TypeError:
         if args:
-            text = string.join([format] + map(str, args))
+            text = ' '.join([format] + map(str, args))
         elif kw:
-            text = string.join([format] + map(str, kw.items()))
+            text = ' '.join([format] + map(str, kw.items()))
         else:
             text = format
 
@@ -118,7 +117,7 @@ def pdebug(level, message, *args, **kw):
     if not config.preferences.print_debug_messages:
         return
     if level:
-        if type(level) == StringType:
+        if isinstance(level, str):
             level = (level,)
         enabled = _levels
         for item in level:
@@ -126,7 +125,7 @@ def pdebug(level, message, *args, **kw):
                 enabled = enabled[item]
             except:
                 break
-        if type(enabled) == DictionaryType:
+        if isinstance(enabled, dict):
             enabled = enabled['default']
         if not enabled:
             return

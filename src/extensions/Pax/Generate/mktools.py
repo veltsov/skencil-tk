@@ -102,7 +102,7 @@ def setlist(list = None):
 
 def dotaggedfunction(tag, returntype, fname, *argtypes):
 	write('#if ', tag, '\n')
-	apply(dofunction, (returntype, fname) + argtypes)
+	dofunction(*(returntype, fname) + argtypes)
 	write('#endif /* ', tag, ' */\n')
 	List[-1] = (tag, List[-1])
 
@@ -126,7 +126,7 @@ def dofunction(returntype, fname, *argtypes):
 	#
 	# -- declare result
 	retlist = []
-	if returntype <> 'void':
+	if returntype != 'void':
 		if returntype == 'SUCCESS':
 			r = 'Boolean'
 		else:
@@ -234,8 +234,7 @@ def dofunction(returntype, fname, *argtypes):
 	for argtype, argname in arglist:
 		if argtype == 'argdict':
 			if not winitialized and not wCinitialized:
-				raise RuntimeError, \
-		  '\'argdict\' must be preceded by Widget or WidgetClass arg'
+				raise RuntimeError('\'argdict\' must be preceded by Widget or WidgetClass arg')
 		if argtype == '*' and 'argdict' in argtypes:
 			write(sep, 'w')
 		else:
@@ -273,10 +272,10 @@ def dofunction(returntype, fname, *argtypes):
 	#
 	# return result
 	if len(retlist) > 1:
-		write('\tretval = PyTuple_New(',`len(retlist)`,');\n')
+		write('\tretval = PyTuple_New(',repr(len(retlist)),');\n')
 		for i in range(len(retlist)):
 			argtype, argname = retlist[i]
-			write('\tPyTuple_SetItem(retval, ', `i`, ', ',
+			write('\tPyTuple_SetItem(retval, ', repr(i), ', ',
 			      create(argtype, argname),');\n')
 		write('\tif (PyErr_Occurred()) {\n')
 		write('\t\tPy_XDECREF(retval);\n')
@@ -306,7 +305,7 @@ def dofunction(returntype, fname, *argtypes):
 	List.append(pname)
 
 def mytaggedfunction(tag, returntype_unused, fname, *args_unused):
-	apply(myfunction, (returntype_unused, fname) +args_unused)
+	myfunction(*(returntype_unused, fname) +args_unused)
 	List[-1] = (tag, List[-1])
 
 def myfunction(returntype_unused, fname, *args_unused):
@@ -412,7 +411,7 @@ def dowidget(name, fname = '', cname = ''):
 		else:
 			cname = Classnamef(name)
 		cname = cname + 'WidgetClass'
-	if fname <> None:
+	if fname != None:
 		include = Includef % fname
 		write('#include ', include, '\n')
 		write('\n')

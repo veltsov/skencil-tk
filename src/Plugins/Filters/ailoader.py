@@ -101,7 +101,6 @@ format_name = 'Adobe Illustrator'
 
 import string, re
 from math import pi, hypot
-from types import IntType, StringType, ListType
 import string
 
 from PIL import Image
@@ -332,14 +331,14 @@ class AILoader(GenericLoader):
         pass
 
     def warn(self, level, *args, **kw):
-        message = apply(warn, (level,) + args, kw)
+        message = warn(*(level,) + args, **kw)
         self.add_message(message)
 
     def get_compiled(self):
         funclist = {}
         for char, name in self.functions.items():
             method = getattr(self, name)
-            argc = method.im_func.func_code.co_argcount - 1
+            argc = method.__func__.__code__.co_argcount - 1
             funclist[char] = (method, argc)
         return funclist
 
@@ -366,7 +365,7 @@ class AILoader(GenericLoader):
                 del self.stack[-1]
             return array
         except:
-            raise RuntimeError, 'No mark on stack'
+            raise RuntimeError('No mark on stack')
 
     def ignore_operator(self):
         pass
@@ -379,7 +378,7 @@ class AILoader(GenericLoader):
         self.stack.append(array)
 
     def convert_color(self, color_spec):
-        c = apply(CreateRGBColor, color_spec)
+        c = CreateRGBColor(*color_spec)
         return c
 
     def set_line_join(self, join):
@@ -532,19 +531,19 @@ class AILoader(GenericLoader):
             color = CreateRGBColor(k, k, k)
         elif color_style == 1:
             # CMYK
-            color = apply(CreateCMYKColor, tuple(self.pop_multi(4)))
+            color = CreateCMYKColor(*tuple(self.pop_multi(4)))
         elif color_style == 2:
             # RGB Color
             args = tuple(self.pop_multi(7))
             # The cmyk and rgb values usually differ slightly because AI
             # does some color correction. Which values should we choose
             # here?
-            color = apply(CreateRGBColor, args[-3:])
-            color = apply(CreateCMYKColor, args[:4])
+            color = CreateRGBColor(*args[-3:])
+            color = CreateCMYKColor(*args[:4])
         elif color_style == 3:
             # CMYK Custom Color
             args = self.pop_multi(6)
-            color = apply(CreateCMYKColor, tuple(args[:4]))
+            color = CreateCMYKColor(*tuple(args[:4]))
         else:
             self.add_message(_("Gradient ColorStyle %d not yet supported."
                                "substituted black")
@@ -830,7 +829,7 @@ class AILoader(GenericLoader):
         self.end_layer()
 
     def name_layer(self, name):
-        apply(self.layer, (name,), self.layer_kw_args)
+        self.layer(*(name,), **self.layer_kw_args)
 
     # Guides
 
@@ -856,13 +855,13 @@ class AILoader(GenericLoader):
         pos = 0
         defs = self.pop_to_mark()
         for item in defs:
-            if type(item) == IntType:
+            if isinstance(item, int):
                 pos = item
-            elif type(item) == StringType:
+            elif isinstance(item, str):
                 encoding[pos] = item
                 pos = pos + 1
             else:
-                self.add_message('unknown item %s in encoding' % `item`)
+                self.add_message('unknown item %s in encoding' % repr(item))
         self.standard_encoding = tuple(encoding)
 
     def define_font(self, psname, newname, encoding = None):
@@ -872,7 +871,7 @@ class AILoader(GenericLoader):
 
     def reencode_font(self):
         args = self.pop_to_mark()
-        if type(args[-1]) == ListType:
+        if isinstance(args[-1], list):
             self.add_message(_("Multiple Master fonts not supported. "
                                "Using Times Roman"))
             newname = args[-6]
@@ -901,9 +900,9 @@ class AILoader(GenericLoader):
 
         # first, turn the text accumulated in the list text_string into
         # a single string and unify line endings to newline characters.
-        text = string.join(self.text_string, '')
-        text = string.replace(text, '\r\n', '\n')
-        text = string.replace(text, '\r', '\n')
+        text = ''.join(self.text_string)
+        text = text.replace('\r\n', '\n')
+        text = text.replace('\r', '\n')
 
         # remove a trailing newline. Many Illustrator files contain a
         # trailing newline as 'overflow' text, there's probably a better
@@ -914,7 +913,7 @@ class AILoader(GenericLoader):
         # Re-encode to Latin1
         text = self.text_font.Reencode(text)
 
-        if not string.strip(text):
+        if not text.strip():
             if self.text_type == 2:
                 self.end_composite()
                 del self.composite_items[-1]
@@ -955,11 +954,11 @@ class AILoader(GenericLoader):
         # fontname and size. In Illustrator >= 7, there are two
         # additional arguments, ascent and descent.
         args = self.pop_multi(2)
-        if type(args[0]) != StringType:
+        if not isinstance(args[0], str):
             newname, size = self.pop_multi(2)
         else:
             newname, size = args
-        if self.font_map.has_key(newname):
+        if newname in self.font_map:
             self.text_font = self.font_map[newname]
         elif newname[0] == '_':
             # special case for ai files generated by ps2ai. They don't
@@ -1017,7 +1016,7 @@ class AILoader(GenericLoader):
         elif mode == 4:
             mode == 'CMYK'
         image = Image.fromstring(mode, (width, height), data, 'raw', mode)
-        self.image(image, apply(Trafo, tuple(trafo)))
+        self.image(image, Trafo(*tuple(trafo)))
 
     #
 
@@ -1032,7 +1031,7 @@ class AILoader(GenericLoader):
     #
 
     def skip_to_dsc(self, *endcomments):
-        next_dsc = self.tokenizer.next_dsc; split = string.split
+        next_dsc = self.tokenizer.next_dsc; split = str.split
         while 1:
             value = next_dsc()
             if not value:
@@ -1046,7 +1045,7 @@ class AILoader(GenericLoader):
 
     def read_prolog(self):
         next = self.tokenizer.next
-        DSC = DSC_COMMENT; split = string.split
+        DSC = DSC_COMMENT; split = str.split
         while 1:
             token, value = next()
             if token == DSC:
@@ -1057,7 +1056,7 @@ class AILoader(GenericLoader):
                 if keyword in ('EndProlog', 'BeginSetup'):
                     return keyword
                 if keyword[:14] == "AI5_FileFormat":
-                    self.format_version = string.atof(keyword[14:])
+                    self.format_version = float(keyword[14:])
                 elif keyword == 'BeginProcSet':
                     # some ai files exported by corel draw don't have an
                     # EndProcSet comment after a BeginProcSet...
@@ -1071,7 +1070,7 @@ class AILoader(GenericLoader):
                     # accepts EPS files as illustrator files if they
                     # contain "Adobe Illustrator" in their Create
                     # DSC-comment
-                    if string.find(value, "Adobe Illustrator") == -1:
+                    if value.find("Adobe Illustrator") == -1:
                         self.add_message("This is probably not an"
                                          " Illustrator file."
                                          " Try embedding it as EPS")
@@ -1083,7 +1082,7 @@ class AILoader(GenericLoader):
         # binding frequently used functions to local variables speeds up
         # the process considerably...
         a = apply; t = tuple
-        DSC = DSC_COMMENT; MAX = MAX_DATA_TOKEN; split = string.split
+        DSC = DSC_COMMENT; MAX = MAX_DATA_TOKEN; split = str.split
         stack = self.stack; push = self.stack.append
         unknown_operator = (None, None)
 

@@ -43,9 +43,6 @@ class UndoDict:
     def values(self):
         return self.dict.values()
 
-    def has_key(self, key):
-        return self.dict.has_key(key)
-
     def SetItem(self, key, item):
         # Add ITEM to self using KEY.
         #      
@@ -56,13 +53,13 @@ class UndoDict:
         #
         #	2. ITEM is not stored in self: Store it under KEY and rename
         #	ITEM.
-        if self.dict.has_key(key):
+        if key in self.dict:
             if self.dict[key] is item:
                 return NullUndo
             # name conflict
-            raise ValueError, '%s already used' % key
+            raise ValueError('%s already used' % key)
         oldname = item.Name()
-        if self.dict.has_key(oldname):
+        if oldname in self.dict:
             del self.dict[oldname]
             undo = (self.SetItem, oldname, item)
         else:

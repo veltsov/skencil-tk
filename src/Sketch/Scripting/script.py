@@ -45,13 +45,13 @@ class Script:
 
     def execute(self, context, *args, **kw):
         document = context.main_window.document
-        apply(document.BeginTransaction, args, kw)
+        document.BeginTransaction(*args, **kw)
         try:
             try:
                 kw = self.kwargs
                 if kw is None:
                     kw = {}
-                apply(self.function, (context,) + self.args, kw)
+                self.function(*(context,) + self.args, **kw)
             except:
                 warn_tb(USER, 'Error in user script "%s"', self.name)
                 document.AbortTransaction()

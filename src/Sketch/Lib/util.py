@@ -20,12 +20,25 @@
 #
 
 
-import os, string, re, stat
+import os, re, stat
+import subprocess
+
+def popen_write(cmd):
+    """Run CMD through the shell and return a file object connected to
+    its standard input. Replacement for os.popen(cmd, 'w')."""
+    return subprocess.Popen(cmd, shell=True,
+                            stdin=subprocess.PIPE).stdin
+
+def popen_read(cmd):
+    """Run CMD through the shell and return a file object connected to
+    its standard output. Replacement for os.popen(cmd)."""
+    return subprocess.Popen(cmd, shell=True,
+                            stdout=subprocess.PIPE).stdout
 
 # Return the value of the environment variable S if present, None
 # otherwise. In Python 1.5 one might use os.environ.get(S) instead...
 def getenv(s):
-    if os.environ.has_key(s):
+    if s in os.environ:
         return os.environ[s]
     return None
 
@@ -167,7 +180,7 @@ def make_backup(filename):
         backupname = filename + '~'
         try:
             os.rename(filename, backupname)
-        except os.error, value:
+        except os.error as value:
             raise BackupError(value[0], value[1], backupname)
 
 #
@@ -198,11 +211,10 @@ class Empty:
 #	List Manipulation
 #
 
-from types import ListType
-def flatten(list):
+def flatten(lst):
     result = []
-    for item in list:
-        if type(item) == ListType:
+    for item in lst:
+        if isinstance(item, list):
             result = result + flatten(item)
         else:
             result.append(item)
@@ -231,15 +243,14 @@ def format(template, converters, dict):
             result.append(template[pos:] % dict)
             pos = len(template)
 
-    return string.join(result, '')
+    return ''.join(result)
 
 # convert a bitmap to a string containing an xbm file. The linedlg uses
 # this for instance to convert bitmap objects to Tk bitmap images.
 def xbm_string(bitmap):
-    import string
     width, height = bitmap.GetGeometry()[3:5]
     lines = ['#define sketch_width %d' % width,
              '#define sketch_height %d' % height,
              'static unsigned char sketch_bits[] = {']
     lines = lines + bitmap.GetXbmStrings() + ['}', '']
-    return string.join(lines, '\n')
+    return '\n'.join(lines)

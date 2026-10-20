@@ -22,7 +22,7 @@ Horizontal Connection
 """) + StickyObject._connection_descr
     
     def __init__(self, *args, **kw):
-        apply(StickyObject.__init__, (self,)+args, kw)
+        StickyObject.__init__(*(self,)+args, **kw)
 
     def GetSnapPoints(self):
         return map(self.trafo, (self.p1, self.p2))

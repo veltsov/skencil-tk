@@ -25,7 +25,6 @@
 #
 # XXX: This needs a cleaner reimplementation
 
-from types import TupleType
 
 from Sketch import config
 from Sketch.Lib.units import unit_dict, unit_names
@@ -47,7 +46,7 @@ class LengthVar:
         self.precision = 2
         self.unit_var = unit_var
         self.callback = command
-        if type(args) != TupleType:
+        if not isinstance(args, tuple):
             args = (args,)
         self.args = args
         self.set_vars()
@@ -98,7 +97,7 @@ class LengthVar:
 
     def call_callback(self):
         if self.callback:
-            apply(self.callback, (self.length,) + self.args)
+            self.callback(*(self.length,) + self.args)
 
 
 

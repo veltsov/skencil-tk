@@ -40,7 +40,7 @@ class MultiGradient(Gradient):
             self.colors = duplicate.colors[:]
         else:
             if len(colors) < 2:
-                raise ValueError, 'at least 2 colors required'
+                raise ValueError('at least 2 colors required')
             self.colors = colors
 
     def StartColor(self):

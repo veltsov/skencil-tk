@@ -13,6 +13,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
+from __future__ import print_function
 from styletext import StyleText, Style
 import Tkinter
 from Tkconstants import *
@@ -21,7 +22,7 @@ from tkFileDialog import asksaveasfilename, asksaveasfilename, \
 from Sketch.Graphics import font
 from Sketch import _
 
-from cPickle import loads, dumps
+from pickle import loads, dumps
 import os
 
 
@@ -31,7 +32,7 @@ def raw2styling(raw):
         if l == 0:
             style = None
         else:
-            style = apply(Style, [], {l[0] : l[1]})
+            style = Style(*[], **{l[0] : l[1]})
         styling.append((style, line, char))
     return styling
 
@@ -115,7 +116,7 @@ std_sizes = (8, 9, 10, 12, 14, 18, 24, 36, 48, 72)
 class TextEditor(StyleText):
     def __init__(self, parent=None, **kw):
         self.top = parent
-        apply(StyleText.__init__, (self, parent), kw)
+        StyleText.__init__(*(self, parent), **kw)
 
         self.register_sort('family', self.FamilySort, 'Times' )
         self.register_sort('bold', self.BoldSort, 0)
@@ -296,14 +297,14 @@ class TextEditor(StyleText):
         else:
             dict['attr'] = ['Roman', 'Book', 'Light', 'Regular']
 
-        xfont = apply(FONTS.xlfd, (), dict)
+        xfont = FONTS.xlfd(*(), **dict)
         tagoptions['font'] = xfont
 
 
     def change_set(self, style):
         range = self.tag_ranges('sel')
         if len(range) == 2:
-            apply(self.style_add,(style,)+self.tag_ranges('sel'))
+            self.style_add(*(style,)+self.tag_ranges('sel'))
         else:
             self.style_force.append(style)
         self.Update()
@@ -352,12 +353,12 @@ class TextEditor(StyleText):
         if name:
             try:
                 text, styling = load_text(name) 
-            except Exception, value:
+            except Exception as value:
                 self.warn( 
                     title = _("Load File"),
                     message = _("Cannot load %(filename)s:\n"
                                 "%(message)s") \
-                    % {'filename':`os.path.split(name)[1]`,
+                    % {'filename':repr(os.path.split(name)[1]),
                        'message':value})
                 return
             index = '1.0'
@@ -375,12 +376,12 @@ class TextEditor(StyleText):
             styling = self.styling_get('1.0', 'end')
             try:
                 save_text(name, text, styling)
-            except IOError, value:
+            except IOError as value:
                 self.warn( 
                     title = _("Save File"),
                     message = _("Cannot Save %(filename)s:\n"
                                 "%(message)s") \
-                    % {'filename':`os.path.split(name)[1]`,
+                    % {'filename':repr(os.path.split(name)[1]),
                        'message':value})
 
     def insert_file(self, event=None):
@@ -390,12 +391,12 @@ class TextEditor(StyleText):
         if name:
             try:
                 text, styling = load_text(name) 
-            except Exception, value:
+            except Exception as value:
                 self.warn( 
                     title = _("Insert File"),
                     message = _("Cannot insert %(filename)s:\n"
                                 "%(message)s") \
-                    % {'filename':`os.path.split(name)[1]`,
+                    % {'filename':repr(os.path.split(name)[1]),
                        'message':value})
                 return
 
@@ -422,7 +423,7 @@ def test1():
 
 def waste():
     global text
-    print "profiling"
+    print("profiling")
     for i in range(1000):
         text.insert('250.10', "x")
 
@@ -434,7 +435,7 @@ def test2():
     text = TextEditor(tk, background='white')
     text.pack(fill=BOTH, expand=1)
     n = 500
-    print "n =", n
+    print("n =", n)
     for i in range(n):
 #        print i
         text.insert(END, '1234567890abcdefghij\n')

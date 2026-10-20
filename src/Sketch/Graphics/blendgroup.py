@@ -21,7 +21,6 @@
 #
 
 
-from types import IntType, ListType
 import operator
 
 from Sketch.UI import command
@@ -58,7 +57,7 @@ class BlendInterpolation(Compound):
 
     def SetParameters(self, steps):
         if steps < 2:
-            raise ValueError, 'steps must be >= 2'
+            raise ValueError('steps must be >= 2')
         if self.steps != steps:
             undo = (self.SetParameters, self.steps)
             self.steps = steps
@@ -165,7 +164,7 @@ class BlendGroup(Compound):
     def insert(self, obj, at):
         undo_info = None
         try:
-            if type(at) != IntType or at > len(self.objects):
+            if not isinstance(at, int) or at > len(self.objects):
                 at = len(self.objects)
             self.objects.insert(at, obj)
             obj.SetDocument(self.document)
@@ -214,7 +213,7 @@ class BlendGroup(Compound):
                 return CreateListUndo(undo)
             else:
                 # XXX implement this case
-                raise ValueError, 'BlendGroup: cannot remove non control child'
+                raise ValueError('BlendGroup: cannot remove non control child')
         except:
             Undo(CreateListUndo(undo))
             raise
@@ -230,12 +229,12 @@ class BlendGroup(Compound):
         undo = [self.begin_change_children()]
         try:
             for start, end in sliced:
-                if type(end) == IntType:
+                if isinstance(end, int):
                     # > 1 adjacent children of self. XXX implement this
                     raise SketchInternalError('Deletion of multiple objects'
                                               ' of BlendGroups not yet'
                                               ' implemented')
-                elif type(end) == ListType:
+                elif isinstance(end, list):
                     # remove grandchildren (children of child of self)
                     if start % 2 == 0:
                         # control object changes. This should result in

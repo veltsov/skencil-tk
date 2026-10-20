@@ -46,11 +46,11 @@ class GradientView(PyWidget, Publisher):
     def __init__(self, master, width, height, gradient, **kw):
         image = PIL.Image.new('RGB', (width, height))
         self.orig_x = handle_height / 2
-        if not kw.has_key('width'):
+        if 'width' not in kw:
             kw["width"] = width + handle_height
-        if not kw.has_key('height'):
+        if 'height' not in kw:
             kw["height"] = height + handle_height
-        apply(PyWidget.__init__, (self, master), kw)
+        PyWidget.__init__(*(self, master), **kw)
         self.set_gradient(gradient)
         self.update_pending = 0
         self.dragging = 0
@@ -210,8 +210,8 @@ class GradientView(PyWidget, Publisher):
                 if gradient[i][0] < pos < gradient[i + 1][0]:
                     p1, c1 = gradient[i]
                     p2, c2 = gradient[i + 1]
-                    color = Blend(apply(CreateRGBColor, c2),
-                                  apply(CreateRGBColor, c1),
+                    color = Blend(CreateRGBColor(*c2),
+                                  CreateRGBColor(*c1),
                                   (pos - p1) / (p2 - p1))
                     gradient.insert(i + 1, (pos, tuple(color)))
                     self.UpdateWhenIdle()
@@ -223,7 +223,7 @@ class GradientView(PyWidget, Publisher):
     def set_handle_color(self):
         if self.context_idx >= 0:
             pos, color = self.gradient[self.context_idx]
-            color = GetColor(self, apply(CreateRGBColor, color))
+            color = GetColor(self, CreateRGBColor(*color))
             if color is not None:
                 self.gradient[self.context_idx] = (pos, tuple(color))
                 self.UpdateWhenIdle()
@@ -280,7 +280,7 @@ class GradientView(PyWidget, Publisher):
     def GetGradient(self):
         result = []
         for pos, color in self.gradient:
-            result.append((pos, apply(CreateRGBColor, color)))
+            result.append((pos, CreateRGBColor(*color)))
         return MultiGradient(result)
 
 
@@ -294,7 +294,7 @@ class EditGradientDlg(SKModal):
 
     def __init__(self, master, gradient, **kw):
         self.gradient = gradient
-        apply(SKModal.__init__, (self, master), kw)
+        SKModal.__init__(*(self, master), **kw)
 
     def build_dlg(self):
         top = self.top

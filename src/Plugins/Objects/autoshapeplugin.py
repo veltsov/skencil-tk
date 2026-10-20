@@ -6,6 +6,7 @@
 #custom_dialog = 'AutoshapeDlg'
 ###End
 
+from __future__ import print_function
 (''"Autoshapes")
 
 _verbose = 0
@@ -39,7 +40,7 @@ def colorize(img, fg, fr, fb):
         red, green, blue = data[i:i+3]
         data[i:i+3] = [byte(fr*red), byte(fg*green), byte(fb*blue)]
 
-    q_image.im.putpalette('RGB',string.join(map(chr, data), ''))
+    q_image.im.putpalette('RGB',''.join(map(chr, data)))
     return q_image
         
 def highlight(img):
@@ -246,10 +247,10 @@ def unload():
             continue
         if f.find('autoshape') > -1:
             if _verbose:
-                print "unloading module ", f
+                print("unloading module ", f)
             del sys.modules[key]
         else:
             if 0:
-                print "i ", f[-20:]
+                print("i ", f[-20:])
 
 

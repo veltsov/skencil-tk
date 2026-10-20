@@ -28,6 +28,7 @@
 # This means that a lot of more or less unnecessary modules are
 # loaded...
 
+from __future__ import print_function
 import sys, os
 
 from Sketch import load, PostScriptDevice
@@ -41,7 +42,7 @@ def sk2ps(filename, psfilename, **psargs):
                             printable = psargs.get('printable', 1))
     psargs['bounding_box'] = tuple(bbox)
     psargs['document'] = doc
-    ps = apply(PostScriptDevice, (psfilename,), psargs)
+    ps = PostScriptDevice(*(psfilename,), **psargs)
     doc.Draw(ps)
     ps.Close()
 
@@ -82,7 +83,7 @@ Other Options:
 '''
 
 def print_usage():
-    print usage
+    print(usage)
 
 def main():
     import Sketch

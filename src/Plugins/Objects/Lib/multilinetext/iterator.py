@@ -12,6 +12,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+from __future__ import print_function
 class StyletextError(Exception):
     pass
 
@@ -29,14 +30,21 @@ class Style:
         self.options = kw.values()[0]
         self._signature_ = str(kw)
 
-    def __cmp__ (self, other):
+    def _check_other(self, other):
         if not hasattr(other, 'is_Style'):
             raise StyletextError(
                 "can't compare styles to non-style objects: %s" %
                 other)
-        s1 = self._signature_
-        s2 = other._signature_
-        return cmp(s1,s2)
+        return other._signature_
+
+    def __eq__ (self, other):
+        return self._signature_ == self._check_other(other)
+
+    def __ne__ (self, other):
+        return not self.__eq__(other)
+
+    def __lt__ (self, other):
+        return self._signature_ < self._check_other(other)
 
 class Id:
 
@@ -88,7 +96,7 @@ class Pool(Id):
 
     def dump(self):
         out = []
-        print "______________ POOL DUMP __________"
+        print("______________ POOL DUMP __________")
         for i in range(len(self.keys)):
             sig = self.signatures[i]
             id = self.keys[i]
@@ -97,9 +105,9 @@ class Pool(Id):
             else: index = ""
             out.append((index,  id, self.dict[sig]))
         for index, id, style in out:
-            print index,"\t", id,"\t", style
-        print "# of keys = ", len(self.keys)
-        print "# of signatures = ", len(self.signatures)
+            print(index,"\t", id,"\t", style)
+        print("# of keys = ", len(self.keys))
+        print("# of signatures = ", len(self.signatures))
 
     class Iterator:
 
@@ -371,8 +379,8 @@ if __name__=='__main__':
     s1 = Style(q=1)
     s2 = Style(w=1)
     s3 = Style(w=1)
-    if s2 == s3: print "error"
-    if s2 != s3: print "error"
+    if s2 == s3: print("error")
+    if s2 != s3: print("error")
 
     i = pool.iterator()
     i.insert_left(Style(color = "blue"),'1.0')
@@ -383,7 +391,7 @@ if __name__=='__main__':
 
     pool.dump()
     i.after("1.0")
-    print "after 1.0: ",i,i.i
+    print("after 1.0: ",i,i.i)
 
     i.after("2.0")
-    print "after 2.0: ",i,i.i
+    print("after 2.0: ",i,i.i)

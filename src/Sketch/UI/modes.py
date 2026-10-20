@@ -129,9 +129,9 @@ class WidgetWithModes:
 
             self.mode.exit()
             self.mode = mode
-            apply(self.mode.enter, args)
+            self.mode.enter(*args)
 
         else:
             self.push_mode(mode)
-            apply(self.mode.enter, args)
+            self.mode.enter(*args)
 

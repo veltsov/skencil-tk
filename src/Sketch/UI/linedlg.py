@@ -72,7 +72,7 @@ def create_dash_images(tk, tkwin, dashes):
     images = []
     for dash in dashes:
         draw_dash_bitmap(gc, dash)
-        image = create_bitmap_image(tk, 'dash_' + `len(images)`, bitmap)
+        image = create_bitmap_image(tk, 'dash_' + repr(len(images)), bitmap)
         images.append((image, dash))
 
     return gc, bitmap, images
@@ -114,12 +114,12 @@ def create_arrow_images(tk, tkwin, arrows):
     images1 = []
     for arrow in arrows:
         draw_arrow_bitmap(gc, arrow, 1)
-        image = create_bitmap_image(tk, 'arrow1_' + `len(images1)`, bitmap)
+        image = create_bitmap_image(tk, 'arrow1_' + repr(len(images1)), bitmap)
         images1.append((image, arrow))
     images2 = []
     for arrow in arrows:
         draw_arrow_bitmap(gc, arrow, 2)
-        image = create_bitmap_image(tk, 'arrow2_' + `len(images2)`, bitmap)
+        image = create_bitmap_image(tk, 'arrow2_' + repr(len(images2)), bitmap)
         images2.append((image, arrow))
 
 

@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 
-from types import StringType, TupleType, FunctionType
+import types
 
 from Sketch import Publisher
 from Sketch.const import CHANGED, SELECTION
@@ -39,23 +39,23 @@ class Command(Publisher):
         except AttributeError:
             if attr == 'button_name':
                 return self.menu_name
-        raise AttributeError, attr
+        raise AttributeError(attr)
 
     def get_method(self, path):
         if callable(path):
             return path
         method = self.object
-        if type(path) != TupleType:
+        if not isinstance(path, tuple):
             path = (path,)
         for name in path:
             method = getattr(method, name)
         return method
 
     def Invoke(self, args = ()):
-        if type(args) != TupleType:
+        if not isinstance(args, tuple):
             args = (args,)
         try:
-            apply(self.get_method(self.command), self.args + args)
+            self.get_method(self.command)(*self.args + args)
         except:
             warn_tb(INTERNAL)
 
@@ -164,7 +164,7 @@ class CommandClass:
         self.name = name
         self.command = command
         self.subscribe_to = subscribe_to
-        if type(args) != TupleType:
+        if not isinstance(args, tuple):
             self.args = (args,)
         else:
             self.args = args
@@ -179,7 +179,7 @@ class CommandClass:
     def InstantiateFor(self, object):
         cmd = self.cmd_class(self, object)
         if self.subscribe_to:
-            if type(self.subscribe_to) == TupleType:
+            if isinstance(self.subscribe_to, tuple):
                 attrs = self.subscribe_to[:-1]
                 for attr in attrs:
                     object = getattr(object, attr)
@@ -202,11 +202,10 @@ class ObjectCommand(Command):
         return Command.get_method(self, path)
 
     def Invoke(self, args = ()):
-        if type(args) != TupleType:
+        if not isinstance(args, tuple):
             args = (args,)
         try:
-            apply(self.object.document.CallObjectMethod,
-                  (self.object_class, self.menu_name, self.command) \
+            self.object.document.CallObjectMethod(*(self.object_class, self.menu_name, self.command) \
                   + self.args + args)
         except:
             warn_tb(INTERNAL)
@@ -275,10 +274,10 @@ class Keymap:
     def AddCommand(self, command):
         key_stroke = command.GetKeystroke()
         if key_stroke:
-            if type(key_stroke) == StringType:
+            if isinstance(key_stroke, str):
                 key_stroke = (key_stroke,)
             for stroke in key_stroke:
-                if self.map.has_key(stroke):
+                if stroke in self.map:
                     # XXX: should be user visible if keybindings can be
                     # changed by user
                     warn(INTERNAL, 'Warning: Binding %s to %s replaces %s',
@@ -286,7 +285,7 @@ class Keymap:
                 self.map[stroke] = command
 
     def MapKeystroke(self, stroke):
-        if self.map.has_key(stroke):
+        if stroke in self.map:
             return self.map[stroke]
 
 
@@ -295,13 +294,13 @@ class Keymap:
 #
 
 def AddCmd(list, name, menu_name, method = None, **kw):
-    if type(name) == FunctionType:
-        name = name.func_name
+    if isinstance(name, types.FunctionType):
+        name = name.__name__
     if method is None:
         method = name
-    elif type(method) == FunctionType:
-        method = method.func_name
+    elif isinstance(method, types.FunctionType):
+        method = method.__name__
     kw['menu_name'] = menu_name
     kw['subscribe_to'] = SELECTION
-    cmd = apply(ObjectCommandClass, (name, method), kw)
+    cmd = ObjectCommandClass(*(name, method), **kw)
     list.append(cmd)

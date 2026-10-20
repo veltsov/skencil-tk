@@ -15,12 +15,13 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
+from __future__ import print_function
 import os, sys, string
 
 _pkgdir = __path__[0]
 _parentdir = os.path.join(_pkgdir, '..')
 
-SketchVersion = string.strip(open(os.path.join(_pkgdir, 'VERSION')).read())
+SketchVersion = open(os.path.join(_pkgdir, 'VERSION')).read().strip()
 
 for _dir in ('Modules', 'Base'):
     __path__.insert(0, os.path.join(_pkgdir, _dir))
@@ -48,8 +49,8 @@ try:
 except locale.Error:
     # if we can't set the locale we might not be able to get
     # properly translated messages
-    print "Can't set locale." \
-          " Please check your LANG and LC_* environment variables"
+    print("Can't set locale." \
+          " Please check your LANG and LC_* environment variables")
 
 _textdomains = {'skencil': message_dir}
 _current_domain = ['skencil']
@@ -123,32 +124,15 @@ from connector import Connect, Disconnect, Issue, RemovePublisher, Subscribe, \
 
 #
 
-def _import_PIL():
-    # Import PIL and work around some bugs...
-    # First, try to import PIL as a package
-    try:
-        import PIL
-        import PIL.Image
-        # Work around a bug in PIL 1.0 when used as a package
-        if PIL.__path__[0] not in sys.path:
-            sys.path.append(PIL.__path__[0])
-    except ImportError:
-        # Must be an older PIL.
-        try:
-            import Image, ImageChops
-        except:
-            warn.warn(warn.USER, "Can't import the Python Imaging Library")
-            sys.exit(1)
-        import plugins
-        plugins.create_packages('PIL')
-        import PIL
-        PIL.__path__.append(os.path.split(Image.__file__)[0])
-        PIL.Image = Image
-        PIL.ImageChops = ImageChops
-        sys.modules['PIL.Image'] = Image
-        sys.modules['PIL.ImageChops'] = ImageChops
-
-_import_PIL()
+# PIL is only supported as a package (true for every Pillow version
+# that runs on this Python; the workarounds for pre-package PIL and
+# PIL 1.0 were removed with the rest of the old compatibility code).
+try:
+    import PIL.Image
+    import PIL.ImageChops
+except ImportError:
+    warn.warn(warn.USER, "Can't import the Python Imaging Library")
+    sys.exit(1)
 
 
 

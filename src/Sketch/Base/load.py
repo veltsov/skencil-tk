@@ -35,7 +35,6 @@
 #	document.
 #
 
-from types import StringType, TupleType
 import os, string
 import time
 
@@ -98,7 +97,7 @@ class LoaderWithComposites:
             args, kw = self.composite_args
             if not kw:
                 kw = {}
-            composite = apply(self.composite_class, args, kw)
+            composite = self.composite_class(*args, **kw)
             # We treat Plugins specially here and in check_object so
             # that we can be a bit more lenient with plugin objects.
             # They should not be empty (after all they'd be invisible
@@ -233,21 +232,21 @@ class GenericLoader(LoaderWithComposites):
                                    properties = self.get_prop_stack()))
     def simple_text(self, str, trafo = None, valign = text.ALIGN_BASE,
                     halign = text.ALIGN_LEFT):
-        if type(trafo) == TupleType:
+        if isinstance(trafo, tuple):
             if len(trafo) == 2:
-                trafo = apply(Translation, trafo)
+                trafo = Translation(*trafo)
             else:
-                raise TypeError, "trafo must be a Trafo-object or a 2-tuple"
+                raise TypeError("trafo must be a Trafo-object or a 2-tuple")
         self.append_object(text.SimpleText(text = str, trafo = trafo,
                                            valign = valign, halign = halign,
                                            properties = self.get_prop_stack()))
 
     def image(self, image, trafo):
-        if type(trafo) == TupleType:
+        if isinstance(trafo, tuple):
             if len(trafo) == 2:
-                trafo = apply(Translation, trafo)
+                trafo = Translation(*trafo)
             else:
-                raise TypeError, "trafo must be a Trafo-object or a 2-tuple"
+                raise TypeError("trafo must be a Trafo-object or a 2-tuple")
         image = ImageData(image)
         self.append_object(Image(image, trafo = trafo))
 
@@ -287,7 +286,7 @@ class GenericLoader(LoaderWithComposites):
             else:
                 list.append(message)
         list.sort()
-        return string.join(list, '\n')
+        return '\n'.join(list)
 
 
 class SimplifiedLoader(GenericLoader):
@@ -353,10 +352,10 @@ def load_drawing_from_file(file, filename = '', doc_class = None):
 
 
 def load_drawing(filename):
-    if type(filename) == StringType:
+    if isinstance(filename, str):
         try:
             file = open(filename, 'r')
-        except IOError, value:
+        except IOError as value:
             message = value.strerror
             raise SketchLoadError(_("Cannot open %(filename)s:\n%(message)s")
                                   % locals())

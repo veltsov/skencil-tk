@@ -79,7 +79,7 @@ class SketchPixmaps:
             try:
                 pixmap = widget.ReadBitmapFile(file_base + '.xbm')[2]
                 setattr(self, name, pixmap)
-            except IOError, info:
+            except IOError as info:
                 warn(USER, "Warning: Can't load Pixmap from %s: %s",
                      file_base + '.xbm', info)
 

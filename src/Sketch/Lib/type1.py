@@ -19,11 +19,10 @@
 #       Extract character outlines from Type1 font files...
 #
 
+from __future__ import print_function
 import sys
 from cStringIO import StringIO
-from types import StringType
 
-from string import atoi, split, find, strip
 
 import streamfilter
 
@@ -39,7 +38,7 @@ def read_type1_file(filename):
         line = file.readline()
         while line:
             line = file.readline()
-            pos = find(line, 'eexec')
+            pos = line.find('eexec')
             if pos >= 0:
                 data.write(line[:pos + 5] + '\n')
                 line = line[pos + 5:]
@@ -62,7 +61,7 @@ def read_type1_file(filename):
     else:
         while 1:
             if ord(head[0]) != 128:
-                raise TypeError, 'not a pfb file'
+                raise TypeError('not a pfb file')
             data_type = ord(head[1])
             if data_type == 3:
                 # EOF
@@ -76,20 +75,20 @@ def read_type1_file(filename):
                 # decode and discard the first 4 bytes
                 buf = file.read(4)
                 if len(buf) < 4:
-                    raise IOError, "insufficient data"
+                    raise IOError("insufficient data")
                 buf, r = decode(buf, 55665)
                 data_length = data_length - 4
                 if data_length < 0:
-                    raise IOError, "invalid data"
+                    raise IOError("invalid data")
                 while data_length:
                     buf = file.read(min(1000, data_length))
                     if not buf:
-                        raise IOError, "insufficient data"
+                        raise IOError("insufficient data")
                     buf, r = decode(buf, r)
                     data.write(buf)
                     data_length = data_length - len(buf)
             else:
-                raise RuntimeError, "Invalid data type"
+                raise RuntimeError("Invalid data type")
             head = file.read(6)
 
 
@@ -172,11 +171,11 @@ class CharStringInterpreter:
     def print_path(self):
         for closed, path in self.paths:
             if closed:
-                print 'closed:'
+                print('closed:')
             else:
-                print 'open:'
+                print('open:')
             for part in path:
-                print part
+                print(part)
 
     def reset(self):
         self.stack = []
@@ -418,7 +417,7 @@ def read_outlines(filename):
 
 
 def embed_type1_file(fontfile, outfile):
-    if type(fontfile) == StringType:
+    if isinstance(fontfile, str):
         file = open(filename, 'rb')
     else:
         file = fontfile
@@ -434,7 +433,7 @@ def embed_type1_file(fontfile, outfile):
         # Probably PFB
         while 1: # loop over all chunks
             if ord(head[0]) != 128:
-                raise TypeError, 'not a pfb file'
+                raise TypeError('not a pfb file')
             data_type = ord(head[1])
             if data_type == 3:
                 # EOF
@@ -472,7 +471,7 @@ def test():
     items.sort()
     interpreter = CharStringInterpreter(subrs)
     for name, code in items:
-        print name, `code`
+        print(name, repr(code))
         interpreter.execute(code)
         interpreter.print_path()
         interpreter.reset()

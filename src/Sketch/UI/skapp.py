@@ -163,13 +163,13 @@ class TkApplication:
         self.root.mainloop()
 
     def MessageBox(self, *args, **kw):
-        return apply(tkext.MessageDialog, (self.root,) + args, kw)
+        return tkext.MessageDialog(*(self.root,) + args, **kw)
 
     def GetOpenFilename(self, **kwargs):
-        return apply(tkext.GetOpenFilename, (self.root,), kwargs)
+        return tkext.GetOpenFilename(*(self.root,), **kwargs)
 
     def GetSaveFilename(self, **kwargs):
-        return apply(tkext.GetSaveFilename, (self.root,), kwargs)
+        return tkext.GetSaveFilename(*(self.root,), **kwargs)
 
     clipboard = None
 

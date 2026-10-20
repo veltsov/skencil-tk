@@ -16,6 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+from __future__ import print_function
 ###Sketch Config
 #type = Import
 #class_name = 'SVGLoader'
@@ -25,11 +26,9 @@ format_name = 'SVG'
 #unload = 1
 ###End
 
-from types import StringType
 from math import pi, tan
 import os, sys
 import re
-from string import strip, split, atoi, lower
 import string
 import operator
 
@@ -77,21 +76,21 @@ degrees = pi / 180.0
 
 
 def csscolor(str):
-    str = strip(str)
+    str = str.strip()
     if str[0] == '#':
         if len(str) == 7:
-            r = atoi(str[1:3], 16) / 255.0
-            g = atoi(str[3:5], 16) / 255.0
-            b = atoi(str[5:7], 16) / 255.0
+            r = int(str[1:3], 16) / 255.0
+            g = int(str[3:5], 16) / 255.0
+            b = int(str[5:7], 16) / 255.0
         elif len(str) == 4:
             # According to the CSS rules a single HEX digit is to be
             # treated as a repetition of the digit, so that for a digit
             # d the value is (16 * d + d) / 255.0 which is equal to d / 15.0
-            r = atoi(str[1], 16) / 15.0
-            g = atoi(str[2], 16) / 15.0
-            b = atoi(str[3], 16) / 15.0
+            r = int(str[1], 16) / 15.0
+            g = int(str[2], 16) / 15.0
+            b = int(str[3], 16) / 15.0
         color = CreateRGBColor(r, g, b)
-    elif namedcolors.has_key(str):
+    elif str in namedcolors:
         color = namedcolors[str]
     else:
         color = StandardColors.black
@@ -304,10 +303,10 @@ class SVGHandler(saxlib.HandlerBase):
     def _print(self, *args):
         return
         if args:
-            print self.depth * self.indent + args[0],
+            print(self.depth * self.indent + args[0], end=' ')
         for s in args[1:]:
-            print s,
-        print
+            print(s, end=' ')
+        print()
 
     def parse_transform(self, trafo_string):
         trafo = self.trafo
@@ -318,11 +317,11 @@ class SVGHandler(saxlib.HandlerBase):
             match = rx_trafo.match(trafo_string)
             if match:
                 function = match.group(1)
-                args = string.translate(match.group(2), commatospace)
-                args = map(float, split(args))
+                args = match.group(2).translate(commatospace)
+                args = map(float, args.split())
                 trafo_string = trafo_string[match.end(0):]
                 if function == 'matrix':
-                    trafo = trafo(apply(Trafo, tuple(args)))
+                    trafo = trafo(Trafo(*tuple(args)))
                 elif function == 'scale':
                     trafo = trafo(Scale(args[0]))
                 elif function == 'translate':
@@ -342,10 +341,10 @@ class SVGHandler(saxlib.HandlerBase):
     def startElement(self, name, attrs):
         self._print('(', name)
         for key, value in attrs.items():
-            self._print('  -', key, `value`)
+            self._print('  -', key, repr(value))
         self.depth = self.depth + 1
         self.push_state()
-        if attrs.has_key('transform'):
+        if 'transform' in attrs:
             self.parse_transform(attrs['transform'])
         self._print("applied transormation", self.trafo)
         method = self.dispatch_start.get(name)
@@ -364,13 +363,13 @@ class SVGHandler(saxlib.HandlerBase):
         self.current_text = self.current_text + as_latin1(ch)
 
     def error(self, exception):
-        print 'error', exception
+        print('error', exception)
 
     def fatalError(self, exception):
-        print 'fatalError', exception
+        print('fatalError', exception)
 
     def warning(self, exception):
-        print 'warning', exception
+        print('warning', exception)
 
     def initsvg(self, attrs):
         width = self.user_length(attrs.get('width', '100%'))
@@ -382,16 +381,16 @@ class SVGHandler(saxlib.HandlerBase):
         # FIXME: Handle preserveAspectRatio as well
         viewbox = attrs.get("viewBox", "")
         if viewbox:
-            vx, vy, vwidth, vheight = map(float, split(viewbox))
+            vx, vy, vwidth, vheight = map(float, viewbox.split())
             t = Scale(width / vwidth, height / vheight)
             t = t(Translation(-vx, -vy))
             self.trafo = self.trafo(t)
         self._print("basetrafo", self.basetrafo)
 
     def parse_style(self, style):
-        parts = filter(None, map(strip, split(style, ';')))
+        parts = filter(None, map(str.strip, style.split(";")))
         for part in parts:
-            key, val = map(strip, split(part, ':', 1))
+            key, val = map(str.strip, part.split(":", 1))
             self._print('style', key, val)
 
             # only try to parse the value if it's not empty
@@ -473,7 +472,7 @@ class SVGHandler(saxlib.HandlerBase):
     def user_length(self, str):
         # interpret string as a length and return the appropriate value
         # user coordinates
-        str = strip(str)
+        str = str.strip()
         factor = factors.get(str[-2:])
         if factor is not None:
             str = str[:-2]
@@ -490,8 +489,8 @@ class SVGHandler(saxlib.HandlerBase):
         # Return the point described by the SVG coordinates x and y as
         # an SKPoint object in user coordinates. x and y are expected to
         # be strings.
-        x = strip(x)
-        y = strip(y)
+        x = x.strip()
+        y = y.strip()
 
         # extract the units from the coordinate values if any and
         # determine the appropriate factor to convert those units to
@@ -546,11 +545,11 @@ class SVGHandler(saxlib.HandlerBase):
             if id:
                 self.named_objects[id] = ('object', 'circle', attrs)
             return
-        if attrs.has_key('cx'):
+        if 'cx' in attrs:
             x = attrs['cx']
         else:
             x = '0'
-        if attrs.has_key('cy'):
+        if 'cy' in attrs:
             y = attrs['cy']
         else:
             y = '0'
@@ -562,7 +561,7 @@ class SVGHandler(saxlib.HandlerBase):
         if style:
             self.parse_style(style)
         self.set_loader_style()
-        apply(self.loader.ellipse, t.coeff())
+        self.loader.ellipse(*t.coeff())
 
 
     def ellipse(self, attrs):
@@ -571,11 +570,11 @@ class SVGHandler(saxlib.HandlerBase):
             if id:
                 self.named_objects[id] = ('object', 'ellipse', attrs)
             return
-        if attrs.has_key('cx'):
+        if 'cx' in attrs:
             x = attrs['cx']
         else:
             x = '0'
-        if attrs.has_key('cy'):
+        if 'cy' in attrs:
             y = attrs['cy']
         else:
             y = '0'
@@ -587,7 +586,7 @@ class SVGHandler(saxlib.HandlerBase):
         if style:
             self.parse_style(style)
         self.set_loader_style()
-        apply(self.loader.ellipse, t.coeff())
+        self.loader.ellipse(*t.coeff())
 
     def rect(self, attrs):
         #print 'rect', attrs.map
@@ -596,11 +595,11 @@ class SVGHandler(saxlib.HandlerBase):
             if id:
                 self.named_objects[id] = ('object', 'rect', attrs)
             return
-        if attrs.has_key('x'):
+        if 'x' in attrs:
             x = attrs['x']
         else:
             x = '0'
-        if attrs.has_key('y'):
+        if 'y' in attrs:
             y = attrs['y']
         else:
             y = '0'
@@ -613,7 +612,7 @@ class SVGHandler(saxlib.HandlerBase):
         if style:
             self.parse_style(style)
         self.set_loader_style()
-        apply(self.loader.rectangle, t.coeff())
+        self.loader.rectangle(*t.coeff())
 
     def polyline(self, attrs):
         if self.in_defs:
@@ -622,8 +621,8 @@ class SVGHandler(saxlib.HandlerBase):
                 self.named_objects[id] = ('object', 'polyline', attrs)
             return
         points = as_latin1(attrs['points'])
-        points = string.translate(points, commatospace)
-        points = split(points)
+        points = points.translate(commatospace)
+        points = points.split()
         path = CreatePath()
         point = self.point
         for i in range(0, len(points), 2):
@@ -642,7 +641,7 @@ class SVGHandler(saxlib.HandlerBase):
             return
         points = as_latin1(attrs['points'])
         points = string.translate(points, commatospace)
-        points = split(points)
+        points = points.split()
         path = CreatePath()
         point = self.point
         for i in range(0, len(points), 2):
@@ -659,7 +658,7 @@ class SVGHandler(saxlib.HandlerBase):
         paths = self.paths
         path = self.path
         trafo = self.trafo
-        str = strip(string.translate(as_latin1(str), commatospace))
+        str = string.translate(as_latin1(str), commatospace).strip()
         last_quad = None
         last_cmd = cmd = None
         f13 = 1.0 / 3.0; f23 = 2.0 / 3.0
@@ -866,11 +865,11 @@ class SVGHandler(saxlib.HandlerBase):
             return
         href = as_latin1(attrs['xlink:href'])
         image = load_image(os.path.join(self.loader.directory, href)).image
-        if attrs.has_key('x'):
+        if 'x' in attrs:
             x = attrs['x']
         else:
             x = '0'
-        if attrs.has_key('y'):
+        if 'y' in attrs:
             y = attrs['y']
         else:
             y = '0'
@@ -903,11 +902,11 @@ class SVGHandler(saxlib.HandlerBase):
         for key,value in attrs.items():
             self.try_add_style(key,value)
 
-        if attrs.has_key('x'):
+        if 'x' in attrs:
             x = attrs['x']
         else:
             x = '0'
-        if attrs.has_key('y'):
+        if 'y' in attrs:
             y = attrs['y']
         else:
             y = '0'
@@ -921,7 +920,7 @@ class SVGHandler(saxlib.HandlerBase):
         self.current_text=''
 
     def end_text(self):
-        self.loader.simple_text(strip(self.current_text), self.text_trafo,
+        self.loader.simple_text(self.current_text.strip(), self.text_trafo,
                                 halign = self.halign)
 
     def data(self, attrs):
@@ -941,14 +940,14 @@ class SVGHandler(saxlib.HandlerBase):
 
     def use(self, attrs):
         #print 'use', attrs.map
-        if attrs.has_key('xlink:href'):
+        if 'xlink:href' in attrs:
             name = attrs['xlink:href']
         else:
             name = attrs.get('href', '<none>')
         if name:
             data = self.named_objects.get(name[1:])
             if data[0] == 'object':
-                if attrs.has_key('style'):
+                if 'style' in attrs:
                     self.parse_style(attrs['style'])
                 self.startElement(data[1], data[2])
                 self.endElement(data[1])

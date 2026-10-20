@@ -19,7 +19,6 @@
 # Miscellaneous functions for PostScript creation
 #
 
-from string import join
 import operator
 
 def make_ps_quote_table():
@@ -39,8 +38,7 @@ def make_ps_quote_table():
 quote_table = make_ps_quote_table()
 
 def quote_ps_string(text):
-    return join(map(operator.getitem, [quote_table]*len(text), map(ord, text)),
-                '')
+    return ''.join(map(operator.getitem, [quote_table]*len(text), map(ord, text)))
 
 def make_textline(text):
     # return text unchanged if no character needs to be quoted, as a

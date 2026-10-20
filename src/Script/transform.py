@@ -50,14 +50,14 @@ def convert(s):
     match = re.search('[^0-9]+$', s)
     if match:
         value, unit = s[:match.start()], s[match.start():]
-        value = string.atof(value)
-        unit = string.strip(unit)
-        if unit_dict.has_key(unit):
+        value = float(value)
+        unit = unit.strip()
+        if unit in unit_dict:
             value = value * unit_dict[unit]
         elif unit:
-            raise ValueError, "unsupported unit: " + unit
+            raise ValueError("unsupported unit: " + unit)
     else:
-        value = string.atof(s)
+        value = float(s)
     return value
 
 
@@ -67,7 +67,7 @@ class TransformDlg(SKModal):
     def __init__(self, master, context, **kw):
         self.context = context
         self.main_window = context.main_window
-        apply(SKModal.__init__, (self, master), kw)
+        SKModal.__init__(*(self, master), **kw)
 
     def build_dlg(self):
         top = self.top
@@ -134,7 +134,7 @@ class TransformDlg(SKModal):
             dy = convert(self.var_movey.get())
             theta = (convert(self.var_rotate.get()) % 360) *pi/180.
             fact = self.var_scale.get()
-        except Exception, e:
+        except Exception as e:
             self.warn(e)
             return
             

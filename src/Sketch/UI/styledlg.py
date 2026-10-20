@@ -19,7 +19,6 @@
 #	A Dialog for managing dynamic styles
 #
 
-from string import atoi
 
 import Sketch
 from Sketch import _, config
@@ -100,7 +99,7 @@ class StylePanel(PropertyPanel):
     def apply_style(self):
         sel = self.styles.curselection()
         if sel:
-            index = atoi(sel[0])
+            index = int(sel[0])
             self.document.AddStyle(self.style_names[index])
 
     def can_remove(self):
@@ -109,7 +108,7 @@ class StylePanel(PropertyPanel):
     def remove_style(self):
         sel = self.styles.curselection()
         if sel:
-            index = atoi(sel[0])
+            index = int(sel[0])
             self.document.RemoveDynamicStyle(self.style_names[index])
 
 
@@ -120,7 +119,7 @@ class CreateStyleDlg(SKModal):
     def __init__(self, master, object, style_names, **kw):
         self.object = object
         self.style_names = style_names
-        apply(SKModal.__init__, (self, master), kw)
+        SKModal.__init__(*(self, master), **kw)
 
     def __del__(self):
         if __debug__:
@@ -251,7 +250,7 @@ def set_properties(master, document, title, category, kw):
     if document.HasSelection():
         document.BeginTransaction(title)
         try:
-            apply(document.SetProperties, (), kw)
+            document.SetProperties(*(), **kw)
         finally:
             document.EndTransaction()
     else:
@@ -259,7 +258,7 @@ def set_properties(master, document, title, category, kw):
             # remove the if_type_present argument if present. The font
             # dialog uses it in a kludgy way to avoid setting the font
             # on a non-text object.
-            if kw.has_key("if_type_present"):
+            if "if_type_present" in kw:
                 del kw["if_type_present"]
             which = WhichDefaultStyles(master, category = category)
             if which:

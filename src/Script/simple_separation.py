@@ -212,7 +212,7 @@ def simple_separation(context):
     color_extractor = ColorExtractor()
     try:
         doc.WalkHierarchy(color_extractor.extract_colors, all = 1)
-    except UnsupportedFeature, value:
+    except UnsupportedFeature as value:
         context.application.MessageBox(_("Simple Separation"),
                                        value)
         return

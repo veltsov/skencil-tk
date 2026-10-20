@@ -76,7 +76,7 @@ class ReloadPanel(SketchPanel):
 
     def do_reload(self):
         index = self.module_list.curselection()
-        index = string.atoi(index[0])
+        index = int(index[0])
 
         pdebug(None, 'reloading', self.modules[index])
         try:

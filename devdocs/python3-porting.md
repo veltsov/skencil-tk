@@ -41,50 +41,58 @@ files containing the construct, not occurrences).
    `long` vs `Py_ssize_t`).
 4. **`skreadmodule` / `.sk` parsing** — `parse_sk_line2` implements a
    restricted eval of save-file lines; its C code and the Python side
-   (`Plugins/Filters/skloader.py`, uses `types.StringType`,
-   `string.atoi`, `apply`) are deeply Python-2.
-5. **PIL naming** — `Sketch/__init__.py:_import_PIL()` already supports
-   `PIL` as a package, but also has a legacy path importing top-level
-   `Image`; modern Pillow under py3 only exposes the package form.
+   (`Plugins/Filters/skloader.py`) need review during the port
+   (the py2-idiom surface there was cleaned in the modernize batch).
+5. **PIL naming** — resolved in the modernize batch: only the `PIL`
+   package form is supported now.
 6. **Binary vs text files** — file formats (.sk, SVG, EPS, PS, PDF) are
    read/written in text mode in py2. In py3, mixed text/binary and
    implicit `str`/`bytes` conversions need explicit encodings.
    Also ASCII assumptions in EPS/PDF code (`dscparser.py`, `type1.py`).
 
-## Inventory of Python-2-only constructs (by grep, file counts)
+## Inventory of Python-2-only constructs (updated 2026-10-20)
+
+The modernize batch (see `devdocs/modernize-roadmap.md`) already
+converted, within py2-compatible syntax: print statements (+
+`from __future__ import print_function`), `except X, e` → `as`,
+`has_key` → `in`, `apply` → `*args`, old-style `raise`, backtick repr,
+`<>` → `!=`, `exec` statements → `exec(...)`, `string.*` functions and
+`from string import` names → str methods/builtins, `types.*` →
+builtins/`isinstance` (FunctionType/MethodType remain as
+`types.FunctionType`/`types.MethodType`), `cPickle` → `pickle`,
+`os.popen` → `subprocess` helpers, `im_*`/`func_*` attrs → new-style
+names, `__cmp__` → rich comparisons.
+
+Remaining py2-only surface (approximate):
 
 | Construct | Files | Notes |
 |---|---|---|
-| `print` statement (py2 syntax) | 24 | plus `print >>file` in `Sketch/Graphics/document.py`, `graphics.py` |
-| `except X, e:` syntax | 21 | must become `except X as e:` |
-| `d.has_key(k)` | 36 | → `k in d` |
-| `apply(f, args)` | 73 | → `f(*args)`; many in graphics/UI code |
-| `import Tkinter` / `from Tkinter import` | 40 | → `tkinter` camelCase renames (`Tkinter→tkinter`, `TclError→tkinter.TclError`, ...) |
-| `import string` + `string.*` functions (`strip`, `atoi`, `join`, ...) | 7 / 21 | use `str` methods / `int()` |
-| `im_func`/`func_code`/`im_self`/`func_name` | 5 | `ailoader.py`, `skloader.py`, `connector.py`, `UI/command.py`, `UI/tkext.py` — renamed to `__func__`, `__code__`, `__self__` |
-| `os.popen` / `commands` module | 13 | e.g. `pdfsaver.py`, `mainwindow.py`, `curvedlg.py`, `drawfile.py`; → `subprocess` |
-| `exec` statement (as statement) | 3 | `Base/plugins.py`, `UI/mainwindow.py`, `UI/prompt.py` |
-| `types.StringType` etc. | 1 | `Filters/cmxloader.py`; also `from types import StringType, TupleType` in `load.py`, `skloader.py`, etc. |
+| `import Tkinter` / `from Tkinter import` | ~40 | → `tkinter` renames |
+| `tkFileDialog`/`tkMessageBox`/`tkSimpleDialog` | 1 | TextEditor.py |
+| `unicode` / `basestring` assumptions | sparse | e.g. tkext MakeCommand `(str, unicode)` tuple |
+| `string.maketrans` | 3 | dscparser.py, svgloader.py, font.py → `str.maketrans` |
+| `sys.maxint`, `long(...)` | 2 | undo.py, drawfile.py |
+| `imp` module (plugin loading) | 1 | plugins.py |
+| dict `.keys()` indexing / sorting patterns | ~9 | need `list(...)` or rework |
+| integer division `/` | sparse | audit geometry/pattern code |
+| dict mutation during iteration; `sort` with `cmp`-style callbacks | audit | |
+| `xml.sax.saxlib` (SVG loader) | 1 | broken already on py2.7; rewrite to `xml.sax` |
 | `reduce` builtin | 4 | → `functools.reduce` |
-| `<>` operator | 4 | → `!=` |
 | `sys.maxint` | 2 | `Base/undo.py`, `Filters/Lib/drawfile.py` → `sys.maxsize` |
 | `long(...)` | 1 | `Filters/Lib/drawfile.py` |
-| `cPickle` | 1 | `Objects/Lib/multilinetext/TextEditor.py` → `pickle` |
-| `tkFileDialog`/`tkMessageBox`/`tkSimpleDialog` | 1 | `TextEditor.py` → `tkinter.filedialog` etc. |
-| `import new` / `SortedList` | 1 | `Script/pathutils/base.py` |
-| `__cmp__` (also `__div__`, `__rcmp__`, `__nonzero__`) | 7 | `Graphics/base.py`, `pattern.py`, `arrow.py`, `clone.py`, `selection.py`, `Scripting/wrapper.py`, `iterator.py` → rich comparisons / `__truediv__` |
-| `for k in d.keys()` patterns | 9 | views in py3; `list(d.keys())` where indexing/sorting needed |
 | `getopt.error` | 1 | OK in py3 (alias of `GetoptError`) — no change needed |
+
+(The rows for print/except/has_key/apply/string/types/cPickle/popen/
+exec/funcattrs/`__cmp__`/`import new` were removed — all resolved by
+the modernize batch. The `import new`/`SortedList` entry for
+`Script/pathutils/base.py` was a false positive.)
 
 Additional py3 semantics to audit everywhere (no reliable grep):
 - integer division `/` → float (geometry code in `Sketch/Graphics/*`,
   dithering/pattern math, trafo code);
-- ordering of objects (`sorted`, `max`) relying on `__cmp__`;
 - implicit `str`/`int` mixing; `%`-formatting with tuples;
 - `file(...)` builtin; `open` modes ('b' needed for images/PDF);
 - `dict.items()` views; mutation of dicts during iteration;
-- `raise X, msg` / `raise X, msg, tb` syntax (grep found none, but
-  re-check after 2to3-style conversion);
 - `Tkinter` constants (uppercase `END`, `BOTH`, ...) — mostly still
   present in py3 tkinter, verify per use;
 - truth tests relying on `__nonzero__` in plugin objects.

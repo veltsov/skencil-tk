@@ -15,10 +15,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
+from __future__ import print_function
 import sys, os
 
 import re, imp
-from string import join, split
 
 from skexceptions import SketchError
 from warn import warn_tb, warn, USER, INTERNAL, pdebug
@@ -37,10 +37,10 @@ def create_packages(package):
     """
     Return the package's module and create it and it's parents if necessary
     """
-    names = split(package, '.')
+    names = package.split('.')
     for i in range(1, len(names) + 1):
-        name = join(names[:i], '.')
-        if not sys.modules.has_key(name):
+        name = '.'.join(names[:i])
+        if name not in sys.modules:
             module = imp.new_module(name)
             module.__path__ = []
             sys.modules[name] = module
@@ -156,7 +156,7 @@ class ImportInfo(ConfigInfo):
         try:
             module = self.load_module()
             if module is not None:
-                return apply(getattr(module, self.class_name), args, kw)
+                return getattr(module, self.class_name)(*args, **kw)
         except:
             warn_tb(INTERNAL, 'When importing plugin %s', self.module_name)
             raise SketchError('Cannot load filter %(name)s.%(message)s'
@@ -212,7 +212,7 @@ class ExportInfo(ConfigInfo):
 
     def ask_options(self, myoptions):
         # Not implemented yet
-        print myoptions
+        print(myoptions)
         return myoptions
 
     def __call__(self, document, filename, file = None, options = None):
@@ -309,7 +309,7 @@ class PluginCompoundInfo(ConfigInfo):
             attr = self.factory
         else:
             attr = self.class_name
-        return apply(self.load_module_attr(attr), args, kw)
+        return self.load_module_attr(attr)(*args, **kw)
 
     __call__ = CallFactory
 
@@ -351,14 +351,14 @@ def extract_cfg(file):
             if line[-2] == '\\':
                 line = line[:-2]
             cfg.append(line)
-    return join(cfg, '')
+    return ''.join(cfg)
 
 
 
 def _search_dir(dir, recurse, package = 'Sketch.Plugins'):
     try:
         files = os.listdir(dir)
-    except os.error, value:
+    except os.error as value:
         warn(USER, _("Cannot list directory %(filename)s\n%(message)s"),
              filename = dir, message = value[1])
         return
@@ -382,7 +382,7 @@ def _search_dir(dir, recurse, package = 'Sketch.Plugins'):
                 module_name = os.path.splitext(os.path.basename(filename))[0]
                 vars = {'_':_}	# hack
                 cfg = extract_cfg(filename)
-                exec cfg in config_types, vars
+                exec(cfg, config_types, vars)
                 infoclass = vars.get('type')
                 if infoclass is None:
                     warn(USER, _("No plugin-type information in %(filename)s"),
@@ -390,7 +390,7 @@ def _search_dir(dir, recurse, package = 'Sketch.Plugins'):
                 else:
                     del vars['type']
                     del vars['_']
-                    info = apply(infoclass, (module_name, dir), vars)
+                    info = infoclass(*(module_name, dir), **vars)
                     info.package = package
             except:
                 warn_tb(INTERNAL, 'In config file %s', filename)

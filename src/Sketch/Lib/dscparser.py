@@ -24,8 +24,8 @@
 # dependencies)
 #
 
+from __future__ import print_function
 import re, string
-from string import split, strip, atof
 
 import streamfilter
 
@@ -99,20 +99,20 @@ class EpsInfo:
 
     def print_info(self):
         # print the contents of self in a readable manner. (for debugging)
-        print 'BoundingBox:\t%s' % `self.BoundingBox`
-        print 'DocumentNeededResources: [',
+        print('BoundingBox:\t%s' % repr(self.BoundingBox))
+        print('DocumentNeededResources: [', end=' ')
         for res in self.DocumentNeededResources.keys():
-            print res,
-        print ']'
-        print 'DocumentSuppliedResources: [',
+            print(res, end=' ')
+        print(']')
+        print('DocumentSuppliedResources: [', end=' ')
         for res in self.DocumentSuppliedResources.keys():
-            print res,
-        print ']'
+            print(res, end=' ')
+        print(']')
 
         for key, value in self.__dict__.items():
             if key not in ('BoundingBox', 'DocumentNeededResources',
                            'DocumentSuppliedResources', 'atend'):
-                print '%s\t%s' % (key, value)
+                print('%s\t%s' % (key, value))
 
 def IsEpsFileStart(data):
     # return true if data might be the beginning of an Encapsulated
@@ -134,7 +134,7 @@ def parse_header(file, info):
         match = rx_dsccomment.match(line)
         if match:
             key = match.group(1)
-            value = strip(line[match.end(0):])
+            value = line[match.end(0):].strip()
             if key == 'EndComments' or key == 'EOF':
                 break
 
@@ -147,15 +147,15 @@ def parse_header(file, info):
                 if value != ATEND:
                     # the bounding box should be given in UINTs
                     # but may also (incorrectly) be float.
-                    info.BoundingBox = tuple(map(atof, split(value)))
+                    info.BoundingBox = tuple(map(float, value.split()))
                 else:
                     info.atend = 1
             elif key == 'DocumentNeededResources':
                 if value != ATEND:
                     if value:
-                        [type, value] = split(value, None, 1)
+                        [type, value] = value.split(None, 1)
                         if type == 'font':
-                            info.NeedResources(type, split(value))
+                            info.NeedResources(type, value.split())
                         else:
                             # XXX: might occasionally be interesting for the
                             # user
@@ -165,15 +165,15 @@ def parse_header(file, info):
                     info.atend = 1
             elif key == 'DocumentNeededFonts':
                 if value != ATEND:
-                    info.NeedResources('font', split(value))
+                    info.NeedResources('font', value.split())
                 else:
                     info.atend = 1
             elif key == 'DocumentSuppliedResources':
                 if value != ATEND:
                     if value:
-                        [type, value] = split(value, None, 1)
+                        [type, value] = value.split(None, 1)
                         if type == 'font':
-                            info.NeedResources(type, split(value))
+                            info.NeedResources(type, value.split())
                         else:
                             # XXX: might occasionally be interesting for the
                             # user
@@ -215,7 +215,7 @@ def skip_to_comment(file, comment):
                 # skip embedded document
                 skip_to_comment(file, 'EndDocument')
             elif key == 'BeginData':
-                value = split(strip(line[match.end(0):]))
+                value = line[match.end(0):].strip().split()
                 lines = 0
                 if len(value) >= 1:
                     count = int(value[0])

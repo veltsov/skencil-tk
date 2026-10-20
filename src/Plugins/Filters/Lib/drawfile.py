@@ -389,8 +389,8 @@ class path(drawfile_object):
                       self.str2num(4, data[at+8:at+12]) ) ) )
                 at = at + 12
             else:
-                raise drawfile_error, 'Unknown path segment found (%s)' % \
-                      hex(tag)
+                raise drawfile_error('Unknown path segment found (%s)' % \
+                      hex(tag))
 
 
     def output(self):
@@ -618,12 +618,12 @@ class text_area(drawfile_object):
                 break
 
             if n != 10:
-                raise drawfile_error, 'Not a text column object.'
+                raise drawfile_error('Not a text column object.')
 
             length = self.str2num(4, data[i+4:i+8])
 
             if length != 24:
-                raise drawfile_error, 'Text column object has invalid length.'
+                raise drawfile_error('Text column object has invalid length.')
 
             self.columns.append(
                 column(
@@ -688,11 +688,11 @@ class text_area(drawfile_object):
 
             else:
                 # In text: add it to the buffer
-                next = string.find(self.text, '\\', i)
+                next = self.text.find('\\', i)
 
                 if next == -1: next = len(self.text)
 
-                lines = string.split(self.text[i:next], '\n')
+                lines = self.text[i:next].split('\n')
 
                 # Examine all but the last line
 
@@ -717,8 +717,8 @@ class text_area(drawfile_object):
                         n_paragraphs = 0
 
                         # Substitute spaces for tabs
-                        line = string.expandtabs(line, 1)
-                        words = string.split(line, ' ')
+                        line = line.expandtabs(1)
+                        words = line.split(' ')
 
                         # Examine the words on this line
                         for word in words:
@@ -739,7 +739,7 @@ class text_area(drawfile_object):
                 if lines[-1] != '':
 
                     # Substitute spaces for tabs
-                    line = string.expandtabs(lines[-1], 1)
+                    line = lines[-1].expandtabs(1)
                     words = string.split(line, ' ')
 
                     # Examine all but the last word
@@ -776,9 +776,8 @@ class text_area(drawfile_object):
 
             args = self.text[next]
             if args not in 'LRCD':
-                raise drawfile_error, \
-                      'Unknown alignment character '+self.align + \
-                      ' in text area at '+hex(i)
+                raise drawfile_error('Unknown alignment character '+self.align + \
+                      ' in text area at '+hex(i))
 
             if self.text[next+1] == '/':
                 next = next + 2
@@ -796,14 +795,14 @@ class text_area(drawfile_object):
             try:
                 value1, value2, value3 = int(value1), int(value2), int(value3)
             except ValueError:
-                raise drawfile_error, 'Invalid colour in text area at '+hex(i)
+                raise drawfile_error('Invalid colour in text area at '+hex(i))
 
             if value1 < 0 or value1 > 255:
-                raise drawfile_error, 'Invalid colour in text area at '+hex(i)
+                raise drawfile_error('Invalid colour in text area at '+hex(i))
             if value2 < 0 or value2 > 255:
-                raise drawfile_error, 'Invalid colour in text area at '+hex(i)
+                raise drawfile_error('Invalid colour in text area at '+hex(i))
             if value3 < 0 or value3 > 255:
-                raise drawfile_error, 'Invalid colour in text area at '+hex(i)
+                raise drawfile_error('Invalid colour in text area at '+hex(i))
 
             args = (value1, value2, value3)
 
@@ -818,14 +817,14 @@ class text_area(drawfile_object):
             try:
                 value1, value2, value3 = int(value1), int(value2), int(value3)
             except ValueError:
-                raise drawfile_error, 'Invalid colour in text area at '+hex(i)
+                raise drawfile_error('Invalid colour in text area at '+hex(i))
 
             if value1 < 0 or value1 > 255:
-                raise drawfile_error, 'Invalid colour in text area at '+hex(i)
+                raise drawfile_error('Invalid colour in text area at '+hex(i))
             if value2 < 0 or value2 > 255:
-                raise drawfile_error, 'Invalid colour in text area at '+hex(i)
+                raise drawfile_error('Invalid colour in text area at '+hex(i))
             if value3 < 0 or value3 > 255:
-                raise drawfile_error, 'Invalid colour in text area at '+hex(i)
+                raise drawfile_error('Invalid colour in text area at '+hex(i))
 
             args = (value1, value2, value3)
 
@@ -835,8 +834,7 @@ class text_area(drawfile_object):
             try:
                 args = int(args)
             except ValueError:
-                raise drawfile_error, \
-                      'Invalid number of columns in text area at '+hex(i)
+                raise drawfile_error('Invalid number of columns in text area at '+hex(i))
 
         elif command == 'F':
 
@@ -845,8 +843,7 @@ class text_area(drawfile_object):
             try:
                 digits = int(digits)
             except ValueError:
-                raise drawfile_error, \
-                      'Invalid font number in text area at '+hex(i)
+                raise drawfile_error('Invalid font number in text area at '+hex(i))
 
             next = self.skip_whitespace(next)
             name, next = self.read_value(next, [' '])
@@ -862,8 +859,7 @@ class text_area(drawfile_object):
             try:
                 value2, value3 = int(value2), int(value3)
             except ValueError:
-                raise drawfile_error, \
-                      'Invalid font size in text area at '+hex(i)
+                raise drawfile_error('Invalid font size in text area at '+hex(i))
 
             self.font_table[digits] = (name, value2, value3)
 
@@ -875,8 +871,7 @@ class text_area(drawfile_object):
             try:
                 args = int(args)
             except ValueError:
-                raise drawfile_error, \
-                      'Invalid leading value in text area at '+hex(i)
+                raise drawfile_error('Invalid leading value in text area at '+hex(i))
 
         elif command == 'M':
 
@@ -887,12 +882,10 @@ class text_area(drawfile_object):
             try:
                 value1, value2 = int(value1), int(value2)
             except ValueError:
-                raise drawfile_error, \
-                      'Invalid margins in text area at '+hex(i)
+                raise drawfile_error('Invalid margins in text area at '+hex(i))
 
             if value1 <= 0.0 or value2 <= 0.0:
-                raise drawfile_error, \
-                      'Invalid margins in text area at '+hex(i)
+                raise drawfile_error('Invalid margins in text area at '+hex(i))
 
             args = (value1, value2)
 
@@ -903,8 +896,7 @@ class text_area(drawfile_object):
             try:
                 args = int(args)
             except ValueError:
-                raise drawfile_error, \
-                      'Invalid leading value in text area at '+hex(i)
+                raise drawfile_error('Invalid leading value in text area at '+hex(i))
 
         elif command == 'U':
 
@@ -916,8 +908,7 @@ class text_area(drawfile_object):
                 try:
                     value1, value2 = int(value1), int(value2)
                 except ValueError:
-                    raise drawfile_error, \
-                          'Invalid value in text area at '+hex(i)
+                    raise drawfile_error('Invalid value in text area at '+hex(i))
 
                 args = (value1, value2)
             else:
@@ -934,7 +925,7 @@ class text_area(drawfile_object):
             try:
                 args = int(args)
             except ValueError:
-                raise drawfile_error, 'Invalid value in text area at '+hex(i)
+                raise drawfile_error('Invalid value in text area at '+hex(i))
 
         elif command == '-':
 
@@ -957,8 +948,7 @@ class text_area(drawfile_object):
         elif command not in string.digits:
 
             # Unknown
-            raise drawfile_error, \
-                  'Unknown command '+command+' in text area at '+hex(i)
+            raise drawfile_error('Unknown command '+command+' in text area at '+hex(i))
         else:
             # Digits
             value, next = self.read_number(next)
@@ -969,8 +959,7 @@ class text_area(drawfile_object):
             try:
                 value = int(value)
             except ValueError:
-                raise drawfile_error, \
-                      'Font number was not an integer in text area at '+hex(i)
+                raise drawfile_error('Font number was not an integer in text area at '+hex(i))
 
             if self.text[next] == '/':
                 next = next + 1
@@ -978,7 +967,7 @@ class text_area(drawfile_object):
             try:
                 font_name, font_size, font_width = self.font_table[value]
             except KeyError:
-                raise drawfile_error, 'Font not found in text area at '+hex(i)
+                raise drawfile_error('Font not found in text area at '+hex(i))
 
             command = 'font'
             args = value
@@ -999,7 +988,7 @@ class text_area(drawfile_object):
         ends = []
         for ch in endings:
 
-            end = string.find(self.text, ch, i)
+            end = self.text.find(ch, i)
             if end != -1:
                 ends.append(end)
 
@@ -1245,7 +1234,7 @@ class unknown(drawfile_object):
 
     def new(self):
 
-        raise drawfile_error, 'Cannot create an unspecified unknown object.'
+        raise drawfile_error('Cannot create an unspecified unknown object.')
 
     def input(self, data):
 
@@ -1484,7 +1473,7 @@ class drawfile:
         file.seek(0, 0)
 
         if file.read(4) != 'Draw':
-            raise drawfile_error, 'Not a Draw file'
+            raise drawfile_error('Not a Draw file')
 
         self.version['major'] = self.str2num(4, file.read(4))
         self.version['minor'] = self.str2num(4, file.read(4))

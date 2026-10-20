@@ -24,7 +24,6 @@
 #
 
 
-from types import StringType, TupleType
 from config import preferences
 from sys import maxint
 
@@ -35,7 +34,7 @@ from Sketch import _
 def Undo(info):
     # execute a single undoinfo
     func = info[0]
-    if type(func) == StringType:
+    if isinstance(func, basestring):
         text = func
         func = info[1]
         args = info[2:]
@@ -43,7 +42,7 @@ def Undo(info):
         args = info[1:]
         text = None
     try:
-        redo = apply(func, args)
+        redo = func(*args)
         if text is not None and callable(redo[0]):
             return (text,) + redo
         else:
@@ -60,7 +59,7 @@ def UndoList(infos):
     return (UndoList, undoinfo)
 
 def _get_callable(info):
-    if type(info[0]) == StringType:
+    if isinstance(info[0], basestring):
         return info[1]
     return info[0]
 
@@ -102,13 +101,13 @@ class UndoTypeError(Exception):
 def check_info(info):
     # Check whether INFO has the correct format for undoinfo. Raise
     # UndoTypeError if the format is invalid.
-    if type(info) != TupleType:
+    if not isinstance(info, tuple):
         raise UndoTypeError("undo info is not a tuple (%s, type %s)"
                             % (info, type(info)))
     if len(info) < 1:
         raise UndoTypeError("undo info is empty tuple")
     f = info[0]
-    if type(f) == StringType:
+    if isinstance(f, basestring):
         if len(info) > 1:
             f = info[1]
     if not callable(f):
@@ -203,7 +202,7 @@ class UndoRedo:
         # next, in a format suitable for a menu entry.
         if self.undoinfo:
             undolabel = self.undoinfo[0][0]
-            if type(undolabel) == StringType:
+            if isinstance(undolabel, basestring):
                 return _("Undo %s") % undolabel
         return _("Undo")
 
@@ -212,7 +211,7 @@ class UndoRedo:
         # next, in a format suitable for a menu entry.
         if self.redoinfo:
             redolabel = self.redoinfo[0][0]
-            if type(redolabel) == StringType:
+            if isinstance(redolabel, basestring):
                 return _("Redo %s") % redolabel
         return _("Redo")
 

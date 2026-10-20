@@ -19,8 +19,7 @@
 #	Font management...
 #
 
-import os, re, operator
-from string import split, strip, atoi, atof, lower, translate, maketrans
+import os, re, operator, string
 
 
 import streamfilter
@@ -32,27 +31,27 @@ from Sketch.Lib import encoding
 from Sketch.warn import warn, INTERNAL, USER, pdebug
 from Sketch.Lib.util import find_in_path, find_files_in_path
 
-minus_tilde = maketrans('-', '~')
+minus_tilde = string.maketrans('-', '~')
 
 def xlfd_matrix(trafo):
     mat = '[%f %f %f %f]' % trafo.matrix()
-    return translate(mat, minus_tilde)
+    return mat.translate(minus_tilde)
 
 
 def _str(val):
-    return strip(val)
+    return val.strip()
 
 def _bb(val):
-    return tuple(map(int, map(round, map(atof, split(strip(val))))))
+    return tuple(map(int, map(round, map(float, val.strip().split()))))
 
 def _number(val):
-    return int(round(atof(val)))
+    return int(round(float(val)))
 
 converters = {
     'EncodingScheme':	_str,
     'Ascender':		_number,
     'Descender':	_number,
-    'ItalicAngle':	atof,
+    'ItalicAngle':	float,
     'FontBBox':		_bb,
     'StartCharMetrics':	None,
     'EndFontMetrics':	None
@@ -70,20 +69,20 @@ def read_char_metrics(afm):
         line = afm.readline()
         if line == 'EndCharMetrics\n':
             break
-        items = filter(None, map(strip, split(line, ';')))
+        items = filter(None, [s.strip() for s in line.split(';')])
         if not items:
             continue
         code = name = width = bbox = None
         for item in items:
-            [key, value] = split(item, None, 1)
+            [key, value] = item.split(None, 1)
             if key == 'C':
-                code = atoi(value)
+                code = int(value)
             elif key == 'WX':
-                width = int(round(atof(value)))
+                width = int(round(float(value)))
             elif key == 'N':
                 name = value
             elif key == 'B':
-                bbox = tuple(map(int,map(round,map(atof,split(value)))))
+                bbox = tuple(map(int,map(round,map(float,value.split()))))
         charmetrics[name] = (width,) + bbox
         font_encoding[code] = name
     return charmetrics, font_encoding
@@ -100,7 +99,7 @@ def read_afm_file(filename):
         if not line:
             break
         try:
-            [key, value] = split(line, None, 1)
+            [key, value] = line.split(None, 1)
         except ValueError:
             # this normally means that a line contained only a keyword
             # but no value or that the line was empty
@@ -119,8 +118,7 @@ def read_afm_file(filename):
             break
 
     if not charmetrics:
-        raise ValueError, \
-              'AFM files without individual char metrics not yet supported.'
+        raise ValueError('AFM files without individual char metrics not yet supported.')
 
     if attribs.get('EncodingScheme', StandardEncoding) == StandardEncoding:
         enc = encoding.iso_latin_1
@@ -153,9 +151,9 @@ def read_afm_file(filename):
     # This is a more general problem since many of the values Sketch
     # reads from afm files are only optional (including ascender and
     # descender).
-    if not attribs.has_key('Ascender'):
+    if 'Ascender' not in attribs:
         attribs['Ascender'] = attribs['FontBBox'][3]
-    if not attribs.has_key('Descender'):
+    if 'Descender' not in attribs:
         attribs['Descender'] = attribs['FontBBox'][1]
 
     return (CreateFontMetric(attribs['Ascender'], attribs['Descender'],
@@ -236,9 +234,9 @@ def convert_outline(outline):
         paths.append(path)
         for item in sub:
             if len(item) == 2:
-                apply(path.AppendLine, item)
+                path.AppendLine(*item)
             else:
-                apply(path.AppendBezier, item)
+                path.AppendBezier(*item)
         if closed:
             path.load_close()
     for path in paths:
@@ -254,7 +252,7 @@ ps_to_filename = {}
 
 def _add_ps_filename(ps_name, filename):
     filename = (filename,)
-    if ps_to_filename.has_key(ps_name):
+    if ps_name in ps_to_filename:
         filename = ps_to_filename[ps_name] + filename
     ps_to_filename[ps_name] = filename
 
@@ -269,7 +267,7 @@ def read_font_dirs():
         #print directory
         try:
             filenames = os.listdir(directory)
-        except os.error, exc:
+        except os.error as exc:
             warn(USER, _("Cannot list directory %s:%s\n"
                          "ignoring it in font_path"),
                  directory, str(exc))
@@ -283,10 +281,10 @@ def read_font_dirs():
                 line_nr = 0
                 for line in file.readlines():
                     line_nr = line_nr + 1
-                    line = strip(line)
+                    line = line.strip()
                     if not line or line[0] == '#':
                         continue
-                    info = map(intern, split(line, ','))
+                    info = map(intern, line.split(','))
                     if len(info) == 6:
                         psname = info[0]
                         fontlist.append(tuple(info[:-1]))
@@ -299,7 +297,7 @@ def read_font_dirs():
                         warn(INTERNAL,'%s:%d: line must have exactly 6 fields',
                              filename, line_nr)
                 file.close()
-            except IOError, value:
+            except IOError as value:
                 warn(USER, _("Cannot load sfd file %(filename)s:%(message)s;"
                              "ignoring it"),
                      filename = filename, message = value.strerror)
@@ -311,7 +309,7 @@ def make_family_to_fonts():
     for item in fontlist:
         family = item[1]
         fontname = item[0]
-        if families.has_key(family):
+        if family in families:
             families[family] = families[family] + (fontname,)
         else:
             families[family] = (fontname,)
@@ -332,7 +330,7 @@ class Font:
         self.family = family
         self.font_attrs = font_attrs
         if xlfd_start:
-            xlfd_start = lower(xlfd_start)
+            xlfd_start = xlfd_start.lower()
         self.xlfd_start = xlfd_start
         self.encoding_name = encoding_name
         self.metric, self.encoding = read_metric(self.PostScriptName())
@@ -342,7 +340,7 @@ class Font:
         font_cache[self.name] = self
 
     def __del__(self):
-        if font_cache is not None and font_cache.has_key(self.name):
+        if font_cache is not None and self.name in font_cache:
             del font_cache[self.name]
 
     def __repr__(self):
@@ -432,9 +430,9 @@ class Font:
 
 _warned_about_font = {}
 def GetFont(fontname):
-    if font_cache.has_key(fontname):
+    if fontname in font_cache:
         return font_cache[fontname]
-    if not fontmap.has_key(fontname):
+    if fontname not in fontmap:
         if not _warned_about_font.get(fontname):
             warn(USER, _("I can't find font %(fontname)s. "
                          "I'll use %(fallback)s instead"),
@@ -443,7 +441,7 @@ def GetFont(fontname):
             _warned_about_font[fontname] = 1
         if fontname != config.preferences.fallback_font:
             return GetFont(config.preferences.fallback_font)
-        raise ValueError, 'Cannot find font %s.' % fontname
+        raise ValueError('Cannot find font %s.' % fontname)
     return Font(fontname)
 
 

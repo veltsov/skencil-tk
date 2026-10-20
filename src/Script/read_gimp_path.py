@@ -30,7 +30,6 @@
 # inserted, or scaling it, or placing it interactively.
 
 
-from string import split, lstrip
 import re
 
 import Sketch
@@ -53,11 +52,11 @@ def read_path(filename):
 
     for line in file.readlines():
         try:
-            key, rest = split(line, ':', 1)
+            key, rest = line.split(':', 1)
         except:
             continue
         if key == 'TYPE':
-            rest = lstrip(rest)
+            rest = rest.lstrip()
             match = rx_point.match(rest)
             if match is not None:
                 type = int(match.group('type'))

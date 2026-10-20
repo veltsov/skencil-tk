@@ -54,12 +54,12 @@ def make_button(*args, **kw):
         else:
             del kw['bitmap']
             kw['image'] = bitmap
-    return apply(Radiobutton, args, kw)
+    return Radiobutton(*args, **kw)
 
 class PatternSample(PyWidget):
 
     def __init__(self, master=None, **kw):
-        apply(PyWidget.__init__, (self, master), kw)
+        PyWidget.__init__(*(self, master), **kw)
         self.gc_initialized = 0
         self.gc = GraphicsDevice()
         self.pattern = EmptyPattern
@@ -121,7 +121,7 @@ class InteractiveSample(PatternSample, Publisher):
     allow_edit_dir = 0
 
     def __init__(self, master=None, **kw):
-        apply(PatternSample.__init__, (self, master), kw)
+        PatternSample.__init__(*(self, master), **kw)
         self.bind('<ButtonPress>', self.ButtonPressEvent)
         self.bind('<Motion>', self.PointerMotionEvent)
         self.bind('<ButtonRelease>', self.ButtonReleaseEvent)
@@ -247,7 +247,7 @@ class InteractiveSample(PatternSample, Publisher):
 class PatternFrame(Frame, Publisher):
 
     def __init__(self, master=None, **kw):
-        apply(Frame.__init__, (self, master), kw)
+        Frame.__init__(*(self, master), **kw)
         self.dialog = None
         self.pattern = EmptyPattern
 
@@ -277,7 +277,7 @@ class PatternFrame(Frame, Publisher):
 class SolidPatternFrame(PatternFrame):
 
     def __init__(self, master=None, **kw):
-        apply(PatternFrame.__init__, (self, master), kw)
+        PatternFrame.__init__(*(self, master), **kw)
 
         label = Label(self, text = _("Color"))
         label.pack(side = LEFT, expand = 1, anchor = E)
@@ -304,7 +304,7 @@ gradient_types = [LinearGradient, ConicalGradient, RadialGradient]
 class GradientPatternFrame(PatternFrame):
 
     def __init__(self, master=None, **kw):
-        apply(PatternFrame.__init__, (self, master), kw)
+        PatternFrame.__init__(*(self, master), **kw)
 
         gradient = CreateSimpleGradient(StandardColors.white,
                                         StandardColors.black)
@@ -392,7 +392,7 @@ class GradientPatternFrame(PatternFrame):
     def SetCenter(self, center):
         if self.pattern.__class__ == LinearGradient:
             return
-        p = apply(Point, center)
+        p = Point(*center)
         self.pattern = self.pattern.Duplicate()
         self.pattern.SetCenter(p)
         self.issue(CHANGED)
@@ -400,7 +400,7 @@ class GradientPatternFrame(PatternFrame):
     def SetDirection(self, dir):
         if self.pattern.__class__ == RadialGradient:
             return
-        dir = apply(Point, dir)
+        dir = Point(*dir)
         self.pattern = self.pattern.Duplicate()
         self.pattern.SetDirection(dir)
         self.issue(CHANGED)
@@ -426,7 +426,7 @@ class GradientPatternFrame(PatternFrame):
 class HatchingPatternFrame(PatternFrame):
 
     def __init__(self, master=None, **kw):
-        apply(PatternFrame.__init__, (self, master), kw)
+        PatternFrame.__init__(*(self, master), **kw)
 
         frame = Frame(self)
         frame.pack(side = TOP, fill = X, expand = 1)
@@ -484,7 +484,7 @@ class HatchingPatternFrame(PatternFrame):
         self.var_spacing.set(pattern.Spacing())
 
     def SetDirection(self, dir):
-        dir = apply(Point, dir)
+        dir = Point(*dir)
         self.pattern = self.pattern.Duplicate()
         self.pattern.SetDirection(dir)
         self.issue(CHANGED)
@@ -496,7 +496,7 @@ class HatchingPatternFrame(PatternFrame):
 class ImageTilePatternFrame(PatternFrame):
 
     def __init__(self, master, main_window, **kw):
-        apply(PatternFrame.__init__, (self, master), kw)
+        PatternFrame.__init__(*(self, master), **kw)
         self.main_window = main_window
         button = UpdatedButton(self, text = _("Load Image..."),
                                command = self.load_image)
@@ -522,14 +522,14 @@ class ImageTilePatternFrame(PatternFrame):
             return
         try:
             tile = load_image(filename)
-        except IOError, value:
+        except IOError as value:
             if type(value) == type(()):
                 value = value[1]
             basename = os.path.split(filename)[1]
             self.main_window.application.MessageBox(title = _("Load Image"),
                                                     message=_("Cannot load %(filename)s:\n"
                                                               "%(message)s") \
-                                                    % {'filename':`basename`,
+                                                    % {'filename':repr(basename),
                                                        'message':value},
                                                     icon = 'warning')
         else:
@@ -678,7 +678,7 @@ class FillPanel(StylePropertyPanel):
         if self.active_frame:
             self.sample.SetPattern(self.active_frame.Pattern())
             self.sample.SetCenter(self.active_frame.Center())
-            apply(self.sample.SetEditMode, self.active_frame.EditModes())
+            self.sample.SetEditMode(*self.active_frame.EditModes())
 
     def center_changed(self, center):
         if self.active_frame:

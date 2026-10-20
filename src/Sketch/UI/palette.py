@@ -16,8 +16,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 import operator, os
-from types import StringType, TupleType, IntType
-from string import strip, split, atof, atoi
 
 import X
 
@@ -46,7 +44,7 @@ class RGBPalette(Publisher):
         self.rgb_to_entry = {}
 
     def Subscribe(self, channel, func, *args):
-        apply(Publisher.Subscribe, (self, channel, func) + args)
+        Publisher.Subscribe(*(self, channel, func) + args)
         self.ignore_issue = 0
 
     def update_dicts(self):
@@ -59,20 +57,19 @@ class RGBPalette(Publisher):
 
     def AddEntry(self, rgb, name = None, rename = 0):
         if name:
-            if self.name_to_entry.has_key(name):
+            if name in self.name_to_entry:
                 if self.name_to_entry[name] != (rgb, name):
                     raise NameInUse
-        if self.rgb_to_entry.has_key(rgb):
+        if rgb in self.rgb_to_entry:
             if self.rgb_to_entry[rgb] != (rgb, name) and not rename:
                 raise RGBAlreadyStored
         if not name:
             i = 0
             base = 'Color '
-            name = base + `i`
-            known = self.name_to_entry.has_key
-            while known(name):
+            name = base + repr(i)
+            while name in self.name_to_entry:
                 i = i + 1
-                name = base + `i`
+                name = base + repr(i)
         entry = (rgb, name)
         self.entries.append(entry)
         self.name_to_entry[name] = entry
@@ -80,11 +77,11 @@ class RGBPalette(Publisher):
         self.issue(CHANGED)
 
     def __getitem__(self, idx):
-        if type(idx) == StringType:
+        if isinstance(idx, str):
             return self.name_to_entry[idx]
-        if type(idx) == TupleType:
+        if isinstance(idx, tuple):
             return self.rgb_to_entry[idx]
-        if type(idx) == IntType:
+        if isinstance(idx, int):
             return self.entries[idx]
 
 
@@ -145,7 +142,7 @@ def read_palette_file(filename):
     """Read the palette file filename"""
     file = open(filename)
     line = file.readline()
-    line = strip(line)
+    line = line.strip()
     palette = None
     try:
         if line == magic_rgb_palette:
@@ -163,24 +160,24 @@ def ReadRGBPaletteFile(filename):
     line = file.readline()
     if line != magic_rgb_palette + '\n':
         file.close()
-        raise ValueError, 'Invalid file type'
+        raise ValueError('Invalid file type')
 
     palette = RGBPalette()
 
     linenr = 1
     for line in file.readlines():
-        line = strip(line)
+        line = line.strip()
         linenr = linenr + 1
         if not line or line[0] == '#':
             continue
 
-        line = split(line, None, 3)
+        line = line.split(None, 3)
 
         if len(line) != 4:
             warn(INTERNAL, '%s:%d: wrong number of fields', filename, linenr)
             continue
         try:
-            rgb = tuple(map(atof, line[:3]))
+            rgb = tuple(map(float, line[:3]))
         except:
             warn(INTERNAL, '%s:%d: cannot parse rgb values', filename, linenr)
             continue
@@ -190,7 +187,7 @@ def ReadRGBPaletteFile(filename):
                 warn(INTERNAL, '%s:%d: value out of range', filename, linenr)
                 continue
 
-        name = strip(line[-1])
+        name = line[-1].strip()
 
         try:
             palette.AddEntry(rgb, name)
@@ -215,14 +212,14 @@ def Read_X_RGB_TXT(filename):
     linenr = 0
     color_num = 0
     for line in file.readlines():
-        line = strip(line)
+        line = line.strip()
         linenr = linenr + 1
         if not line or line[0] in ('#', '!'):
             # an empty line or an X-style comment (!) or a GIMP comment (#)
             # GIMP's palette files have practically the same format as rgb.txt
             continue
 
-        line = split(line, None, 3)
+        line = line.split(None, 3)
         if len(line) == 3:
             # the name is missing
             while 1:
@@ -240,7 +237,7 @@ def Read_X_RGB_TXT(filename):
             warn(INTERNAL, '%s:%d: wrong number of fields', filename, linenr)
             continue
         try:
-            values = map(atoi, line[:3])
+            values = map(int, line[:3])
         except:
             warn(INTERNAL, '%s:%d: cannot parse rgb values', filename, linenr)
             continue
@@ -255,7 +252,7 @@ def Read_X_RGB_TXT(filename):
             rgb.append(value)
         rgb = tuple(rgb)
 
-        name = strip(line[-1])
+        name = line[-1].strip()
 
         try:
             palette.AddEntry(rgb, name)
@@ -275,9 +272,9 @@ def Read_X_RGB_TXT(filename):
 class PaletteWidget(PyWidget, Publisher):
 
     def __init__(self, master=None, palette = None, cell_size = 16, **kw):
-        if not kw.has_key('height'):
+        if 'height' not in kw:
 	     kw['height'] = cell_size
-        apply(PyWidget.__init__, (self, master), kw)
+        PyWidget.__init__(*(self, master), **kw)
 
         self.cell_size = cell_size
         self.num_cells = 0
@@ -316,7 +313,7 @@ class PaletteWidget(PyWidget, Publisher):
         if 0 <= x < self.tkwin.width and 0 <= y < self.tkwin.height:
             i = self.start_idx + x / self.cell_size
             if i < len(self.palette):
-                return apply(CreateRGBColor, self.palette.GetRGB(i))
+                return CreateRGBColor(*self.palette.GetRGB(i))
 
     def release_1(self, event):
         try:
@@ -402,7 +399,7 @@ class PaletteWidget(PyWidget, Publisher):
         rgbs = self.palette.Colors()
         rgbs = rgbs[self.start_idx:self.start_idx + self.num_cells]
         for rgb in rgbs:
-            SetFillColor(apply(create_color, rgb))
+            SetFillColor(create_color(*rgb))
 	    FillRectangle(x, 0, x + height, height)
 	    x = x + height
         self.gc.EndDblBuffer()

@@ -54,7 +54,7 @@ class GuideLine(GraphicsObject, Draggable):
         undo = (self.SetPoint, self.point)
         if type(point) != PointType:
             if type(point) == type(()):
-                point = apply(Point, point)
+                point = Point(*point)
             else:
                 if self.horizontal:
                     point = Point(self.point.x, point)

@@ -150,7 +150,7 @@ class CGMSaver:
         self.file.write(str)
 
     def pack(self , *args):
-        self.file.write(apply(struct.pack , args))
+        self.file.write(struct.pack(*args))
 
     def putstr(self, Id , str):
         lng = len(str)
@@ -160,7 +160,7 @@ class CGMSaver:
             self.pack("!H" , Id | 31)
             self.pack("!H" , lng + 1)
         self.pack("!B" , lng)
-        fmt = '!' + `lng` + 's'
+        fmt = '!' + repr(lng) + 's'
         self.pack(fmt , str)
         if lng % 2 == 0:
             self.pack("!B" , 0)
@@ -172,9 +172,9 @@ class CGMSaver:
         else:
             self.pack("!H" , Id | 31)
             self.pack("!H" , 4 * lng)
-        fmt = '!' + `lng` + "i"
+        fmt = '!' + repr(lng) + "i"
         args = (fmt,) + tuple(seq)
-        apply(self.pack , args)
+        self.pack(*args)
 
     def putcol(self , Id , color):
         red = rndtoint(255 * color.red)
@@ -289,7 +289,7 @@ class CGMSaver:
                 self.pack("!H" , 0x4100 | 31)
                 self.pack("!H" , size)
             for lst in set:
-                while lst <> ():
+                while lst != ():
                     Arg = tuple(map(rndtoint , lst[:2]))
                     #Arg = lst[:2]
                     lst = lst[2:]
@@ -298,7 +298,7 @@ class CGMSaver:
                     else:
                         Arg = Arg + (1,)
                     Arg = ("!iiH",) + Arg
-                    apply(self.pack , Arg)
+                    self.pack(*Arg)
 
 
     def Rectangle(self, rct):
@@ -349,7 +349,7 @@ class CGMSaver:
                         cp = 2 - ell.arc_type
                     Args = ["!H7iH" , 0x4200 + 30] + map(rndtoint , tuple(self.trafo(C)) \
                                                          + tuple(S) + tuple(E) + (R * self.Scale , cp))
-                    apply(self.pack , Args)
+                    self.pack(*Args)
         else:
             if ell.start_angle == ell.end_angle:
                 self.FillStyle(ell.Properties())
@@ -381,7 +381,7 @@ class CGMSaver:
                     Args = ["!HH10iH" , 0x4260 + 31 , 42] + map(rndtoint , tuple(self.trafo(C)) \
                                                                 + tuple(self.trafo(P1)) + tuple(self.trafo(P2)) + tuple(S) \
                                                                 + tuple(E) + (cp,))
-                    apply(self.pack , Args)
+                    self.pack(*Args)
 
     def Image(self, object):
         self.Msg.Incl(W_Image)

@@ -28,12 +28,12 @@ def convert(s):
     match = re.search('[^0-9]+$', s)
     if match:
         value, unit = s[:match.start()], s[match.start():]
-        value = string.atof(value)
-        unit = string.strip(unit)
-        if unit_dict.has_key(unit):
+        value = float(value)
+        unit = unit.strip()
+        if unit in unit_dict:
             value = value * unit_dict[unit]
         elif unit:
-            raise ValueError, "unsupported unit: " + unit
+            raise ValueError("unsupported unit: " + unit)
     else:
-        value = string.atof(s)
+        value = float(s)
     return value

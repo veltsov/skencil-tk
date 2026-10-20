@@ -16,6 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
+from __future__ import print_function
 from sketchdlg import SketchPanel
 from Tkinter import X, BOTH, LEFT, TOP
 from Tkinter import Frame, Label
@@ -88,6 +89,8 @@ class ExportPanel(SketchPanel):
 
 import os
 
+from Sketch.Lib.util import popen_write
+
 
 def export_bitmap(document):
     from psdevice import PostScriptDevice
@@ -101,8 +104,8 @@ def export_bitmap(document):
     #gs_cmd = 'cat > ' + outfile
 
     if __debug__:
-        print gs_cmd
-    file = os.popen(gs_cmd, 'w')
+        print(gs_cmd)
+    file = util.popen_write(gs_cmd)
     try:
         device = PostScriptDevice(file, as_eps = 0)
         document.Draw(device)

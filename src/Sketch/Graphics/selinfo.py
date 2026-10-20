@@ -114,17 +114,16 @@
 #
 
 
-from types import TupleType, ListType
 
 def build_info(idx, obj):
     return ((idx,), obj)
 
 def prepend_idx(idx, info):
     # prepend idx to the path of info.
-    if type(info) == TupleType:
+    if isinstance(info, tuple):
         return ((idx,) + info[0], info[1])
 
-    if type(info) == ListType:
+    if isinstance(info, list):
         idx = (idx,)
         for i in range(len(info)):
             tmp = info[i]
@@ -186,7 +185,7 @@ def list_to_tree2(infolist):
     result.sort()
     for i in range(len(result)):
         idx, info = result[i]
-        if len(info) == 1 and type(info[0]) != TupleType:
+        if len(info) == 1 and not isinstance(info[0], tuple):
             result[i] = (idx, info[0])
         else:
             info.sort()
@@ -198,7 +197,7 @@ def list_to_tree_sliced(infolist):
     slice_start = slice_end = -1
     last_obj = None
     for idx, list in list_to_tree2(infolist):
-        if type(list) != ListType:
+        if not isinstance(list, list):
             # list is a child
             if idx == slice_end:
                 slice_end = idx + 1

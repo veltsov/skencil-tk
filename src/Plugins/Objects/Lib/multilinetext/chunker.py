@@ -14,6 +14,7 @@
 
 
 
+from __future__ import print_function
 from StringIO import StringIO
 from re import compile, search
 
@@ -123,5 +124,5 @@ if __name__ == '__main__':
 
     chunker = Chunker(text, styling, '\t')
     while not chunker.eof():
-        print ">",repr(chunker.get()), "eof = ",chunker.eof(),  \
-              "\t reason = ", repr(chunker.reason())
+        print(">",repr(chunker.get()), "eof = ",chunker.eof(),  \
+              "\t reason = ", repr(chunker.reason()))

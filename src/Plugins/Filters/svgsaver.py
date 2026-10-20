@@ -24,7 +24,6 @@ format_name = 'SVG'
 #unload = 1
 ###End
 
-from string import join, replace
 import re
 from math import atan2, hypot, pi
 
@@ -40,11 +39,11 @@ svg_caps = (None, 'butt', 'round', 'square')
 def escape(data):
     """Escape &, \", ', <, and > in the string data.
     """
-    data = replace(data, "&", "&amp;")
-    data = replace(data, "<", "&lt;")
-    data = replace(data, ">", "&gt;")
-    data = replace(data, '"', "&quot;")
-    data = replace(data, "'", "&apos;")
+    data = data.replace("&", "&amp;")
+    data = data.replace("<", "&lt;")
+    data = data.replace(">", "&gt;")
+    data = data.replace('"', "&quot;")
+    data = data.replace("'", "&apos;")
     return data
 
 
@@ -110,7 +109,7 @@ class SVGSaver:
                 #quick hack will only produce one style of dashed line
                 #for the moment.
                 style.append("stroke-dasharray:" + "6,3")
-            style.append('stroke-width:' + `properties.line_width`)
+            style.append('stroke-width:' + repr(properties.line_width))
             if properties.line_join != const.JoinMiter:
                 style.append('stroke-linejoin:'
                              + svg_joins[properties.line_join])
@@ -121,9 +120,9 @@ class SVGSaver:
             # this accordingly
             # FIXME: currently the orientation of the arrow heads is
             # wrong.
-            if properties.line_arrow1 <> None:
+            if properties.line_arrow1 != None:
                 style.append('marker-start:url(#ArrowStart)')
-            if properties.line_arrow2 <> None:
+            if properties.line_arrow2 != None:
                 style.append('marker-end:url(#ArrowEnd)')
         else:
             style.append("stroke:none")
@@ -153,7 +152,7 @@ class SVGSaver:
             style.append("font-family:" + font)
             style.append("font-size:" + str(size))
 
-        return join(style, '; ')
+        return '; '.join(style)
 
     def write_gradient(self, (pattern, rect), style):
         write = self.file.write
@@ -223,7 +222,7 @@ class SVGSaver:
                         data.append('M %g %g' % tuple(p))
             if path.closed:
                 data.append('z')
-        write('d="%s"/>\n' % join(data, ''))
+        write('d="%s"/>\n' % ''.join(data))
 
 
     def SimpleText(self, object):

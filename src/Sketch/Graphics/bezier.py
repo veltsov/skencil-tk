@@ -49,7 +49,7 @@ from properties import DefaultGraphicsProperties
 
 def undo_path(undo, path):
     if undo is not None:
-        return apply(getattr(path, undo[0]), undo[1:])
+        return getattr(path, undo[0])(*undo[1:])
     else:
         return undo
 
@@ -282,10 +282,10 @@ class PolyBezier(Primitive):
         file.PolyBezier(self.paths)
 
     def load_straight(self, *args):
-        apply(self.paths[-1].AppendLine, args)
+        self.paths[-1].AppendLine(*args)
 
     def load_curve(self, *args):
-        apply(self.paths[-1].AppendBezier, args)
+        self.paths[-1].AppendBezier(*args)
 
     def load_close(self, copy_cont_from_last = 0):
         self.paths[-1].load_close(copy_cont_from_last)
@@ -306,7 +306,7 @@ class PolyBezier(Primitive):
                 other = other.AsBezier()
                 if not other:
                     raise MismatchError
-            except AttributeError, value:
+            except AttributeError as value:
                 if value == 'AsBezier':
                     raise MismatchError
                 else:
@@ -1258,7 +1258,7 @@ def segments_to_lines(path):
                 cont = path.Continuity(i)
             newpath.AppendLine(path.Node(i), cont)
         else:
-            apply(newpath.AppendSegment, path.Segment(i))
+            newpath.AppendSegment(*path.Segment(i))
     if path.closed:
         cont = newpath.Continuity(-1)
         newpath.ClosePath()
@@ -1391,7 +1391,7 @@ def split_path_at(path, at):
         args = (p1, p2, q, ContSymmetrical)
     copy_path(path2, path, index + 2, copy_selection = 0)
     copy_path(path1, path, 1, index, copy_selection = 0)
-    apply(function, args)
+    function(*args)
     return result
 
 def segment_to_line(path, at):

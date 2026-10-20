@@ -24,7 +24,6 @@
 
 
 import operator, math
-from types import ListType, InstanceType, TupleType
 import time
 
 from Sketch.Lib.util import flatten
@@ -253,7 +252,7 @@ class Selection(Bounded):
 
     def __init__(self, copy_from = None):
         if copy_from is not None:
-            if type(copy_from) == ListType:
+            if isinstance(copy_from, list):
                 self.objects = copy_from[:]
             else:
                 # assume copy_from is another instance of a selection class
@@ -299,7 +298,7 @@ class Selection(Bounded):
     def SetSelection(self, info):
         old_objs = self.objects
         if info:
-            if type(info) == ListType:
+            if isinstance(info, list):
                 self.objects = info
                 self.objects.sort()
             else:
@@ -316,7 +315,7 @@ class Selection(Bounded):
         if not info:
             return 0
         old_len = len(self.objects)
-        if type(info) == ListType:
+        if isinstance(info, list):
             self.objects = self.objects + info
         elif info:
             self.objects.append(info)
@@ -328,7 +327,7 @@ class Selection(Bounded):
         if not info:
             return 0
         old_len = len(self.objects)
-        if type(info) != ListType:
+        if not isinstance(info, list):
             info = [info]
         objects = self.objects
         for item in info:
@@ -359,7 +358,7 @@ class Selection(Bounded):
 
     def IsSingleDepth(self):
         if self.objects:
-            return type(self.Depth()) != TupleType
+            return not isinstance(self.Depth(), tuple)
         return 1
 
     def GetPath(self):
@@ -375,7 +374,7 @@ class Selection(Bounded):
         self.del_lazy_attrs()
         if len(undoinfo) == 1:
             undoinfo = undoinfo[0]
-        if type(undoinfo) == ListType:
+        if isinstance(undoinfo, list):
             return CreateListUndo(undoinfo)
         return undoinfo
 
@@ -389,7 +388,7 @@ class Selection(Bounded):
         self.del_lazy_attrs()
         if len(undoinfo) == 1:
             undoinfo = undoinfo[0]
-        if type(undoinfo) == ListType:
+        if isinstance(undoinfo, list):
             return CreateListUndo(undoinfo)
         return undoinfo
 
@@ -450,7 +449,7 @@ class Selection(Bounded):
             except AttributeError:
                 return NullUndo
 
-            undo = apply(method, args)
+            undo = method(*args)
             if undo is None:
                 undo = NullUndo
             return undo
@@ -476,7 +475,7 @@ class Selection(Bounded):
                 path, obj = sel_info[0]
                 dict = {'layer': document[path[0]].Name()}
                 info = obj.Info()
-                if type(info) == TupleType:
+                if isinstance(info, tuple):
                     dict.update(info[1])
                     # the %% is correct here. The result has to be a
                     # %-template itself.
@@ -975,7 +974,7 @@ class EditSelection(Selection):
     def __init__(self, copy_from = None):
         Selection.__init__(self, copy_from)
         self.check_edit_mode()
-        if type(copy_from) == InstanceType \
+        if isinstance(copy_from, Selection) \
            and copy_from.__class__ == self.__class__:
             self.editor = copy_from.editor
         else:
@@ -1079,7 +1078,7 @@ class EditSelection(Selection):
                      'no method %s for class %s', methodname, aclass)
                 return NullUndo
 
-            undo = apply(method, args)
+            undo = method(*args)
             if undo is None:
                 undo = NullUndo
             return undo

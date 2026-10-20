@@ -19,7 +19,7 @@ class IconManager:
         if name not in self.dict:
             self.init()
             if not name in self.dict:
-                raise "icon '%s' not found " % name, icon_dir 
+                raise "icon '%s' not found " % name(icon_dir) 
         return self.dict[name]
 
     def init(self):

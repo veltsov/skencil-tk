@@ -55,7 +55,7 @@ class MyDoubleVar(DoubleVar):
 class ColorSample(PyWidget):
 
     def __init__(self, master=None, color = None, **kw):
-        apply(PyWidget.__init__, (self, master), kw)
+        PyWidget.__init__(*(self, master), **kw)
         self.gc_initialized = 0
         if color is None:
             color = StandardColors.black
@@ -92,11 +92,11 @@ class ImageView(PyWidget):
 
     def __init__(self, master, image, **kw):
         width, height = image.size
-        if not kw.has_key('width'):
+        if 'width' not in kw:
             kw["width"] = width
-        if not kw.has_key('height'):
+        if 'height' not in kw:
             kw["height"] = height
-        apply(PyWidget.__init__, (self, master), kw)
+        PyWidget.__init__(*(self, master), **kw)
         self.gc_initialized = 0
         self.image = image
         self.ximage = None
@@ -143,7 +143,7 @@ class ChooseComponent(ImageView, Publisher):
 
     def __init__(self, master, width, height, color = (0, 0, 0), **kw):
         image = PIL.Image.new('RGB', (width, height))
-        apply(ImageView.__init__, (self, master, image), kw)
+        ImageView.__init__(*(self, master, image), **kw)
         self.set_color(color)
         self.drawn = 0
         self.dragging = 0
@@ -211,7 +211,7 @@ class ChooseComponent(ImageView, Publisher):
             self.draw_mark()
 
     def RGBColor(self):
-        return apply(CreateRGBColor, apply(hsv_to_rgb, self.color))
+        return CreateRGBColor(*hsv_to_rgb(*self.color))
 
 class ChooseRGBXY(ChooseComponent):
 
@@ -223,11 +223,10 @@ class ChooseRGBXY(ChooseComponent):
                                   0, -1 / float(height - 1),
                                   0, 1)
         self.color_to_win = self.win_to_color.inverse()
-        apply(ChooseComponent.__init__, (self, master, width, height, color),
-              kw)
+        ChooseComponent.__init__(*(self, master, width, height, color), **kw)
 
     def SetColor(self, color):
-        color = apply(rgb_to_hsv, tuple(color))
+        color = rgb_to_hsv(*tuple(color))
         otheridx = 3 - self.xcomp - self.ycomp
         if color[otheridx] != self.color[otheridx]:
             self.UpdateWhenIdle()
@@ -278,12 +277,11 @@ class ChooseRGBZ(ChooseComponent):
         self.comp = comp
         self.win_to_color = Trafo(1, 0, 0, -1 / float(height - 1), 0, 1)
         self.color_to_win = self.win_to_color.inverse()
-        apply(ChooseComponent.__init__, (self, master, width, height, color),
-              kw)
+        ChooseComponent.__init__(*(self, master, width, height, color), **kw)
 
     def SetColor(self, color):
         c = self.color;
-        color = apply(rgb_to_hsv, tuple(color))
+        color = rgb_to_hsv(*tuple(color))
         if ((self.comp == 0 and (color[1] != c[1] or color[2] != c[2]))
             or (self.comp == 1 and (color[0] != c[0] or color[2] != c[2]))
             or (self.comp == 2 and (color[0] != c[0] or color[1] != c[1]))):
@@ -327,7 +325,7 @@ class ChooseColorDlg(SKModal):
     def __init__(self, master, color, **kw):
         self.color = color
         self.orig_color = color
-        apply(SKModal.__init__, (self, master), kw)
+        SKModal.__init__(*(self, master), **kw)
 
     def build_dlg(self):
         top = self.top
@@ -418,7 +416,7 @@ class ChooseColorDlg(SKModal):
         self.viewxy.SetColor(color)
         self.viewz.SetColor(color)
         self.sample.SetColor(color)
-        v1, v2, v3 = apply(rgb_to_hsv, tuple(color))
+        v1, v2, v3 = rgb_to_hsv(*tuple(color))
         self.var1.set(v1)
         self.var2.set(v2)
         self.var3.set(v3)
@@ -430,7 +428,7 @@ class ChooseColorDlg(SKModal):
 
     def component_changed(self, *rest):
         color = (self.var1.get(), self.var2.get(), self.var3.get())
-        color = apply(CreateRGBColor, apply(hsv_to_rgb, color))
+        color = CreateRGBColor(*hsv_to_rgb(*color))
         self.color_changed(color)
 
     def rgb_component_changed(self, *rest):

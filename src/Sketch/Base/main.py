@@ -33,6 +33,7 @@
 #
 #
 
+from __future__ import print_function
 import sys, getopt, string
 
 import Sketch
@@ -106,10 +107,10 @@ def process_args(args):
         elif optchar == '--run-script':
             options.run_script = value
         elif optchar == '-h' or optchar == '--help':
-            print Sketch._(usage)
+            print(Sketch._(usage))
             sys.exit(0)
         elif optchar == '--version':
-            print Sketch._(version) % Sketch.SketchVersion
+            print(Sketch._(version) % Sketch.SketchVersion)
             sys.exit(0)
 
     return options

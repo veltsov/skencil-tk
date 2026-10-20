@@ -44,7 +44,7 @@ def Blend(obj1, obj2, frac1, frac2 = None):
             properties = Blend(obj1.Properties(), obj2.Properties(),
                                frac1, frac2)
             return PolyBezier(paths = paths, properties = properties)
-    except AttributeError, value:
+    except AttributeError as value:
         if str(value) != 'is_curve':
             raise
 

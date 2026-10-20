@@ -73,7 +73,6 @@ __version__ = "1.0"
 #
 
 import os.path
-from string import replace
 
 from Tkinter import Button, Label, Entry, Frame, Scrollbar, \
      DoubleVar, StringVar, E, W, N, S, END, LEFT, RIGHT, Y
@@ -158,7 +157,7 @@ def get_charmap(face):
         if pid == 3 and eid == 1:  # Windows Unicode
             return face.get_charmap(i)
     else:
-        raise RuntimeError, "no Windows Unicode charmap"
+        raise RuntimeError("no Windows Unicode charmap")
 
 
 def create_ttf_group(text, face):
@@ -245,7 +244,7 @@ class SmartListbox(Tkinter.Listbox):
     strings and return the selected object"""
 
     def __init__(self, master, command = None, args = (), **kw):
-	apply(Tkinter.Listbox.__init__, (self, master), kw)
+	Tkinter.Listbox.__init__(*(self, master), **kw)
         self.list = []
 
     def SetList(self, list):
@@ -341,7 +340,7 @@ class CurveTextDialog(SKModal):
         for name in font_files:
             basename, ext = os.path.splitext(name)
             if ext in ('.pfa', '.pfb'):
-                if not used_basenames.has_key(basename):
+                if basename not in used_basenames:
                     type1.append(("T1: " + basename,
                                   ("T1-file", os.path.join(self.font_directory,
                                                            basename))))
@@ -432,13 +431,13 @@ def create_curve_text(context):
         text, (font_type, font_name), size = result
         if text.find("\xd0") >= 0 or text.find("\xd1") >= 0:
             for c in convdict.keys():
-                text = replace(text,c,convdict[c])
+                text = text.replace(c, convdict[c])
         if text.find("\\") >= 0:
             text = eval('"""'+text+'"""',{"__builtins__":None},{})
         try:
             group = text_as_curves(text, font_type, font_name, size)
             context.main_window.canvas.PlaceObject(group, "Create CurveText")
-        except FontError, exception:
+        except FontError as exception:
             context.application.MessageBox("Curve Text Error",
                                            str(exception))
                                            

@@ -87,7 +87,7 @@ orientations = ['portrait', 'landscape']
 
 def RISCOSFont(fontname):
 
-    font = string.split(fontname, '.')
+    font = fontname.split('.')
 
     if font[0] == 'Trinity':
         new_font = 'Times'
@@ -424,7 +424,7 @@ class DrawfileLoader(GenericLoader):
                 n_objects = n_objects + 1
 
                 # Determine the font
-                if self.font_table.has_key(object.style):
+                if object.style in self.font_table:
                     self.style.font = RISCOSFont(self.font_table[object.style])
                 else:
                     self.style.font = GetFont('Times Roman')

@@ -232,7 +232,7 @@ def export_raster_interactive(context, alpha = 0, use_bbox = 0, render_ppi=72):
         initialfile = basename + default_ext)
     if filename:
         ext = os.path.splitext(filename)[1]
-        if extensions.has_key(ext):
+        if ext in extensions:
             if alpha:
                 export_alpha(context, filename, render_ppi, use_bbox)
             else:

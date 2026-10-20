@@ -75,7 +75,6 @@
 #
 #
 
-from string import split
 from math import sin, cos, atan2, hypot, pi, fmod, floor
 
 from Sketch import _, Rect, UnionRects, EmptyRect, NullPoint, Polar, \
@@ -380,9 +379,9 @@ class SimpleText(CommonText, RectangularPrimitive):
     def update_rects(self):
         trafo = self.trafo(self.atrafo)
         a = self.properties
-        rect = apply(Rect, a.font.TextBoundingBox(self.text, a.font_size))
+        rect = Rect(*a.font.TextBoundingBox(self.text, a.font_size))
         self.bounding_rect = trafo(rect).grown(2)
-        rect = apply(Rect, a.font.TextCoordBox(self.text, a.font_size))
+        rect = Rect(*a.font.TextCoordBox(self.text, a.font_size))
         self.coord_rect = trafo(rect)
 
     def Info(self):

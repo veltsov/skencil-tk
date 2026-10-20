@@ -47,7 +47,7 @@ class MutableNumber:
         return str(self.value)
 
     def __repr__(self):
-        return `self.value`
+        return repr(self.value)
 
 class LayerInfo:
 
@@ -257,7 +257,7 @@ class LayerPanel(SketchPanel):
         row = self.info_list[idx]
         idx = self.document.NumLayers() - idx - 1
         state = row.State()
-        apply(self.document.SetLayerState, (idx,) + state)
+        self.document.SetLayerState(*(idx,) + state)
 
     def set_color(self, idx):
         idx = int(idx)
@@ -366,7 +366,7 @@ class GetNameDlg(SKModal):
 
     def __init__(self, master, name, **kw):
         self.name = name
-        apply(SKModal.__init__, (self, master), kw)
+        SKModal.__init__(*(self, master), **kw)
 
     def build_dlg(self):
         top = self.top

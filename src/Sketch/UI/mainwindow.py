@@ -16,7 +16,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 import os, sys, string
-from types import TupleType, ListType
 
 from Sketch.Lib import util
 from Sketch.warn import warn, warn_tb, INTERNAL, USER
@@ -58,7 +57,7 @@ def AddCmd(name, menu_name, method_name = None, **kw):
     kw['menu_name'] = menu_name
     if not method_name:
         method_name = name
-    cmd = apply(CommandClass, (name, method_name), kw)
+    cmd = CommandClass(*(name, method_name), **kw)
     command_list.append(cmd)
 
 def AddDocCmd(name, menu_name, method_name = None, **kw):
@@ -67,15 +66,15 @@ def AddDocCmd(name, menu_name, method_name = None, **kw):
         method_name = name
     method_name = ('document', method_name)
     for key in CommandClass.callable_attributes:
-        if kw.has_key(key):
+        if key in kw:
             value = kw[key]
             if type(value) == type(""):
                 kw[key] = ('document', value)
-    if not kw.has_key('subscribe_to'):
+    if 'subscribe_to' not in kw:
         kw['subscribe_to'] = SELECTION
-    if not kw.has_key('sensitive_cb'):
+    if 'sensitive_cb' not in kw:
         kw['sensitive_cb'] = ('document', 'HasSelection')
-    cmd = apply(CommandClass, (name, method_name), kw)
+    cmd = CommandClass(*(name, method_name), **kw)
     command_list.append(cmd)
 
 
@@ -201,7 +200,7 @@ class SketchMainWindow(Publisher):
             doc = load.load_drawing(filename)
             self.SetDocument(doc)
             self.add_mru_file(filename)
-        except SketchError, value:
+        except SketchError as value:
             app.MessageBox(title = _("Open"),
                            message = _("An error occurred:\n") + str(value))
             #warn_tb(USER, "An error occurred:\n", str(value))
@@ -270,14 +269,14 @@ class SketchMainWindow(Publisher):
                         util.make_backup(compressed_file)
                     else:
                         util.make_backup(filename)
-                except util.BackupError, value:
+                except util.BackupError as value:
                     backupfile = value.filename
                     strerror = value.strerror
                     msg = (_("Cannot create backup file %(filename)s:\n"
                              "%(message)s\n"
                              "Choose `continue' to try saving anyway,\n"
                              "or `cancel' to cancel.")
-                           % {'filename':`backupfile`, 'message':strerror})
+                           % {'filename':repr(backupfile), 'message':strerror})
                     cancel = _("Cancel")
                     result = app.MessageBox(title = _("Save To File"),
                                             message = msg, icon = 'warning',
@@ -297,19 +296,19 @@ class SketchMainWindow(Publisher):
                         cmd = 'gzip -c -9 > ' + util.sh_quote(compressed_file)
                     elif compressed == "bzip2":
                         cmd = 'bzip2 > ' + util.sh_quote(compressed_file)
-                    file = os.popen(cmd, 'w')
+                    file = util.popen_write(cmd)
                     saver(self.document, filename, file = file, options = plugin_options)
                 else:
                     saver(self.document, filename, options = plugin_options)
             finally:
                 saver.UnloadPlugin()
-        except IOError, value:
+        except IOError as value:
             if type(value) == type(()):
                 value = value[1]
             app.MessageBox(title = _("Save To File"),
                            message = _("Cannot save %(filename)s:\n"
                                        "%(message)s") \
-                           % {'filename':`os.path.split(filename)[1]`,
+                           % {'filename':repr(os.path.split(filename)[1]),
                               'message':value},
                            icon = 'warning')
             self.remove_mru_file(filename)
@@ -385,11 +384,11 @@ class SketchMainWindow(Publisher):
             self.document.Draw(ps_dev)
             ps_dev.Close()
             self.document.meta.ps_directory = os.path.split(filename)[0]
-        except IOError, value:
+        except IOError as value:
             app.MessageBox(title = _("Save As PostScript"),
                            message = _("Cannot save %(filename)s:\n"
                                        "%(message)s") \
-                           % {'filename':`os.path.split(filename)[1]`,
+                           % {'filename':repr(os.path.split(filename)[1]),
                               'message':value[1]},
                            icon = 'warning')
 
@@ -430,7 +429,7 @@ class SketchMainWindow(Publisher):
                 filename = os.path.join(os.getcwd(), filename)
             doc = load.load_drawing(filename)
             group = doc.as_group()
-        except SketchError, value:
+        except SketchError as value:
             app.MessageBox(title = _("Insert Document"),
                            message = _("An error occurred:\n") + str(value))
             #warn_tb(USER, "An error occurred:\n", str(value))
@@ -479,11 +478,11 @@ class SketchMainWindow(Publisher):
         self.dialogs = {}
 
     def CreateDialog(self, module, dlgname):
-        if self.dialogs.has_key(dlgname):
+        if dlgname in self.dialogs:
             dialog = self.dialogs[dlgname]
             dialog.deiconify_and_raise()
         else:
-            exec "from %s import %s" % (module, dlgname)
+            exec("from %s import %s" % (module, dlgname))
             dlgclass = locals()[dlgname]
             dialog = dlgclass(self.root, self, self.document)
             dialog.Subscribe(CLOSED, self.__dlg_closed, dlgname)
@@ -926,7 +925,7 @@ class SketchMainWindow(Publisher):
     def convert_menu_tree(self, tree):
         result = []
         for title, item in tree:
-            if type(item) == ListType:
+            if isinstance(item, list):
                 result.append([title] + self.convert_menu_tree(item))
             else:
                 result.append((title, item.Execute))
@@ -1071,9 +1070,9 @@ class SketchMainWindow(Publisher):
                       "Python:\t%(py)s\tTcl:\t%(tcl)s\n"
                       "Tkinter:\t%(tkinter)s\tTk:\t%(tk)s") \
                   % {'version':SketchVersion,
-                     'py':string.split(sys.version)[0],
+                     'py':sys.version.split()[0],
                      'tcl':TclVersion,
-                     'tkinter':string.split(Tkinter.__version__)[1],
+                     'tkinter':Tkinter.__version__.split()[1],
                      'tk':TkVersion}
 
         self.application.MessageBox(title = _("About Skencil"),
@@ -1164,13 +1163,13 @@ class SketchMainWindow(Publisher):
                 else:
                     imageobj = image.Image(imagefile = filename)
                 self.canvas.PlaceObject(imageobj)
-            except IOError, value:
-                if type(value) == TupleType:
+            except IOError as value:
+                if isinstance(value, tuple):
                     value = value[1]
                 self.application.MessageBox(title = _("Load Image"),
                                             message = _("Cannot load %(filename)s:\n"
                                                         "%(message)s") \
-                                            % {'filename':`os.path.split(filename)[1]`,
+                                            % {'filename':repr(os.path.split(filename)[1]),
                                                'message':value},
                                             icon = 'warning')
 

@@ -19,7 +19,6 @@
 #       The layer classes. 
 #
 
-from types import TupleType
 from Sketch.const import LAYER_STATE, LAYER_COLOR
 
 from Sketch import _, NullUndo, EmptyRect, InfinityRect, Point, config, _sketch
@@ -46,8 +45,8 @@ class Layer(EditableCompound):
         self.printable = printable
         self.locked = locked
         self.outlined = outlined
-        if type(outline_color) == TupleType:
-            self.outline_color = apply(color.CreateRGBColor, outline_color)
+        if isinstance(outline_color, tuple):
+            self.outline_color = color.CreateRGBColor(*outline_color)
         else:
             self.outline_color = outline_color
 
@@ -296,7 +295,7 @@ class GuideLayer(SpecialLayer):
         result = [default]
         for obj in self.objects:
             dist, snapped = obj.Snap(p)
-            if type(snapped) == TupleType:
+            if isinstance(snapped, tuple):
                 if snapped[0] is None:
                     horizontal.append((dist, snapped))
                 else:
@@ -338,7 +337,7 @@ class GridLayer(SpecialLayer):
         elif len(geometry) == 4:
             self.geometry = geometry
         else:
-            raise ValueError, "grid tuple must have length 2 or 4"
+            raise ValueError("grid tuple must have length 2 or 4")
 
     def Draw(self, device, rect = None):
         if device.draw_visible and self.visible \

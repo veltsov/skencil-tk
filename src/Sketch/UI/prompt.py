@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
+from __future__ import print_function
 import sys, os, string
 import Sketch
 
@@ -69,8 +70,8 @@ def PythonPrompt(prompt = '>>>', prompt2 = '...'):
         pass
     globals = {}
     # put all of Sketch.main and Sketch into the globals
-    exec 'from Sketch.main import *' in globals
-    exec 'from Sketch import *' in globals
+    exec('from Sketch.main import *', globals)
+    exec('from Sketch import *', globals)
     # put all sketch specific modules into the globals
     for module in get_sketch_modules():
         globals[module.__name__] = module
@@ -86,20 +87,20 @@ def PythonPrompt(prompt = '>>>', prompt2 = '...'):
                 if cmd[-1] == ':':
                     # a compound statement
                     lines = []
-                    while string.strip(cmd):
+                    while cmd.strip():
                         lines.append(cmd)
                         cmd = raw_input(prompt2)
-                    cmd = string.join(lines + [''], '\n')
+                    cmd = '\n'.join(lines + [''])
                     kind = 'exec'
                 else:
                     kind = 'single'
 
                 c = compile(cmd, '<string>', kind)
-                exec c in globals, locals
+                exec(c, globals, locals)
         except EOFError:
-            print '----- returning to Sketch'
+            print('----- returning to Sketch')
             return
         except:
             import traceback
             traceback.print_tb(sys.exc_traceback)
-            print 'Exception %s: %s' % (sys.exc_type, sys.exc_value)
+            print('Exception %s: %s' % (sys.exc_type, sys.exc_value))

@@ -16,7 +16,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-from types import DictType, StringType
 import operator
 
 from Sketch.warn import warn, USER
@@ -31,13 +30,13 @@ class ScriptRegistry:
         self.menu = {}
 
     def Add(self, script, menu = ()):
-        if type(menu) == StringType:
+        if isinstance(menu, basestring):
             menu = (menu,)
         self.registry[script.name] = script
         submenu = self.menu
         for item in menu:
-            if submenu.has_key(item):
-                if type(submenu[item]) != DictType:
+            if item in submenu:
+                if not isinstance(submenu[item], dict):
                     warn(USER, 'Replacing menu entry "%s" with a submenu',
                          item)
                     submenu[item] = {}
@@ -56,10 +55,10 @@ class ScriptRegistry:
         return make_menu_tree(self.menu)
 
 
-def make_menu_tree(dict):
+def make_menu_tree(menu):
     result = []
-    for key, value in dict.items():
-        if type(value) == DictType:
+    for key, value in menu.items():
+        if isinstance(value, dict):
             value = make_menu_tree(value)
         result.append((key, value))
     result.sort()

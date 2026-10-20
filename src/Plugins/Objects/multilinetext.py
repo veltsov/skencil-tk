@@ -29,8 +29,6 @@ from Tkinter import StringVar, Entry, Label, Button, Frame, Text, END, \
      BOTH, LEFT, TOP, X, W, GROOVE, Frame, Label, StringVar, Radiobutton
 
 import os
-from string import split, rstrip
-from types import StringType
 from math import ceil
 
 import Sketch.const
@@ -79,7 +77,7 @@ class MultilineText(TrafoPlugin):
             self.recompute()
 
     def recompute(self):
-        chunker = Chunker(rstrip(self.text), self.styling, '\t')
+        chunker = Chunker(self.text.rstrip(), self.styling, '\t')
 
         objects = []
         options = {}

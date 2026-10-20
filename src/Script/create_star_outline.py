@@ -65,7 +65,7 @@ def create_star_outline(context):
     args = CreateStarDlg(context.application.root).RunDialog()
     if args is None:
         return
-    path = apply(create_star_path, args)
+    path = create_star_path(*args)
     bezier = PolyBezier((path,))
     context.main_window.PlaceObject(bezier)
 

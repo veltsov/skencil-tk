@@ -37,7 +37,7 @@ def reload_image(context):
 
         # first, remove the old object from the cache.
         if olddata.stored_in_cache \
-           and external.instance_cache.has_key(filename):
+           and filename in external.instance_cache:
             del external.instance_cache[filename]
             olddata.stored_in_cache = 0
 

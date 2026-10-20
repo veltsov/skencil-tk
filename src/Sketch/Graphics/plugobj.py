@@ -16,7 +16,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 
-from types import TupleType
 from Sketch import _, SketchError, CreateListUndo, Undo, \
      Trafo, Translation, Scale, Identity, TrafoType
 
@@ -38,7 +37,7 @@ class PluginCompound(Compound):
 
     def SaveToFile(self, file, *args, **kw):
         if self.class_name:
-            apply(file.BeginPluginCompound, (self.class_name,) + args, kw)
+            file.BeginPluginCompound(*(self.class_name,) + args, **kw)
             for obj in self.objects:
                 obj.SaveToFile(file)
             file.EndPluginCompound()
@@ -55,8 +54,8 @@ class TrafoPlugin(PluginCompound):
         else:
             if trafo is None:
                 trafo = Identity
-            elif type(trafo) == TupleType:
-                trafo = apply(Trafo, trafo)
+            elif isinstance(trafo, tuple):
+                trafo = Trafo(*trafo)
             elif isinstance(trafo, TrafoType):
                 # trafo is already a trafo object
                 pass
@@ -115,7 +114,7 @@ class UnknownPlugin(PluginCompound):
     changed = 0
 
     def __init__(self, class_name = '', *args, **kw):
-        if kw.has_key('loading'):
+        if 'loading' in kw:
             del kw['loading']
         duplicate = kw.get('duplicate')
         if duplicate is not None:
@@ -148,7 +147,7 @@ class UnknownPlugin(PluginCompound):
 
     def SaveToFile(self, file):
         if not self.changed:
-            apply(PluginCompound.SaveToFile, (self, file) + self.args, self.kw)
+            PluginCompound.SaveToFile(*(self, file) + self.args, **self.kw)
         else:
             # XXX an alternative approach for a changed UnknownPlugin
             # might be to store explicitly as an 'UnknownPlugin' so that

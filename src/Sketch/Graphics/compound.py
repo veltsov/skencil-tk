@@ -22,7 +22,6 @@
 # (primitives or other compounds)
 #
 
-from types import ListType, TupleType, IntType, InstanceType
 import operator
 
 from Sketch import _, SketchError, UnionRects, EmptyRect, _sketch
@@ -152,14 +151,14 @@ class Compound(GraphicsObject):
         pass
 
     def __getitem__(self, idx):
-        if type(idx) == IntType:
+        if isinstance(idx, int):
             return self.objects[idx]
-        elif type(idx) == TupleType:
+        elif isinstance(idx, tuple):
             if len(idx) > 1:
                 return self.objects[idx[0]][idx[1:]]
             elif len(idx) == 1:
                 return self.objects[idx[0]]
-        raise ValueError, 'invalid index %s' % `idx`
+        raise ValueError('invalid index %s' % repr(idx))
 
     def GetObjects(self):
         # XXX should this return a copy of self.objects?
@@ -260,7 +259,7 @@ class Compound(GraphicsObject):
 
     def SetProperties(self, **kw):
         self.del_lazy_attrs()
-        func = lambda o, kw = kw: apply(o.SetProperties, (), kw)
+        func = lambda o, kw = kw: o.SetProperties(*(), **kw)
         undo = self.ForAllUndo(func)
         return undo
 
@@ -397,7 +396,7 @@ class EditableCompound(Compound):
         # If self is modified directly, issue a CHANGED message.
         undo_info = None
         try:
-            if type(at) == TupleType and at:
+            if isinstance(at, tuple) and at:
                 if len(at) == 1:
                     at = at[0]
                 else:
@@ -406,9 +405,9 @@ class EditableCompound(Compound):
                     sel_info, undo_info = self.objects[child].Insert(obj, at)
                     sel_info = prepend_idx(child, sel_info)
                     return (sel_info, undo_info)
-            if type(at) != IntType or at > len(self.objects):
+            if not isinstance(at, int) or at > len(self.objects):
                 at = len(self.objects)
-            if type(obj) == InstanceType:
+            if isinstance(obj, GraphicsObject):
                 self.objects.insert(at, obj)
                 obj.SetDocument(self.document)
                 obj.SetParent(self)
@@ -444,7 +443,7 @@ class EditableCompound(Compound):
         return (self._insert_with_undo, obj, idx)
 
     def Remove(self, obj, idx = None):
-        if type(idx) == TupleType:
+        if isinstance(idx, tuple):
             if len(idx) == 1:
                 idx = idx[0]
             else:
@@ -452,7 +451,7 @@ class EditableCompound(Compound):
         if idx is None:
             idx = self.objects.index(obj)
         elif self.objects[idx] is not obj:
-            raise ValueError, 'Compound.Remove(): invalid index'
+            raise ValueError('Compound.Remove(): invalid index')
         return self.do_remove_child(idx)
 
     def RemoveSlice(self, min, max):
@@ -472,9 +471,9 @@ class EditableCompound(Compound):
         undo = [self.begin_change_children()]
         try:
             for start, end in sliced:
-                if type(end) == IntType:
+                if isinstance(end, int):
                     undo.append(self.RemoveSlice(start, end))
-                elif type(end) == ListType:
+                elif isinstance(end, list):
                     undo.append(self.objects[start].RemoveObjects(end))
                 else:
                     undo.append(self.Remove(end, start))
@@ -504,7 +503,7 @@ class EditableCompound(Compound):
         if permutation == identity:
             return NullUndo
         if len(objects) != len(permutation):
-            raise ValueError, 'len(permutation) != len(self.objects)'
+            raise ValueError('len(permutation) != len(self.objects)')
 
         result = map(operator.getitem, [objects] * length, permutation)
         inverse = [0] * length
@@ -525,11 +524,11 @@ class EditableCompound(Compound):
         permutation = range(len(self.objects))
         try:
             for start, end in sliced:
-                if type(end) == IntType:
+                if isinstance(end, int):
                     # a contiguous range of self's children (start:end)
                     idxs[:0] = permutation[start:end]
                     del permutation[start:end]
-                elif type(end) == ListType:
+                elif isinstance(end, list):
                     # children of self.objects[start]
                     child = self.objects[start]
                     sel, undo_info = child.move_objects_to_top(end, to_bottom)
@@ -593,7 +592,7 @@ class EditableCompound(Compound):
         objects = self.objects
         try:
             for start, end in sliced:
-                if type(end) == IntType:
+                if isinstance(end, int):
                     if start > 0:
                         temp = permutation[start:end]
                         del permutation[start:end]
@@ -604,7 +603,7 @@ class EditableCompound(Compound):
                         selection = selection +select_range(start,
                                                             objects[start:end])
 
-                elif type(end) == ListType:
+                elif isinstance(end, list):
                     sel, undo_info = objects[start].MoveObjectsDown(end)
                     if undo_info is not NullUndo:
                         undo.append(undo_info)
@@ -641,7 +640,7 @@ class EditableCompound(Compound):
         max = len(objects)
         try:
             for start, end in sliced:
-                if type(end) == IntType:
+                if isinstance(end, int):
                     if end < max:
                         temp = permutation[start:end]
                         del permutation[start:end]
@@ -652,7 +651,7 @@ class EditableCompound(Compound):
                         selection = selection + select_range(start,
                                                              objects[start:end])
 
-                elif type(end) == ListType:
+                elif isinstance(end, list):
                     sel, undo_info = objects[start].MoveObjectsUp(end)
                     if undo_info is not NullUndo:
                         undo.append(undo_info)
@@ -689,7 +688,7 @@ class EditableCompound(Compound):
         try:
             for idx, obj in infolist:
                 idx = idx + added
-                if type(obj) == ListType:
+                if isinstance(obj, list):
                     # duplicate in subobj
                     sel, undoinfo = objects[idx].DuplicateObjects(obj, offset)
                     undo.append(undoinfo)

@@ -93,16 +93,23 @@ class SolidPattern(Pattern):
         elif color is not None:
             self.color = color
         else:
-            raise ValueError,'SolidPattern be must created with color argument'
+            raise ValueError('SolidPattern be must created with color argument')
 
-    def __cmp__(self, other):
-        if self.__class__ == other.__class__:
-            return cmp(self.color, other.color)
-        else:
-            return cmp(id(self), id(other))
+    # rich comparisons; the old __cmp__ compared the color objects by
+    # identity (Color has no comparison methods), and that is preserved
+    def __eq__(self, other):
+        if self.__class__ is other.__class__:
+            return self.color is other.color
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        return id(self) < id(other)
 
     def __str__(self):
-        return 'SolidPattern(%s)' % `self.color`
+        return 'SolidPattern(%s)' % repr(self.color)
 
     def Execute(self, device, rect = None):
         device.SetFillColor(self.color)
@@ -130,8 +137,7 @@ class GradientPattern(Pattern):
         elif gradient:
             self.gradient = gradient
         else:
-            raise ValueError,\
-                  'GradientPattern must be created with gradient argument'
+            raise ValueError('GradientPattern must be created with gradient argument')
 
     def Gradient(self):
         return self.gradient
@@ -196,7 +202,7 @@ class LinearGradient(GradientPattern):
 
         colors = self.gradient.Sample(steps)
         SetFillColor(colors[0])
-        apply(device.FillRectangle, tuple(rect))
+        device.FillRectangle(*tuple(rect))
 
         device.PushTrafo()
         vx, vy = self.direction
@@ -325,7 +331,7 @@ class RadialGradient(GradientPattern):
         SetFillColor = device.SetFillColor
         FillCircle = device.FillCircle
         SetFillColor(color(0))
-        apply(device.FillRectangle, tuple(rect))
+        device.FillRectangle(*tuple(rect))
         radius = radius * (1.0 - self.border)
         dr = radius / steps
         device.PushTrafo()
@@ -525,8 +531,7 @@ class HatchingPattern(Pattern):
             self.width = width
             self.direction = direction
         else:
-            raise ValueError,\
-                  'HatchingPattern must be created with color argument'
+            raise ValueError('HatchingPattern must be created with color argument')
 
     def SetDirection(self, dir):
         undo = (self.SetDirection, self.direction)

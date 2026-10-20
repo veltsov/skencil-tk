@@ -31,8 +31,6 @@
 # historical reasons...
 #
 
-from types import ListType, IntType, StringType, TupleType
-from string import join
 import math
 import sys
 
@@ -100,14 +98,14 @@ class SketchDocument(Protocols):
             pdebug('__del__', '__del__', self.meta.filename)
 
     def __getitem__(self, idx):
-        if type(idx) == IntType:
+        if isinstance(idx, int):
             return self.layers[idx]
-        elif type(idx) == TupleType:
+        elif isinstance(idx, tuple):
             if len(idx) > 1:
                 return self.layers[idx[0]][idx[1:]]
             elif len(idx) == 1:
                 return self.layers[idx[0]]
-        raise ValueError, 'invalid index %s' % `idx`
+        raise ValueError('invalid index %s' % repr(idx))
 
     def AppendLayer(self, layer_name = None, *args, **kw_args):
         try:
@@ -116,7 +114,7 @@ class SketchDocument(Protocols):
                 layer_name = _("Layer %d") % (len(self.layers) + 1)
             else:
                 layer_name = str(layer_name)
-            layer = apply(Layer, (layer_name,) + args, kw_args)
+            layer = Layer(*(layer_name,) + args, **kw_args)
             layer.SetDocument(self)
             self.layers.append(layer)
             if not self.active_layer:
@@ -141,7 +139,7 @@ class SketchDocument(Protocols):
     script_access['BoundingRect'] = SCRIPT_GET
 
     def augment_sel_info(self, info, layeridx):
-        if type(layeridx) != IntType:
+        if not isinstance(layeridx, int):
             layeridx = self.layers.index(layeridx)
         return selinfo.prepend_idx(layeridx, info)
 
@@ -150,11 +148,11 @@ class SketchDocument(Protocols):
         try:
             if layer is None:
                 layer = self.active_layer
-            elif type(layer) == IntType:
+            elif isinstance(layer, int):
                 layer = self.layers[layer]
             if layer is None or layer.Locked():
                 raise SketchInternalError('Layer %s is locked' % layer)
-            if type(object) == ListType:
+            if isinstance(object, list):
                 for obj in object:
                     obj.SetDocument(self)
             else:
@@ -211,7 +209,7 @@ class SketchDocument(Protocols):
             layer = self.layers[idx]
             info.append('%d: %s,\t%d objects' % (idx + 1, layer.name,
                                                  len(layer.objects)))
-        return join(info, '\n')
+        return '\n'.join(info)
 
     def SaveToFile(self, file):
         file.BeginDocument()
@@ -308,10 +306,10 @@ class EditDocument(SketchDocument, QueueingPublisher):
 
     def queue_layer(self, *args):
         if self.transaction:
-            apply(self.queue_message, (LAYER,) + args)
+            self.queue_message(*(LAYER,) + args)
             return (self.queue_layer, args)
         else:
-            apply(self.issue, (LAYER,) + args)
+            self.issue(*(LAYER,) + args)
 
     def queue_selection(self):
         self.queue_message(SELECTION)
@@ -363,7 +361,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
 
             for d, handler, args in handlers:
                 try:
-                    apply(handler, args)
+                    handler(*args)
                 except:
                     warn_tb(INTERNAL, "In after handler `%s'%s", handler, args)
 
@@ -409,9 +407,9 @@ class EditDocument(SketchDocument, QueueingPublisher):
     def cleanup_transaction(self):
         for handler, args in self.transaction_cleanup:
             try:
-                apply(handler, args)
+                handler(*args)
             except:
-                warn_tb(INTERNAL, "in cleanup handler %s%s", handler, `args`)
+                warn_tb(INTERNAL, "in cleanup handler %s%s", handler, repr(args))
         self.transaction_cleanup = []
 
     def add_cleanup_handler(self, handler, *args):
@@ -458,7 +456,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
                 self.reset_clear()
         else:
             # a normal transaction
-            if type(issue) == StringType:
+            if isinstance(issue, str):
                 self.queue_message(issue)
             else:
                 for channel in issue:
@@ -677,7 +675,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
         self.begin_transaction(clear_selection_rect = 0)
         try:
             try:
-                if type(objects) != ListType:
+                if not isinstance(objects, list):
                     objects = [objects]
                 selinfo = []
                 for object in objects:
@@ -1156,17 +1154,17 @@ class EditDocument(SketchDocument, QueueingPublisher):
         # Add undoinfo for the current transaction. should not be called
         # when not in a transaction.
         if infos:
-            if type(infos[0]) == StringType:
+            if isinstance(infos[0], basestring):
                 if not self.transaction_name:
                     self.transaction_name = infos[0]
                 infos = infos[1:]
                 if not infos:
                     return
             for info in infos:
-                if type(info) == ListType:
+                if isinstance(info, list):
                     info = CreateListUndo(info)
                 else:
-                    if type(info[0]) == StringType:
+                    if isinstance(info[0], basestring):
                         if __debug__:
                             pdebug(None, 'add_undo: info contains text')
                         info = info[1:]
@@ -1272,7 +1270,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
                 self.end_transaction()
 
     def AddStyle(self, style):
-        if type(style) == StringType:
+        if isinstance(style, str):
             style = self.GetDynamicStyle(style)
         self.apply_to_selected(_("Add Style"),
                                lambda o, style = style: o.AddStyle(style))
@@ -1286,10 +1284,10 @@ class EditDocument(SketchDocument, QueueingPublisher):
 
     def SetProperties(self, **kw):
         self.apply_to_selected(_("Set Properties"),
-                               lambda o, kw=kw: apply(o.SetProperties, (), kw))
+                               lambda o, kw=kw: o.SetProperties(*(), **kw))
 
     def SetStyle(self, style):
-        if type(style) == StringType:
+        if isinstance(style, str):
             style = self.get_dynamic_style(style)
             self.AddStyle(style)
 
@@ -1337,7 +1335,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
                 selection = []
                 for layer, infolist in split:
                     method = getattr(self.layers[layer], methodname)
-                    sel, undo = apply(method, (infolist,) + args)
+                    sel, undo = method(*(infolist,) + args)
                     if undo is not NullUndo:
                         self.add_undo(undo)
                         edited = 1
@@ -1977,7 +1975,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
         return self.layers.index(self.active_layer)
 
     def SetActiveLayer(self, idx):
-        if type(idx) == IntType:
+        if isinstance(idx, int):
             layer = self.layers[idx]
         else:
             layer = idx
@@ -2074,8 +2072,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
         self.begin_transaction(_("Append Layer"),clear_selection_rect = 0)
         try:
             try:
-                layer = apply(SketchDocument.AppendLayer, (self,) + args,
-                              kw_args)
+                layer = SketchDocument.AppendLayer(*(self,) + args, **kw_args)
                 self.add_undo((self._remove_layer, len(self.layers) - 1))
                 self.queue_layer(LAYER_ORDER, layer)
             except:

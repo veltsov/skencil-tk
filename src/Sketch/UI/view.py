@@ -34,7 +34,7 @@ class SketchView(PyWidget, Viewport, QueueingPublisher):
     def __init__(self, master=None, toplevel = None, document = None,
                  show_visible = 0, show_printable = 1,
                  resolution = None, **kw):
-        apply(PyWidget.__init__, (self, master), kw)
+        PyWidget.__init__(*(self, master), **kw)
         Viewport.__init__(self, resolution)
         QueueingPublisher.__init__(self)
         self.toplevel = toplevel

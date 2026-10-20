@@ -131,21 +131,21 @@ class WMFSaver:
         self.maxrecord = 10
 
     def pack(self, *args):
-        self.file.write(apply(struct.pack , args))
+        self.file.write(struct.pack(*args))
 
     def packrec(self, *args):
         if args[1] is None:
             # compute size of the record
             args = (args[0], struct.calcsize(args[0]) / 2) + args[2:]
         self.maxrecord = max(args[1], self.maxrecord)
-        apply(self.pack, args)
+        self.pack(*args)
 
     def putpolyrec(self, function, seq):
         fmt = '<LHh%dh' % len(seq)
         size = struct.calcsize(fmt) / 2
         args = (fmt, size, function, len(seq) / 2) + tuple(seq)
         self.maxrecord = max(size, self.maxrecord)
-        apply(self.pack, args)
+        self.pack(*args)
 
     def close(self):
         self.file.close()
@@ -290,10 +290,10 @@ class WMFSaver:
                 lens.append(len(lst) / 2)
             self.packrec('<LHh', size, 0x0538, len(set))
             lens.insert(0, '<%dh' % len(set))
-            apply(self.pack, lens)
+            self.pack(*lens)
             for lst in set:
                 fmt = '<%dh' % len(lst)
-                apply(self.pack, (fmt,) + tuple(lst))
+                self.pack(*(fmt,) + tuple(lst))
 
     def rect_to_ltrb(self, rct, zero = Point(0,0)):
         trf = rct.trafo

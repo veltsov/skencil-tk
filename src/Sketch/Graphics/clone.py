@@ -68,7 +68,7 @@ class Clone(Bounded, HierarchyNode):
         _unregister_clone(self._original)
 
     def __getattr__(self, attr):
-        if self._lazy_attrs.has_key(attr):
+        if attr in self._lazy_attrs:
             return Bounded.__getattr__(self, attr)
         #print 'Clone.__getattr__: from original:', attr
         #if attr in ('__nonzero__', 'document'):
@@ -152,7 +152,7 @@ class Clone(Bounded, HierarchyNode):
 
 
 def _transform(original, matrix):
-    trafo = apply(Trafo, matrix)
+    trafo = Trafo(*matrix)
     undo = original.Transform(trafo)
     doc = original.document
     doc.AddUndo((_undo, doc, [undo]))

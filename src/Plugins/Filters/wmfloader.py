@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
+from __future__ import print_function
 ###Sketch Config
 #type = Import
 #class_name = 'WMFLoader'
@@ -189,7 +190,7 @@ class WMFLoader(GenericLoader):
                 else:
                     text = format
             except:
-                text = string.join([format] + map(str, args))
+                text = ' '.join([format] + map(str, args))
             if text[-1] != '\n':
                 text = text + '\n'
             sys.stdout.write(text)
@@ -271,7 +272,7 @@ class WMFLoader(GenericLoader):
         try:
             object = self.gdiobjects[idx]
         except IndexError:
-            print 'Index Error:', idx, self.gdiobjects
+            print('Index Error:', idx, self.gdiobjects)
             raise
         for property, value in object:
             setattr(self.curstyle, property, value)

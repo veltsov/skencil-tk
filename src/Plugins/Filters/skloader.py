@@ -26,9 +26,7 @@ format_name = 'SK-1'
 
 (''"Skencil/Sketch Document")
 
-from types import StringType, TupleType
 import os, sys
-from string import atoi
 
 from Sketch.warn import warn, INTERNAL, pdebug, warn_tb
 
@@ -83,7 +81,7 @@ class SKLoader(GenericLoader):
 
     def __init__(self, file, filename, match):
         GenericLoader.__init__(self, file, filename, match)
-        if atoi(match.group('minor')) > 2:
+        if int(match.group('minor')) > 2:
             self.add_message(_("The file was created by a newer version of "
                                "Skencil or Sketch, there might be inaccuracies."))
         if self.filename:
@@ -105,13 +103,13 @@ class SKLoader(GenericLoader):
         pass
 
     def warn(self, level, *args, **kw):
-        message = apply(warn, (level,) + args, kw)
+        message = warn(*(level,) + args, **kw)
         self.add_message(message)
 
     def get_func_dict(self):
         func_dict = {}
         for name in self.functions:
-            if type(name) == StringType:
+            if isinstance(name, str):
                 func_dict[name] = getattr(self, name)
             else:
                 func_dict[name[1]] = getattr(self, name[0])
@@ -119,7 +117,7 @@ class SKLoader(GenericLoader):
 
     functions.append('layout')
     def layout(self, format, orientation):
-        if type(format) == StringType:
+        if isinstance(format, str):
             if format not in papersizes:
                 # The format is given by name but it's not one of the
                 # standard papersizes. The file may be corrupted.
@@ -147,7 +145,7 @@ class SKLoader(GenericLoader):
             c = self.color_cache.get(color_spec)
             if c:
                 return c
-            c = apply(CreateRGBColor, color_spec)
+            c = CreateRGBColor(*color_spec)
             self.color_cache[color_spec] = c
         except:
             # This should only happen if the color_spec is invalid
@@ -198,7 +196,7 @@ class SKLoader(GenericLoader):
 
     functions.append('pit')
     def pit(self, id, trafo):
-        trafo = apply(Trafo, trafo)
+        trafo = Trafo(*trafo)
         self.pattern = ImageTilePattern(self.id_dict[id], trafo)
 
     functions.append('fp')
@@ -250,14 +248,14 @@ class SKLoader(GenericLoader):
     def la1(self, args = None, head=None):
         #print head
         if args is not None:
-            self.style.line_arrow1 = apply(Arrow, args)
+            self.style.line_arrow1 = Arrow(*args)
         else:
             self.style.line_arrow1 = None
 
     functions.append('la2')
     def la2(self, args = None):
         if args is not None:
-            self.style.line_arrow2 = apply(Arrow, args)
+            self.style.line_arrow2 = Arrow(*args)
         else:
             self.style.line_arrow2 = None
 
@@ -307,7 +305,7 @@ class SKLoader(GenericLoader):
                 bezier.paths[-1].append_from_string(line)
                 line = bezier.paths[-1].append_from_file(self.file)
             except:
-                warn(INTERNAL, _("Error reading line %s"), `line`)
+                warn(INTERNAL, _("Error reading line %s"), repr(line))
                 line = self.file.readline()
             if line[:2] == 'bC':
                 bezier.paths[-1].load_close()
@@ -327,7 +325,7 @@ class SKLoader(GenericLoader):
         if len(trafo) == 2:
             trafo = Translation(trafo)
         else:
-            trafo = apply(Trafo, trafo)
+            trafo = Trafo(*trafo)
         object = text.SimpleText(text = thetext, trafo = trafo,
                                  halign = halign, valign = valign,
                                  properties = self.get_prop_stack())
@@ -338,7 +336,7 @@ class SKLoader(GenericLoader):
         if len(trafo) == 2:
             trafo = Translation(trafo)
         else:
-            trafo = apply(Trafo, trafo)
+            trafo = Trafo(*trafo)
         self.append_object(image.Image(self.id_dict[id], trafo = trafo))
 
     functions.append('bm')
@@ -356,7 +354,7 @@ class SKLoader(GenericLoader):
         if len(trafo) == 2:
             trafo = Translation(trafo)
         else:
-            trafo = apply(Trafo, trafo)
+            trafo = Trafo(*trafo)
         if not os.path.isabs(filename):
             if self.directory:
                 filename = os.path.join(self.directory, filename)
@@ -399,7 +397,7 @@ class SKLoader(GenericLoader):
         model = text.PATHTEXT_ROTATE
         start_pos = 0.0
         if args:
-            if type(args[0]) == TupleType:
+            if isinstance(args[0], tuple):
                 matrix = args[0]
                 args = args[1:]
             if args:
@@ -408,7 +406,7 @@ class SKLoader(GenericLoader):
                     start_pos = args[1]
 
         if matrix:
-            trafo = apply(Trafo, matrix)
+            trafo = Trafo(*matrix)
         else:
             trafo = None
 
@@ -447,7 +445,7 @@ class SKLoader(GenericLoader):
 
     def Load(self):
         file = self.file
-        if type(file) == StringType:
+        if isinstance(file, str):
             file = open(file, 'r')
         dict = self.get_func_dict()
         from Sketch import skread
@@ -472,7 +470,7 @@ class SKLoader(GenericLoader):
                     function = dict.get(funcname)
                     if function is not None:
                         try:
-                            apply(function, args, kwargs)
+                            function(*args, **kwargs)
                         except TypeError:
                             tb = sys.exc_info()[2]
                             try:
@@ -498,7 +496,7 @@ class SKLoader(GenericLoader):
 
                 line = readline()
 
-        except (SketchLoadError, SyntaxError), value:
+        except (SketchLoadError, SyntaxError) as value:
             # a loader specific error occurred
             warn_tb(INTERNAL, 'error in line %d', num)
             if load._dont_handle_exceptions:
@@ -508,12 +506,12 @@ class SKLoader(GenericLoader):
         except:
             # An exception was not converted to a SketchLoadError.
             # This should be considered a bug.
-            warn_tb(INTERNAL, 'error in line %d:\n%s', num, `line`)
+            warn_tb(INTERNAL, 'error in line %d:\n%s', num, repr(line))
             if load._dont_handle_exceptions:
                 raise
             else:
                 raise SketchLoadError(_("error %s:%s in line %d:\n%s")
-                                      % (sys.exc_info()[:2] +(num, `line`)))
+                                      % (sys.exc_info()[:2] +(num, repr(line))))
 
         self.end_all()
         if self.page_layout:
@@ -530,10 +528,10 @@ class SKLoader(GenericLoader):
 
 
 def call_function(function, args, kwargs):
-    if hasattr(function, 'im_func'):
-        args = (function.im_self,) + args
-        function = function.im_func
-    code = function.func_code
+    if hasattr(function, '__func__'):
+        args = (function.__self__,) + args
+        function = function.__func__
+    code = function.__code__
     if code.co_flags & 0x000C:
         # uses *args or **kwargs
         return 0
@@ -543,9 +541,9 @@ def call_function(function, args, kwargs):
         if key not in argnames:
             del kwargs[key]
     try:
-        apply(function, args, kwargs)
+        function(*args, **kwargs)
     except:
         warn_tb(INTERNAL, 'Trying to call function %s with reduced arglist',
-                function.func_name)
+                function.__name__)
         return 0
     return 1

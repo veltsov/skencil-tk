@@ -55,7 +55,7 @@
 #
 #       check   ignored         Checkbutton (on = 1, off = 0)
 
-from string import split, join, capitalize
+from __future__ import print_function
 
 from Sketch.warn import warn, USER
 from Sketch.const import SELECTION
@@ -72,7 +72,7 @@ from lengthvar import create_length_widgets
 
 
 def capwords(ident):
-    return join(map(capitalize, split(ident, '_')), '')
+    return ''.join(map(str.capitalize, ident.split('_')))
 
 class Parameter:
 
@@ -350,7 +350,7 @@ class PluginPanel(PropertyPanel,PluginDlg):
             dict = {}
             for var in self.vars:
                 dict[var.name] = var()
-            obj = apply(self.info.Constructor(), (), dict)
+            obj = self.info.Constructor()(*(), **dict)
             text = 'Create ' + self.info.menu_text # NLS
             self.main_window.canvas.PlaceObject(obj, text)
 
@@ -374,12 +374,12 @@ class PluginPanel(PropertyPanel,PluginDlg):
                 var(getattr(object, capwords(var.name))())
 
     def update_from_object_cb(self, obj):
-        print 'update_from_object_cb', obj
+        print('update_from_object_cb', obj)
         while not obj.is_Plugin and not obj.is_Layer:
             obj = obj.parent
         if obj.is_Plugin and obj.class_name == self.info.class_name:
             for var in self.vars:
-                print 'update_from_object_cb', var
+                print('update_from_object_cb', var)
                 var(getattr(obj, capwords(var.name))())
 
     def close_dlg(self):

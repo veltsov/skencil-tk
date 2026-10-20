@@ -211,7 +211,7 @@ def Cnt3Pnt(P1, P2, P3):
     return Point(Nx/N , Ny/N)
 
 def transform_base(po, px, py):
-    return apply(Trafo, tuple(px - po) + tuple(py - po) + tuple(po))
+    return Trafo(*tuple(px - po) + tuple(py - po) + tuple(po))
 
 def CreateColorTable(sz):
 
@@ -376,7 +376,7 @@ class CGMLoader(GenericLoader):
                 else:
                     text = format
             except:
-                text = string.join([format] + map(str, args))
+                text = ' '.join([format] + map(str, args))
             if text[-1] != '\n':
                 text = text + '\n'
             sys.stdout.write(text)
@@ -445,7 +445,7 @@ class CGMLoader(GenericLoader):
 
     def getstr(self):
         lng = self.u8()
-        return self.unpack("!" + `lng` + "s")[0]
+        return self.unpack("!" + repr(lng) + "s")[0]
 
     def getcol(self):
         if reff.color.mode == 1:
@@ -759,7 +759,7 @@ class CGMLoader(GenericLoader):
 
     def setlinestyle(self):
         style = basestyle.Duplicate()
-        style.line_pattern = SolidPattern(apply(CreateRGBColor , reff.line.color))
+        style.line_pattern = SolidPattern(CreateRGBColor(*reff.line.color))
         style.line_width = reff.line.width
         if reff.line.widthmode == 0:
             style.line_width = style.line_width * self.Scale
@@ -798,7 +798,7 @@ class CGMLoader(GenericLoader):
         self.style = basestyle.Duplicate()
         self.style.font = GetFont(fntlst[self.fntmap[reff.text.fontindex]])
         self.style.font_size = reff.text.height * self.Scale
-        self.style.fill_pattern = SolidPattern(apply(CreateRGBColor , reff.text.color))
+        self.style.fill_pattern = SolidPattern(CreateRGBColor(*reff.text.color))
         O = text.SimpleText(text = S, trafo = T(B),
                             halign = text.ALIGN_LEFT, valign = text.ALIGN_BASE,
                             properties = self.get_prop_stack())
@@ -807,13 +807,13 @@ class CGMLoader(GenericLoader):
     def setfillstyle(self):
         style = basestyle.Duplicate()
         if reff.fill.type == 1:
-            style.fill_pattern = SolidPattern(apply(CreateRGBColor , reff.fill.color))
+            style.fill_pattern = SolidPattern(CreateRGBColor(*reff.fill.color))
         elif reff.fill.type == 3:
-            style.fill_pattern = HatchingPattern(apply(CreateRGBColor , reff.fill.color),
+            style.fill_pattern = HatchingPattern(CreateRGBColor(*reff.fill.color),
                                                  StandardColors.white,
                                                  Point(2.0, 1.0), 5 , 1)
         if reff.edge.visible:
-            style.line_pattern = SolidPattern(apply(CreateRGBColor , reff.edge.color))
+            style.line_pattern = SolidPattern(CreateRGBColor(*reff.edge.color))
             style.line_width = reff.edge.width
             if reff.edge.widthmode == 0:
                 style.line_width = style.line_width * self.Scale
@@ -867,7 +867,7 @@ class CGMLoader(GenericLoader):
         ul = Point(ll.x , ur.y)
         T = transform_base(ll , lr , ul)
         self.setfillstyle()
-        apply(self.rectangle , T.coeff())
+        self.rectangle(*T.coeff())
 
 #   0x4180: 
     def CIRCLE(self,size):
@@ -939,7 +939,7 @@ class CGMLoader(GenericLoader):
         cdp2 = self.trafo(self.Pnt())
         T = transform_base(centre , cdp1 , cdp2)
         self.setfillstyle()
-        apply(self.ellipse , T.coeff())
+        self.ellipse(*T.coeff())
 
 #   0x4240: 
     def ELLIPARC(self, size):
@@ -954,7 +954,7 @@ class CGMLoader(GenericLoader):
         Ao = Angle(Vo)
         Ae = Angle(Ve)
         self.setlinestyle()
-        apply(self.ellipse , T.coeff() + (Ao, Ae, 0))
+        self.ellipse(*T.coeff() + (Ao, Ae, 0))
 
 #   0x4260: 
     def ELLIPARCCLOSE(self, size):
@@ -970,7 +970,7 @@ class CGMLoader(GenericLoader):
         Ao = Angle(Vo)
         Ae = Angle(Ve)
         self.setfillstyle()
-        apply(self.ellipse , T.coeff() + (Ao, Ae, 2 - closetype))
+        self.ellipse(*T.coeff() + (Ao, Ae, 2 - closetype))
 
 #   0x5040
     def linetype(self, size):

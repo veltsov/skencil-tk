@@ -373,8 +373,8 @@ if sys.argv[1] == 'build':
 ##############################################    
             
 if COPY:
-    import string, platform
-    version = (string.split(sys.version)[0])[0:3]
+    import platform
+    version = sys.version[:3]
     
     shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/paxmodule.so', 'src/Sketch/Modules/')
     print '\n paxmodule.so has been copied to src/ directory'
@@ -404,8 +404,8 @@ if COPY:
 if DEBIAN:
     print '\nDEBIAN PACKAGE BUILD'
     print '===================='
-    import string, platform
-    version = (string.split(sys.version)[0])[0:3]
+    import platform
+    version = sys.version[:3]
     
     arch, bin = platform.architecture()
     if arch == '64bit':

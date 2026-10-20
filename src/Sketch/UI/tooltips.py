@@ -19,7 +19,7 @@
 # A very primitive balloon help mechanism for Python/Tk
 #
 
-from types import InstanceType
+from __future__ import print_function
 
 from Tkinter import Toplevel, Label
 
@@ -43,15 +43,15 @@ class Tooltips:
             self.balloon_label['text'] = description
 
     def RemoveDescription(self, widget):
-        if type(widget) == InstanceType:
+        if hasattr(widget, '_w'):
             widget = widget._w
-        if self.descriptions.has_key(widget):
+        if widget in self.descriptions:
             del self.descriptions[widget]
 
     def GetDescription(self, widget):
-        if type(widget) == InstanceType:
+        if hasattr(widget, '_w'):
             widget = widget._w
-        if self.descriptions.has_key(widget):
+        if widget in self.descriptions:
             return self.descriptions[widget]
         return ''
 
@@ -103,7 +103,7 @@ class Tooltips:
             y = widget.winfo_rooty() + widget.winfo_height()
             
             if self.after_id:
-                print 'after_id in enter'
+                print('after_id in enter')
                 self.root.after_cancel(self.after_id)
             self.after_id = self.root.after(config.preferences.tooltip_delay,
                                             self.popup_delayed,

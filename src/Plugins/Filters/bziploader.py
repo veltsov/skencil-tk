@@ -29,7 +29,7 @@
 import os
 
 from Sketch import SketchLoadError, load
-from Sketch.Lib.util import sh_quote
+from Sketch.Lib.util import popen_read, sh_quote
 
 class BZIP2Loader:
 
@@ -47,7 +47,7 @@ class BZIP2Loader:
         basename, ext = os.path.splitext(self.filename)
         if ext != '.bz2':
             basename = self.filename
-        stream = os.popen('bzip2 -d -c ' + sh_quote(self.filename))
+        stream = popen_read('bzip2 -d -c ' + sh_quote(self.filename))
         doc = load.load_drawing_from_file(stream, basename,
                                           doc_class = self.doc_class)
         if doc:

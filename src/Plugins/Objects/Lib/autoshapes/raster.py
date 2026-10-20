@@ -32,7 +32,7 @@ Modifier:
             self.rows.append(f*i/float(n))
         for i in range(n):
             self.cols.append(f*i/float(n))
-        apply(AutoshapeBase.__init__, (self,)+args, kw)
+        AutoshapeBase.__init__(*(self,)+args, **kw)
 
     def Info(self):
         return "Raster (%s x %s)" % (len(self.cols)-1, len(self.rows)-1)

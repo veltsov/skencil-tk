@@ -18,6 +18,7 @@
 
 # Convert a Sketch-file into a PPM file
 
+from __future__ import print_function
 """usage: sk2ppm [Options] infile [outfile]
 
 Convert the Skencil/Sketch SK-file infile into a PPM file. Output is
@@ -47,7 +48,7 @@ from Script.export_raster import export_raster
 
 
 def print_usage():
-    print __doc__
+    print(__doc__)
 
 class Context:
     pass

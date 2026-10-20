@@ -93,7 +93,7 @@ def save_repr(obj):
     if type(obj) == PointType:
         return 'Point(%g, %g)' % tuple(obj)
     else:
-        return `obj`
+        return repr(obj)
 
 
 def save_user_preferences():
@@ -106,9 +106,9 @@ def save_user_preferences():
     try:
         util.create_directory(config.user_config_dir)
         file = open(filename, 'w')
-    except (IOError, os.error), value:
+    except (IOError, os.error) as value:
         sys.stderr('cannot write preferences into %s: %s'
-        	   % (`filename`, value[1]))
+        	   % (repr(filename), value[1]))
         return
 
     file.write('#### -*- python -*-\n'
@@ -119,7 +119,7 @@ def save_user_preferences():
     items = preferences.__dict__.items()
     items.sort()
     for key, value in items:
-        if defaults.has_key(key) and defaults[key] == value:
+        if key in defaults and defaults[key] == value:
             continue
         file.write('preferences.%s = %s\n' % (key, save_repr(value)))
 

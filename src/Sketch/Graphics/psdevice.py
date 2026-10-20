@@ -23,9 +23,7 @@
 #
 
 import os
-from types import StringType
 from math import pi, sqrt
-from string import join, strip, lstrip, split
 
 from Sketch.Lib.util import Empty
 
@@ -68,7 +66,7 @@ class PostScriptDevice(CommonDevice):
                  document = None, printable = 1, visible = 0, rotate = 0,
                  embed_fonts = 0, **options):
         if as_eps and not bounding_box:
-            raise ValueError, 'bounding_box required for EPS'
+            raise ValueError('bounding_box required for EPS')
 
         self.fill = 0; self.line = 0
         self.properties = None
@@ -104,13 +102,13 @@ class PostScriptDevice(CommonDevice):
 
         # search through the document if file is a string with the name
         # of an existing file.
-        if isinstance(file, StringType) and os.path.exists(file):
+        if isinstance(file, str) and os.path.exists(file):
             self.filename = file
             document.WalkHierarchy(self.handle_writes_to_embedded_eps,
                                    visible = self.draw_visible,
                                    printable = self.draw_printable)
 
-        if type(file) == StringType:
+        if isinstance(file, str):
             file = open(file, 'w')
             self.close_file = 1
         else:
@@ -129,7 +127,7 @@ class PostScriptDevice(CommonDevice):
             write("%!PS-Adobe-3.0\n")
         # header comments
         for name, format in HeaderComments:
-            if options.has_key(name):
+            if name in options:
                 value = options[name]
                 if value:
                     write(format % make_textline(value))
@@ -166,9 +164,9 @@ class PostScriptDevice(CommonDevice):
         procfile = os.path.join(config.sketch_dir, config.postscript_prolog)
         procfile = open(procfile, 'r')
         line = procfile.readline()
-        self.supplied_resources.append(join(split(strip(line))[1:]))
+        self.supplied_resources.append(' '.join(line.strip().split()[1:]))
         write(line)
-        for line in map(lstrip, procfile.readlines()):
+        for line in [l.lstrip() for l in procfile.readlines()]:
             if line and line[0] != '%':
                 write(line)
         write('%%EndResource\n')
@@ -188,11 +186,11 @@ class PostScriptDevice(CommonDevice):
                             write("%%%%BeginResource: %s %s\n" % res)
                             type1.embed_type1_file(fontfile, self.file)
                             write("\n%%EndResource\n")
-                        except IOError, exc:
+                        except IOError as exc:
                             warn(USER, _("Can't embed font '%s': %s")
                                  % (value, exc))
                         del self.needed_resources[res]
-                        self.supplied_resources.append(join(res))
+                        self.supplied_resources.append(' '.join(res))
                         continue
                     else:
                         warn(USER,
@@ -225,7 +223,7 @@ class PostScriptDevice(CommonDevice):
         if obj.is_Eps:
             data = obj.Data()
             # we only need to investigate this if we've not processed it yet
-            if not self.loaded_eps_files.has_key(id(data)):
+            if id(data) not in self.loaded_eps_files:
                 filename = data.Filename()
                 if os.path.samefile(self.filename, filename):
                     # it's the same file we're going to write into, so load it
@@ -597,7 +595,7 @@ class PostScriptDevice(CommonDevice):
         write('[%g %g %g %g %g %g]\n' % trafo.coeff())
         write('skeps\n')
         write('%%%%BeginDocument: %s\n' % data.Filename())
-        if self.loaded_eps_files.has_key(id(data)):
+        if id(data) in self.loaded_eps_files:
             write(self.loaded_eps_contents)
         else:
             data.WriteLines(self.file)

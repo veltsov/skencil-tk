@@ -55,7 +55,6 @@
 # Panel (CurvePanel and AlignPanel for instance)
 #
 
-from types import StringType
 
 from Sketch.warn import pdebug, warn_tb, INTERNAL
 from Sketch import _, Publisher
@@ -96,7 +95,7 @@ class SketchPanel(Publisher):
         self.document = None
 
         kw['class'] = self.class_name
-        top = apply(Toplevel, (master,), kw)
+        top = Toplevel(*(master,), **kw)
         top.title(self.title)
         self.pref_pos_name = 'dlg_pos_' + self.__class__.__name__
         if config.preferences.panel_use_coordinates:
@@ -158,13 +157,11 @@ class SketchPanel(Publisher):
 
     def subscribe_receivers(self):
         for info in self.receivers:
-            apply(self.document.Subscribe,
-                  (info[0], getattr(self, info[1])) + info[2:])
+            self.document.Subscribe(*(info[0], getattr(self, info[1])) + info[2:])
 
     def unsubscribe_receivers(self):
         for info in self.receivers:
-            apply(self.document.Unsubscribe,
-                  (info[0], getattr(self, info[1])) + info[2:])
+            self.document.Unsubscribe(*(info[0], getattr(self, info[1])) + info[2:])
 
     def SetDocument(self, doc):
         if self.document:
@@ -242,7 +239,7 @@ class PropertyPanel(SketchPanel):
     def __init__(self, master, main_window, doc, *args, **kw):
         self.var_auto_update = IntVar(master)
         self.var_auto_update.set(1)
-        apply(SketchPanel.__init__, (self, master, main_window, doc) +args, kw)
+        SketchPanel.__init__(*(self, master, main_window, doc) +args, **kw)
 
     receivers.append((SELECTION, 'selection_changed'))
     receivers.append((EDITED, 'selection_changed'))
@@ -320,7 +317,7 @@ class SKModal:
         self.master = master
 
         kw['class'] = self.class_name
-        top = apply(Toplevel, (master,), kw)
+        top = Toplevel(*(master,), **kw)
         top.title(self.title)
         top.transient(master)
         top.group(master)
@@ -413,7 +410,7 @@ class MessageDialog(SKModal):
         frame = Frame(top, name = 'top')
         frame.pack(side = TOP, fill = BOTH, expand = 1)
         bitmap = pixmaps.load_image(self.bitmap)
-        if type(bitmap) == StringType:
+        if isinstance(bitmap, str):
             label = Label(frame, bitmap = bitmap, name = 'bitmap')
         else:
             label = Label(frame, image = bitmap, name = 'bitmap')

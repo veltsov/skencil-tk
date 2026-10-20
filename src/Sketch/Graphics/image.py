@@ -22,7 +22,6 @@
 #
 
 import os
-from types import StringType
 
 import PIL.Image, PIL.ImageChops
 
@@ -49,9 +48,9 @@ class ImageData(ExternalData):
         ExternalData.__init__(self, filename, cache)
 
     def __getattr__(self, attr):
-        if self.attributes.has_key(attr):
+        if attr in self.attributes:
             return getattr(self.image, attr)
-        raise AttributeError, attr
+        raise AttributeError(attr)
 
     def AsEmbedded(self):
         if self.filename:
@@ -80,12 +79,12 @@ class ImageData(ExternalData):
 
 
 def load_image(filename, cache = 1):
-    if type(filename) == StringType:
+    if isinstance(filename, str):
         image = get_cached(filename)
         if image:
             return image
     image = PIL.Image.open(filename)
-    if type(filename) != StringType:
+    if not isinstance(filename, str):
         filename = ''
     return ImageData(image, filename = filename, cache = cache)
 
@@ -101,8 +100,8 @@ class Image(ExternalGraphics):
         if duplicate is None:
             if not image:
                 if not imagefile:
-                    raise ValueError, 'Image must be instantiated with'\
-                          ' either image or imagefile'
+                    raise ValueError('Image must be instantiated with'\
+                          ' either image or imagefile')
                 image = load_image(imagefile)
         ExternalGraphics.__init__(self, image, trafo,
                                   duplicate = duplicate)
@@ -132,7 +131,7 @@ class Image(ExternalGraphics):
     def CallImageFunction(self, function, args = ()):
         if type(args) != type(()):
             args = (args,)
-        data = apply(getattr(self.data, function), args)
+        data = getattr(self.data, function)(*args)
         return self.SetData(data)
     AddCmd(commands, 'GrayscaleImage', _("Grayscale Image"),
            CallImageFunction, args = ('Convert', 'L'))
