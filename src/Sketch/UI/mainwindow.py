@@ -261,7 +261,7 @@ class SketchMainWindow(Publisher):
         self.SaveToFile(filename, fileformat, compressed, compressed_file)
 
     def SaveToFile(self, filename, fileformat = None, compressed = '',
-                   compressed_file = ''):
+                   compressed_file = '', plugin_options = None):
         app = self.application
         try:
             if not self.document.meta.backup_created:
@@ -298,9 +298,9 @@ class SketchMainWindow(Publisher):
                     elif compressed == "bzip2":
                         cmd = 'bzip2 > ' + util.sh_quote(compressed_file)
                     file = os.popen(cmd, 'w')
-                    saver(self.document, filename, file = file)
+                    saver(self.document, filename, file = file, options = plugin_options)
                 else:
-                    saver(self.document, filename)
+                    saver(self.document, filename, options = plugin_options)
             finally:
                 saver.UnloadPlugin()
         except IOError, value:
@@ -341,7 +341,8 @@ class SketchMainWindow(Publisher):
     def ExportAgain(self):
         filename = self.document.meta.last_export_filename
         if filename:
-            self.SaveToFile(filename,self.document.meta.last_export_format)
+            self.SaveToFile(filename,self.document.meta.last_export_format,
+                            plugin_parameters = self.document.meta.last_export_plugin_options)
 
     def CanExportAgain(self):
         return len(self.document.meta.last_export_filename) > 0

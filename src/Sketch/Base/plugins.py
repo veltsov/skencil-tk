@@ -211,7 +211,9 @@ class ExportInfo(ConfigInfo):
         return opts
 
     def ask_options(self, myoptions):
+        # Not implemented yet
         print myoptions
+        return myoptions
 
     def __call__(self, document, filename, file = None, options = None):
         poptkey = 'Export.' + self.format_name
@@ -220,7 +222,7 @@ class ExportInfo(ConfigInfo):
         myoptions = document.options[poptkey]
         if options is None:
             if len(self.parameters):
-                self.ask_options(myoptions)
+                myoptions = self.ask_options(myoptions)
         elif len(options):
             myoptions.update(options)
         try:

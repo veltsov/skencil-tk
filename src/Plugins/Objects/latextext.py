@@ -203,7 +203,7 @@ def create_tex_sk(text,fontsz,doc=None):
     # separate sktextwidth is introduced for freedom of implementaions
     # e.g. I played with implementation via minipage
     texwrapper='''\\documentclass{article}
-\\usepackage[dvips,usenames]{color}
+\\usepackage[usenames]{color}
 \\usepackage[utf8]{inputenc}
 \\parindent 0pt
 \\pagestyle{empty}

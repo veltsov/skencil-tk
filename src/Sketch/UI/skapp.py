@@ -49,6 +49,7 @@ meta_defaults = [
     ('load_messages', ''),		# (warning) messages
     ('last_export_filename', ''),
     ('last_export_format', None),
+    ('last_export_plugin_options', None),
 ]
 
 for key, val in meta_defaults:
