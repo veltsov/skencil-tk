@@ -16,6 +16,7 @@ from GTK to **Tk** and added many features (see `README.md`).
 | `devdocs/architecture.md` | Source layout, package structure, C extension modules, plugin system, file formats, key classes and data flow |
 | `devdocs/python3-porting.md` | All findings relevant to the goal of porting the application to Python 3: inventory of Python-2-only constructs (per-file), C extension issues, strategy recommendations |
 | `devdocs/paxtkinter-analysis.md` | Deep analysis of the `paxtkinter` module: why it exists (GIL/TclLock), full dependency surface, and the plan to drop it in favor of stock `_tkinter` (branch `modernize`) |
+| `devdocs/modernize-paxtkinter.md` | Pre-flight experiment record (2026-10-20): running the app on stock `_tkinter` segfaults at the first pax→Python call (gdb backtrace); corrected conclusions and the simplified fix |
 
 ## Quick facts
 

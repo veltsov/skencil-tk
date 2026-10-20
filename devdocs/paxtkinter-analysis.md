@@ -61,6 +61,13 @@ Failure modes if the app were switched to stock `_tkinter` unchanged:
    `tk.call` (menu command → dialog → anything) hits stock
    `_tkinter`'s `ENTER_TCL` → re-acquisition of the non-recursive
    `tcl_lock` on the same thread → deadlock.
+   **Correction (see `devdocs/modernize-paxtkinter.md`):** this does
+   not apply when Tcl itself is threaded — py2.7's `_tkinter` frees
+   `tcl_lock` at tkapp creation for threaded Tcl (source lines
+   737-742), so the macros reduce to pure GIL release/acquire and
+   re-entrant `tk.call` cannot deadlock. On threaded Tcl the fix is a
+   simple `PyGILState_Ensure`/`Release` wrap of pax's Python-call
+   sites.
 3. **Nested event loops:** file dialogs (`tk_getOpenFile` runs a
    `tkwait` inner loop inside `Tkapp_Call`), `update`, `grab` all
    dispatch X events inside Tcl with the GIL released — so even driving
@@ -68,7 +75,10 @@ Failure modes if the app were switched to stock `_tkinter` unchanged:
 
 The header comment "only necessary if Python was compiled with thread
 support" means it is always necessary on distro Pythons today. Not a
-vanished 1.5.2 problem.
+vanished 1.5.2 problem. **Empirically confirmed 2026-10-20:** running
+the app on stock `_tkinter` (via a sitecustomize alias, validated by an
+import spy) segfaults at the first `pax → Python` call — gdb backtrace
+in `devdocs/modernize-paxtkinter.md`.
 
 ## Complete dependency surface (verified)
 
@@ -117,6 +127,14 @@ acquires the GIL) before running Python — the same mechanism as normal
 Tk `-command` scripts. Therefore pax's event-context callbacks must be
 marshaled through a `createcommand`-registered dispatcher instead of
 calling Python directly.
+
+**Simplified after the pre-flight experiment** (see
+`devdocs/modernize-paxtkinter.md`): with threaded Tcl there is no
+`tcl_lock` at all, so the simple fix works — wrap pax's Python-call
+choke points (`paxWidget_CallMethodArgs` at paxmodule.c:104 and
+`call_py_method` at :791) with `PyGILState_Ensure()`/`Release()`.
+The `createcommand`-dispatcher variant below remains a fallback if
+the `PyGILState` approach shows reentrancy problems.
 
 Python side:
 1. `Sketch/__init__.py:init_ui()` — remove the paxtkinter hack.
@@ -168,11 +186,13 @@ dispatcher — all stable across py2.7 → py3.x. The 2241-line
 
 ## Pre-flight probe
 
-Before implementing, the analysis can be validated in minutes without
-touching the repo: run the app with stock `_tkinter` by aliasing
-`paxtkinter` to it via a `sitecustomize.py` injected through
-`PYTHONPATH` (expected result per this analysis: abort on the first
-canvas redraw with "no current thread state"). See
-`devdocs/modernize-paxtkinter.md` for the executed procedure and
-result.
+Executed 2026-10-20 — see `devdocs/modernize-paxtkinter.md` for the
+full procedure, results, gdb backtrace and the corrected conclusions.
+Short version: the probe (run under Xvfb with a sitecustomize aliasing
+*both* `paxtkinter` and `Sketch.paxtkinter` to the stock `_tkinter`,
+validated by an `__import__` spy) **segfaulted at the first
+`pax → Python` call**, confirming the GIL analysis; the deadlock
+concern was disproven for threaded Tcl, which makes the actual fix a
+simple `PyGILState_Ensure`/`Release` wrap.
+
 
