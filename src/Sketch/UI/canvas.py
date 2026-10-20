@@ -43,7 +43,7 @@ import Sketch
 import command
 import skpixmaps
 pixmaps = skpixmaps.PixmapTk
-from tkext import MakeCommand, UpdatedMenu
+from tkext import MakeCommand, UpdatedMenu, utf8_to_latin1
 
 from cursorstack import CursorStack
 from view import SketchView
@@ -562,14 +562,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
         try:
             state = event.state
             sym = event.keysym
-            char = event.char
-            try:
-                char = self.tk.utf8_to_latin1(char)
-            except AttributeError:
-                # we're using Python's own _tkinter. FIXME: we should
-                # handle this case properly, bit it only happens with
-                # python <= 1.5.1, so it shouldn't be much of a problem
-                pass
+            char = utf8_to_latin1(event.char)
             # key events should probably be also handled by the modes
             if sym == 'Escape':
                 self.cancel_current_mode()

@@ -248,13 +248,8 @@ if __name__ == "__main__":
         sys.exit(1)
     
     
-    paxtkinter_src = src_path + 'extensions/Pax/'                
-    paxtkinter_module = Extension('Sketch.Modules.paxtkinter',
-            define_macros=[('MAJOR_VERSION', '1'),
-                        ('MINOR_VERSION', '0')],
-            sources=[paxtkinter_src + 'paxtkinter.c'],
-            include_dirs=tcl_include_dirs,
-            libraries=['tk' + tcl_ver, 'tcl' + tcl_ver])
+    # paxtkinter (a private copy of _tkinter) is no longer built; pax
+    # works with the stock _tkinter (see devdocs/modernize-paxtkinter.md)
     
     
     pax_src = src_path + 'extensions/Pax/'
@@ -362,7 +357,7 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
                     ],
 
             ext_modules=[filter_module, intl_module, skread_module, type1mod_module,
-                         pstokenize_module, paxtkinter_module, pax_module, skmod_module])
+                         pstokenize_module, pax_module, skmod_module])
     
 #################################################
 # .py source compiling
@@ -385,9 +380,6 @@ if COPY:
     
     shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/paxmodule.so', 'src/Sketch/Modules/')
     print '\n paxmodule.so has been copied to src/ directory'
-    
-    shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/paxtkinter.so', 'src/Sketch/Modules/')
-    print '\n paxtkinter.so has been copied to src/ directory'
     
     shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/intl.so', 'src/Sketch/Modules/')
     print '\n intl.so has been copied to src/ directory'

@@ -37,6 +37,7 @@ import Sketch.const
 from Sketch import Scale, TrafoPlugin, SimpleText, Translation, Identity, \
      GetFont, StandardColors, SolidPattern, UndoAfter, _
 from Sketch.UI.sketchdlg import SketchPanel
+from Sketch.UI.tkext import utf8_to_latin1
 
 from Lib.multilinetext.TextEditor import TextEditor, FONTS, Style, \
      raw2styling, styling2raw
@@ -240,8 +241,7 @@ class MultilineTextDlg(SketchPanel):
 
 
     def get_text(self):
-        tk = self.master.tk
-        return tk.utf8_to_latin1(self.text_field.get('1.0', 'end')[:-1])
+        return utf8_to_latin1(self.text_field.get('1.0', 'end')[:-1])
 
     def get_styling(self):
         return self.text_field.styling_get('1.0', 'end')

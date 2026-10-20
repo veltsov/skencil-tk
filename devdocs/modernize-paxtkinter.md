@@ -135,3 +135,53 @@ around Tcl, `tcl_lock` freed for threaded Tcl, GIL-safe
   reentrancy of `paxwidget_cmd` needs a functional test after the fix.
 - Interaction with modal dialogs / `tkwait` inner loops after the fix.
 
+## Implementation (2026-10-20, done on branch `modernize`)
+
+The fix was implemented as described and validated:
+
+- `src/extensions/Pax/paxmodule.c`: every function that can run in a
+  Tcl call/event context now acquires the GIL. Either by wrapping the
+  whole body (impl + thin `PyGILState_Ensure`/`Release` wrapper for
+  `paxwidget_cmd`, `paxwidget_widget_cmd`, `PaxWidgetEventProc`,
+  `PaxWidgetDisplay`, `PaxWidgetDestroy`) or inline
+  (`paxWidget_CallMethodArgs` — the choke point for all widget method
+  callbacks — and `call_py_method`).
+- `src/Sketch/__init__.py`: `init_ui()` no longer replaces
+  `sys.modules['_tkinter']` with paxtkinter.
+- `src/Sketch/UI/skapp.py`: `init_tk()` checks
+  `tcl_platform(threaded)` right after root creation and aborts with
+  an error message if Tcl is not threaded (required because with
+  non-threaded Tcl `_tkinter`'s internal `tcl_lock` exists and the
+  GIL-acquiring pax callbacks would deadlock re-entering `tk.call`).
+  Also calls `self.root.tk.wantobjects(0)` so `tk.call` results come
+  back as plain strings like paxtkinter returned them (verified:
+  without it, e.g. `winfo rgb` returns `unicode`).
+- `src/Sketch/UI/tkext.py`: pure-Python `utf8_to_latin1` /
+  `utf8_to_system` helpers replace the former tkapp methods
+  (used by `GetOpenFilename`/`GetSaveFilename`).
+- `src/Sketch/UI/canvas.py`, `src/Plugins/Objects/multilinetext.py`:
+  use the tkext helpers instead of `tk.utf8_to_latin1`.
+- `setup.py`: paxtkinter Extension removed from `ext_modules` and from
+  the `build&copy` list; the stale `paxtkinter.so` was removed from the
+  build tree.
+
+Validation (Xvfb, same harness as the pre-flight):
+
+- stress run (`--run-script` with 100 hammers: canvas resizes — real X
+  ConfigureNotify → `PaxWidgetEventProc` — plus nested `update()` /
+  `update_idletasks()` event loops → `PaxWidgetDisplay`): **100/100
+  hammers completed, zero errors**, and the stress script confirmed
+  `sys.modules['_tkinter']` is the stock
+  `/usr/lib/python2.7/lib-dynload/_tkinter.so`.
+- `call_py_method` raw Tcl command: Python method invoked with
+  arguments correctly; widget command subcommands (`bgpixel`,
+  `cget -class`) work.
+- plain startup: runs cleanly until killed by timeout.
+- `wantobjects` behavior verified interactively (see above).
+
+Not yet covered by automation: interactive menu/command activation
+(the `call_py_method` path from real button/menu events — same code
+path as the validated direct call), modal dialogs (`tkwait`), real
+file dialogs, drag&drop. An interactive session is recommended.
+
+

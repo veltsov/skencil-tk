@@ -84,12 +84,19 @@ paxWidget_CallMethodArgs(PyObject * obj, int method_idx, PyObject * args)
 {
     PyObject * result;
     PyObject * method;
+    PyGILState_STATE gilstate;
 
     if (obj == NULL)
 	return 0;
 
     if (args == NULL)
 	return -1;
+
+    /* Stock _tkinter releases the GIL around every Tcl call and event
+       dispatch. This function may be invoked from such a context (via
+       paxwidget_cmd, PaxWidgetEventProc, PaxWidgetDisplay), so make
+       sure the GIL is held while calling Python. */
+    gilstate = PyGILState_Ensure();
 
     method = PyObject_GetAttr(obj, method_names_obj[method_idx]);
     if (!method)
@@ -98,6 +105,7 @@ paxWidget_CallMethodArgs(PyObject * obj, int method_idx, PyObject * args)
 	fprintf(stderr, "No Method %s\n",
 		PyString_AsString(method_names_obj[method_idx]));
 	PyErr_Clear();
+	PyGILState_Release(gilstate);
 	return 0;
     }
 
@@ -110,9 +118,11 @@ paxWidget_CallMethodArgs(PyObject * obj, int method_idx, PyObject * args)
 	char buf[100];
 	sprintf(buf, "--- Calling %.40s failed---", method_names[method_idx]);
 	print_failure_message(buf);
+	PyGILState_Release(gilstate);
 	return 0;
     }
     Py_DECREF(result);
+    PyGILState_Release(gilstate);
     return 0;
 }
 
@@ -253,8 +263,10 @@ static int paxwidget_widget_cmd(ClientData data, Tcl_Interp * interp,
 static void PaxWidgetDisplay(ClientData clientData);
 static void PaxWidgetDestroy(char * data);
 
-int
-paxwidget_cmd(ClientData data, Tcl_Interp * interp, int argc, char** argv)
+/* Stock _tkinter releases the GIL around Tcl calls; this Tcl command is
+   invoked from such a context, so acquire the GIL for the whole body. */
+static int
+paxwidget_cmd_impl(ClientData data, Tcl_Interp * interp, int argc, char** argv)
 {
     Tk_Window tkmain = (Tk_Window) data;
     Tk_Window tkwin;
@@ -334,8 +346,18 @@ paxwidget_cmd(ClientData data, Tcl_Interp * interp, int argc, char** argv)
     return TCL_OK;
 }
 
+static int
+paxwidget_cmd(ClientData data, Tcl_Interp * interp, int argc, char** argv)
+{
+    int result;
+    PyGILState_STATE gilstate = PyGILState_Ensure();
+    result = paxwidget_cmd_impl(data, interp, argc, argv);
+    PyGILState_Release(gilstate);
+    return result;
+}
+
 static void
-PaxWidgetDestroy(char * data)
+PaxWidgetDestroy_impl(char * data)
 {
     PaxWidget *paxwidget = (PaxWidget *) data;
 
@@ -343,6 +365,15 @@ PaxWidgetDestroy(char * data)
     Py_XDECREF(paxwidget->obj);
     XDestroyRegion(paxwidget->exposed_region);
     ckfree((char *) paxwidget);
+}
+
+/* may be called (indirectly via Tk_EventuallyFree) without the GIL */
+static void
+PaxWidgetDestroy(char * data)
+{
+    PyGILState_STATE gilstate = PyGILState_Ensure();
+    PaxWidgetDestroy_impl(data);
+    PyGILState_Release(gilstate);
 }
 
 
@@ -407,8 +438,9 @@ PaxWidgetConfigure(Tcl_Interp * interp, PaxWidget * paxwidget,
 }
 
 
+/* may be invoked from Tcl event dispatch without the GIL */
 static int
-paxwidget_widget_cmd(ClientData data, Tcl_Interp * interp,
+paxwidget_widget_cmd_impl(ClientData data, Tcl_Interp * interp,
 		     int argc, char** argv)
 {
     PaxWidget * paxwidget = (PaxWidget*)data;
@@ -564,9 +596,21 @@ handle_expose_event(PaxWidget * paxwidget, XEvent * event)
     PaxWidget_RegisterUpdate(paxwidget);
 }
 
+/* may be invoked from Tcl event dispatch without the GIL */
+static int
+paxwidget_widget_cmd(ClientData data, Tcl_Interp * interp,
+		     int argc, char** argv)
+{
+    int result;
+    PyGILState_STATE gilstate = PyGILState_Ensure();
+    result = paxwidget_widget_cmd_impl(data, interp, argc, argv);
+    PyGILState_Release(gilstate);
+    return result;
+}
+
 
 static void
-PaxWidgetEventProc(ClientData clientData, XEvent *event)
+PaxWidgetEventProc_impl(ClientData clientData, XEvent *event)
 {
     PaxWidget *paxwidget = (PaxWidget *) clientData;
 
@@ -608,8 +652,18 @@ PaxWidgetEventProc(ClientData clientData, XEvent *event)
     }
 }
 
+/* may be invoked from Tcl event dispatch without the GIL */
 static void
-PaxWidgetDisplay(ClientData clientData)
+PaxWidgetEventProc(ClientData clientData, XEvent *event)
+{
+    PyGILState_STATE gilstate = PyGILState_Ensure();
+    PaxWidgetEventProc_impl(clientData, event);
+    PyGILState_Release(gilstate);
+}
+
+/* may be invoked (via Tk_DoWhenIdle) without the GIL */
+static void
+PaxWidgetDisplay_impl(ClientData clientData)
 {
     PaxWidget *paxwidget = (PaxWidget *) clientData;
     Tk_Window tkwin = paxwidget->tkwin;
@@ -627,6 +681,14 @@ PaxWidgetDisplay(ClientData clientData)
     paxWidget_CallMethodArgs(paxwidget->obj, RedrawMethodIdx,
 			     Py_BuildValue("(O)", region));
     Py_DECREF(region);
+}
+
+static void
+PaxWidgetDisplay(ClientData clientData)
+{
+    PyGILState_STATE gilstate = PyGILState_Ensure();
+    PaxWidgetDisplay_impl(clientData);
+    PyGILState_Release(gilstate);
 }
 
 
@@ -733,10 +795,14 @@ unregister_object(PyObject * self, PyObject * args)
 }
 
 
+/* may be invoked from Tcl event dispatch (widget callbacks) without
+   the GIL, so acquire the GIL for the whole body */
 static int
 call_py_method(ClientData data, Tcl_Interp * interp, int argc, char** argv)
 {
     PyObject * obj, *method, *args, *result;
+    PyGILState_STATE gilstate;
+    int tcl_result = TCL_OK;
 
     if (argc < 3)
     {
@@ -744,14 +810,16 @@ call_py_method(ClientData data, Tcl_Interp * interp, int argc, char** argv)
 	return TCL_ERROR;
     }
 
+    gilstate = PyGILState_Ensure();
+
     if (!object_registry)
-	return TCL_OK;
+	goto done;
 
     obj = PyDict_GetItemString(object_registry, argv[1]);
     if (!obj)
     {
 	PyErr_Clear();
-	return TCL_OK;
+	goto done;
     }
     method = PyObject_GetAttrString(obj, argv[2]);
     if (!method)
@@ -759,7 +827,7 @@ call_py_method(ClientData data, Tcl_Interp * interp, int argc, char** argv)
 	/* do nothing if the object doesn't have the method */
 	fprintf(stderr, "No Method %s.%s\n", argv[1], argv[2]);
 	PyErr_Clear();
-	return TCL_OK;
+	goto done;
     }
 
     
@@ -782,7 +850,8 @@ call_py_method(ClientData data, Tcl_Interp * interp, int argc, char** argv)
 	{
 	    Py_XDECREF(args);
 	    Tcl_SetResult(interp, "Cannot build argument tuple", TCL_VOLATILE);
-	    return TCL_ERROR;
+	    tcl_result = TCL_ERROR;
+	    goto done;
 	}
     }
     else
@@ -795,11 +864,14 @@ call_py_method(ClientData data, Tcl_Interp * interp, int argc, char** argv)
     {
 	/*PyErr_Clear();*/
     Tcl_SetResult(interp, "Exception in python method", TCL_VOLATILE);
-	return TCL_ERROR;
+	tcl_result = TCL_ERROR;
+	goto done;
     }
     Py_DECREF(result);
 
-    return TCL_OK;
+ done:
+    PyGILState_Release(gilstate);
+    return tcl_result;
 }
 
 static PyObject *

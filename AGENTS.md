@@ -22,9 +22,12 @@ from GTK to **Tk** and added many features (see `README.md`).
 
 - **Language:** Python 2 (2.7) + C extension modules. ~200 `.py` files under
   `src/`, ~57k lines of Python, plus ~10k lines of C in `src/extensions/`.
-- **UI toolkit:** Tk (via `Tkinter`), plus two custom C extensions that hook
-  into Tk: `paxtkinter` (replaces `_tkinter` at startup) and `pax`
-  (X11/pixmap rendering for Tk widgets). No GTK anymore (despite the
+- **UI toolkit:** Tk (via `Tkinter`), plus the custom C extension `pax`
+  (X11/pixmap rendering for Tk widgets). Since the `modernize` branch,
+  the stock `_tkinter` is used directly — the former `paxtkinter`
+  `_tkinter`-replacement module was dropped (see
+  `devdocs/modernize-paxtkinter.md`); the runtime now *requires
+  threaded Tcl* (checked at startup). No GTK anymore (despite the
   legacy name `Sketch/Base/gtkutils.py`, which now contains only Tk
   font/color helpers).
 - **Build:** `python2 setup.py build` (distutils). Result goes to
@@ -83,10 +86,10 @@ from GTK to **Tk** and added many features (see `README.md`).
 
 1. `src/skencil` (launcher) puts `../lib.linux-x86_64-2.7` on `sys.path`
    and calls `Sketch.main.main()`.
-2. `Sketch/Base/main.py:main()` parses options, calls `Sketch.init_ui()`
-   (which imports `paxtkinter` and *replaces `sys.modules['_tkinter']`*
-   with it — a crucial, unusual detail), creates `SketchApplication`
-   (`Sketch/UI/skapp.py`) and runs the Tk mainloop.
+2. `Sketch/Base/main.py:main()` parses options, calls `Sketch.init_ui()`,
+   creates `SketchApplication`
+   (`Sketch/UI/skapp.py`; `init_tk` checks that Tcl is threaded and sets
+   `wantobjects(0)`) and runs the Tk mainloop.
 3. `Sketch/__init__.py` is the package bootstrap: extends `__path__` with
    `Modules/` and `Base/`, sets up gettext, imports and re-exports
    geometry primitives from `_sketch` C module, initializes PIL, loads

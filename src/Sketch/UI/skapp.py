@@ -114,7 +114,23 @@ class TkApplication:
         self.root = Tk(screenName = screen_name,
                        baseName = self.tk_basename,
                        className = self.tk_class_name)
-        
+
+        # pax works with the stock _tkinter only with a threaded Tcl:
+        # _tkinter releases the GIL around Tcl calls and pax re-acquires
+        # it in its callbacks (PyGILState), which would deadlock on the
+        # internal Tcl lock of a non-threaded Tcl build.
+        if not int(self.root.tk.call('info', 'exists',
+                                     'tcl_platform(threaded)')) \
+           or not int(self.root.tk.getvar('tcl_platform(threaded)')):
+            sys.stderr.write(_(
+                'This build of Skencil requires a threaded Tcl runtime:\n'
+                'the Tcl variable tcl_platform(threaded) must be set.\n'))
+            sys.exit(1)
+
+        # return results of tk.call as strings, like the old paxtkinter
+        # module did (Tkinter.py sets wantobjects to 1 by default)
+        self.root.tk.wantobjects(0)
+
         gtkutils.set_ui_font(self.root, config.preferences.ui_font)
         gtkutils.set_ui_colors(self.root, config.preferences.ui_color_scheme)
         

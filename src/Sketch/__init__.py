@@ -182,10 +182,11 @@ def init_lib():
     Issue(None, const.INITIALIZE)
 
 def init_ui():
-    # workaround for a threaded _tkinter in Python 1.5.2
-    if sys.version[:5] >= '1.5.2':
-        import paxtkinter
-        sys.modules['_tkinter'] = paxtkinter
+    # paxtkinter (a copy of _tkinter from Python 1.5.2) used to be
+    # substituted for _tkinter here; pax now works with the stock
+    # _tkinter (GIL-safe callbacks; see devdocs/modernize-paxtkinter.md).
+    # The runtime requires threaded Tcl; this is checked in
+    # UI.skapp.TkApplication.init_tk as soon as an interpreter exists.
 
     init_lib()
 

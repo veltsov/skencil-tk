@@ -17,6 +17,7 @@
 
 
 from types import TupleType, ListType, InstanceType, StringType
+import sys
 
 import pax
 
@@ -704,17 +705,30 @@ class PyWidget(Widget, SketchDropTarget):
 
 
 
+# encoding helpers that were provided by the paxtkinter module before it
+# was dropped in favor of the stock _tkinter
+
+def utf8_to_latin1(text):
+    """Convert a UTF-8 encoded string to latin-1 (iso8859-1)"""
+    return text.decode('utf-8').encode('latin-1')
+
+def utf8_to_system(text):
+    """Convert a UTF-8 encoded string to the system encoding"""
+    encoding = sys.getfilesystemencoding() or 'utf-8'
+    return text.decode('utf-8').encode(encoding, 'replace')
+
+
 def GetOpenFilename(master, **kw):
     filename = apply(master.tk.call,
                      ('tk_getOpenFile', '-parent', master._w)
                      + master._options(kw))
-    return master.tk.utf8_to_system(filename)
+    return utf8_to_system(filename)
 
 def GetSaveFilename(master, **kw):
     filename = apply(master.tk.call,
                      ('tk_getSaveFile', '-parent', master._w)
                      + master._options(kw))
-    return master.tk.utf8_to_system(filename)
+    return utf8_to_system(filename)
 
 # NLS:
 #

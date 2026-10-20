@@ -21,6 +21,12 @@ files containing the construct, not occurrences).
    still exists in py2.7/py3, but pax's dependency surface on
    `paxtkinter` is tiny and a concrete redesign exists to drop it in
    favor of stock `_tkinter` (work planned on branch `modernize`).
+   **Resolved on branch `modernize`:** paxtkinter was dropped; pax now
+   works with the stock `_tkinter` (GIL-safe callbacks via
+   `PyGILState_Ensure`, threaded-Tcl requirement checked at startup).
+   See `devdocs/modernize-paxtkinter.md`. For the py3 port only
+   `paxmodule.c` (937 lines) remains to port instead of paxtkinter +
+   pax (~3200 lines).
 2. **`pax` module** — X11 pixmaps/GC/windows/TkWin objects; C code using
    the Tk C API (`tkwinobject.c` uses `Tk_Window` internals via
    interpaddr) and Tcl command plumbing. Must be checked against the

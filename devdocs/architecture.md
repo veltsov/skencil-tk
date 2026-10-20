@@ -9,7 +9,7 @@ The `Sketch` package is unusual and central to understanding the code:
   `loadres` (in `Sketch/Base/`) are importable as top-level names
   (`import config`, not `import Sketch.Base.config`).
 - It inserts `Modules/` into `sys.path[1:]`, so the C extensions
-  (`_sketch`, `pax`, `paxtkinter`, `streamfilter`, `pstokenize`,
+  (`_sketch`, `pax`, `streamfilter`, `pstokenize`,
   `skreadmodule`, `_type1module`, `intl`) are importable top-level too.
 - It sets up gettext through the custom `intl` extension (fallback:
   identity functions), defines `_`.
@@ -17,10 +17,9 @@ The `Sketch` package is unusual and central to understanding the code:
   does `from Sketch import Trafo, PolyBezier, ...`.
 - `_import_PIL()` imports PIL (package or old top-level `Image`) and
   patches `sys.modules` so `PIL.Image` always works.
-- `init_ui()` imports `paxtkinter` and replaces `sys.modules['_tkinter']`
-  with it **before** Tk is imported, then `init_lib()` (loads user
-  preferences, `Issue(INITIALIZE)`) and imports the standard scripts from
-  `config.preferences.standard_scripts`.
+- `init_ui()` loads user preferences via `init_lib()` and imports the
+  standard scripts (the old `paxtkinter`-for-`_tkinter` substitution
+  was removed on the `modernize` branch).
 - `init_modules_from_widget(root)` imports `pax`, initializes
   `UI.tkext` from the Tk app (`pax.create_tcl_commands(tk)`), etc.
 
@@ -115,14 +114,17 @@ appear here only after `build&copy`.
   Base64Decode, SubFileDecode, HexFilter, ASCII85, zlib; imported
   top-level, e.g. `from streamfilter import Base64Decode, SubFileDecode`.
 - `Pax/paxmodule.c` + `paxtkinter.c` — the X11/Tk rendering layer:
-  `paxtkinter` wraps/replaces `_tkinter` (patching the Tk event loop and
-  object registration); `pax` provides off-screen X11 pixmaps, GC
+  `paxtkinter` was a private copy of Python 1.5.2's `_tkinter` that
+  used to replace `sys.modules['_tkinter']` at startup; it was **dropped
+  on the `modernize` branch** — pax now runs on the stock `_tkinter`
+  (its Tcl-context callbacks acquire the GIL via `PyGILState_Ensure`;
+  threaded Tcl is required and checked at startup).
+  `pax` provides off-screen X11 pixmaps, GC
   objects, windows (`tkwinobject.c`), regions, clipping, fonts, images,
   and registers Tcl commands; used by `Sketch/UI/tkext.py`,
   `canvas.py`, `ruler.py`, `miniscroll.py`, `gradientedit.py`.
-  See `devdocs/paxtkinter-analysis.md` for why `paxtkinter` exists
-  (GIL/TclLock design) and the plan to drop it in favor of stock
-  `_tkinter` (branch `modernize`).
+  See `devdocs/paxtkinter-analysis.md` and
+  `devdocs/modernize-paxtkinter.md` for the full story.
 - `Pax/intl.c` — gettext bindings (`Sketch.Modules.intl`).
 - `Pax/Generate/` — code generator script (`mkgc.py`) for GC methods.
 - Small patches exist: `skcolor.c.patch`, `skpoint.c.patch`,
