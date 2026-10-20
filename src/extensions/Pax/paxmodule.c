@@ -126,28 +126,6 @@ paxWidget_CallMethodArgs(PyObject * obj, int method_idx, PyObject * args)
     return 0;
 }
 
-static int
-paxWidget_CallMethod(PyObject * obj, int method_idx)
-{
-    static PyObject * empty_arg = NULL;
-
-    if (obj == NULL)
-	return 0;
-
-    if (!empty_arg)
-    {
-	empty_arg = PyTuple_New(0);
-	if (!empty_arg)
-	{
-	    print_failure_message("No Memory!");
-	    return -1;
-	}
-    }
-    Py_INCREF(empty_arg);
-    return paxWidget_CallMethodArgs(obj, method_idx, empty_arg);
-}
-
-
 /* ugly: there should be a standard way to access Tk internals from a
    python module outside of _tkinter */
 typedef struct
@@ -175,6 +153,34 @@ typedef struct PaxWidget_s{
 				 * don't request any size. */
     int height;			/* Height to request for window. */
 } PaxWidget;
+
+/* Marshall a method call on the widget's Python object through the
+   'call_py_method' Tcl command, which is registered via _tkinter's
+   createcommand (PythonCmd). _tkinter then handles the GIL and its
+   internal tcl_tstate bookkeeping correctly, also when the called
+   Python method makes nested tk calls.
+
+   This function may be called with the GIL released (from Tcl event
+   dispatch), so it must not use the Python C API directly.
+*/
+static void
+paxWidget_EvalMethod(PaxWidget * paxwidget, int method_idx, const char * args)
+{
+    char cmd[256];
+
+    if (paxwidget->obj == NULL)
+	return;
+
+    if (args)
+	sprintf(cmd, "call_py_method %ld %s %s",
+		(long) paxwidget->obj, method_names[method_idx], args);
+    else
+	sprintf(cmd, "call_py_method %ld %s",
+		(long) paxwidget->obj, method_names[method_idx]);
+
+    if (Tcl_Eval(paxwidget->interp, cmd) != TCL_OK)
+	fprintf(stderr, "pax: %s\n", Tcl_GetStringResult(paxwidget->interp));
+}
 
 
 static int tk_pyobject_parse(ClientData clientData,
@@ -609,8 +615,11 @@ paxwidget_widget_cmd(ClientData data, Tcl_Interp * interp,
 }
 
 
+/* may be invoked from Tcl event dispatch without the GIL; all Python
+   callbacks are marshaled through the call_py_method Tcl command (see
+   paxWidget_EvalMethod), so no direct Python C API calls here */
 static void
-PaxWidgetEventProc_impl(ClientData clientData, XEvent *event)
+PaxWidgetEventProc(ClientData clientData, XEvent *event)
 {
     PaxWidget *paxwidget = (PaxWidget *) clientData;
 
@@ -620,17 +629,18 @@ PaxWidgetEventProc_impl(ClientData clientData, XEvent *event)
     }
     else if (event->type == ConfigureNotify)
     {
-	paxWidget_CallMethodArgs(paxwidget->obj, ResizedMethodIdx,
-				 Py_BuildValue("ii", event->xconfigure.width,
-					       event->xconfigure.height));
+	char args[40];
+	sprintf(args, "%d %d", event->xconfigure.width,
+		event->xconfigure.height);
+	paxWidget_EvalMethod(paxwidget, ResizedMethodIdx, args);
     }
     else if (event->type == MapNotify)
     {
-	paxWidget_CallMethod(paxwidget->obj, MapMethodIdx);
+	paxWidget_EvalMethod(paxwidget, MapMethodIdx, NULL);
     }
     else if (event->type == DestroyNotify)
     {
-	paxWidget_CallMethod(paxwidget->obj, DestroyMethodIdx);
+	paxWidget_EvalMethod(paxwidget, DestroyMethodIdx, NULL);
 
 	if (paxwidget->tkwin != NULL)
 	{
@@ -647,48 +657,30 @@ PaxWidgetEventProc_impl(ClientData clientData, XEvent *event)
     }
     else if (event->type > LASTEvent)
     {
-	paxWidget_CallMethodArgs(paxwidget->obj, ExtensionEventIdx,
-				 Py_BuildValue("(i)", event->type));
+	char args[20];
+	sprintf(args, "%d", event->type);
+	paxWidget_EvalMethod(paxwidget, ExtensionEventIdx, args);
     }
 }
 
-/* may be invoked from Tcl event dispatch without the GIL */
+/* may be invoked (via Tk_DoWhenIdle) without the GIL; the exposed
+   region is handed over to the Python side as a pointer marshaled
+   through the call_py_method Tcl command */
 static void
-PaxWidgetEventProc(ClientData clientData, XEvent *event)
-{
-    PyGILState_STATE gilstate = PyGILState_Ensure();
-    PaxWidgetEventProc_impl(clientData, event);
-    PyGILState_Release(gilstate);
-}
-
-/* may be invoked (via Tk_DoWhenIdle) without the GIL */
-static void
-PaxWidgetDisplay_impl(ClientData clientData)
+PaxWidgetDisplay(ClientData clientData)
 {
     PaxWidget *paxwidget = (PaxWidget *) clientData;
     Tk_Window tkwin = paxwidget->tkwin;
-    PyObject * region;
+    char args[32];
 
     paxwidget->update_pending = 0;
     if (!Tk_IsMapped(tkwin))
 	return;
 
-    region = PaxRegion_FromRegion(paxwidget->exposed_region);
-    if (!region)
-	return;
+    sprintf(args, "%lu", (unsigned long) paxwidget->exposed_region);
     paxwidget->exposed_region = XCreateRegion();
 
-    paxWidget_CallMethodArgs(paxwidget->obj, RedrawMethodIdx,
-			     Py_BuildValue("(O)", region));
-    Py_DECREF(region);
-}
-
-static void
-PaxWidgetDisplay(ClientData clientData)
-{
-    PyGILState_STATE gilstate = PyGILState_Ensure();
-    PaxWidgetDisplay_impl(clientData);
-    PyGILState_Release(gilstate);
+    paxWidget_EvalMethod(paxwidget, RedrawMethodIdx, args);
 }
 
 
@@ -795,107 +787,161 @@ unregister_object(PyObject * self, PyObject * args)
 }
 
 
-/* may be invoked from Tcl event dispatch (widget callbacks) without
-   the GIL, so acquire the GIL for the whole body */
-static int
-call_py_method(ClientData data, Tcl_Interp * interp, int argc, char** argv)
+/* The 'call_py_method' command is registered via _tkinter's
+   createcommand (see create_tcl_commands below), so that it is
+   dispatched by _tkinter's PythonCmd: that guarantees the GIL is held
+   and _tkinter's internal tcl_tstate bookkeeping stays correct, also
+   when the called method makes nested tk calls. (A raw
+   Tcl_CreateCommand would be invoked with the GIL released by stock
+   _tkinter, and PyGILState_Ensure/Release around the body cannot
+   restore tcl_tstate afterwards.)
+
+   Called with (key, methodname, arg...); all arguments arrive as
+   strings (both from MakeMethodCommand scripts and from the event
+   marshaling in paxWidget_EvalMethod). The arguments of the
+   event-driven methods are converted back to their original types
+   here. */
+static PyObject *
+pax_call_py_method(PyObject * self, PyObject * args)
 {
-    PyObject * obj, *method, *args, *result;
-    PyGILState_STATE gilstate;
-    int tcl_result = TCL_OK;
+    PyObject * obj, *method, *call_args, *result;
+    char * key, *name;
+    Py_ssize_t argc = PyTuple_GET_SIZE(args);
+    int i;
 
-    if (argc < 3)
+    if (argc < 2)
     {
-    Tcl_SetResult(interp, "object id and method name must be given", TCL_VOLATILE);
-	return TCL_ERROR;
+	PyErr_SetString(PyExc_TypeError,
+			"call_py_method requires key and method name");
+	return NULL;
     }
-
-    gilstate = PyGILState_Ensure();
+    key = PyString_AsString(PyTuple_GET_ITEM(args, 0));
+    name = PyString_AsString(PyTuple_GET_ITEM(args, 1));
+    if (!key || !name)
+	return NULL;
 
     if (!object_registry)
-	goto done;
+	Py_RETURN_NONE;
 
-    obj = PyDict_GetItemString(object_registry, argv[1]);
+    obj = PyDict_GetItemString(object_registry, key);
     if (!obj)
     {
 	PyErr_Clear();
-	goto done;
+	Py_RETURN_NONE;
     }
-    method = PyObject_GetAttrString(obj, argv[2]);
+    method = PyObject_GetAttrString(obj, name);
     if (!method)
     {
 	/* do nothing if the object doesn't have the method */
-	fprintf(stderr, "No Method %s.%s\n", argv[1], argv[2]);
+	fprintf(stderr, "No Method %s.%s\n", key, name);
 	PyErr_Clear();
-	goto done;
+	Py_RETURN_NONE;
     }
 
-    
-    if (argc > 3)
+    /* convert the string-marshaled arguments of event-driven methods */
+    call_args = NULL;
+    if (strcmp(name, "RedrawMethod") == 0 && argc == 3)
     {
-	int i;
-	PyObject * string = NULL;
-	args = PyTuple_New(argc - 3);
-	if (args)
+	char * ptr = PyString_AsString(PyTuple_GET_ITEM(args, 2));
+	if (!ptr)
 	{
-	    for (i = 3; i < argc; i++)
+	    Py_DECREF(method);
+	    return NULL;
+	}
+	call_args = Py_BuildValue(
+	    "(N)", PaxRegion_FromRegion((Region) strtoul(ptr, NULL, 10)));
+    }
+    else if (strcmp(name, "ResizedMethod") == 0 && argc == 4)
+	call_args = Py_BuildValue(
+	    "(ii)",
+	    atoi(PyString_AsString(PyTuple_GET_ITEM(args, 2))),
+	    atoi(PyString_AsString(PyTuple_GET_ITEM(args, 3))));
+    else if (strcmp(name, "ExtensionEvent") == 0 && argc == 3)
+	call_args = Py_BuildValue(
+	    "(i)", atoi(PyString_AsString(PyTuple_GET_ITEM(args, 2))));
+    else if (argc > 2)
+    {
+	call_args = PyTuple_New(argc - 2);
+	if (call_args)
+	    for (i = 2; i < argc; i++)
 	    {
-		string = PyString_FromString(argv[i]);
-		if (!string)
-		    break;
-		PyTuple_SetItem(args, i - 3, string);
+		PyObject * string = PyTuple_GET_ITEM(args, i);
+		Py_INCREF(string);
+		PyTuple_SET_ITEM(call_args, i - 2, string);
 	    }
-	}
-	if (!string)
-	{
-	    Py_XDECREF(args);
-	    Tcl_SetResult(interp, "Cannot build argument tuple", TCL_VOLATILE);
-	    tcl_result = TCL_ERROR;
-	    goto done;
-	}
     }
-    else
-	args = NULL;
-
-    result = PyObject_CallObject(method, args);
-    Py_DECREF(method);
-    Py_XDECREF(args);
-    if (!result)
+    if (PyErr_Occurred())
     {
-	/*PyErr_Clear();*/
-    Tcl_SetResult(interp, "Exception in python method", TCL_VOLATILE);
-	tcl_result = TCL_ERROR;
-	goto done;
+	Py_DECREF(method);
+	return NULL;
     }
-    Py_DECREF(result);
 
- done:
-    PyGILState_Release(gilstate);
-    return tcl_result;
+    result = PyObject_CallObject(method, call_args);
+    Py_DECREF(method);
+    Py_XDECREF(call_args);
+    return result;  /* NULL: PythonCmd reports the exception */
 }
+
+static PyMethodDef pax_call_py_method_def = {
+    "call_py_method",
+    (PyCFunction) pax_call_py_method,
+    METH_VARARGS,
+    "call_py_method(key, methodname, arg...)\n\n"
+    "Call the method 'methodname' of the object registered under 'key'."
+};
+
+/* Convert a Region pointer marshaled as a decimal string (see
+   PaxWidgetDisplay) back into a PaxRegion object. The region ownership
+   is transferred to the new object. */
+static PyObject *
+pax_region_from_ptr(PyObject * self, PyObject * args)
+{
+    char * ptr;
+    if (!PyArg_ParseTuple(args, "s", &ptr))
+	return NULL;
+    return PaxRegion_FromRegion((Region) strtoul(ptr, NULL, 10));
+}
+
 
 static PyObject *
 create_tcl_commands(PyObject * self, PyObject * args)
 {
-    PyObject * app_or_interpaddr;
+    PyObject * app;
     Tcl_Interp * interp;
     
-    if (!PyArg_ParseTuple(args, "O", &app_or_interpaddr))
+    if (!PyArg_ParseTuple(args, "O", &app))
 	return NULL;
 
-    if (PyInt_Check(app_or_interpaddr))
+    /* app must be the _tkinter tkapp object (not an interpaddr):
+       'call_py_method' is registered via its createcommand method so
+       that _tkinter dispatches it with proper GIL and tcl_tstate
+       handling (see the comment on pax_call_py_method) */
+    if (PyInt_Check(app))
     {
-	interp = (Tcl_Interp*)PyInt_AsLong(app_or_interpaddr);
+	PyErr_SetString(PyExc_TypeError,
+			"create_tcl_commands requires the tkapp object, "
+			"not an interpaddr");
+	return NULL;
     }
-    else
-    {
-	interp = ((TkappObject*)app_or_interpaddr)->interp;
-    }
+
+    interp = ((TkappObject*)app)->interp;
 
     Tcl_CreateCommand(interp, "paxwidget", paxwidget_cmd,
 		      (ClientData)Tk_MainWindow(interp), NULL);
-    Tcl_CreateCommand(interp, "call_py_method", call_py_method,
-		      (ClientData)Tk_MainWindow(interp), NULL);
+
+    {
+	PyObject * func = PyCFunction_New(&pax_call_py_method_def, NULL);
+	PyObject * result;
+	if (!func)
+	    return NULL;
+	result = PyObject_CallMethod(app, "createcommand",
+				     "sO", "call_py_method", func);
+	Py_DECREF(func);
+	if (!result)
+	    return NULL;
+	Py_DECREF(result);
+    }
+
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -915,6 +961,8 @@ static PyMethodDef pax_methods[] = {
     {"unregister_object",	unregister_object,	1},
     {"name_to_window",	name_to_window,			1},
     {"do_one_event",	do_one_event,			1},
+    {"call_py_method",	(PyCFunction) pax_call_py_method, METH_VARARGS},
+    {"region_from_ptr",	pax_region_from_ptr,		1},
     {"create_tcl_commands",	create_tcl_commands,	1},
     {NULL, NULL} 
 };

@@ -955,10 +955,12 @@ _tcl_commands_created = 0
 def InitFromTkapp(tk):
     global _tcl_commands_created
     if not _tcl_commands_created:
-        if hasattr(tk, 'interpaddr'):
-            # introduced in Python 1.5.2
-            pax.create_tcl_commands(tk.interpaddr())
-        else:
-            pax.create_tcl_commands(tk)
+        # registers the raw 'paxwidget' Tcl command and the
+        # 'call_py_method' command via tk.createcommand. The tkapp
+        # object (not an interpaddr) is required, because
+        # 'call_py_method' must be dispatched by _tkinter itself
+        # (PythonCmd) to keep the GIL and _tkinter's internal
+        # tcl_tstate bookkeeping correct.
+        pax.create_tcl_commands(tk)
         #tk.call('load', pax.__file__, 'paxwidget')
     _tcl_commands_created = 1

@@ -184,4 +184,66 @@ Not yet covered by automation: interactive menu/command activation
 path as the validated direct call), modal dialogs (`tkwait`), real
 file dialogs, drag&drop. An interactive session is recommended.
 
+## Incident: crash on Windows → Layers (`NULL tstate`) and the revised design
+
+The first implementation (PyGILState wrappers around pax's raw Tcl
+commands) crashed with `Fatal Python error: PyEval_RestoreThread: NULL
+tstate` when opening the Layers dialog (reproduced under Xvfb with a
+`--run-script` calling `main_window.CreateDialog('layerdlg',
+'LayerPanel')`; core backtrace: `PythonCmd → ENTER_PYTHON →
+PyEval_RestoreThread(NULL)` inside a `Tk_BindEvent` dispatch nested in
+a `tk.call`).
+
+Root cause: `_tkinter` maintains a static `tcl_tstate` (the thread
+state saved by `ENTER_TCL`); `PythonCmd` (the createcommand dispatcher)
+and the timer/file-handler callbacks restore the GIL from it
+(`ENTER_PYTHON`). Every nested `tk.call` ends with `LEAVE_OVERLAP_TCL`,
+which sets `tcl_tstate = NULL`; pure-Tkinter callbacks repair this via
+their `LEAVE_PYTHON` (`tcl_tstate = PyEval_SaveThread()`).
+`PyGILState_Release` cannot do that (`tcl_tstate` is static inside
+`_tkinter.c`). So when pax's **raw** `Tcl_CreateCommand("call_py_method",
+...)` returned from a callback that had made nested tk calls (dialog
+construction), the Tcl event dispatch continued with `tcl_tstate ==
+NULL`, and the next Tkinter binding callback crashed.
+
+Revised design (implemented on branch `modernize`):
+
+- **`call_py_method` is no longer a raw Tcl command.** It is now the
+  pax module function `pax.call_py_method(key, methodname, arg...)`,
+  registered through the tkapp object's `createcommand` in
+  `create_tcl_commands(tkapp)` (which now *requires* the tkapp object —
+  `tkext.InitFromTkapp` no longer passes an interpaddr). All such
+  callbacks are dispatched by `_tkinter`'s `PythonCmd`, which handles
+  GIL *and* `tcl_tstate` correctly.
+- **Event-context callbacks are marshaled through it**:
+  `PaxWidgetEventProc` (Map/Resized/Destroy/Extension) and
+  `PaxWidgetDisplay` (Redraw) build the Tcl command string
+  `call_py_method <objkey> <Method> <args>` (`paxWidget_EvalMethod`,
+  pure C — no Python API in the GIL-released context) and `Tcl_Eval`
+  it. `pax.call_py_method` converts the string-marshaled arguments
+  back: `ResizedMethod(w, h)` and `ExtensionEvent(type)` to ints,
+  `RedrawMethod` to a `PaxRegion` via the new `pax.region_from_ptr`
+  (the exposed region pointer is handed over through the command
+  string; `PaxRegion_FromRegion` transfers ownership). The GIL
+  wrappers on these two functions were removed (no direct Python calls
+  left there).
+- Kept: GIL wrappers on `paxwidget_cmd`, `paxwidget_widget_cmd` (only
+  ever invoked via `tk.call`, whose return path re-enters Python, so
+  the `tcl_tstate` invariant is not violated) and `PaxWidgetDestroy`
+  (its `Py_XDECREF` needs the GIL; nothing is dispatched after it
+  inside the wrapper).
+- Deleted: the now-unused `paxWidget_CallMethod` helper.
+
+Validation after the revision (Xvfb):
+
+- **Layers dialog repro passes**: dialog created, 30 `update()` pumps,
+  no crash (was exit 134 before).
+- stress run: 100/100 hammers (resizes → `ResizedMethod` with ints,
+  exposes → `RedrawMethod` with `PaxRegion`), stderr clean.
+- region spy: `RedrawMethod` receives real `PaxRegion` objects through
+  the marshaled path.
+- `pax.call_py_method` invoked directly and via widget commands
+  (`bgpixel`, `cget -class`) works.
+
+
 
