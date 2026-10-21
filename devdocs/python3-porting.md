@@ -49,6 +49,11 @@ files containing the construct, not occurrences).
    read/written in text mode in py2. In py3, mixed text/binary and
    implicit `str`/`bytes` conversions need explicit encodings.
    Also ASCII assumptions in EPS/PDF code (`dscparser.py`, `type1.py`).
+   For `.sk` the encoding is now decided: strings are utf-8 byte
+   strings written as `\x`-escaped `repr()` literals without the `u`
+   prefix, byte-compatible with master (see
+   `devdocs/unicode-runtime-audit.md`); during the port the loader
+   side needs the matching explicit decode.
 
 ## Inventory of Python-2-only constructs (updated 2026-10-20)
 

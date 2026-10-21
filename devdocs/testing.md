@@ -83,9 +83,13 @@ input test).  All comparisons go through `test/testsupport.py`.
   `layer(u'Layer 1',...)`; the `.sk` parser (parse_sk_line2) cannot
   parse the `u` prefix → `test_save_reload_stable[zz.fig]` and
   `test_fixture_baseline[zz.fig]` are RED on `modernize`, green on
-  master.  This is a genuine bug to fix during the port (write plain
-  str in sksaver, or teach the parser `u''`).  See
-  `modernize-roadmap.md` (gettext item).
+  master.  **Fixed 2026-10-21** (write side): `sksaver.py` encodes
+  unicode strings to utf-8 via `skrepr()` before `repr()`, so non-ascii
+  text is saved as `\x`-escaped byte-string literals exactly as master
+  wrote it; both tests are green again and no baselines needed
+  re-recording.  See `modernize-roadmap.md` (gettext item) and
+  `devdocs/unicode-runtime-audit.md` (encoding decision + planned
+  proactive tooling for this bug class).
 - **bm()/im() ids.**  Saved `.sk` files embed `id(image_data)` in
   `bm(...)`/`im(...)` directives — never reproducible;
   `testsupport.normalize_sk()` masks ids of 12+ digits and rewrites

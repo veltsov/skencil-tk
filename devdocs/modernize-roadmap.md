@@ -141,6 +141,14 @@ Deliberately NOT used: `import` (would rename Tkinter→tkinter etc.),
    `test_fixture_baseline[zz.fig]` in the suite, green on master).
    Fix options: save plain `str` in sksaver (encode explicitly), or
    teach the C parser the `u''` prefix.
+   **Fixed 2026-10-21, on the write side (the parser was left
+   unchanged):** all file-bound `repr()` calls in `sksaver.py` now go
+   through `skrepr()`, which encodes unicode strings to utf-8 first.
+   Non-ascii text is therefore saved as `\x`-escaped plain byte-string
+   literals, byte-identical to master's output (verified against
+   master-saved files with Russian layer/text content; the full suite
+   is green again, baselines unchanged).  Rationale, format decision
+   and follow-up tooling: `devdocs/unicode-runtime-audit.md`.
 8. **`map(f, lines)` rewriting picked the wrong string method**
    (found 2026-10-20 via the broken PDF export):
    `fix_leftovers` rewrote `map(lstrip,

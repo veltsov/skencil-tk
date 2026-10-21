@@ -278,6 +278,16 @@ papersizes = {
 class SketchSaveError(SketchError):
     pass
 
+def skrepr(s):
+    # .sk files store strings as utf-8 encoded byte strings in repr()
+    # form (\x escapes, no u'...' prefix).  Unicode strings (e.g. layer
+    # names coming from gettext) must be converted explicitly; otherwise
+    # they would be saved as u'...' with \u escapes, which
+    # parse_sk_line2 cannot read (and which master never wrote).
+    if isinstance(s, unicode):
+        s = s.encode('utf-8')
+    return repr(s)
+
 def color_repr(color):
     return '(%g,%g,%g)' % tuple(color)
 
@@ -318,7 +328,7 @@ class SKSaver:
 
     def BeginLayer(self, name, visible, printable, locked, outlined, color):
         self.file.write('layer(%s,%d,%d,%d,%d,%s)\n'
-                        % (repr(name), visible, printable, locked, outlined,
+                        % (skrepr(name), visible, printable, locked, outlined,
                            color_repr(color)))
 
     def EndLayer(self):
@@ -327,19 +337,19 @@ class SKSaver:
     def BeginGuideLayer(self, name, visible, printable, locked, outlined,
                         color):
         self.file.write('guidelayer(%s,%d,%d,%d,%d,%s)\n'
-                        % (repr(name), visible, printable, locked, outlined,
+                        % (skrepr(name), visible, printable, locked, outlined,
                            color_repr(color)))
     EndGuideLayer = EndLayer
 
     def BeginGridLayer(self, geometry, visible, outline_color, name):
         self.file.write('grid((%g,%g,%g,%g),%d,%s,%s)\n'
                         % (geometry
-                           + (visible, color_repr(outline_color), repr(name))))
+                           + (visible, color_repr(outline_color), skrepr(name))))
     EndGridLayer = EndLayer
 
     def PageLayout(self, format, width, height, orientation):
         if format and format in papersizes:
-            self.file.write('layout(%s,%d)\n' % (repr(format), orientation))
+            self.file.write('layout(%s,%d)\n' % (skrepr(format), orientation))
         else:
             self.file.write('layout((%g,%g),%d)\n'
                             % (width, height, orientation))
@@ -423,25 +433,25 @@ class SKSaver:
         if hasattr(style, 'line_join'):
             write('lj(%d)\n' % style.line_join)
         if hasattr(style, 'line_dashes'):
-            write('ld(%s)\n' % repr(style.line_dashes))
+            write('ld(%s)\n' % skrepr(style.line_dashes))
         if hasattr(style, 'line_arrow1'):
             if style.line_arrow1 is not None:
-                write('la1(%s)\n' % repr(style.line_arrow1.SaveRepr()))
+                write('la1(%s)\n' % skrepr(style.line_arrow1.SaveRepr()))
             else:
                 write('la1()\n')
         if hasattr(style, 'line_arrow2'):
             if style.line_arrow2 is not None:
-                write('la2(%s)\n' % repr(style.line_arrow2.SaveRepr()))
+                write('la2(%s)\n' % skrepr(style.line_arrow2.SaveRepr()))
             else:
                 write('la2()\n')
         if hasattr(style, 'font'):
-            write('Fn(%s)\n' % repr(style.font.PostScriptName()))
+            write('Fn(%s)\n' % skrepr(style.font.PostScriptName()))
         if hasattr(style, 'font_size'):
             write('Fs(%g)\n' % style.font_size)
 
     def DynamicStyle(self, style):
         self.write_style(style)
-        self.file.write('dstyle(%s)\n' % repr(style.Name()))
+        self.file.write('dstyle(%s)\n' % skrepr(style.Name()))
 
     def write_style_no_defaults(self, style):
         style = style.Copy()
@@ -454,12 +464,12 @@ class SKSaver:
         styles = properties.stack[:]
         styles.reverse()
         if styles[0].is_dynamic:
-            self.file.write('style(%s)\n' % repr(style[0].Name()))
+            self.file.write('style(%s)\n' % skrepr(style[0].Name()))
         else:
             self.write_style_no_defaults(styles[0])
         for style in styles[1:]:
             if style.is_dynamic:
-                self.file.write('style(%s)\n' % repr(style.Name()))
+                self.file.write('style(%s)\n' % skrepr(style.Name()))
             else:
                 self.write_style(style)
 
@@ -495,13 +505,13 @@ class SKSaver:
                     elif len(item) == 7:
                         write('bc(%g,%g,%g,%g,%g,%g,%d)\n' % item)
                     else:
-                        raise SketchSaveError('got ivalid item: ' + repr(item))
+                        raise SketchSaveError('got ivalid item: ' + skrepr(item))
             if path.closed:
                 write("bC()\n")
 
     def SimpleText(self, text, trafo, halign, valign):
         write = self.file.write
-        write('txt(%s,' % repr(text))
+        write('txt(%s,' % skrepr(text))
         if trafo.matrix() != IdentityMatrix:
             write('(%g,%g,%g,%g,%g,%g)' % trafo.coeff())
         else:
@@ -524,7 +534,7 @@ class SKSaver:
             else:
                 if self.directory and relative_filename:
                     imagefile = relpath(self.directory, imagefile)
-                write('bm(%d,%s)\n' % (id(image), repr(imagefile)))
+                write('bm(%d,%s)\n' % (id(image), skrepr(imagefile)))
             self.saved_ids[id(image)] = image
 
     def Image(self, image, trafo, relative_filename = 1):
@@ -548,7 +558,7 @@ class SKSaver:
         filename = data.Filename()
         if self.directory and relative_filename:
             filename = relpath(self.directory, filename)
-        write(',%s)\n' % repr(filename))
+        write(',%s)\n' % skrepr(filename))
 
     def BeginBlendGroup(self):
         self.file.write('B()\n')
@@ -578,9 +588,9 @@ class SKSaver:
         matrix = trafo.matrix()
         if matrix != IdentityMatrix:
             self.file.write('pt(%s,(%g,%g,%g,%g),%d'
-                            % ((repr(text),) + matrix + (model,)))
+                            % ((skrepr(text),) + matrix + (model,)))
         else:
-            self.file.write('pt(%s,%d' % (repr(text), model))
+            self.file.write('pt(%s,%d' % (skrepr(text), model))
         if start_pos > 0:
             self.file.write(',%g)\n' % start_pos)
         else:
@@ -598,11 +608,11 @@ class SKSaver:
 
     def BeginPluginCompound(self, plugin_name, *args, **kw):
         write = self.file.write
-        write('PC(%s' % repr(plugin_name))
+        write('PC(%s' % skrepr(plugin_name))
         for arg in args:
-            write(',%s' % repr(arg))
+            write(',%s' % skrepr(arg))
         for key, value in kw.items():
-            write(',%s=%s' % (key, repr(value)))
+            write(',%s=%s' % (key, skrepr(value)))
         write(')\n')
 
     def EndPluginCompound(self):
