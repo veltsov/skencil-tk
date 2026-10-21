@@ -120,7 +120,7 @@ Deliberately NOT used: `import` (would rename Tkinter→tkinter etc.),
    (selection.py: `_("Rotate by %(angle)[angle]")`) this raised
    `'ascii' codec can't decode byte 0xb0` on every rotation drag
    -- fixed by making `angle_format` a unicode literal
-   (`u'%.1f�'`).  Other `isinstance(.*, str)` sites
+   (`u'%.1f�'`).  Other `isinstance(.*, str)` sites
    (`load.py`, `image.py`, `psdevice.py`, `type1.py`, `skloader.py`,
    `ailoader.py`, `tkext.py` bitmaps, `command.py`, `palette.py`,
    `warn.py`) currently only receive byte strings (file system or
@@ -129,6 +129,18 @@ Deliberately NOT used: `import` (would rename Tkinter→tkinter etc.),
    port, where `str` unifies both anyway.  Note: **lib2to3 has no
    `basestring` fixer**; the py3 port must rewrite `basestring` ->
    `str` by hand.
+   **Third instance, found by the test suite (2026-10-21):** unicode
+   names leak into *saved files*: `sksaver` writes
+   `layer(u'Layer 1',...)` / `guidelayer(u'Guide Lines',...)` /
+   `grid(...,u'Grid')` when the name came from `_()`-derived defaults
+   (e.g. documents imported from .fig).  The `.sk` parser
+   (`parse_sk_line2` in `skreadmodule.c`) rejects the `u` string
+   prefix (`SyntaxError: ')' expected`), so such documents cannot be
+   reloaded -- `.sk` round-trip of `zz.fig` fails (red tests
+   `test_save_reload_stable[zz.fig]` /
+   `test_fixture_baseline[zz.fig]` in the suite, green on master).
+   Fix options: save plain `str` in sksaver (encode explicitly), or
+   teach the C parser the `u''` prefix.
 8. **`map(f, lines)` rewriting picked the wrong string method**
    (found 2026-10-20 via the broken PDF export):
    `fix_leftovers` rewrote `map(lstrip,

@@ -1,0 +1,9 @@
+# runtime artifacts of the test suite
+__pycache__/
+*.pyc
+output/
+
+# fixtures and golden baselines are ad-hoc selections, deliberately not
+# tracked; regenerate with test/add-fixture and test/run_tests.sh --record
+data/
+baselines/

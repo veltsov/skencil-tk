@@ -18,6 +18,7 @@ from GTK to **Tk** and added many features (see `README.md`).
 | `devdocs/paxtkinter-analysis.md` | Deep analysis of the `paxtkinter` module: why it exists (GIL/TclLock), full dependency surface, and the plan to drop it in favor of stock `_tkinter` (branch `modernize`) |
 | `devdocs/modernize-paxtkinter.md` | Pre-flight experiment record (2026-10-20): running the app on stock `_tkinter` segfaults at the first pax→Python call (gdb backtrace); corrected conclusions and the simplified fix |
 | `devdocs/modernize-roadmap.md` | Roadmap of pre-py3 modernization batches (dead code, 2to3-based mechanical cleanups, deeper items) with status |
+| `devdocs/testing.md` | The automatic test suite in `test/`: layers (model/formats/Xvfb app/screenshot), baseline recording from `master`, fixture management, known findings |
 
 ## Quick facts
 
