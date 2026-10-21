@@ -87,7 +87,12 @@ input test).  All comparisons go through `test/testsupport.py`.
   unicode strings to utf-8 via `skrepr()` before `repr()`, so non-ascii
   text is saved as `\x`-escaped byte-string literals exactly as master
   wrote it; both tests are green again and no baselines needed
-  re-recording.  See `modernize-roadmap.md` (gettext item) and
+  re-recording.  Now guarded by `test/model/test_unicode.py`, which
+  injects unicode into object properties (layer name, LtxObj text
+  parameter), saves and rereads, using the `rustext.sk` fixture
+  (Russian layer name and LaTeX text; untracked like all fixtures —
+  install with `test/add-fixture`).  See
+  `modernize-roadmap.md` (gettext item) and
   `devdocs/unicode-runtime-audit.md` (encoding decision + planned
   proactive tooling for this bug class).
 - **bm()/im() ids.**  Saved `.sk` files embed `id(image_data)` in
