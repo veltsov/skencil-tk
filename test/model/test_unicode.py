@@ -198,18 +198,77 @@ def test_reader_decodes_user_strings():
     assert style in doc.GetStyleNames()
     assert doc.Layout().FormatName() == 'A4'
     assert isinstance(doc.Layout().FormatName(), unicode)
-    # K3: text object content stays byte strings, byte for byte
+    # K3: text object content is an array of glyph ids now (see
+    # devdocs/glyph-text.md); the font-encoded bytes from the file
+    # round-trip through the font's encoding
     texts = [obj for obj in testsupport.iter_objects(doc)
              if testsupport.class_name(obj) == 'SimpleText']
     assert len(texts) == 1, 'expected one SimpleText, got %d' % len(texts)
-    assert texts[0].text == text_bytes
-    assert isinstance(texts[0].text, str)
-    # K3 display: font-encoded bytes must not be utf-8-decoded by the
-    # display path; as_latin1_text maps them 1:1 and never raises (and
-    # Info() must not raise on the non-utf-8 bytes)
-    from Sketch.Lib.util import as_latin1_text
+    from array import array
+    assert isinstance(texts[0].text, array)
+    assert texts[0].text.typecode == 'I'
+    # display: glyph ids map via their names to unicode; the loaded
+    # bytes here are the literal `\xff\xfe\x41' characters (the .sk
+    # reader does not decode \x escapes), so their names map back to
+    # the same literal characters.  Info() must not raise either way.
     assert texts[0].Info() is not None
-    assert as_latin1_text(texts[0].text) == text_bytes.decode('latin-1')
+    assert texts[0].TextAsUnicode() == text_bytes.decode('latin-1')
+    font = texts[0].properties.font
+    if font is None:
+        from Sketch import config
+        from Sketch.Graphics import font as font_module
+        font = font_module.GetFont(config.preferences.fallback_font)
+    assert font.EncodedText(texts[0].text) == text_bytes
+
+
+# ------------------------------------------- preferences file serialization
+
+def test_preferences_save_repr_uses_sk_style():
+    # preferences.py is written via configutil.save_repr; unicode
+    # strings and containers of them (e.g. the mru_files list) must be
+    # serialized as utf-8 byte-string reprs -- the .sk style --, not as
+    # u'...' with \u escapes (the same regression class as the .sk
+    # u'...' leak, see devdocs/testing.md)
+    sk = testsupport.sketch()
+    from Sketch import configutil, Point
+
+    mru = [u'\u0421\u043b\u043e\u0439.sk', u'plain.sk']
+    text = configutil.save_repr(mru)
+    assert 'u\'' not in text and 'u"' not in text
+    assert '\\xd0' in text            # the utf-8 bytes of the Cyrillic name
+    assert eval(text) == [mru[0].encode('utf-8'), mru[1].encode('utf-8')]
+
+    # single strings, tuples, dicts and Points
+    s = configutil.save_repr(u'\u0444')
+    assert 'u\'' not in s and eval(s) == u'\u0444'.encode('utf-8')
+    t = configutil.save_repr((u'\u0444', 'x'))
+    assert 'u\'' not in t and eval(t) == (u'\u0444'.encode('utf-8'), 'x')
+    d = configutil.save_repr({u'\u0444': [u'\u043b']})
+    assert 'u\'' not in d and eval(d) == {u'\u0444'.encode('utf-8'):
+                                          [u'\u043b'.encode('utf-8')]}
+    assert configutil.save_repr(Point(1, 2)) == 'Point(1, 2)'
+
+
+def test_preferences_mru_normalized_to_unicode_on_load():
+    # execfile reads the preferences back as byte strings; the loaded
+    # mru_files must be normalized to unicode (K2) -- otherwise the
+    # mixed kinds crash `filename in mru_list' comparisons for
+    # non-ascii names
+    sk = testsupport.sketch()
+    from Sketch import config, configutil
+
+    u_name = u'\u0421\u043b\u043e\u0439.sk'
+    old = config.preferences.mru_files
+    try:
+        config.preferences.mru_files = [u_name.encode('utf-8'), 'plain.sk',
+                                        u'\u0444'.encode('utf-8')]
+        configutil.normalize_mru_files()
+        assert config.preferences.mru_files == [u_name, 'plain.sk', u'\u0444']
+        # the runtime add/remove lookups work on the normalized list
+        configutil.add_mru_file(u'\u0444')
+        assert config.preferences.mru_files[0] == u'\u0444'
+    finally:
+        config.preferences.mru_files = old
 
 
 def test_reader_decodes_style_names_for_use_style():

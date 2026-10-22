@@ -351,7 +351,7 @@ class PluginPanel(PropertyPanel,PluginDlg):
             for var in self.vars:
                 dict[var.name] = var()
             obj = self.info.Constructor()(*(), **dict)
-            text = 'Create ' + self.info.menu_text # NLS
+            text = u'Create ' + self.info.menu_text # NLS
             self.main_window.canvas.PlaceObject(obj, text)
 
 

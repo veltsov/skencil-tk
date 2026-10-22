@@ -282,6 +282,19 @@ def as_display_name(s):
         return s.decode('utf-8', 'replace')
     return s
 
+
+def skrepr(s):
+    # Serialization form for strings in text files written by Sketch
+    # (.sk documents, the preferences file): utf-8 encoded byte strings
+    # in repr() form (\x escapes, no u'...' prefix).  Unicode strings
+    # (e.g. layer names coming from gettext) must be converted
+    # explicitly; otherwise they would be saved as u'...' with \u
+    # escapes, which the .sk reader (parse_sk_line2) cannot read and
+    # which master never wrote.
+    if isinstance(s, unicode):
+        s = s.encode('utf-8')
+    return repr(s)
+
 def format(template, converters, dict):
     # Normalize everything to unicode: the templates come from the
     # gettext shim (unicode), the values may be byte strings (utf-8)

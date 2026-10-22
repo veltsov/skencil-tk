@@ -21,6 +21,8 @@ from GTK to **Tk** and added many features (see `README.md`).
 | `devdocs/testing.md` | The automatic test suite in `test/`: layers (model/formats/Xvfb app/screenshot), baseline recording from `master`, fixture management, known findings |
 | `devdocs/unicode-runtime-audit.md` | The unicode-at-runtime bug class (gettext shim returns unicode on py2): fixed instances, the `.sk` utf-8/\x-escape format decision, and the planned proactive audit tooling (not yet executed) |
 | `devdocs/string-handling.md` | The string-kind taxonomy (origins → types → conversions) and the conventions that replace scattered type checks; feeds the py3 port |
+| `devdocs/glyph-text.md` | The glyph-index text representation of `SimpleText` (global glyph registry, gid arrays, conversions at all sinks); supersedes the byte-per-character K3 form |
+| `devdocs/text-input.md` | Findings and design for the planned text input rework: unicode keyboard input (Cyrillic etc.), keymap dispatch, afii/uniXXXX glyph-name candidates — **planned, not implemented** |
 
 ## Quick facts
 
@@ -75,6 +77,10 @@ from GTK to **Tk** and added many features (see `README.md`).
 
 ## Working rules
 
+- When analysing code (greps, searches, reading), **skip the `AppDir/`**
+  directory — it is a bundled AppImage payload containing a full copy of
+  the python2 stdlib and third-party modules that pollutes every search.
+  Concentrate on `src/` (plus `test/` and `devdocs/` as appropriate).
 - Do not touch anything outside the task scope; when only asked to
   document, do not modify source files.
 - The code is Python 2: keep new code Python 2 compatible unless the task

@@ -241,7 +241,10 @@ class SVGSaver:
         endText = '</text >\n'
 
         self.file.write(beginText %  (( style, ) + tm) )
-        self.file.write(escape(object.Text()))
+        # object.Text() is a sequence of glyph ids; the SVG file is
+        # ISO-8859-1, so convert via unicode (see devdocs/glyph-text.md)
+        self.file.write(escape(object.TextAsUnicode().encode(
+            'iso-8859-1', 'replace')))
         self.file.write("\n")
         self.file.write(endText)
 

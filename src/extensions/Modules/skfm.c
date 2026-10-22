@@ -27,20 +27,20 @@
  * that the ascender of a 12pt instance of a font is 12 * ascender /
  * 1000.0 points, etc.
  *
- * All strings are assumed to be in the same encoding as the
- * fontmetrics. In fact, the fontmetric object doesn't know anything
- * about encodings. That is assumed to be handled appropriately in
- * Python code. (The Fontmetric object has to be changed, of course, if
- * we want to use more than 8 bits per character)
- *
- * Currently, font metrics are read from afm-files by some python code
- * and passed to the constructors for this object type.
+ * The metrics are indexed by *glyph id* (see devdocs/glyph-text.md):
+ * text objects store arrays of indices into the process-global glyph
+ * registry, and the string methods accept buffers of native unsigned
+ * ints (as provided by array.array('I')) or a single int.  Glyph ids
+ * at or beyond the array size are treated as notdef (zero metrics).
+ * The mapping between glyph names/ids and font encodings is done in
+ * Python code.
  *
  * Fontmetric objects are immutable.
  *
  */
 
 #include <Python.h>
+#include <string.h>
 #include <structmember.h>
 
 #include "skpoint.h"
@@ -59,7 +59,10 @@ struct SKFontMetric_s {
     int			llx, lly, urx, ury;	/* font bounding box */
     float		italic_angle;		/* italic angle as in afm
 						   file */
-    SKCharMetric	char_metric[256];
+    int			n_metrics;		/* size of the gid-indexed
+						   array */
+    SKCharMetric *	char_metric;		/* indexed by glyph id,
+						   zero-filled */
 };
 typedef struct SKFontMetric_s SKFontMetric;
 
@@ -79,37 +82,107 @@ SKFontMetric_New()
     if (self == NULL)
 	return NULL;
 
+    self->n_metrics = 0;
+    self->char_metric = NULL;
+
     return (PyObject*)self;
 }
 
 static void
 skfm_dealloc(SKFontMetric * self)
 {
+    if (self->char_metric)
+	PyMem_Free(self->char_metric);
     PyObject_Del(self);
+}
+
+/*
+ * Interpret the argument of the string methods: either an object
+ * supporting the read buffer protocol whose contents are native
+ * unsigned ints (array.array('I')), or a single int giving one glyph
+ * id.  Returns 0 on error.
+ */
+static int
+skfm_get_gids(PyObject * object, unsigned int ** gids, int * length)
+{
+    const void * buffer;
+    Py_ssize_t size;
+
+    if (PyInt_Check(object))
+    {
+	long gid = PyInt_AS_LONG(object);
+	if (gid < 0)
+	{
+	    PyErr_SetString(PyExc_ValueError,
+			    "glyph id must be non-negative");
+	    return 0;
+	}
+	/* static singleton: the one-glyph case is consumed
+	 * immediately by the caller */
+	static unsigned int single;
+	single = (unsigned int)gid;
+	*gids = &single;
+	*length = 1;
+	return 1;
+    }
+
+    if (PyObject_AsReadBuffer(object, &buffer, &size) < 0)
+	return 0;
+
+    if (size % sizeof(unsigned int))
+    {
+	PyErr_SetString(PyExc_TypeError,
+	       "glyph id sequence must be a buffer of native unsigned ints"
+	       " (e.g. array.array('I'))");
+	return 0;
+    }
+
+    *gids = (unsigned int *)buffer;
+    *length = (int)(size / sizeof(unsigned int));
+    return 1;
 }
 
 
 /*
- *	fm.string_bbox(STRING)
+ * The metric of a gid, or NULL if the gid is beyond the array (treat
+ * as notdef).
+ */
+static SKCharMetric *
+skfm_metric_of(SKFontMetric * self, unsigned int gid)
+{
+    if ((int)gid >= self->n_metrics)
+	return NULL;
+    return self->char_metric + gid;
+}
+
+/*
+ *	fm.string_bbox(GIDS)
  *
- * Return the bounding box of STRING as a tuple (llx, lly, urx, ury) in
- * 1000-pixel metric. The first character is positioned at (0, 0).
+ * Return the bounding box of the glyphs GIDS as a tuple
+ * (llx, lly, urx, ury) in 1000-pixel metric. The first glyph is
+ * positioned at (0, 0).
  */
 static PyObject *
 skfm_string_bbox(SKFontMetric * self, PyObject * args)
 {
-    unsigned char * string;
+    PyObject * object;
+    unsigned int * gids;
     int length, i;
     int	llx = 0, lly = 0, urx = 0, ury = 0;
     int pos = 0;
+    SKCharMetric zero_metric = {0, 0, 0, 0, 0};
     SKCharMetric * metric;
 
-    if (!PyArg_ParseTuple(args, "s#", &string, &length))
+    if (!PyArg_ParseTuple(args, "O", &object))
+	return NULL;
+    if (!skfm_get_gids(object, &gids, &length))
 	return NULL;
 
     for (i = 0; i < length; i++)
     {
-	metric = self->char_metric + string[i];
+	metric = skfm_metric_of(self, gids[i]);
+	if (!metric)
+	    metric = &zero_metric;
 	if (pos + metric->llx < llx)
 	    llx = pos + metric->llx;
 	if (pos + metric->urx > urx)
@@ -125,99 +198,111 @@ skfm_string_bbox(SKFontMetric * self, PyObject * args)
 }
 
 /*
- *	fm.string_width(STRING[, MAXPOS])
+ *	fm.string_width(GIDS[, MAXPOS])
  *
- * Return the setwidth of STRING in 1000-pixel metrics. No kerning or
- * ligatures are taken into account (maybe in the future).
+ * Return the setwidth of the glyphs GIDS in 1000-pixel metrics. No
+ * kerning or ligatures are taken into account (maybe in the future).
  *
- * If provided, MAXCHAR is equivalent to using STRING[:MAXCHAR] instead
- * of STRING. MAXCHAR defaults to the length of STRING. It usefule to
- * compute the position of a caret (See Font.TextCaretData() in font.py)
+ * If provided, MAXPOS is equivalent to using GIDS[:MAXPOS] instead.
+ * MAXPOS defaults to the length. It is useful to compute the position
+ * of a caret (See Font.TextCaretData() in font.py)
  */
 
 static PyObject *
 skfm_string_width(SKFontMetric * self, PyObject * args)
 {
-    unsigned char * string;
+    PyObject * object;
+    unsigned int * gids;
     int length, i, maxpos = -1;
     int width = 0;
+    SKCharMetric * metric;
 
-    if (!PyArg_ParseTuple(args, "s#|i", &string, &length, &maxpos))
+    if (!PyArg_ParseTuple(args, "O|i", &object, &maxpos))
+	return NULL;
+    if (!skfm_get_gids(object, &gids, &length))
 	return NULL;
 
     if (maxpos >= 0 && maxpos < length)
 	length = maxpos;
 
     for (i = 0; i < length; i++)
-	width += self->char_metric[string[i]].width;
+    {
+	metric = skfm_metric_of(self, gids[i]);
+	if (metric)
+	    width += metric->width;
+    }
 
     return Py_BuildValue("i", width);
 }
 
 /*
- *	fm.char_width(CHR)
+ *	fm.glyph_width(GID)
  *
- * Return the setwidth of the character with code CHR (CHR is an int).
+ * Return the setwidth of the glyph with id GID (GID is an int).
+ * Unknown glyphs have width 0.
  */
 static PyObject *
-skfm_char_width(SKFontMetric * self, PyObject * args)
+skfm_glyph_width(SKFontMetric * self, PyObject * args)
 {
-    int chr;
+    int gid;
 
-    if (!PyArg_ParseTuple(args, "i", &chr))
+    if (!PyArg_ParseTuple(args, "i", &gid))
 	return NULL;
 
-    if (0 <= chr && chr < 256)
-	return PyInt_FromLong(self->char_metric[chr].width);
+    if (0 <= gid && gid < self->n_metrics)
+	return PyInt_FromLong(self->char_metric[gid].width);
 
     PyErr_SetString(PyExc_ValueError,
-		    "argument must be in the range [0 .. 255]");
+		    "argument must be a glyph id of this font");
     return NULL;
 }
 
 
 /*
- *	fm.char_bbox(CHR)
+ *	fm.glyph_bbox(GID)
  *
- * Return the bounding box of the character with code CHR (CHR is an
- * int).
+ * Return the bounding box of the glyph with id GID (GID is an int).
  */
 static PyObject *
-skfm_char_bbox(SKFontMetric * self, PyObject * args)
+skfm_glyph_bbox(SKFontMetric * self, PyObject * args)
 {
-    int chr;
+    int gid;
 
-    if (!PyArg_ParseTuple(args, "i", &chr))
+    if (!PyArg_ParseTuple(args, "i", &gid))
 	return NULL;
 
-    if (0 <= chr && chr < 256)
+    if (0 <= gid && gid < self->n_metrics)
     {
-	SKCharMetric * metric = self->char_metric + chr;
+	SKCharMetric * metric = self->char_metric + gid;
 	return Py_BuildValue("iiii", metric->llx, metric->lly,
 			     metric->urx, metric->ury);
     }
     PyErr_SetString(PyExc_ValueError,
-		    "argument must be in the range [0 .. 255]");
+		    "argument must be a glyph id of this font");
     return NULL;
 }
 
 /*
- *	fm.typeset_string(STRING)
+ *	fm.typeset_string(GIDS)
  *
- * Return a list of SKPoint objects, one for each char in STRING,
- * indicating the coordinates of the characters origin. The first char
+ * Return a list of SKPoint objects, one for each glyph in GIDS,
+ * indicating the coordinates of the glyph's origin. The first glyph
  * is set at (0, 0).
  */
 static PyObject *
 skfm_typeset_string(SKFontMetric * self, PyObject * args)
 {
-    unsigned char * string;
+    PyObject * object;
+    unsigned int * gids;
     int length, i;
     int width = 0;
     PyObject * list;
     PyObject * point;
+    SKCharMetric * metric;
 
-    if (!PyArg_ParseTuple(args, "s#", &string, &length))
+    if (!PyArg_ParseTuple(args, "O", &object))
+	return NULL;
+    if (!skfm_get_gids(object, &gids, &length))
 	return NULL;
 
     list = PyList_New(length);
@@ -237,7 +322,9 @@ skfm_typeset_string(SKFontMetric * self, PyObject * args)
 	    Py_DECREF(list);
 	    return NULL;
 	}
-	width += self->char_metric[string[i]].width;
+	metric = skfm_metric_of(self, gids[i]);
+	if (metric)
+	    width += metric->width;
     }
 
     return list;
@@ -259,8 +346,8 @@ static struct PyMethodDef skfm_methods[] = {
     {"typeset_string",	(PyCFunction)skfm_typeset_string,	1},
     {"string_bbox",	(PyCFunction)skfm_string_bbox,		1},
     {"string_width",	(PyCFunction)skfm_string_width,		1},
-    {"char_width",	(PyCFunction)skfm_char_width,		1},
-    {"char_bbox",	(PyCFunction)skfm_char_bbox,		1},
+    {"glyph_width",	(PyCFunction)skfm_glyph_width,		1},
+    {"glyph_bbox",	(PyCFunction)skfm_glyph_bbox,		1},
     {NULL,	NULL}
 };
 
@@ -300,7 +387,7 @@ PyTypeObject SKFontMetricType = {
 
 
 /*
- *	skfm.CreateMetric(ASCENDER, DESCENDER, FONTBBOX, ITALIC, CHARMETRICS)
+ *	skfm.CreateMetric(ASCENDER, DESCENDER, FONTBBOX, ITALIC, ENTRIES)
  *
  * Return a new fontmetric object initialized with the given parameters:
  *
@@ -309,8 +396,12 @@ PyTypeObject SKFontMetricType = {
  *	FONTBBOX	The font bounding box as a tuple (llx, lly, urx, ury)
  *			in 1000-pixel metrics.
  *	ITALIC		the italic angle in degrees ccw from straight up.
- *	CHARMETRICS	A sequence of 256 tuples (width, llx, lly, urx, ury),
- *			the metrics of each character in 1000-pixel metrics
+ *	ENTRIES		a sequence of tuples (GID, width, llx, lly, urx,
+ *			ury): the glyph id (see devdocs/glyph-text.md) and
+ *			the metrics of that glyph in 1000-pixel metrics.
+ *			The array is sized to the highest gid and
+ *			zero-filled; glyph ids not given have zero
+ *			metrics.
  */
 
 PyObject *
@@ -321,7 +412,7 @@ SKFM_PyCreateMetric(PyObject * self, PyObject * args)
     SKFontMetric * metric;
     int fllx, flly, furx, fury;
     float italic_angle;
-    int i;
+    int i, length, max_gid = -1;
 
     if (!PyArg_ParseTuple(args, "ii(iiii)fO", &ascender, &descender,
 			  &fllx, &flly, &furx, &fury, &italic_angle, &list))
@@ -334,10 +425,11 @@ SKFM_PyCreateMetric(PyObject * self, PyObject * args)
 	return NULL;
     }
 
-    if (PySequence_Length(list) < 256)
+    length = PySequence_Length(list);
+    if (length < 1)
     {
 	PyErr_SetString(PyExc_ValueError,
-			"CHARMETRICS must have 256 elements");
+			"ENTRIES must have at least one element");
 	return NULL;
     }
 
@@ -353,20 +445,57 @@ SKFM_PyCreateMetric(PyObject * self, PyObject * args)
     metric->ury = fury;
     metric->italic_angle = italic_angle;
 
-    for (i = 0; i < 256; i++)
+    /* find the highest glyph id to size the array */
+    for (i = 0; i < length; i++)
     {
-	int width, llx, lly, urx, ury;
+	int gid, width, llx, lly, urx, ury;
 	PyObject * tuple = PySequence_GetItem(list, i);
-	SKCharMetric * char_metric = metric->char_metric + i;
 
-	if (!PyArg_ParseTuple(tuple, "iiiii;"
-			   "CHARMETRICS item must be (w, llx, lly, urx, ury)",
-			      &width, &llx, &lly, &urx, &ury))
+	if (!PyArg_ParseTuple(tuple, "iiiiii;"
+		   "ENTRIES item must be (gid, w, llx, lly, urx, ury)",
+			      &gid, &width, &llx, &lly, &urx, &ury))
 	{
 	    Py_DECREF(tuple);
+	    Py_DECREF(metric);
 	    return NULL;
 	}
 	Py_DECREF(tuple);
+	if (gid < 0)
+	{
+	    PyErr_SetString(PyExc_ValueError, "glyph id must be >= 0");
+	    Py_DECREF(metric);
+	    return NULL;
+	}
+	if (gid > max_gid)
+	    max_gid = gid;
+    }
+
+    metric->n_metrics = max_gid + 1;
+    metric->char_metric = PyMem_New(SKCharMetric, metric->n_metrics);
+    if (!metric->char_metric)
+    {
+	Py_DECREF(metric);
+	return PyErr_NoMemory();
+    }
+    memset(metric->char_metric, 0,
+	   metric->n_metrics * sizeof(SKCharMetric));
+
+    for (i = 0; i < length; i++)
+    {
+	int gid, width, llx, lly, urx, ury;
+	PyObject * tuple = PySequence_GetItem(list, i);
+	SKCharMetric * char_metric;
+
+	if (!PyArg_ParseTuple(tuple, "iiiiii;"
+		   "ENTRIES item must be (gid, w, llx, lly, urx, ury)",
+			      &gid, &width, &llx, &lly, &urx, &ury))
+	{
+	    Py_DECREF(tuple);
+	    Py_DECREF(metric);
+	    return NULL;
+	}
+	Py_DECREF(tuple);
+	char_metric = metric->char_metric + gid;
 	char_metric->width = width;
 	char_metric->llx = llx;
 	char_metric->lly = lly;

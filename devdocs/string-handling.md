@@ -13,7 +13,7 @@ Python 3 port (`python3-porting.md`).
 |------|-------------------|--------|----------------------------|
 | K1 — UI/display strings | `unicode` | `_()` (gettext shim), Tk widget output | pass to Tk as-is |
 | K2 — user-provided names/parameters **and file names** | `unicode` | Tk widget input (dialogs, entries); Tk file dialogs (`as_unicode`); `sys.argv` (utf-8 decode); the `.sk` reader decodes on read; `os.listdir` (given a unicode dir) | serialize via `sksaver.skrepr` (utf-8 `\x`-escaped repr form); pass to `open`/`os.*`/`subprocess` as unicode (py2 encodes via the filesystem encoding — utf-8 on the assumed systems); never compare with K3 bytes |
-| K3 — text-object content | `bytes`, one byte per character in the selected font's encoding | canvas `KeyPressEvent` (`utf8_to_latin1`), `txt()`/`pt()` in `.sk`, import filters | serialize via `skrepr`; display via `util.as_latin1_text` (never utf-8) |
+| K3 — text-object content | `array.array('I')` of glyph ids into the global glyph registry (see `devdocs/glyph-text.md`; **redefined 2026-10-22**, formerly font-encoding byte strings) | canvas `KeyPressEvent` (single byte char via `utf8_to_latin1`), `txt()`/`pt()` in `.sk` (font-encoding codes), import filters (bytes or unicode) | coercion via `Font.TextGids` at construction/`SetText` (byte form interpreted with the font's encoding); serialization via `Font.EncodedText` then `skrepr`; display via glyph names → unicode (`SimpleText.TextAsUnicode`) |
 | K5 — internal identifiers | ascii content, either type | plugin class names, font PostScript names, keysyms, X resource names | py2's implicit ascii coercion makes them type-agnostic; no conversions |
 | K6 — external output | `bytes`, target encoding | savers, generated files, subprocess input | explicit `.encode(...)` at the boundary (e.g. `psmisc.quote_ps_string` for PS headers) |
 
@@ -64,8 +64,10 @@ read, via `Sketch.Lib.util.decode_sk_string` (utf-8, strict):
 * `PC(...)` class names (ascii identifiers, decoded for uniformity
   with the plugin registry keys).
 
-Deliberately **not** decoded (they stay byte strings):
-* `txt()`/`pt()` text — K3, font-encoding bytes;
+Deliberately **not** decoded (they stay byte strings at the reader):
+* `txt()`/`pt()` text — K3, font-encoding codes; the text objects
+  convert them to glyph ids at construction (`Font.TextGids`, see
+  `devdocs/glyph-text.md`);
 * `PC(...)` arguments in general — the *plugin object* owns the kind
   of its text parameters (below).
 
@@ -87,26 +89,33 @@ A new plugin object must classify its string parameters into K2 or K3
 and normalize at construction.
 
 ### Sources of byte strings (K3/K5/K6)
-* Import filters: SVG (SAX unicode converted to latin-1 bytes for
-  text), AI/WMF/CMX/XFig (bytes) — text content (K3).
-* The preferences file — saved via `configutil.save_repr` (`repr`),
-  executed on load; `mru_files` are unicode now, but any bytes read
-  back from it are treated as utf-8.
+* Import filters: SVG (SAX unicode), AI/WMF/CMX/XFig (bytes) — text
+  content (K3); the byte/unicode forms are coerced to glyph ids when
+  the `SimpleText` is constructed (`Font.TextGids`).
+* The preferences file — saved via `configutil.save_repr`, which
+  serializes strings and containers of them `.sk`-style
+  (`util.skrepr`: utf-8 `\x`-escaped byte reprs, no `u'...'` prefix)
+  and is executed on load; `mru_files` is normalized back to unicode
+  after loading (`configutil.normalize_mru_files`), so the model only
+  ever sees K2 unicode.
 
 ## Sink rules
 
 1. **Tk display sinks** (labels, titles, menus, message boxes) need
    unicode.  Names and file names (K2) arrive as unicode everywhere,
-   so no normalization is needed for them; only K3 text bytes must be
-   normalized at the sink (`util.as_latin1_text`; see `SimpleText.Info`,
-   `PathText.Info`, `InternalPathText.Info`) — do not feed them to
-   `as_unicode`, they are not utf-8.  `util.format` and
+   so no normalization is needed for them; K3 text is displayed via
+   glyph names → unicode (`_display_text`/`SimpleText.TextAsUnicode`;
+   see `SimpleText.Info`, `PathText.Info`, `InternalPathText.Info`).
+   `util.as_latin1_text` remains as a lenient display helper for stray
+   byte strings.  `util.format` and
    `tkext.UpdatedLabel.Update` keep their `as_unicode` normalization as
    a safety net for stray bytes; `as_display_name` remains for lenient
    display of the rare byte name (e.g. from a foreign-locale argv).
 2. **Serialization sinks** write K2 as utf-8 `\x`-escaped repr
-   literals via `sksaver.skrepr`; K3 likewise via `skrepr` (its bytes
-   pass through unchanged).  No `repr()` of K2 anywhere else.
+   literals via `sksaver.skrepr`; K3 is first converted back to the
+   font-encoding byte form via `Font.EncodedText` (in the text
+   objects' `SaveToFile`) and likewise passed through `skrepr`.  No
+   `repr()` of K2 anywhere else.
 3. **External sinks**: `open`/`os.*`/`subprocess` take K2 unicode file
    names directly (py2 encodes via the filesystem encoding — utf-8 on
    the assumed systems); K6 content (PS/PDF/generated files, embedded
@@ -127,6 +136,12 @@ vs style object — those use `unicode` since K2 is unicode).
 `psdevice.py`).  Anything else is a symptom of an unclear origin — fix
 the origin, not the check.
 
+Undo/transaction labels (the text shown by Edit→Undo, built from
+command menu names and `BeginTransaction` arguments) are K1 unicode;
+`undo.check_info` enforces this (a byte-string label raises
+`UndoTypeError` rather than being tolerated — the origins must be
+fixed instead; see `devdocs/testing.md`, UndoTypeError finding).
+
 ## Validation and enforcement
 
 * The suite guards the on-disk format: `test/model/test_unicode.py`
@@ -138,10 +153,14 @@ the origin, not the check.
 
 ## Python 3 port impact (summary)
 
-* K1/K2/K5 collapse into `str`; K3 stays `bytes` — with file names
-  unicode in the model, the model described here is already the py3
+* K1/K2/K5 collapse into `str`; K3 is `array.array('I')`, whose
+  semantics are identical on py2 and py3 — with file names unicode in
+  the model, the model described here is already the py3
   shape; py2's implicit filename conversions at `open`/`os.*` simply
   vanish and no `os.fsdecode`/`fsencode` is needed in the model.
+  The glyph-index representation was introduced precisely to remove
+  the last bytes-with-encoding kind from the model (see
+  `devdocs/glyph-text.md`).
 * `decode_sk_string` keeps its call sites (or is deleted if
   `skreadmodule.c` is ported to return `str`); the site list above is
   the complete work list.
@@ -149,7 +168,6 @@ the origin, not the check.
   each, and comparisons no longer rely on py2's implicit ascii
   coercion.
 * Port-time rewrites stay localized: `skrepr` (py3 `repr` of bytes is
-  `b'...'`), K3 iteration semantics in `text.py`/`font.py`/
-  `psdevice.py`.  In py3 the K4 helpers collapse into
+  `b'...'`).  In py3 the K4 helpers collapse into
   `os.fsdecode`/`fsencode` (surrogateescape); on a utf-8 system the
   py2 utf-8 assumption and the py3 default agree.

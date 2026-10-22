@@ -81,9 +81,12 @@ import Tkinter
 import Sketch, Sketch.UI
 from Sketch import ContAngle, ContSmooth, CreatePath, Point
 from Sketch.UI.sketchdlg import SKModal
-from Sketch.Graphics.font import read_afm_file, read_outlines, convert_outline
+from Sketch.Graphics.font import read_afm_file, read_outlines, \
+     convert_outline, glyph_registry
 from Sketch.Lib.type1 import read_outlines
 from Sketch.Graphics.properties import DefaultTextProperties
+from Sketch.Lib import glyphnames
+from array import array
 
 class FontError(Exception):
     """Exceptions specific to this module"""
@@ -111,19 +114,35 @@ class Type1FontFile:
                    " if necessary.") % afm
             raise FontError(msg)
 	self.outlines = None
+        self.code_to_gid = [glyph_registry.index(name)
+                            for name in self.encoding]
 
     def __repr__(self):
         return "<Type1File %s>" % self.filename
 
-    def TypesetText(self, text):
-	return self.metric.typeset_string(text)
+    def TextGids(self, text):
+        """Convert TEXT (byte string in the font's encoding or
+        unicode) to an array of glyph ids (see devdocs/glyph-text.md)"""
+        if isinstance(text, unicode):
+            gids = []
+            for char in text:
+                name = glyphnames.unicode_to_glyphname(char)
+                if name is None:
+                    gids.append(glyph_registry.index('.notdef'))
+                else:
+                    gids.append(glyph_registry.index(name))
+            return array('I', gids)
+        return array('I', [self.code_to_gid[ord(char)] for char in text])
 
-    def GetOutline(self, char):
+    def TypesetText(self, text):
+	return self.metric.typeset_string(self.TextGids(text))
+
+    def GetOutline(self, gid):
 	if self.outlines is None:
 	    self.char_strings, self.cs_interp \
 			       = read_outlines(self.font_file)
 	    self.outlines = {}
-	char_name = self.encoding[ord(char)]
+	char_name = glyph_registry.name(gid)
 	outline = self.outlines.get(char_name)
 	if outline is None:
 	    self.cs_interp.execute(self.char_strings[char_name])
@@ -138,10 +157,11 @@ class Type1FontFile:
 
 
 def curves_type1(text, font):
+    gids = font.TextGids(text)
     objects = []
-    pos = font.TypesetText(text)
-    for i in range(len(text)):
-        paths = font.GetOutline(text[i])
+    pos = font.TypesetText(gids)
+    for i in range(len(gids)):
+        paths = font.GetOutline(gids[i])
         if paths:
             obj = Sketch.PolyBezier(paths = paths, properties = DefaultTextProperties())
             trafo = Sketch.Translation(pos[i])

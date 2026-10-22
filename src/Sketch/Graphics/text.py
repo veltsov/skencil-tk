@@ -97,7 +97,8 @@ import graphics, font
 font_module = font
 
 from Sketch.Lib import encoding; iso_latin_1 = encoding.iso_latin_1
-from Sketch.Lib.util import as_latin1_text
+from Sketch.Lib import glyphnames
+from array import array
 
 
 
@@ -105,6 +106,25 @@ printable = ''
 for n in range(len(iso_latin_1)):
     if iso_latin_1[n] != encoding.notdef:
         printable = printable + chr(n)
+
+
+def _text_font(properties):
+    # The font used to interpret legacy byte text and to encode text
+    # again for serialization (see devdocs/glyph-text.md)
+    font = properties.font
+    if font is None:
+        font = font_module.GetFont(config.preferences.fallback_font)
+    return font
+
+
+def _display_text(gids, limit = 10):
+    # Display conversion for glyph-index text (the `text' attribute of
+    # SimpleText/PathText): map the glyph ids to their names and from
+    # there to unicode (see devdocs/glyph-text.md; formerly the byte
+    # form was mapped 1:1 via latin-1, see devdocs/string-handling.md)
+    registry = font_module.glyph_registry
+    return glyphnames.glyphnames_to_unicode(
+        [registry.name(gid) for gid in gids[:limit]])
 
 
 # Alignment. Defaults are 0
@@ -120,6 +140,18 @@ class CommonText:
 
     commands = []
 
+    def _coerce_text(self, text):
+        # The text is stored as an array of glyph ids (see
+        # devdocs/glyph-text.md); accepted forms: a gid array
+        # (returned unchanged), a byte string (codes in the font's
+        # encoding, as read from .sk files and produced by import
+        # filters) and unicode.
+        if isinstance(text, array):
+            if text.typecode == 'I':
+                return text
+            return array('I', text)
+        return _text_font(self.properties).TextGids(text)
+
     def __init__(self, text = '', duplicate = None):
         if duplicate is not None:
             self.text = duplicate.text
@@ -131,6 +163,7 @@ class CommonText:
             oldcaret = self.editor.Caret()
         else:
             oldcaret = 0
+        text = self._coerce_text(text)
         undo = (self.SetText, self.text, oldcaret)
         self.text = text
         if caret is not None and self.editor is not None:
@@ -140,6 +173,14 @@ class CommonText:
 
     def Text(self):
         return self.text
+
+    def TextAsUnicode(self):
+        """Return the text as a unicode string, mapping the glyph ids
+        to their names and from there to unicode (see
+        devdocs/glyph-text.md)."""
+        registry = font_module.glyph_registry
+        return glyphnames.glyphnames_to_unicode(
+            [registry.name(gid) for gid in self.text])
 
     editor = None
     def set_editor(self, editor):
@@ -200,12 +241,17 @@ class CommonTextEditor(Editor):
         return self.caret
 
     def InsertCharacter(self, char):
-        if len(char) == 1 and self.properties.font.IsPrintable(char):
-            text = self.text;	caret = self.caret
-            text = text[:caret] + char + text[caret:]
-            return self.SetText(text, caret + 1)
+        if len(char) == 1:
+            font = _text_font(self.properties)
+            gid = font.GidForChar(char)
+            if font.IsPrintableGlyph(gid) \
+               and gid != font_module.NEWLINE_GID \
+               and gid != font_module.CARRIAGE_RETURN_GID:
+                text = self.text; caret = self.caret
+                text = text[:caret] + array('I', [gid]) + text[caret:]
+                return self.SetText(text, caret + 1)
         return NullUndo
-    AddCmd(commands, InsertCharacter, '', key_stroke = tuple(printable),
+    AddCmd(commands, InsertCharacter, u'', key_stroke = tuple(printable),
            invoke_with_keystroke = 1)
 
     def DeleteCharBackward(self):
@@ -214,7 +260,7 @@ class CommonTextEditor(Editor):
             text = text[:caret - 1] + text[caret:]
             return self.SetText(text, caret - 1)
         return NullUndo
-    AddCmd(commands, DeleteCharBackward, '', key_stroke = 'BackSpace')
+    AddCmd(commands, DeleteCharBackward, u'', key_stroke = 'BackSpace')
 
     def DeleteCharForward(self):
         if self.text and self.caret < len(self.text):
@@ -222,33 +268,33 @@ class CommonTextEditor(Editor):
             text = text[:caret] + text[caret + 1:]
             return self.SetText(text, caret)
         return NullUndo
-    AddCmd(commands, DeleteCharForward, '', key_stroke = ('Delete', 'C-d'))
+    AddCmd(commands, DeleteCharForward, u'', key_stroke = ('Delete', 'C-d'))
 
     def MoveForwardChar(self):
         if self.caret < len(self.text):
             self.SetCaret(self.caret + 1)
             self.update_selection()
         return NullUndo
-    AddCmd(commands, MoveForwardChar, '', key_stroke = ('Right', 'C-f'))
+    AddCmd(commands, MoveForwardChar, u'', key_stroke = ('Right', 'C-f'))
 
     def MoveBackwardChar(self):
         if self.caret > 0:
             self.SetCaret(self.caret - 1)
             self.update_selection()
         return NullUndo
-    AddCmd(commands, MoveBackwardChar, '', key_stroke = ('Left', 'C-b'))
+    AddCmd(commands, MoveBackwardChar, u'', key_stroke = ('Left', 'C-b'))
 
     def MoveToBeginningOfLine(self):
         self.SetCaret(0)
         self.update_selection()
         return NullUndo
-    AddCmd(commands, MoveToBeginningOfLine, '', key_stroke = ('Home', 'C-a'))
+    AddCmd(commands, MoveToBeginningOfLine, u'', key_stroke = ('Home', 'C-a'))
 
     def MoveToEndOfLine(self):
         self.SetCaret(len(self.text))
         self.update_selection()
         return NullUndo
-    AddCmd(commands, MoveToEndOfLine, '', key_stroke = ('End', 'C-e'))
+    AddCmd(commands, MoveToEndOfLine, u'', key_stroke = ('End', 'C-e'))
 
 
 RegisterCommands(CommonTextEditor)
@@ -284,6 +330,10 @@ class SimpleText(CommonText, RectangularPrimitive):
             self.valign = valign
             if properties is None:
                 self.properties = PropertyStack(base=FactoryTextStyle())
+        # self.text is either duplicate.text (a gid array) or the raw
+        # text argument; coerce the raw forms now that the properties
+        # (and with them the font) are known
+        self.text = self._coerce_text(self.text)
         self.cache = {}
 
     def Disconnect(self):
@@ -386,10 +436,10 @@ class SimpleText(CommonText, RectangularPrimitive):
         self.coord_rect = trafo(rect)
 
     def Info(self):
-        # the text bytes are in the font's encoding, not utf-8; decode
-        # 1:1 via latin-1 for display (see devdocs/string-handling.md)
+        # display conversion via glyph names -> unicode (see
+        # devdocs/glyph-text.md and devdocs/string-handling.md)
         return (_("Text `%(text)s' at %(position)[position]"),
-                {'text':as_latin1_text(self.text[:10]),
+                {'text':_display_text(self.text),
                  'position':self.trafo.offset()} )
 
     def FullTrafo(self):
@@ -399,7 +449,8 @@ class SimpleText(CommonText, RectangularPrimitive):
 
     def SaveToFile(self, file):
         RectangularPrimitive.SaveToFile(self, file)
-        file.SimpleText(self.text, self.trafo, self.halign, self.valign)
+        file.SimpleText(_text_font(self.properties).EncodedText(self.text),
+                        self.trafo, self.halign, self.valign)
 
     def Blend(self, other, p, q):
         if self.__class__ != other.__class__ \
@@ -505,7 +556,8 @@ class SimpleTextEditor(CommonTextEditor):
         trafo = self.trafo(self.atrafo(Scale(self.properties.font_size)))
         trafo = trafo.inverse()
         p2 = trafo(p)
-        pts = self.properties.font.TypesetText(self.text + ' ')
+        font = self.properties.font
+        pts = font.TypesetText(self.text + array('I', [font.SpaceGid()]))
         dists = []
         for i in range(len(pts)):
             dists.append((abs(pts[i].x - p2.x), i))
@@ -563,8 +615,7 @@ def pathtext(path, start_pos, text, font, size, type):
     pos = map(scale, pos)
     trafos = []
     for idx in range(len(text)):
-        char = text[idx]
-        width2 = metric.char_width(ord(char)) * factor
+        width2 = metric.glyph_width(text[idx]) * factor
         x = pos[idx].x + width2
         trafo = coord_sys_at(lengths, x, type)
         if trafo is not None:
@@ -611,6 +662,7 @@ class InternalPathText(CommonText, Primitive):
                 self.trafo = trafo
             self.model = model
             self.start_pos = start_pos
+        self.text = self._coerce_text(self.text)
         self.cache = {}
 
 
@@ -684,9 +736,10 @@ class InternalPathText(CommonText, Primitive):
         Primitive.DrawShape(self, device)
         device.BeginComplexText(clip, self.cache)
         for idx in range(len(trafos)):
-            char = text[idx]
-            if char not in '\r\n': # avoid control chars
-                device.DrawComplexText(text[idx], trafos[idx], font, font_size)
+            gid = text[idx]
+            if gid != font_module.NEWLINE_GID \
+               and gid != font_module.CARRIAGE_RETURN_GID: # control chars
+                device.DrawComplexText(gid, trafos[idx], font, font_size)
         device.EndComplexText()
 
     def Disconnect(self):
@@ -735,12 +788,13 @@ class InternalPathText(CommonText, Primitive):
 
     def SaveToFile(self, file):
         Primitive.SaveToFile(self, file)
-        file.InternalPathText(self.text, self.trafo, self.model,
-                              self.start_pos)
+        file.InternalPathText(
+            _text_font(self.properties).EncodedText(self.text),
+            self.trafo, self.model, self.start_pos)
 
     def Info(self):
         return _("Text on Path: `%(text)s'") \
-               % {'text':as_latin1_text(self.text[:10])}
+               % {'text':_display_text(self.text)}
 
     def Editor(self):
         return InternalPathTextEditor(self)
@@ -787,8 +841,8 @@ class InternalPathTextEditor(CommonTextEditor):
             for i in range(len(self.trafos)):
                 dists.append((abs(p - self.trafos[i].offset()), i))
 
-            char = self.text[len(self.trafos) - 1]
-            width = self.properties.font.metric.char_width(ord(char)) / 1000.0
+            gid = self.text[len(self.trafos) - 1]
+            width = self.properties.font.metric.glyph_width(gid) / 1000.0
             pos = self.trafos[-1](width * self.properties.font_size, 0)
             dists.append((abs(p - pos), len(self.trafos)))
             caret = min(dists)[-1]
@@ -816,9 +870,10 @@ class InternalPathTextEditor(CommonTextEditor):
 
         device.BeginComplexText(0, self.cache)
         for idx in range(len(trafos)):
-            char = text[idx]
-            if char not in '\n\r':
-                device.DrawComplexText(char, trafos[idx], font, font_size)
+            gid = text[idx]
+            if gid != font_module.NEWLINE_GID \
+               and gid != font_module.CARRIAGE_RETURN_GID: # control chars
+                device.DrawComplexText(gid, trafos[idx], font, font_size)
         device.EndComplexText()
         device.ResetFontCache()
 
@@ -902,7 +957,7 @@ class PathText(Compound):
 
     def Info(self):
         return _("Path Text: `%(text)s'") \
-               % {'text':as_latin1_text(self.text.Text()[:10])}
+               % {'text':_display_text(self.text.Text())}
 
     def SaveToFile(self, file):
         file.BeginPathText()

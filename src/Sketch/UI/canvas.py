@@ -1778,19 +1778,19 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
 
 
     # add commands for inherited methods
-    AddCmd('ScrollYPages', 'Page Up', args = -1, key_stroke = 'Prior',
+    AddCmd('ScrollYPages', u'Page Up', args = -1, key_stroke = 'Prior',
            subscribe_to = None)
-    AddCmd('ScrollYPages', 'Page Down', args = +1, key_stroke = 'Next',
+    AddCmd('ScrollYPages', u'Page Down', args = +1, key_stroke = 'Next',
            subscribe_to = None)
 
     # scrolling with the cursor keys
-    AddCmd('ScrollYPages', '', args = -1, key_stroke = 'C-Up',
+    AddCmd('ScrollYPages', u'', args = -1, key_stroke = 'C-Up',
            subscribe_to = None)
-    AddCmd('ScrollYPages', '', args = +1, key_stroke = 'C-Down',
+    AddCmd('ScrollYPages', u'', args = +1, key_stroke = 'C-Down',
            subscribe_to = None)
-    AddCmd('ScrollXPages', '', args = -1, key_stroke = 'C-Left',
+    AddCmd('ScrollXPages', u'', args = -1, key_stroke = 'C-Left',
            subscribe_to = None)
-    AddCmd('ScrollXPages', '', args = +1, key_stroke = 'C-Right',
+    AddCmd('ScrollXPages', u'', args = +1, key_stroke = 'C-Right',
            subscribe_to = None)
 
     #	other view related methods

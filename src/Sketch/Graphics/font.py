@@ -19,7 +19,8 @@
 #	Font management...
 #
 
-import os, re, operator, string
+import os, re, string
+from array import array
 
 
 import streamfilter
@@ -27,6 +28,7 @@ import streamfilter
 from Sketch import _, config, const, Point, TrafoType, Scale, SketchError, \
      SketchInternalError, Subscribe, CreatePath, CreateFontMetric, SKCache
 from Sketch.Lib import encoding
+from Sketch.Lib import glyphnames
 
 from Sketch.warn import warn, INTERNAL, USER, pdebug
 from Sketch.Lib.util import find_in_path, find_files_in_path, as_unicode
@@ -58,6 +60,48 @@ converters = {
 }
 
 StandardEncoding = 'AdobeStandardEncoding'
+
+
+#
+# The global glyph registry (see devdocs/glyph-text.md)
+#
+# Glyph names are mapped to small, session-local integer ids.  The
+# registry grows as fonts are loaded (read_afm_file registers every
+# glyph of a font).  Indices are never serialized: files store glyph
+# names or font-encoding codes.
+
+class GlyphRegistry:
+
+    def __init__(self):
+        self.names = []
+        self._indices = {}
+
+    def index(self, name):
+        """Return the id of NAME, registering it if necessary."""
+        idx = self._indices.get(name)
+        if idx is None:
+            idx = len(self.names)
+            self.names.append(name)
+            self._indices[name] = idx
+        return idx
+
+    def name(self, index):
+        """Return the glyph name for the id INDEX."""
+        return self.names[index]
+
+    def __len__(self):
+        return len(self.names)
+
+
+glyph_registry = GlyphRegistry()
+
+# reserved ids. `.notdef' must be 0; the control-code names exist
+# because historical .sk files contain \n / \r bytes inside quoted
+# txt()/pt() strings.
+NOTDEF_GID = glyph_registry.index(encoding.notdef)		# 0
+NEWLINE_GID = glyph_registry.index(glyphnames.NEWLINE)
+CARRIAGE_RETURN_GID = glyph_registry.index(glyphnames.CARRIAGE_RETURN)
+
 
 def read_char_metrics(afm):
     # read the individual char metrics. Assumes that each line contains
@@ -120,25 +164,24 @@ def read_afm_file(filename):
     if not charmetrics:
         raise ValueError('AFM files without individual char metrics not yet supported.')
 
+    # Register every glyph of the font in the global glyph registry and
+    # build the metric entries indexed by glyph id (see
+    # devdocs/glyph-text.md).  Glyphs missing their metrics keep the
+    # zero metrics of the sparse array.
+    gid_entries = []
+    for name, metric_tuple in charmetrics.items():
+        gid_entries.append((glyph_registry.index(name),) + metric_tuple)
+
     if attribs.get('EncodingScheme', StandardEncoding) == StandardEncoding:
         enc = encoding.iso_latin_1
     else:
         enc = font_encoding
 
-    try:
-        rescharmetrics = map(operator.getitem, [charmetrics] * len(enc), enc)
-    except KeyError:
-        # Some iso-latin-1 glyphs are not defined in the font. Try the
-        # slower way and report missing glyphs.
-        length = len(enc)
-        rescharmetrics = [(0, 0,0,0,0)] * length
-        for idx in range(length):
-            name = enc[idx]
-            try:
-                rescharmetrics[idx] = charmetrics[name]
-            except KeyError:
-                # missing character...
-                warn(INTERNAL, '%s: missing character %s', filename, name)
+    # report glyphs of the encoding that the font does not define
+    for name in enc:
+        if name not in charmetrics:
+            # missing character...
+            warn(INTERNAL, '%s: missing character %s', filename, name)
 
     # some fonts don't define ascender and descender (psyr.afm for
     # instance). use the values from the font bounding box instead. This
@@ -158,7 +201,7 @@ def read_afm_file(filename):
 
     return (CreateFontMetric(attribs['Ascender'], attribs['Descender'],
                              attribs['FontBBox'], attribs['ItalicAngle'],
-                             rescharmetrics),
+                             gid_entries),
             enc)
 
 
@@ -336,6 +379,21 @@ class Font:
         self.xlfd_start = xlfd_start
         self.encoding_name = encoding_name
         self.metric, self.encoding = read_metric(self.PostScriptName())
+        # map between the font's 256-code encoding (as used by .sk
+        # files and PostScript) and glyph ids (see devdocs/glyph-text.md)
+        self.code_to_gid = [glyph_registry.index(name)
+                            for name in self.encoding]
+        # control codes that occur in historical .sk files map to the
+        # reserved control glyphs (see devdocs/glyph-text.md)
+        self.code_to_gid[0x0A] = NEWLINE_GID
+        self.code_to_gid[0x0D] = CARRIAGE_RETURN_GID
+        self.gid_to_code = dict(
+            [(self.code_to_gid[code], code)
+             for code in range(256)
+             if self.encoding[code] != encoding.notdef])
+        # control-code glyphs round-trip through their byte codes
+        self.gid_to_code[NEWLINE_GID] = 0x0A
+        self.gid_to_code[CARRIAGE_RETURN_GID] = 0x0D
         self.outlines = None
 
         self.ref_count = 0
@@ -373,11 +431,77 @@ class Font:
     def PostScriptName(self):
         return self.name
 
+    def TextGids(self, text):
+        """Convert TEXT to a gid array.  Accepted forms: array('I') of
+        glyph ids (returned unchanged), unicode (characters mapped to
+        glyph names), byte string (codes in this font's encoding -- the
+        legacy form used by .sk files and import filters).  See
+        devdocs/glyph-text.md."""
+        if isinstance(text, array):
+            if text.typecode == 'I':
+                return text
+            return array('I', text)
+        if isinstance(text, unicode):
+            gids = []
+            for char in text:
+                name = glyphnames.unicode_to_glyphname(char)
+                if name is None:
+                    gids.append(NOTDEF_GID)
+                else:
+                    gids.append(glyph_registry.index(name))
+            return array('I', gids)
+        # byte string: font-encoding codes
+        code_to_gid = self.code_to_gid
+        return array('I', [code_to_gid[ord(char)] for char in text])
+
+    def _as_gids(self, text):
+        if isinstance(text, array) and text.typecode == 'I':
+            return text
+        return self.TextGids(text)
+
+    def GlyphName(self, gid):
+        """Return the glyph name for the glyph id GID."""
+        return glyph_registry.name(gid)
+
+    def IsPrintableGlyph(self, gid):
+        """Return true if the glyph GID is printable, i.e. has a code
+        in the font's encoding."""
+        return gid in self.gid_to_code
+
+    def GidForChar(self, char):
+        """Return the glyph id for the single byte character CHAR (a
+        code in this font's encoding)."""
+        return self.code_to_gid[ord(char)]
+
+    def SpaceGid(self):
+        """Return the glyph id of the space character."""
+        return self.code_to_gid[32]
+
+    def GlyphCodes(self, gids):
+        """Return a list of the byte codes of GIDS in this font's
+        encoding.  Glyphs that are not in the encoding become code 0
+        (notdef)."""
+        gid_to_code = self.gid_to_code
+        result = []
+        for gid in gids:
+            code = gid_to_code.get(gid)
+            if code is None:
+                code = 0
+            result.append(code)
+        return result
+
+    def EncodedText(self, gids):
+        """Return the glyphs GIDS as a byte string in this font's
+        encoding (the serialization form of .sk files and PostScript).
+        Glyphs that are not in the encoding become notdef."""
+        return ''.join(map(chr, self.GlyphCodes(gids)))
+
     def TextBoundingBox(self, text, size):
-        # Return the bounding rectangle of TEXT when set in this font
-        # with a size of SIZE. The coordinates of the rectangle are
-        # relative to the origin of the first character.
-        llx, lly, urx, ury = self.metric.string_bbox(text)
+        # Return the bounding rectangle of TEXT (gids, bytes or
+        # unicode) when set in this font with a size of SIZE. The
+        # coordinates of the rectangle are relative to the origin of
+        # the first character.
+        llx, lly, urx, ury = self.metric.string_bbox(self._as_gids(text))
         size = size / 1000.0
         return (llx * size, lly * size, urx * size, ury * size)
 
@@ -386,7 +510,7 @@ class Font:
         # a size of SIZE. The coordinates of the rectangle are relative
         # to the origin of the first character.
         metric = self.metric
-        width = metric.string_width(text)
+        width = metric.string_width(self._as_gids(text))
         size = size / 1000.0
         return (0,		metric.descender * size,
                 width * size,	metric.ascender * size)
@@ -394,7 +518,7 @@ class Font:
     def TextCaretData(self, text, pos, size):
         from math import tan, pi
         size = size / 1000.0
-        x = self.metric.string_width(text, pos) * size
+        x = self.metric.string_width(self._as_gids(text), pos) * size
         lly = self.metric.lly * size
         ury = self.metric.ury * size
         t = tan(self.metric.italic_angle * pi / 180.0);
@@ -402,17 +526,15 @@ class Font:
         return Point(x - t * lly, lly), Point(-t * up, up)
 
     def TypesetText(self, text):
-        return self.metric.typeset_string(text)
+        return self.metric.typeset_string(self._as_gids(text))
 
-    def IsPrintable(self, char):
-        return self.encoding[ord(char)] != encoding.notdef
-
-    def GetOutline(self, char):
+    def GetOutline(self, gid):
+        """Return the outline paths of the glyph with id GID."""
         if self.outlines is None:
             self.char_strings, self.cs_interp \
                 = read_outlines(self.PostScriptName())
             self.outlines = {}
-        char_name = self.encoding[ord(char)]
+        char_name = glyph_registry.name(gid)
         outline = self.outlines.get(char_name)
         if outline is None:
             self.cs_interp.execute(self.char_strings[char_name])

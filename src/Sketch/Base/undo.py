@@ -107,6 +107,8 @@ def check_info(info):
     if len(info) < 1:
         raise UndoTypeError("undo info is empty tuple")
     f = info[0]
+    # a text label (K1, unicode -- e.g. a gettext'd transaction name)
+    # may precede the callable
     if isinstance(f, unicode):
         if len(info) > 1:
             f = info[1]

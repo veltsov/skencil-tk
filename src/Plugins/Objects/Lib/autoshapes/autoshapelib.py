@@ -289,7 +289,7 @@ class AutoshapeEditor(Editor):
     handled_keys.append('C-Up')
     handled_keys.append('C-Down')
 
-    AddCmd(commands, 'AutoshapeKey','', AnyKey, key_stroke=handled_keys, 
+    AddCmd(commands, 'AutoshapeKey',u'', AnyKey, key_stroke=handled_keys, 
            invoke_with_keystroke=1)
 
 RegisterCommands(AutoshapeEditor)

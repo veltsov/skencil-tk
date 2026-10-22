@@ -828,7 +828,12 @@ class GraphicsDevice(SimpleGC, CommonDevice):
                     if (ptrafo and (ptrafo.m12 != 0 or ptrafo.m21 != 0
                                     or ptrafo.m11 > 40 or ptrafo.m11 < 0
                                     or ptrafo.m22 > 40 or ptrafo.m22 < 0)):
-                        xlfd = '%s[%s]' % (xlfd, _sketch.xlfd_char_range(text))
+                        # the X11 core font can only address the glyphs
+                        # of one 256-code encoding: convert the glyph
+                        # ids to codes (see devdocs/glyph-text.md)
+                        xlfd = '%s[%s]' % (xlfd,
+                                           _sketch.xlfd_char_range(
+                                               font.EncodedText(text)))
                     
                     xfont = self.load_font(xlfd, cache)
 
@@ -856,10 +861,11 @@ class GraphicsDevice(SimpleGC, CommonDevice):
                     # Draw as text
                     gc.SetFont(xfont)
 
+                    codes = font.GlyphCodes(text)
                     pos = map(self.DocToWin, pos)
                     for i in range(len(text)):
                         x, y = pos[i]
-                        gc.DrawString(x, y, text[i])
+                        gc.DrawString(x, y, chr(codes[i]))
             else:
                 # 'greek'. XXX is this really necessary. It avoids
                 # rendering fonts that are too small to read.
@@ -867,10 +873,11 @@ class GraphicsDevice(SimpleGC, CommonDevice):
                 ux, uy = up
                 lx = ux / 2; ly = uy / 2
                 uppercase = string.ascii_uppercase
+                registry = font.glyph_registry
                 draw = gc.DrawLine # we should draw rectangles...
                 for i in range(len(text)):
                     x, y = pos[i]
-                    if text[i] in uppercase:
+                    if registry.name(text[i]) in uppercase:
                         draw(x, y, int(round(x + ux)), int(round(y + uy)))
                     else:
                         draw(x, y, int(round(x + lx)), int(round(y + ly)))

@@ -504,7 +504,10 @@ class PostScriptDevice(CommonDevice):
         if font:
             write = self.file.write
             self.set_font(font, self.properties.font_size)
-            write('(%s)\n' % quote_ps_string(text))
+            # text is a sequence of glyph ids; PostScript fonts address
+            # glyphs by the codes of their 256-code encoding (see
+            # devdocs/glyph-text.md)
+            write('(%s)\n' % quote_ps_string(font.EncodedText(text)))
             if trafo.matrix() == IdentityMatrix:
                 write('%g %g ' % tuple(trafo.offset()))
             else:
@@ -537,7 +540,8 @@ class PostScriptDevice(CommonDevice):
         write = self.file.write
         complex_text = self.complex_text
         self.set_font(font, font_size)
-        write('(%s) ' % quote_ps_string(text))
+        # text is a single glyph id (see devdocs/glyph-text.md)
+        write('(%s) ' % quote_ps_string(font.EncodedText((text,))))
         if trafo.matrix() == IdentityMatrix:
             write('%g %g ' % tuple(trafo.offset()))
         else:

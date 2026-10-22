@@ -240,7 +240,7 @@ format_name = 'SK-1'
 
 import os
 
-from Sketch.Lib.util import relpath, Empty
+from Sketch.Lib.util import relpath, Empty, skrepr
 from Sketch import IdentityMatrix, EmptyPattern, SolidPattern, Style, \
      StandardColors, SketchError, const
 from Sketch.Graphics import properties
@@ -277,16 +277,6 @@ u'executive': (7.25 * in_to_pt, 10.5 * in_to_pt)
 
 class SketchSaveError(SketchError):
     pass
-
-def skrepr(s):
-    # .sk files store strings as utf-8 encoded byte strings in repr()
-    # form (\x escapes, no u'...' prefix).  Unicode strings (e.g. layer
-    # names coming from gettext) must be converted explicitly; otherwise
-    # they would be saved as u'...' with \u escapes, which
-    # parse_sk_line2 cannot read (and which master never wrote).
-    if isinstance(s, unicode):
-        s = s.encode('utf-8')
-    return repr(s)
 
 def color_repr(color):
     return '(%g,%g,%g)' % tuple(color)

@@ -294,7 +294,10 @@ class AISaver:
         font = properties.font
         size = properties.font_size
         write("/_%s %g Tf\n" % (font.PostScriptName(), size))
-        write("(%s) Tx\n" % quote_ps_string(object.Text()))
+        # object.Text() is a sequence of glyph ids; encode it with the
+        # font's 256-code encoding for PostScript (see
+        # devdocs/glyph-text.md)
+        write("(%s) Tx\n" % quote_ps_string(font.EncodedText(object.Text())))
         write("TO\n")
 
     def Image(self, object):

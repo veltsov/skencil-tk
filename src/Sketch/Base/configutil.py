@@ -72,6 +72,7 @@ def load_user_preferences():
             execfile(filename, {'preferences':config.preferences})
         except:
             warn_tb(USER, "Cannot read the preferences file")
+        normalize_mru_files()
     try:
         import userhooks
     except ImportError:
@@ -91,11 +92,38 @@ def load_user_preferences():
 
 
 def save_repr(obj):
-    # XXX get rid of this...
+    # Serialize a preferences value the way master wrote its text
+    # files: strings as utf-8 encoded byte-string reprs (\x escapes,
+    # no u'...' prefix -- util.skrepr, see devdocs/string-handling.md).
+    # Containers (e.g. the mru_files list) are converted recursively,
+    # because repr() of the container would otherwise emit u'...'
+    # items.
     if type(obj) == PointType:
         return 'Point(%g, %g)' % tuple(obj)
-    else:
-        return repr(obj)
+    if isinstance(obj, unicode):
+        return util.skrepr(obj)
+    if isinstance(obj, list):
+        return '[%s]' % ', '.join([save_repr(item) for item in obj])
+    if isinstance(obj, tuple):
+        if len(obj) == 1:
+            return '(%s,)' % save_repr(obj[0])
+        return '(%s)' % ', '.join([save_repr(item) for item in obj])
+    if isinstance(obj, dict):
+        return '{%s}' % ', '.join(
+            ['%s: %s' % (save_repr(key), save_repr(value))
+             for key, value in obj.items()])
+    return repr(obj)
+
+
+def normalize_mru_files():
+    # The preferences file stores file names as utf-8 byte strings
+    # (see save_repr); execfile reads them back as bytes, while newly
+    # opened files add unicode entries.  Normalize the list to unicode
+    # (K2) -- otherwise the mixed kinds crash `filename in mru_list'
+    # comparisons with UnicodeDecodeError for non-ascii names.
+    mru_list = config.preferences.mru_files
+    config.preferences.mru_files = [util.as_display_name(filename)
+                                    for filename in mru_list]
 
 
 def save_user_preferences():

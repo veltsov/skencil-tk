@@ -57,7 +57,7 @@ class FontPreview(SketchView):
         self.FitToWindow(save_viewport = 0)
 
     def Text(self):
-        return self.sample.Text()
+        return self.sample.TextAsUnicode()
     
     def ResizedMethod(self, width, height):
         SketchView.ResizedMethod(self, width, height)
