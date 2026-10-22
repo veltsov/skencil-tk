@@ -119,16 +119,22 @@ reloads; full suite green (51/51), including the previously red
   `file.write`/subprocess), and declare the encoding in the generated
   content (the LaTeX wrapper uses `inputenc utf8`).
 
-**Toolchain caveat found while testing instance 4:** pstoedit 3.78's
-Sketch driver (`-f sk`) returns an empty document for *any* input
-(verified even with trivial hand-written PostScript; the dxf driver
-works, so the ghostscript interpretation backend is fine).  A
-recompiled LtxObj therefore renders empty on such systems, and the
-empty plugin compound is then deliberately not loaded again
-(`Sketch/Base/load.py: check_object` ignores empty plugins).  The
-LaTeX test (`test/ui/test_latex.py`) tolerates this (`LTXGROUP:empty`)
-and asserts the full round trip only when the driver works
-(`LTXGROUP:ok`).
+**Toolchain note (instance 4 testing):** pstoedit 3.78 itself is fine
+(`pstoedit -f sk oms.eps` produces a valid sketch).  But when the LaTeX
+preamble does not select a **Type 1** cyrillic font (e.g. plain
+`\usepackage[T2A]{fontenc}` without pscyr or cm-super), dvips/pdflatex
+fall back to Type 3 **bitmap** fonts, which pstoedit's ghostscript
+frontend cannot interpret: it prints `Error: /undefined in --get-- ...
+FontName` but still writes a header-only `sk.sk` (~62 bytes), so the
+plugin gets a "successfully produced" but empty document and the
+recompiled object renders empty (and is then deliberately not loaded
+again — `Sketch/Base/load.py: check_object` ignores empty plugins).
+With a Type 1 font setup (pscyr — as in the rustext.sk fixture
+preamble — or cm-super) the whole pipeline works, cyrillic included.
+The LaTeX test (`test/ui/test_latex.py`) selects the pscyr preamble
+when `kpsewhich pscyr.sty` finds it, tolerates the empty case
+(`LTXGROUP:empty`) and asserts the full round trip when the object
+renders (`LTXGROUP:ok`).
 
 ## Part 2 — proactive analysis of this bug class (PLANNED, NOT EXECUTED)
 

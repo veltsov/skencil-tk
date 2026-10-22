@@ -108,9 +108,11 @@ input test).  All comparisons go through `test/testsupport.py`.
   (`obj.__class__.__name__`).
 - **LaTeX toolchain (`test/ui/test_latex.py`).**  The LtxObj recompile
   test needs latex/pdflatex, pstoedit and gs; it is skipped when they
-  are missing.  pstoedit 3.78's Sketch driver returns empty documents
-  (a pstoedit regression, input-independent); in that case the test
-  verifies the utf-8 path and the saved parameter only — see
-  `devdocs/unicode-runtime-audit.md`.
+  are missing.  It selects the pscyr preamble when installed (as in
+  the rustext.sk fixture); without a Type 1 cyrillic font (pscyr or
+  cm-super) the LaTeX output uses Type 3 bitmap fonts which pstoedit
+  cannot interpret — the recompiled object then renders empty and the
+  test only verifies the utf-8 path and the saved parameter (see
+  `devdocs/unicode-runtime-audit.md`).
 - The Xvfb app runner kills the whole process group on timeout (plain
   `proc.kill()` would leak Xvfb and skencil children).

@@ -17,11 +17,25 @@ import testsupport
 
 SCRIPTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts')
 
-# like the fixture: preamble declaring the T2A cyrillic font encoding,
-# followed by the non-ASCII text ('\preamble<char>...<char>' syntax of
-# the plugin); '\sf Текст проверка'
-LTX_TEXT = (u'\\preamble|\\usepackage[T2A]{fontenc}|\n'
-            u'\\sf \u0422\u0435\u043a\u0441\u0442 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430')
+# '\sf Текст проверка' with a preamble declaring the font encoding, in
+# the plugin's \preamble<char>...<char> syntax.  When pscyr (as in the
+# rustext.sk fixture) is available it is used -- otherwise the T2A
+# fonts fall back to Type 3 bitmaps, which pstoedit cannot interpret
+# (empty render); with cm-super installed the plain T2A variant works.
+def _kpsewhich(filename):
+    try:
+        from subprocess import Popen, PIPE
+        po = Popen(['kpsewhich', filename], stdout=PIPE, stderr=PIPE)
+        return bool(po.communicate()[0].strip())
+    except OSError:
+        return False
+
+if _kpsewhich('pscyr.sty'):
+    LTX_TEXT = (u'\\preamble|\\usepackage{pscyr}\\usepackage[T2A]{fontenc}|\n'
+                u'\\sf \u0422\u0435\u043a\u0441\u0442 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430')
+else:
+    LTX_TEXT = (u'\\preamble|\\usepackage[T2A]{fontenc}|\n'
+                u'\\sf \u0422\u0435\u043a\u0441\u0442 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430')
 
 
 def latex_available():
