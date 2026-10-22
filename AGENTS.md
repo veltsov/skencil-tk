@@ -38,7 +38,9 @@ from GTK to **Tk** and added many features (see `README.md`).
   `build/lib.linux-x86_64-2.7/` and the launcher to
   `build/scripts-2.7/skencil`. The app is run *directly from the build
   directory*, no install needed (see `README.md`).
-- **Version:** `src/Sketch/VERSION` says `1.0`; setup.py says `1.0alpha`.
+- **Version:** `1.1` (`src/Sketch/VERSION`, also `setup.py` and
+  `PKG-INFO`; shown by `--version` and in the PostScript Creator
+  comment).
 - **License:** LGPL (most), GPL for some parts; see `README`, `COPYING`.
 - **Current environment used for development:** Ubuntu 20.04 (focal) with
   `python2, python2-dev, python-tk, python-pil, python-pil.imagetk,

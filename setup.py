@@ -39,7 +39,7 @@ import os, sys
 
 COPY = False
 DEBIAN = False
-VERSION = '1.0alpha'
+VERSION = '1.1'
 
 ############################################################
 #
