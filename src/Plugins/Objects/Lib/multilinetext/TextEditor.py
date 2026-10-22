@@ -21,6 +21,7 @@ from tkFileDialog import asksaveasfilename, asksaveasfilename, \
      askopenfilename
 from Sketch.Graphics import font
 from Sketch import _
+from Sketch.Lib.util import as_display_name
 
 from pickle import loads, dumps
 import os
@@ -358,7 +359,7 @@ class TextEditor(StyleText):
                     title = _("Load File"),
                     message = _("Cannot load %(filename)s:\n"
                                 "%(message)s") \
-                    % {'filename':repr(os.path.split(name)[1]),
+                    % {'filename':as_display_name(os.path.split(name)[1]),
                        'message':value})
                 return
             index = '1.0'
@@ -381,7 +382,7 @@ class TextEditor(StyleText):
                     title = _("Save File"),
                     message = _("Cannot Save %(filename)s:\n"
                                 "%(message)s") \
-                    % {'filename':repr(os.path.split(name)[1]),
+                    % {'filename':as_display_name(os.path.split(name)[1]),
                        'message':value})
 
     def insert_file(self, event=None):
@@ -396,7 +397,7 @@ class TextEditor(StyleText):
                     title = _("Insert File"),
                     message = _("Cannot insert %(filename)s:\n"
                                 "%(message)s") \
-                    % {'filename':repr(os.path.split(name)[1]),
+                    % {'filename':as_display_name(os.path.split(name)[1]),
                        'message':value})
                 return
 

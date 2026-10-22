@@ -97,6 +97,7 @@ import graphics, font
 font_module = font
 
 from Sketch.Lib import encoding; iso_latin_1 = encoding.iso_latin_1
+from Sketch.Lib.util import as_latin1_text
 
 
 
@@ -385,8 +386,11 @@ class SimpleText(CommonText, RectangularPrimitive):
         self.coord_rect = trafo(rect)
 
     def Info(self):
+        # the text bytes are in the font's encoding, not utf-8; decode
+        # 1:1 via latin-1 for display (see devdocs/string-handling.md)
         return (_("Text `%(text)s' at %(position)[position]"),
-                {'text':self.text[:10], 'position':self.trafo.offset()} )
+                {'text':as_latin1_text(self.text[:10]),
+                 'position':self.trafo.offset()} )
 
     def FullTrafo(self):
         # XXX perhaps the Trafo method should return
@@ -735,7 +739,8 @@ class InternalPathText(CommonText, Primitive):
                               self.start_pos)
 
     def Info(self):
-        return _("Text on Path: `%(text)s'") % {'text':self.text[:10]}
+        return _("Text on Path: `%(text)s'") \
+               % {'text':as_latin1_text(self.text[:10])}
 
     def Editor(self):
         return InternalPathTextEditor(self)
@@ -896,7 +901,8 @@ class PathText(Compound):
             raise SketchError('Cannot replace child')
 
     def Info(self):
-        return _("Path Text: `%(text)s'") % {'text':self.text.Text()[:10]}
+        return _("Path Text: `%(text)s'") \
+               % {'text':as_latin1_text(self.text.Text()[:10])}
 
     def SaveToFile(self, file):
         file.BeginPathText()

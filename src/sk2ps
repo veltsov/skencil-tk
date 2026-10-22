@@ -126,6 +126,10 @@ def main():
         print_usage()
         return -1
 
+    # file names are unicode in the model; argv bytes are utf-8 on the
+    # assumed systems (devdocs/string-handling.md)
+    args = [util.as_display_name(arg) for arg in args]
+
     filename = args[0]
     if len(args) > 1:
         psfile = args[1]

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Layer 3: LaTeX plugin recompilation with non-ASCII text.  Runs the
 # full application under Xvfb and triggers LtxObj.recompute with a
 # unicode text parameter, exercising utf-8 through the external
@@ -85,7 +86,10 @@ def test_latex_recompile_unicode():
         doc2 = testsupport.load_document(out)
         texts = [obj.Text() for obj in testsupport.iter_objects(doc2)
                  if obj.__class__.__name__ == 'LtxObj']
-        assert texts == [LTX_TEXT.encode('utf-8')], repr(texts)
+        # the plugin parameter text is K2: unicode in the model after
+        # the reader boundary decode (devdocs/string-handling.md)
+        assert texts == [LTX_TEXT], repr(texts)
+        assert isinstance(texts[0], unicode), repr(texts)
         for obj in testsupport.iter_objects(doc2):
             if obj.__class__.__name__ == 'LtxObj':
                 assert len(obj.objects) > 0, 'recompiled object is empty'

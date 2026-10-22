@@ -169,13 +169,17 @@ class SketchMainWindow(Publisher):
     AddCmd('LoadFromFile', _("Open..."), bitmap = pixmaps.Open,
            key_stroke = ('Ctrl+O','C-o'))
     AddCmd('LoadMRU0', '', 'LoadFromFile', args = 0, key_stroke = ('Alt+1','M-1'),
-           name_cb = lambda: os.path.split(config.preferences.mru_files[0])[1])
+           name_cb = lambda: util.as_display_name(
+               os.path.split(config.preferences.mru_files[0])[1]))
     AddCmd('LoadMRU1', '', 'LoadFromFile', args = 1, key_stroke = ('Alt+2','M-2'),
-           name_cb = lambda: os.path.split(config.preferences.mru_files[1])[1])
+           name_cb = lambda: util.as_display_name(
+               os.path.split(config.preferences.mru_files[1])[1]))
     AddCmd('LoadMRU2', '', 'LoadFromFile', args = 2, key_stroke = ('Alt+3','M-3'),
-           name_cb = lambda: os.path.split(config.preferences.mru_files[2])[1])
+           name_cb = lambda: util.as_display_name(
+               os.path.split(config.preferences.mru_files[2])[1]))
     AddCmd('LoadMRU3', '', 'LoadFromFile', args = 3, key_stroke = ('Alt+4','M-4'),
-           name_cb = lambda: os.path.split(config.preferences.mru_files[3])[1])
+           name_cb = lambda: util.as_display_name(
+               os.path.split(config.preferences.mru_files[3])[1]))
     def LoadFromFile(self, filename = None, directory = None):
         app = self.application
         if self.save_doc_if_edited(_("Open Document")) == tkext.Cancel:
@@ -276,7 +280,8 @@ class SketchMainWindow(Publisher):
                              "%(message)s\n"
                              "Choose `continue' to try saving anyway,\n"
                              "or `cancel' to cancel.")
-                           % {'filename':repr(backupfile), 'message':strerror})
+                           % {'filename':util.as_display_name(backupfile),
+                              'message':strerror})
                     cancel = _("Cancel")
                     result = app.MessageBox(title = _("Save To File"),
                                             message = msg, icon = 'warning',
@@ -308,7 +313,8 @@ class SketchMainWindow(Publisher):
             app.MessageBox(title = _("Save To File"),
                            message = _("Cannot save %(filename)s:\n"
                                        "%(message)s") \
-                           % {'filename':repr(os.path.split(filename)[1]),
+                           % {'filename':
+                              util.as_display_name(os.path.split(filename)[1]),
                               'message':value},
                            icon = 'warning')
             self.remove_mru_file(filename)
@@ -388,7 +394,8 @@ class SketchMainWindow(Publisher):
             app.MessageBox(title = _("Save As PostScript"),
                            message = _("Cannot save %(filename)s:\n"
                                        "%(message)s") \
-                           % {'filename':repr(os.path.split(filename)[1]),
+                           % {'filename':
+                              util.as_display_name(os.path.split(filename)[1]),
                               'message':value[1]},
                            icon = 'warning')
 
@@ -564,6 +571,9 @@ class SketchMainWindow(Publisher):
                 docname = os.path.splitext(docname)[0]
             else:
                 docname = self.document.meta.filename
+            # file names are byte strings in the filesystem encoding;
+            # decode leniently for display (devdocs/string-handling.md)
+            docname = util.as_display_name(docname)
             title = config.preferences.window_title_template % locals()
             command = (config.sketch_command, self.document.meta.fullpathname)
         else:
@@ -1169,7 +1179,9 @@ class SketchMainWindow(Publisher):
                 self.application.MessageBox(title = _("Load Image"),
                                             message = _("Cannot load %(filename)s:\n"
                                                         "%(message)s") \
-                                            % {'filename':repr(os.path.split(filename)[1]),
+                                            % {'filename':
+                                               util.as_display_name(
+                                                   os.path.split(filename)[1]),
                                                'message':value},
                                             icon = 'warning')
 

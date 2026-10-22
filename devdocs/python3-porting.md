@@ -52,8 +52,12 @@ files containing the construct, not occurrences).
    For `.sk` the encoding is now decided: strings are utf-8 byte
    strings written as `\x`-escaped `repr()` literals without the `u`
    prefix, byte-compatible with master (see
-   `devdocs/unicode-runtime-audit.md`); during the port the loader
-   side needs the matching explicit decode.
+   `devdocs/unicode-runtime-audit.md`); the loader-side explicit
+   decode **is implemented** for the user-provided strings (K2:
+   layer/guide/grid names, style names, paper-format names) — see
+   `devdocs/string-handling.md` for the full string-kind taxonomy,
+   which is the Stage-4 checklist for the remaining str/bytes work
+   (text content and file names stay byte strings by design).
 
 ## Inventory of Python-2-only constructs (updated 2026-10-20)
 

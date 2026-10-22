@@ -185,7 +185,8 @@ class PrintPanel(SketchPanel):
             app.MessageBox(title = _("Save As PostScript"),
                            message = _("Cannot save %(filename)s:\n"
                                        "%(message)s") \
-                           % {'filename':repr(os.path.split(filename)[1]),
+                           % {'filename':
+                              util.as_display_name(os.path.split(filename)[1]),
                               'message':value[1]},
                            icon = 'warning')
             return

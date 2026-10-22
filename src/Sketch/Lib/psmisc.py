@@ -38,6 +38,11 @@ def make_ps_quote_table():
 quote_table = make_ps_quote_table()
 
 def quote_ps_string(text):
+    if isinstance(text, unicode):
+        # PS output is a byte stream: encode non-ascii characters to
+        # utf-8; each byte is then quoted individually (K6 in
+        # devdocs/string-handling.md)
+        text = text.encode('utf-8')
     return ''.join(map(operator.getitem, [quote_table]*len(text), map(ord, text)))
 
 def make_textline(text):

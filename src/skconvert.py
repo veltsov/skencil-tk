@@ -32,7 +32,10 @@ import Sketch
 
 
 def convert(infile, outfile):
-    doc = load.load_drawing(infile)
+    # file names are unicode in the model; argv bytes are utf-8 on the
+    # assumed systems (devdocs/string-handling.md)
+    from Sketch.Lib.util import as_display_name
+    doc = load.load_drawing(as_display_name(infile))
     extension = os.path.splitext(outfile)[1]
     fileformat = plugins.guess_export_plugin(extension)
     if fileformat:

@@ -26,6 +26,7 @@ import config
 
 from Sketch import _, dgettext, gettext, bindtextdomain, message_dir, \
      Subscribe, config, const
+from Sketch.Lib.util import as_unicode
 
 
 # All plugins are loaded as modules in the _plugin_package_name package
@@ -357,7 +358,8 @@ def extract_cfg(file):
 
 def _search_dir(dir, recurse, package = 'Sketch.Plugins'):
     try:
-        files = os.listdir(dir)
+        # unicode dir -> unicode file names (devdocs/string-handling.md)
+        files = os.listdir(as_unicode(dir))
     except os.error as value:
         warn(USER, _("Cannot list directory %(filename)s\n%(message)s"),
              filename = dir, message = value[1])

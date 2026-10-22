@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Layer 1: headless model tests -- unicode strings at runtime.
 #
 # The gettext shim returns unicode, so gettext-derived strings (layer
@@ -119,7 +120,10 @@ def test_unicode_layer_name_save_reload():
     assert expected in data, \
         'layer line not in expected form %r' % expected
     doc2 = testsupport.load_document(out1)
-    assert doc2.layers[0].name == U_LAYER_NAME.encode('utf-8')
+    # the reader decodes user-provided strings (K2): the model holds
+    # unicode (devdocs/string-handling.md)
+    assert doc2.layers[0].name == U_LAYER_NAME
+    assert isinstance(doc2.layers[0].name, unicode)
     # the reloaded document must save identically
     out2 = testsupport.output_path('sk', 'rustext_unilayer.rt.sk')
     save(doc2, out2)
@@ -145,8 +149,172 @@ def test_unicode_plugin_parameter_save_reload():
     doc2 = testsupport.load_document(out1)
     obj2 = first_ltxobj(doc2)
     assert obj2 is not None, 'LtxObj lost on reload'
-    assert obj2.text == U_PLUGIN_TEXT.encode('utf-8')
+    # plugin parameter text is K2: unicode in the model
+    assert obj2.text == U_PLUGIN_TEXT
+    assert isinstance(obj2.text, unicode)
     out2 = testsupport.output_path('sk', 'rustext_unitext.rt.sk')
     save(doc2, out2)
     assert_saved_without_u_prefixes(out2)
     round_trip_stable(out1, out2)
+
+
+# --------------------------------------------- reader boundary (K2 -> unicode)
+
+def test_reader_decodes_user_strings():
+    # A hand-written minimal .sk with non-ascii utf-8 names in master's
+    # \\x-escaped repr() form.  The reader must produce unicode for all
+    # user-provided strings (layer/guidelayer/grid names, style names,
+    # paper-format names) and must NOT touch text-object content
+    # (font-encoded bytes).
+    sk = testsupport.sketch()
+    layer = u'\u0421\u043b\u043e\u0439'            # 'Слой'
+    guidelayer = u'\u041d\u0430\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0449\u0438\u0435'
+    grid = u'\u0421\u0435\u0442\u043a\u0430'       # 'Сетка'
+    style = u'\u0421\u0442\u0438\u043b\u044c'      # 'Стиль'
+    # text content: bytes that are NOT valid utf-8 (font-encoded data
+    # has no reason to be); every byte is one character
+    text_bytes = '\\xff\\xfe\\x41'
+    content = ('##Sketch 1 2\n'
+               'document()\n'
+               + 'layout(%r,0)\n' % 'A4'
+               + 'layer(%r,1,1,0,0,(0,0,0))\n' % layer.encode('utf-8')
+               + 'dstyle(%r)\n' % style.encode('utf-8')
+               + 'guidelayer(%r,1,0,0,1,(0,0,1))\n' % guidelayer.encode('utf-8')
+               + 'grid((0,0,20,20),0,(0,0,1),%r)\n' % grid.encode('utf-8')
+               + 'layer(%r,1,1,0,0,(0,0,0))\n' % layer.encode('utf-8')
+               + 'txt(%r,(10,10))\n' % text_bytes)
+    path = testsupport.output_path('sk', 'reader_boundary.sk')
+    with open(path, 'wb') as f:
+        f.write(content)
+    doc = testsupport.load_document(path)
+    # K2: names are unicode
+    assert doc.layers[0].name == layer
+    assert isinstance(doc.layers[0].name, unicode)
+    assert doc.layers[1].name == guidelayer
+    assert isinstance(doc.layers[1].name, unicode)
+    assert doc.layers[2].name == grid
+    assert isinstance(doc.layers[2].name, unicode)
+    assert doc.GetDynamicStyle(style) is not None
+    assert style in doc.GetStyleNames()
+    assert doc.Layout().FormatName() == 'A4'
+    assert isinstance(doc.Layout().FormatName(), unicode)
+    # K3: text object content stays byte strings, byte for byte
+    texts = [obj for obj in testsupport.iter_objects(doc)
+             if testsupport.class_name(obj) == 'SimpleText']
+    assert len(texts) == 1, 'expected one SimpleText, got %d' % len(texts)
+    assert texts[0].text == text_bytes
+    assert isinstance(texts[0].text, str)
+    # K3 display: font-encoded bytes must not be utf-8-decoded by the
+    # display path; as_latin1_text maps them 1:1 and never raises (and
+    # Info() must not raise on the non-utf-8 bytes)
+    from Sketch.Lib.util import as_latin1_text
+    assert texts[0].Info() is not None
+    assert as_latin1_text(texts[0].text) == text_bytes.decode('latin-1')
+
+
+def test_reader_decodes_style_names_for_use_style():
+    # style names are used as dict keys in the loader and compared in
+    # the styledlg; both file and dialog side are unicode now
+    sk = testsupport.sketch()
+    style = u'\u0421\u0442\u0438\u043b\u044c 2'    # 'Стиль 2'
+    content = ('##Sketch 1 2\n'
+               'document()\n'
+               'layer(%r,1,1,0,0,(0,0,0))\n' % u'\u0421\u043b\u043e\u0439'.encode('utf-8')
+               + 'dstyle(%r)\n' % style.encode('utf-8')
+               + 'use_style(%r)\n' % style.encode('utf-8')
+               + 'r(1,0,0,1,10,10)\n')
+    path = testsupport.output_path('sk', 'reader_style.sk')
+    with open(path, 'wb') as f:
+        f.write(content)
+    doc = testsupport.load_document(path)
+    assert style in doc.GetStyleNames()
+    assert doc.GetDynamicStyle(style) is not None
+
+
+def test_document_filename_unicode_round_trip():
+    # save/load with a non-ascii document name: py2 open/os accept
+    # unicode names directly (fs encoding = utf-8, the assumption of
+    # devdocs/string-handling.md); meta.filename must stay unicode
+    import os
+    doc = load()
+    name = u'\u0440\u0443\u0441doc.sk'
+    out = os.path.join(testsupport.output_dir('sk'), name)
+    save(doc, out)
+    assert os.path.isfile(out)
+    doc2 = testsupport.load_document(out)
+    assert doc2.meta.filename == name
+    assert isinstance(doc2.meta.filename, unicode)
+
+
+# --------------------------------------------- filename boundary (K2)
+
+def test_tk_filename_boundary_returns_unicode():
+    # stock _tkinter returns unicode for results containing non-ascii
+    # characters and byte strings for ascii-only ones (verified under
+    # Xvfb); the filename boundary normalizes both to unicode -- file
+    # names are unicode in the model (devdocs/string-handling.md)
+    sk = testsupport.sketch()
+    from Sketch.Lib.util import as_unicode
+    name = u'\u0440\u0443\u0441text\u00e4.sk'
+    assert as_unicode(name) == name
+    assert as_unicode('plain.sk') == 'plain.sk'
+    assert isinstance(as_unicode('plain.sk'), unicode)
+
+
+def test_eps_with_unicode_filename_info():
+    # regression: EpsImage.Info() crashed with a byte-string file name
+    # (UnicodeDecodeError inside the unicode _() template).  File names
+    # are unicode in the model now (decoded at the .sk reader), so the
+    # whole display path needs no per-site normalization.
+    sk = testsupport.sketch()
+    import os
+    import shutil
+    from Sketch.Lib.util import format
+    from Sketch.UI import converters
+    eps_name = u'oms\u0448\u0442\u0443\u043a\u0430.eps'
+    layer = u'\u0421\u043b\u043e\u0439'
+    outdir = testsupport.output_dir('sk')
+    shutil.copy(testsupport.data_path('oms.eps'),
+                os.path.join(outdir, eps_name.encode('utf-8')))
+    content = ('##Sketch 1 2\n'
+               'document()\n'
+               + 'layer(%r,1,1,0,0,(0,0,0))\n' % layer.encode('utf-8')
+               + 'eps((1,0,0,1,10,10),%r)\n' % eps_name.encode('utf-8'))
+    path = os.path.join(outdir, 'reader_eps.sk')
+    with open(path, 'wb') as f:
+        f.write(content)
+    doc = testsupport.load_document(path)
+    doc.SelectAll()
+    eps_objs = [o for o in testsupport.iter_objects(doc)
+                if testsupport.class_name(o) == 'EpsImage']
+    assert len(eps_objs) == 1, 'expected one EpsImage'
+    assert eps_objs[0].data.Filename().endswith(eps_name)
+    assert isinstance(eps_objs[0].data.Filename(), unicode)
+    # the full status-bar path (which crashed before) must work
+    template, dict = doc.SelectionInfoText()
+    text = format(template, converters.converters, dict)
+    assert isinstance(text, unicode)
+    assert eps_name in text
+
+
+def test_as_display_name_assumes_utf8():
+    # K4 display conversion assumes utf-8 names and is lenient: valid
+    # utf-8 decodes exactly, invalid bytes are replaced, never raised
+    sk = testsupport.sketch()
+    from Sketch.Lib.util import as_display_name
+    name = u'\u0440\u0443\u0441text\u00e4.sk'
+    assert as_display_name(name.encode('utf-8')) == name
+    assert as_display_name(name) == name            # unicode passes through
+    assert u'\ufffd' in as_display_name('\xff\xfe')  # invalid utf-8 -> U+FFFD
+    assert isinstance(as_display_name('\xff\xfe'), unicode)
+
+
+def test_utf8_to_latin1_accepts_bytes_and_unicode():
+    # the K3 input path (canvas key events, multilinetext dialog) gets
+    # the same ascii/unicode coin-flip from _tkinter; both must map to
+    # the same latin-1 bytes
+    sk = testsupport.sketch()
+    from Sketch.UI import tkext
+    assert tkext.utf8_to_latin1(u'\xe9xy') == '\xe9xy'
+    assert tkext.utf8_to_latin1('\xc3\xa9xy') == '\xe9xy'
+    assert isinstance(tkext.utf8_to_latin1('\xc3\xa9xy'), str)

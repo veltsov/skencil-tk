@@ -38,6 +38,7 @@ from Sketch import CreateRGBColor, SolidPattern, HatchingPattern,EmptyPattern,\
      GetFont
 
 from Sketch.load import GenericLoader
+from Sketch.Lib.util import decode_sk_string
 
 from Sketch.Graphics import pagelayout, plugobj, blendgroup, text, image, eps,\
      properties
@@ -63,8 +64,8 @@ for key in dir(properties.factory_defaults):
                 getattr(properties.factory_defaults, key))
 
 papersizes = [#    'A0', 'A1', 'A2',
-              'A3', 'A4', 'A5', 'A6', 'A7',
-              'letter', 'legal', 'executive',
+              u'A3', u'A4', u'A5', u'A6', u'A7',
+              u'letter', u'legal', u'executive',
               ]
 
 
@@ -117,13 +118,14 @@ class SKLoader(GenericLoader):
 
     functions.append('layout')
     def layout(self, format, orientation):
-        if isinstance(format, str):
+        format = decode_sk_string(format)
+        if isinstance(format, unicode):
             if format not in papersizes:
                 # The format is given by name but it's not one of the
                 # standard papersizes. The file may be corrupted.
                 self.add_message(_("Unknown paper format '%s', "
                                    "using A4 instead") % format)
-                format = "A4"
+                format = u"A4"
             layout = pagelayout.PageLayout(format, orientation=orientation)
         else:
             w, h = format
@@ -135,6 +137,8 @@ class SKLoader(GenericLoader):
     def grid(self, geometry, visible = 0, color = None, name = None):
         if name is None:
             name = _("Grid")
+        else:
+            name = decode_sk_string(name)
         self.begin_layer_class(GridLayer,
                                (geometry, visible, self.convert_color(color),
                                 name))
@@ -261,6 +265,7 @@ class SKLoader(GenericLoader):
 
     functions.append('dstyle')
     def dstyle(self, name = ''):
+        name = decode_sk_string(name)
         if not name:
             raise SketchLoadError(_("unnamed style"))
         style = self.style.AsDynamicStyle()
@@ -270,6 +275,7 @@ class SKLoader(GenericLoader):
 
     functions.append(('use_style', 'style'))
     def use_style(self, name = ''):
+        name = decode_sk_string(name)
         if not name:
             raise SketchLoadError(_("unnamed style"))
         if not self.style.IsEmpty():
@@ -296,6 +302,8 @@ class SKLoader(GenericLoader):
 
     functions.append('guidelayer')
     def guidelayer(self, *args, **kw):
+        if args:
+            args = (decode_sk_string(args[0]),) + args[1:]
         self.begin_layer_class(GuideLayer, args, kw)
 
     def bezier_load(self, line):
@@ -346,11 +354,17 @@ class SKLoader(GenericLoader):
             decoder = Base64Decode(SubFileDecode(self.file, '-'))
             data = image.load_image(decoder)
         else:
+            # file names are unicode in the model (K2; see
+            # devdocs/string-handling.md)
+            filename = decode_sk_string(filename)
             data = image.load_image(os.path.join(self.directory, filename))
         self.id_dict[id] = data
 
     functions.append('eps')
     def eps(self, trafo, filename):
+        # file names are unicode in the model (K2; see
+        # devdocs/string-handling.md)
+        filename = decode_sk_string(filename)
         if len(trafo) == 2:
             trafo = Translation(trafo)
         else:
@@ -421,6 +435,9 @@ class SKLoader(GenericLoader):
 
     functions.append('PC')
     def PC(self, class_name, *args, **kw):
+        # class names are internal ascii identifiers (K5); decode for
+        # uniformity with the plugin registry keys
+        class_name = decode_sk_string(class_name)
         kw['loading'] = 1
         info = plugins.find_object_plugin(class_name)
         if info is not None:
@@ -445,7 +462,7 @@ class SKLoader(GenericLoader):
 
     def Load(self):
         file = self.file
-        if isinstance(file, str):
+        if isinstance(file, (str, unicode)):
             file = open(file, 'r')
         dict = self.get_func_dict()
         from Sketch import skread

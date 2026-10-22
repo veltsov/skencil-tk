@@ -34,7 +34,7 @@ from Sketch import _
 def Undo(info):
     # execute a single undoinfo
     func = info[0]
-    if isinstance(func, basestring):
+    if isinstance(func, unicode):
         text = func
         func = info[1]
         args = info[2:]
@@ -59,7 +59,7 @@ def UndoList(infos):
     return (UndoList, undoinfo)
 
 def _get_callable(info):
-    if isinstance(info[0], basestring):
+    if isinstance(info[0], unicode):
         return info[1]
     return info[0]
 
@@ -107,7 +107,7 @@ def check_info(info):
     if len(info) < 1:
         raise UndoTypeError("undo info is empty tuple")
     f = info[0]
-    if isinstance(f, basestring):
+    if isinstance(f, unicode):
         if len(info) > 1:
             f = info[1]
     if not callable(f):
@@ -202,7 +202,7 @@ class UndoRedo:
         # next, in a format suitable for a menu entry.
         if self.undoinfo:
             undolabel = self.undoinfo[0][0]
-            if isinstance(undolabel, basestring):
+            if isinstance(undolabel, unicode):
                 return _("Undo %s") % undolabel
         return _("Undo")
 
@@ -211,7 +211,7 @@ class UndoRedo:
         # next, in a format suitable for a menu entry.
         if self.redoinfo:
             redolabel = self.redoinfo[0][0]
-            if isinstance(redolabel, basestring):
+            if isinstance(redolabel, unicode):
                 return _("Redo %s") % redolabel
         return _("Redo")
 

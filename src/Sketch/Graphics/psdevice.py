@@ -102,13 +102,13 @@ class PostScriptDevice(CommonDevice):
 
         # search through the document if file is a string with the name
         # of an existing file.
-        if isinstance(file, str) and os.path.exists(file):
+        if isinstance(file, (str, unicode)) and os.path.exists(file):
             self.filename = file
             document.WalkHierarchy(self.handle_writes_to_embedded_eps,
                                    visible = self.draw_visible,
                                    printable = self.draw_printable)
 
-        if isinstance(file, str):
+        if isinstance(file, (str, unicode)):
             file = open(file, 'w')
             self.close_file = 1
         else:

@@ -66,7 +66,7 @@ def body():
     status = 'ok'
     # same transaction structure as PluginPanel.do_apply, but print the
     # traceback (AbortTransaction's warn_tb is suppressed by default)
-    doc.BeginTransaction('Set Parameters')
+    doc.BeginTransaction(u'Set Parameters')
     try:
         try:
             doc.AddUndo(obj.SetParameters({'text': LTX_TEXT,

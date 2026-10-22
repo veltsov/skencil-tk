@@ -128,7 +128,10 @@ def render_ps(filename, resolution, width, height, orig_x = 0, orig_y = 0,
                   '-c %(orig_x)f %(orig_y)f translate '
                   '-f%(filename)s -c quit')
         gs_cmd = gs_cmd % locals()
-        retval = os.system(gs_cmd)
+        # py2's os.system encodes unicode commands with the default
+        # (ascii) codec; the command may contain utf-8 file names (K6,
+        # devdocs/string-handling.md)
+        retval = os.system(gs_cmd.encode('utf-8'))
         if retval:
             sys.stderr.write("skencil:export_raster: executing %s failed"
                              " with exit code %x\n" % (repr(gs_cmd), retval))

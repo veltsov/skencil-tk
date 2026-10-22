@@ -16,11 +16,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 
-import sys
-
 import pax
 
 from Sketch import _, Publisher, StandardColors, config
+from Sketch.Lib.util import as_unicode
 from Sketch.const import CHANGED, DROP_COLOR, COMMAND, SELECTION
 from Sketch.warn import warn_tb, INTERNAL
 
@@ -708,27 +707,31 @@ class PyWidget(Widget, SketchDropTarget):
 
 
 # encoding helpers that were provided by the paxtkinter module before it
-# was dropped in favor of the stock _tkinter
+# was dropped in favor of the stock _tkinter.  Note that stock _tkinter
+# returns *unicode* for any result containing non-ascii characters and
+# plain byte strings otherwise, so the helpers must accept both input
+# types (see devdocs/string-handling.md).
 
 def utf8_to_latin1(text):
-    """Convert a UTF-8 encoded string to latin-1 (iso8859-1)"""
+    """Convert a text in utf-8 (bytes) or unicode to latin-1 bytes"""
+    if isinstance(text, unicode):
+        return text.encode('latin-1')
     return text.decode('utf-8').encode('latin-1')
-
-def utf8_to_system(text):
-    """Convert a UTF-8 encoded string to the system encoding"""
-    encoding = sys.getfilesystemencoding() or 'utf-8'
-    return text.decode('utf-8').encode(encoding, 'replace')
 
 
 def GetOpenFilename(master, **kw):
+    # file names are unicode in the model; the Tk result is either an
+    # ascii byte string or unicode (stock _tkinter converts results
+    # containing non-ascii characters), as_unicode normalizes both.
+    # See devdocs/string-handling.md.
     filename = master.tk.call(*('tk_getOpenFile', '-parent', master._w)
                      + master._options(kw))
-    return utf8_to_system(filename)
+    return as_unicode(filename)
 
 def GetSaveFilename(master, **kw):
     filename = master.tk.call(*('tk_getSaveFile', '-parent', master._w)
                      + master._options(kw))
-    return utf8_to_system(filename)
+    return as_unicode(filename)
 
 # NLS:
 #

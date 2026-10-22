@@ -34,6 +34,7 @@ from Sketch import _, Publisher, GraphicsDevice, StandardColors, \
      PropertyStack, SolidPattern, LinearGradient, ConicalGradient, \
      RadialGradient, HatchingPattern, EmptyPattern, ImageTilePattern, \
      CreateSimpleGradient, Point, Rect, Trafo, load_image, config
+from Sketch.Lib.util import as_display_name
 from Sketch.const import CHANGED, ConstraintMask, DROP_COLOR
 from Sketch.warn import warn_tb, INTERNAL
 
@@ -529,7 +530,8 @@ class ImageTilePatternFrame(PatternFrame):
             self.main_window.application.MessageBox(title = _("Load Image"),
                                                     message=_("Cannot load %(filename)s:\n"
                                                               "%(message)s") \
-                                                    % {'filename':repr(basename),
+                                                    % {'filename':
+                                                       as_display_name(basename),
                                                        'message':value},
                                                     icon = 'warning')
         else:

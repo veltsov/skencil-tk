@@ -162,7 +162,7 @@ def _edit_first_bezier_path(doc, edit_path):
     new = edit_path(obj.Paths()[0])
     paths = list(obj.Paths())
     paths[0] = new
-    doc.begin_transaction('test edit')
+    doc.begin_transaction(u'test edit')
     try:
         doc.AddUndo(obj.SetPaths(paths))
     except:

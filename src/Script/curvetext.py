@@ -332,7 +332,9 @@ class CurveTextDialog(SKModal):
                 items.append(("T1: " + name, ("T1", name)))
 
         # scan the font directory
-        font_files = os.listdir(self.font_directory)
+        # unicode dir -> unicode file names (devdocs/string-handling.md)
+        from Sketch.Lib.util import as_unicode
+        font_files = os.listdir(as_unicode(self.font_directory))
         font_files.sort()
         used_basenames = {}
         type1 = []

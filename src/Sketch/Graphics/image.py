@@ -79,12 +79,12 @@ class ImageData(ExternalData):
 
 
 def load_image(filename, cache = 1):
-    if isinstance(filename, str):
+    if isinstance(filename, (str, unicode)):
         image = get_cached(filename)
         if image:
             return image
     image = PIL.Image.open(filename)
-    if not isinstance(filename, str):
+    if not isinstance(filename, (str, unicode)):
         filename = ''
     return ImageData(image, filename = filename, cache = cache)
 

@@ -31,6 +31,7 @@
 (''"Size")
 
 from Sketch import Scale, TrafoPlugin, PolyBezier, CreatePath
+from Sketch.Lib.util import as_unicode
 
 
 segments = ((( 0, 18), (10, 18), ( 8, 16), ( 2, 16), ( 0, 18)),
@@ -107,7 +108,12 @@ class LCDText(TrafoPlugin):
             self.text = duplicate.text
             self.size = duplicate.size
         else:
-            self.text = text
+            # text is unicode in the model (the rendering below uses its
+            # own segment definitions, not the font encoding; see
+            # devdocs/string-handling.md): the plugin dialog provides
+            # unicode directly, and byte strings loaded from a .sk file
+            # are utf-8 encoded parameters
+            self.text = as_unicode(text)
             self.size = size
         if not loading:
             self.recompute()

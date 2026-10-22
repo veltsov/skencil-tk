@@ -29,7 +29,7 @@ from Sketch import _, config, const, Point, TrafoType, Scale, SketchError, \
 from Sketch.Lib import encoding
 
 from Sketch.warn import warn, INTERNAL, USER, pdebug
-from Sketch.Lib.util import find_in_path, find_files_in_path
+from Sketch.Lib.util import find_in_path, find_files_in_path, as_unicode
 
 minus_tilde = string.maketrans('-', '~')
 
@@ -266,7 +266,9 @@ def read_font_dirs():
     for directory in config.font_path:
         #print directory
         try:
-            filenames = os.listdir(directory)
+            # unicode dir -> unicode file names
+            # (devdocs/string-handling.md)
+            filenames = os.listdir(as_unicode(directory))
         except os.error as exc:
             warn(USER, _("Cannot list directory %s:%s\n"
                          "ignoring it in font_path"),

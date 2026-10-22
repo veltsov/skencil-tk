@@ -106,6 +106,13 @@ reloads; full suite green (51/51), including the previously red
 
 **Conventions after instance 4 (2026-10-21):**
 
+Superseded/completed 2026-10-22 by the string-kind taxonomy in
+`devdocs/string-handling.md`: the `.sk` reader now decodes
+user-provided strings (K2) to unicode at the boundary, display sinks
+are enumerated per kind, and the remaining byte-string kinds
+(text-object content, file names) have dedicated normalizers.  The
+rules below remain valid; the taxonomy document is authoritative.
+
 * *Serialization sinks* (`sksaver`) write utf-8 `\x`-escaped byte
   strings (above).
 * *Display sinks* (`util.format`, `tkext.UpdatedLabel.Update`) normalize
@@ -136,40 +143,148 @@ when `kpsewhich pscyr.sty` finds it, tolerates the empty case
 (`LTXGROUP:empty`) and asserts the full round trip when the object
 renders (`LTXGROUP:ok`).
 
-## Part 2 — proactive analysis of this bug class (PLANNED, NOT EXECUTED)
+## Part 2 — proactive analysis of this bug class (PLANNED, refined 2026-10-22)
 
-Three complementary layers, ordered cheap → thorough:
+Revised after fixing instances 1–4 (commits `04b1a59`, `6d9d868`,
+`961321e`).  The original three-layer plan is kept, but redesigned
+from experience: the actual bug taxonomy is richer than assumed, and
+the detection layers caught different subsets of it.
 
-1. **Pin the sink in the test suite (regression net).**  For every
-   fixture — after load and after the standard mutations — save the
-   `.sk` and scan the bytes for a `u'`/`u"` string prefix
-   (`(?<![A-Za-z_])u['"]`), plus assert reload succeeds.  Catches any
-   future unicode→`.sk` leak regardless of which `_()` site grows
-   next; no knowledge of sources required.  (Layer-1 model test, no
-   display needed.)
+### Lessons from instances 1–4 (what the plan must cover)
 
-2. **Runtime unicode-taint audit mode (finds unknown sinks app-wide).**
-   Env-gated (e.g. `SKENCIL_UNICODE_AUDIT=1`, settable via
-   `test/run_tests.sh`): make the gettext shim return a `unicode`
-   *subclass* whose `__repr__` raises/warns (exactly the sksaver
-   failure mode) and whose `__add__`/`__mod__`/`join` detect mixing
-   with byte strings containing non-ascii (bug class (2), the `0xb0`
-   incident).  Run the suite + Xvfb smoke tests under this mode to
-   flush out sibling leaks: other savers (`cgmsaver`, `aisaver`,
-   PS/EPS headers), clipboard/dialog flows, `warn()`/format paths.
-   Zero cost when the flag is off.
+Bug classes actually encountered, and how each was caught:
 
-3. **Static source/sink audit (one-time report + py3 checklist).**
-   A small AST-based script (e.g. `devtools/unicode_audit.py`) that,
-   per module, cross-references
-   *sources* (`_(`, `gettext`/`ugettext`, `.decode(`, Tk `get()` /
-   `getvar`) with *byte-str sinks* (`repr(`, `isinstance(..., str)` /
-   `type(...) == str`, computed values written to files, `%`/`+`
-   concatenation into byte literals) and ranks files containing both.
-   Results go into `devdocs/python3-porting.md`; the audit doubles as
-   the py3 checklist (`basestring` → `str` rewrite sites, bytes
-   literals in file filters).
+| class | instance | caught by |
+|---|---|---|
+| (a) `repr(unicode)` into file formats | 3 (.sk leak) | suite round trip |
+| (b) unicode template `%`/concat/join with bytes | 2 (angle), 4 (status bar) | hand testing only |
+| (c) type-mixed comparison of model attributes | 4 (`text != ptext`) | hand testing only (UnicodeWarning) |
+| (d) slicing byte strings (splits utf-8 chars) | 4 (`Info[:20]`) | hand testing only |
+| (e) writing unicode to text-mode files / external programs | 4 (`create_tex_sk`) | hand testing only |
+| (f) `isinstance(x, str)` type checks | 1 (undo chain) | hand testing only |
+| (g) display sinks needing unicode (Tk labels) | 4 (`UpdatedLabel`) | hand testing only |
 
-Status: decision to fix on the write side made and implemented; the
-tooling above is agreed in principle, not started.  Revisit after the
-next modernize/py3 batches.
+Consequences:
+
+* The suite's round-trip tests only guard class (a).  Classes (b)–(g)
+  live in display/comparison/IO paths and need their own nets.
+* The working remedies are all *sink-side normalizations* with named
+  helpers — `skrepr()` (serialization), `as_unicode()` (display),
+  `as_unicode` on both sides (comparisons), explicit `.encode('utf-8')`
+  (files/external programs).  Source-tainting alone is insufficient:
+  instance 4's comparison mixed two *non-gettext* strings (bytes from
+  the file vs unicode from a Tk dialog), and Tk entry values are
+  unicode in the app without ever passing through `_()`.  Tainting
+  must be complemented by sink/convention checks and targeted tests.
+
+### Layer 1 — pin the sinks in the test suite (partially done)
+
+Done: per-fixture save/reload round trips plus the unicode-injection
+tests in `test/model/test_unicode.py` (scan saved bytes for
+`(?<![A-Za-z_])u['"]`), and the LaTeX UI test scanning its saved file.
+
+Remaining:
+
+1. Generalize the scan: one parametrized model test that, for *every*
+   fixture, after load and after the standard mutation set, saves and
+   scans (today only the rustext injection paths are scanned).
+2. A headless display-path test set: build `(template, dict)` pairs
+   via the document API (`SelectionInfoText` etc.) and run them
+   through `util.format` with the real `Sketch.UI.converters` —
+   reachable without a display (this is how instance 4's status-bar
+   bug was reproduced headlessly).
+3. Model-level comparison tests: set model string attributes from both
+   bytes and unicode (layer names, LtxObj `text`/`ptext` where no
+   recompute fires) and assert no `UnicodeWarning` and stable
+   behavior.  A `-W error::UnicodeWarning` run mode makes these loud.
+
+### Layer 2 — runtime unicode-taint audit mode (designed, not started)
+
+Env-gated (`SKENCIL_UNICODE_AUDIT=1`; warn mode default, strict mode
+`SKENCIL_UNICODE_AUDIT=strict` raises instead of warning):
+
+* The gettext shim returns a `unicode` subclass `TrStr` with alarms
+  on: `__repr__` (class (a) — the sksaver failure mode), `__mod__`,
+  `__add__`/`__radd__` with a byte-str operand, `join` when the
+  sequence mixes bytes (class (b)).
+* Byte-str *sink* wrappers (same flag): `sksaver.skrepr` and
+  `util.as_unicode` log when they actually convert non-ascii bytes
+  (shows where bytes cross into display land).
+* Install the hooks in `Sketch/__init__.py` behind the flag; collect
+  alarms in a module list and dump a summary at exit (do not raise
+  inside Tk callbacks in warn mode — see harness pitfalls below).
+* Run the full suite plus the Xvfb smoke/screenshot payloads under
+  the mode; expected first catches: other savers (`cgmsaver`,
+  `aisaver`, PS/EPS/PDF headers), clipboard and dialog flows,
+  `warn()`/message formatting.
+* Known blind spots (covered by layers 1/3 instead): type-mixed
+  comparisons where neither side is tainted (class (c)), and unicode
+  entering from Tk dialogs without `_()`.
+
+### Layer 3 — static source/sink audit (designed, calibration cases known)
+
+A small AST-based script (`devtools/unicode_audit.py`), py2-parseable
+(lib2to3 or the `ast` module), reporting per module:
+
+* sources: `_(` / `gettext`/`ugettext`, `.decode(`, Tk
+  `get()`/`getvar()` (dialog values!), config string values;
+* sinks: `repr(`, `isinstance(..., str)` / `type(...) == str`,
+  `%`-formatting and `+`/`join` with byte-str literals, `file.write`
+  in text mode / `open(..., 'w')` of computed values, external
+  process input (args/env of `subprocess`/`os.system`), slicing of
+  suspected-bytes values, `==`/`!=` on attributes that can be
+  bytes-or-unicode;
+* convention conformance: save-file writers should use `skrepr`/
+  explicit `.encode`; display text should flow through
+  `util.format`/`as_unicode`.
+
+Calibration requirement: on the current (fixed) tree the tool must
+flag nothing in the fixed sites, and flag all of them when run against
+the pre-fix revisions (`04b1a59^` for sksaver/util/tkext/latextext) —
+a measurable precision/recall check before trusting its output.
+Results go into `devdocs/python3-porting.md`; the audit doubles as the
+py3 checklist (`basestring` → `str` rewrites, bytes literals in file
+filters, `as_unicode`/`skrepr` call sites that simplify away in py3).
+
+### Harness pitfalls for UI-layer unicode tests (learned in instance 4)
+
+For whoever implements the Xvfb-based parts
+(`test/ui/scripts/latex_recompile.py` is the working template):
+
+* `--run-script` payloads must schedule work via `root.after(...)`
+  inside the mainloop; a long synchronous body before the mainloop
+  can deadlock in the Tk/pax layer.
+* `sys.stderr` is redirected inside the app — route diagnostics to
+  stdout; Tkinter callback tracebacks appear on stdout too, so
+  `assert_clean_exit`'s stderr check is not sufficient: communicate
+  status via stdout markers (`LTXGROUP:ok|empty|error`) and check the
+  exit code.
+* Modal error dialogs (`MessageBox` from plugin `write_error`, load
+  warnings) hang an unattended Xvfb run — stub/patch them in the
+  payload; give the runner a generous timeout and kill the whole
+  process group (`testsupport.run_app` does).
+* Empty plugin compounds are dropped by the loader
+  (`load.py:check_object`) — round-trip assertions on a recompiled
+  object only work when it actually rendered; use a status marker and
+  downgrade assertions accordingly.
+* External toolchain variability (font types, pscyr/cm-super
+  presence) must be probed (`kpsewhich`), not assumed — see the
+  toolchain note above.
+
+### Status / suggested task breakdown
+
+Partially executed: sink fixes + conventions + injection tests + LaTeX
+UI test are in (`04b1a59`, `6d9d868`, `961321e`).  Remaining, ordered
+by cost/effect, each a self-contained step with a green suite as the
+gate:
+
+1. Generalize the saved-file u-prefix scan to all fixtures +
+   mutations (small; pure layer 1).
+2. Headless display-path test set + UnicodeWarning-as-error run mode
+   (small/medium).
+3. Static audit script with calibration against pre-fix revisions
+   (medium; also feeds the py3 port checklist).
+4. Runtime taint audit mode + suite/Xvfb runs under it (medium; the
+   exploratory part — budget time for triaging what it finds).
+5. Optional, heavy: dialog-input taint probes (drive Tk entries with
+   non-ASCII text via payloads) for the Tk-source blind spot.

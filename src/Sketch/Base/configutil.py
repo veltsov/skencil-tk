@@ -41,7 +41,9 @@ def init_directories(base_dir):
     config.font_path.append(config.fontmetric_dir)
     envfp = os.getenv('SKETCH_FONTPATH')
     if envfp:
-        config.font_path.extend(envfp.split(':'))
+        # file names are unicode in the model; environment bytes are
+        # utf-8 on the assumed systems (devdocs/string-handling.md)
+        config.font_path.extend(util.as_display_name(envfp).split(':'))
     check_path(config.font_path)
 
     config.plugin_path.append(config.plugin_dir)
@@ -108,7 +110,7 @@ def save_user_preferences():
         file = open(filename, 'w')
     except (IOError, os.error) as value:
         sys.stderr('cannot write preferences into %s: %s'
-        	   % (repr(filename), value[1]))
+        	   % (util.as_display_name(filename), value[1]))
         return
 
     file.write('#### -*- python -*-\n'

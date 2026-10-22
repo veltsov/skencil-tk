@@ -169,7 +169,7 @@ class TransformDlg(SKModal):
             
             duplicate = self.var_duplicate.get()
 
-            doc.BeginTransaction("Transforming Objects")
+            doc.BeginTransaction(u"Transforming Objects")
             try:
                 try:
                     sel = []

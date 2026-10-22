@@ -52,7 +52,10 @@ def render_preview(filename, startx, starty, width, height, resolution = None):
         height = int(math.ceil(height * factor))
         offx = -startx
         offy = -starty
-        os.system(gs_command % locals())
+        # py2's os.system encodes unicode commands with the default
+        # (ascii) codec; the command may contain utf-8 file names (K6,
+        # devdocs/string-handling.md)
+        os.system((gs_command % locals()).encode('utf-8'))
 
         image = PIL.Image.open(temp)
         image.load()

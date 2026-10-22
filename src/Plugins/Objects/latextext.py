@@ -95,10 +95,14 @@ class LtxObj(TrafoPlugin):
 	    self.psize = duplicate.psize
             self.redraw = duplicate.redraw
 	else:
-	    self.text = text
+	    # self.text is unicode in the model: the plugin dialog
+	    # provides unicode directly, and byte strings loaded from a
+	    # .sk file are utf-8 encoded parameters (see
+	    # devdocs/string-handling.md)
+	    self.text = as_unicode(text)
 	    self.size = size
 	    self.group = None
-            self.ptext = text
+            self.ptext = self.text
             self.psize = size
             self.redraw = 1
 
@@ -116,10 +120,9 @@ class LtxObj(TrafoPlugin):
         self.group.Transform(self.trafo.inverse())
 
     def recompute(self):
-        # self.text may be a byte string (loaded from a .sk file) or
-        # unicode (from the plugin dialog); compare in unicode to avoid
-        # the UnicodeWarning and spurious recomputes
-        if  as_unicode(self.text) != as_unicode(self.ptext) \
+        # self.text is always unicode (normalized in __init__; see
+        # devdocs/string-handling.md)
+        if  self.text != self.ptext \
                 or self.size != self.psize:
             #text is new or changed
             self.ptext = self.text
@@ -155,10 +158,9 @@ class LtxObj(TrafoPlugin):
 			       self.trafo.coeff())
 
     def Info(self):
-        # decode first: slicing the utf-8 bytes could split a character
-        # (and non-ascii bytes would crash the unicode template)
+        # self.text is unicode, so slicing cannot split a character
         return _("LaTeX Text: `%s', size %g") \
-               % (as_unicode(self.text)[:20],self.size)
+               % (self.text[:20],self.size)
 
     def AsBezier(self):
 	return self.objects[0].AsBezier()
@@ -194,7 +196,9 @@ def create_tex_sk(text,fontsz,doc=None):
         for dpre in [docdir,os.path.dirname(docdir),config.user_config_dir]:
             try:
                 with open(os.path.join(dpre,'sk-ltx.tex'),'r') as fpre:
-                    preamb=fpre.read()
+                    # the preamble file is utf-8 text; normalize so the
+                    # wrapper below stays unicode throughout
+                    preamb = as_unicode(fpre.read())
                     break
             except IOError:
                 pass
@@ -233,13 +237,10 @@ def create_tex_sk(text,fontsz,doc=None):
     try:
         chdir(tdir)
         with open('sk.tex','w') as tfile:
-            tex = texwrapper
-            if isinstance(tex, unicode):
-                # the text (and possibly the preamble) is unicode; the
-                # wrapper declares \usepackage[utf8]{inputenc}, so write
-                # utf-8 bytes
-                tex = tex.encode('utf-8')
-            tfile.write(tex)
+            # texwrapper is always unicode (text and preamble are
+            # normalized); the wrapper declares
+            # \usepackage[utf8]{inputenc}, so write utf-8 bytes
+            tfile.write(texwrapper.encode('utf-8'))
         if not exists('sk.tex'):
             raise cm_exc("LaTeX", "Can't create tempory file %s" %  os.path.join(tdir,'sk.tex'))
 

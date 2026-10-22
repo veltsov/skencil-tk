@@ -46,6 +46,7 @@ from Sketch.Graphics import document, layer, group, text
 from Sketch import _, PolyBezier, Rectangle, Ellipse, Trafo, Translation, \
      Style, PropertyStack, EmptyPattern, Document, SketchLoadError, \
      ImageData, Image
+from Sketch.Lib.util import decode_sk_string
 
 
 doc_class = Document
@@ -201,6 +202,11 @@ class GenericLoader(LoaderWithComposites):
         self.begin_composite(doc_class, args, kw)
 
     def layer(self, *args, **kw):
+        if args:
+            # the layer name is user-provided text (see
+            # devdocs/string-handling.md): decode it right at the
+            # reader boundary so the model holds unicode
+            args = (decode_sk_string(args[0]),) + args[1:]
         self.begin_layer_class(layer.Layer, args, kw)
 
     def end_layer(self):
@@ -352,7 +358,7 @@ def load_drawing_from_file(file, filename = '', doc_class = None):
 
 
 def load_drawing(filename):
-    if isinstance(filename, str):
+    if isinstance(filename, (str, unicode)):
         try:
             file = open(filename, 'r')
         except IOError as value:

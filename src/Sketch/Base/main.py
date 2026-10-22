@@ -136,7 +136,12 @@ def main():
         sys.exit(1)
 
     if options.args:
-        filename = options.args[0]
+        # file names are unicode in the model; the filesystem
+        # representation is assumed to be utf-8 (see
+        # devdocs/string-handling.md).  as_display_name decodes
+        # leniently: a name in a foreign encoding degrades to a clear
+        # load error instead of a crash.
+        filename = util.as_display_name(options.args[0])
     else:
         filename = ''
 
@@ -144,9 +149,11 @@ def main():
 
     from Sketch.UI.skapp import SketchApplication
 
+    run_script = options.run_script \
+                 and util.as_display_name(options.run_script)
     application = SketchApplication(filename, options.display,
                                     options.geometry,
-                                    run_script = options.run_script)
+                                    run_script = run_script)
     
     setattr(Sketch.main, 'application', application)
     

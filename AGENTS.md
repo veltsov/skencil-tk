@@ -20,6 +20,7 @@ from GTK to **Tk** and added many features (see `README.md`).
 | `devdocs/modernize-roadmap.md` | Roadmap of pre-py3 modernization batches (dead code, 2to3-based mechanical cleanups, deeper items) with status |
 | `devdocs/testing.md` | The automatic test suite in `test/`: layers (model/formats/Xvfb app/screenshot), baseline recording from `master`, fixture management, known findings |
 | `devdocs/unicode-runtime-audit.md` | The unicode-at-runtime bug class (gettext shim returns unicode on py2): fixed instances, the `.sk` utf-8/\x-escape format decision, and the planned proactive audit tooling (not yet executed) |
+| `devdocs/string-handling.md` | The string-kind taxonomy (origins → types → conversions) and the conventions that replace scattered type checks; feeds the py3 port |
 
 ## Quick facts
 

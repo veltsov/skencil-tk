@@ -30,7 +30,7 @@ class ScriptRegistry:
         self.menu = {}
 
     def Add(self, script, menu = ()):
-        if isinstance(menu, basestring):
+        if isinstance(menu, unicode):
             menu = (menu,)
         self.registry[script.name] = script
         submenu = self.menu

@@ -68,7 +68,9 @@ def parse_options():
             sys.stderr.write(__doc__)
             sys.exit(0)
 
-    Options.files = args
+    # file names are unicode in the model; argv bytes are utf-8 on the
+    # assumed systems (devdocs/string-handling.md)
+    Options.files = [f.decode('utf-8', 'replace') for f in args]
 
 parse_options()
 

@@ -112,7 +112,10 @@ class SketchDocument(Protocols):
             old_layers = self.layers[:]
             if layer_name is None:
                 layer_name = _("Layer %d") % (len(self.layers) + 1)
-            else:
+            elif not isinstance(layer_name, (str, unicode)):
+                # coerce non-string names (e.g. numbers passed by
+                # scripts); string names (unicode per
+                # devdocs/string-handling.md) pass through unchanged
                 layer_name = str(layer_name)
             layer = Layer(*(layer_name,) + args, **kw_args)
             layer.SetDocument(self)
@@ -1154,7 +1157,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
         # Add undoinfo for the current transaction. should not be called
         # when not in a transaction.
         if infos:
-            if isinstance(infos[0], basestring):
+            if isinstance(infos[0], unicode):
                 if not self.transaction_name:
                     self.transaction_name = infos[0]
                 infos = infos[1:]
@@ -1164,7 +1167,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
                 if isinstance(info, list):
                     info = CreateListUndo(info)
                 else:
-                    if isinstance(info[0], basestring):
+                    if isinstance(info[0], unicode):
                         if __debug__:
                             pdebug(None, 'add_undo: info contains text')
                         info = info[1:]
@@ -1270,7 +1273,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
                 self.end_transaction()
 
     def AddStyle(self, style):
-        if isinstance(style, str):
+        if isinstance(style, unicode):
             style = self.GetDynamicStyle(style)
         self.apply_to_selected(_("Add Style"),
                                lambda o, style = style: o.AddStyle(style))
@@ -1287,7 +1290,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
                                lambda o, kw=kw: o.SetProperties(*(), **kw))
 
     def SetStyle(self, style):
-        if isinstance(style, str):
+        if isinstance(style, unicode):
             style = self.get_dynamic_style(style)
             self.AddStyle(style)
 

@@ -26,12 +26,19 @@ import subprocess
 def popen_write(cmd):
     """Run CMD through the shell and return a file object connected to
     its standard input. Replacement for os.popen(cmd, 'w')."""
+    if isinstance(cmd, unicode):
+        # py2's os layer encodes process arguments with the default
+        # (ascii) codec; the shell command may contain utf-8 file names
+        # (K2/K6, devdocs/string-handling.md)
+        cmd = cmd.encode('utf-8')
     return subprocess.Popen(cmd, shell=True,
                             stdin=subprocess.PIPE).stdin
 
 def popen_read(cmd):
     """Run CMD through the shell and return a file object connected to
     its standard output. Replacement for os.popen(cmd)."""
+    if isinstance(cmd, unicode):
+        cmd = cmd.encode('utf-8')
     return subprocess.Popen(cmd, shell=True,
                             stdout=subprocess.PIPE).stdout
 
@@ -61,7 +68,10 @@ def gethome():
         home = getenv("HOME")
         if not home:
             home = get_pwd()[5]
-        return home
+        # file names are unicode in the model; the filesystem
+        # representation is assumed to be utf-8 (see
+        # devdocs/string-handling.md)
+        return as_unicode(home)
     except (KeyError, ImportError):
         return os.curdir
 
@@ -235,6 +245,41 @@ def as_unicode(s):
     # through unchanged.
     if isinstance(s, str):
         return s.decode('utf-8')
+    return s
+
+def decode_sk_string(s):
+    # Reader-boundary conversion for the .sk format.  User-provided
+    # strings (layer/guide/grid names, style names, paper format names)
+    # are stored in .sk files as utf-8 encoded byte strings in repr()
+    # form (\x escapes, no u prefix) and become unicode in the model
+    # right here; the model must never see byte strings for them.
+    # Text object contents (txt/pt) and file names (bm/eps) stay byte
+    # strings -- their bytes are in the font's encoding resp. the
+    # filesystem encoding.  Plugin object parameters are normalized by
+    # the plugin objects themselves (they know the kind of their text).
+    # See devdocs/string-handling.md.
+    if isinstance(s, str):
+        return s.decode('utf-8')
+    return s
+
+def as_latin1_text(s):
+    # Display conversion for font-encoded text bytes (the `text'
+    # attribute of SimpleText/PathText: one byte per character in the
+    # font's encoding).  These bytes are NOT utf-8; map them 1:1 onto
+    # U+0000..U+00FF.  latin-1 decoding never fails, so this cannot
+    # raise and cannot split a character.
+    if isinstance(s, str):
+        return s.decode('latin-1')
+    return s
+
+def as_display_name(s):
+    # Display conversion for file name byte strings (K4).  The
+    # filesystem name representation is assumed to be utf-8 (see
+    # devdocs/string-handling.md); decode leniently -- undecodable
+    # bytes (e.g. from a foreign-encoding command line argument) are
+    # replaced instead of raising.
+    if isinstance(s, str):
+        return s.decode('utf-8', 'replace')
     return s
 
 def format(template, converters, dict):
