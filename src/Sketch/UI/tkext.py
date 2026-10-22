@@ -84,7 +84,11 @@ class AutoUpdate:
         if self.sensitivecb:
             self.SetSensitive(self.sensitivecb())
         if self.updatecb and self.update_field:
-            self[self.update_field] = self.updatecb()
+            # normalize to unicode: the label text may come from the
+            # document or the file system as utf-8 byte strings (e.g.
+            # object info, file names); Tk labels expect unicode.
+            from Sketch.Lib.util import as_unicode
+            self[self.update_field] = as_unicode(self.updatecb())
 
     def SetSensitive(self, on):
         # for ordinary TkWidgets:

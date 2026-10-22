@@ -149,6 +149,14 @@ Deliberately NOT used: `import` (would rename Tkinter→tkinter etc.),
    master-saved files with Russian layer/text content; the full suite
    is green again, baselines unchanged).  Rationale, format decision
    and follow-up tooling: `devdocs/unicode-runtime-audit.md`.
+   **Fourth instance (2026-10-21, display + LaTeX plugin paths):**
+   `util.format` crashed on unicode templates with utf-8 byte values
+   (status bar), `LtxObj` mixed bytes/unicode in comparisons and wrote
+   the tex wrapper unencoded.  Fixed via `util.as_unicode`
+   normalization in `util.format` and `tkext.UpdatedLabel.Update`, and
+   `as_unicode`/utf-8 fixes in `latextext.py` — see
+   `devdocs/unicode-runtime-audit.md` (instance 4) for the analysis
+   and the resulting conventions.
 8. **`map(f, lines)` rewriting picked the wrong string method**
    (found 2026-10-20 via the broken PDF export):
    `fix_leftovers` rewrote `map(lstrip,

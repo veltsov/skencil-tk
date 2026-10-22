@@ -106,5 +106,11 @@ input test).  All comparisons go through `test/testsupport.py`.
 - **Sketch classes are old-style Python 2 classes**: `type(obj).__name__`
   is `'instance'` for everything; use `testsupport.class_name(obj)`
   (`obj.__class__.__name__`).
+- **LaTeX toolchain (`test/ui/test_latex.py`).**  The LtxObj recompile
+  test needs latex/pdflatex, pstoedit and gs; it is skipped when they
+  are missing.  pstoedit 3.78's Sketch driver returns empty documents
+  (a pstoedit regression, input-independent); in that case the test
+  verifies the utf-8 path and the saved parameter only — see
+  `devdocs/unicode-runtime-audit.md`.
 - The Xvfb app runner kills the whole process group on timeout (plain
   `proc.kill()` would leak Xvfb and skencil children).

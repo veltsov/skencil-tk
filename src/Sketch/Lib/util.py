@@ -228,22 +228,40 @@ def flatten(lst):
 rx_format = re.compile(r'%\((?P<item>[a-zA-Z_0-9]+)\)'
                        r'\[(?P<converter>[a-zA-Z_]+)\]')
 
+def as_unicode(s):
+    # Byte strings at runtime are utf-8 encoded (see
+    # devdocs/unicode-runtime-audit.md).  Convert them for safe mixing
+    # with the unicode templates returned by gettext; other types pass
+    # through unchanged.
+    if isinstance(s, str):
+        return s.decode('utf-8')
+    return s
+
 def format(template, converters, dict):
+    # Normalize everything to unicode: the templates come from the
+    # gettext shim (unicode), the values may be byte strings (utf-8)
+    # from the document or the file system.  Mixing both in py2's %
+    # operator raises UnicodeDecodeError.  The result is always
+    # unicode, which the Tk widgets display correctly.
+    template = as_unicode(template)
+    udict = {}
+    for key, value in dict.items():
+        udict[key] = as_unicode(value)
     result = []
     pos = 0
     while pos < len(template):
         match = rx_format.search(template, pos)
         if match:
-            result.append(template[pos:match.start()] % dict)
+            result.append(template[pos:match.start()] % udict)
             converter = converters[match.group('converter')]
-            item = dict[match.group('item')]
-            result.append(converter(item))
+            item = udict[match.group('item')]
+            result.append(as_unicode(converter(item)))
             pos = match.end()
         else:
-            result.append(template[pos:] % dict)
+            result.append(template[pos:] % udict)
             pos = len(template)
 
-    return ''.join(result)
+    return u''.join(result)
 
 # convert a bitmap to a string containing an xbm file. The linedlg uses
 # this for instance to convert bitmap objects to Tk bitmap images.

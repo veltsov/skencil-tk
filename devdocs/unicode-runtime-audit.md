@@ -32,6 +32,30 @@ Known instances (see also `modernize-roadmap.md`, section C, item 7):
    as `u'...'` with `\u` escapes, which `parse_sk_line2`
    (`skreadmodule.c`) cannot parse — documents became unloadable.
    **Fixed** (see below).
+4. **unicode/bytes mixing in the display and LaTeX-plugin paths**
+   (found 2026-10-21 by hand with Russian layer names and LtxObj text):
+   * selecting the LtxObj crashed the status bar: `selection.InfoText()`
+     produces a unicode `_()`-template whose dict values are utf-8 byte
+     strings (layer name `База`), and `util.format()` mixed both in a
+     `%` operation → `UnicodeDecodeError`.  Sibling: `LtxObj.Info()`
+     sliced the utf-8 text bytes before formatting (would split a
+     multibyte character / crash on non-ascii prefixes).
+   * `LtxObj.recompute` compared `self.text != self.ptext` across
+     types (bytes from file vs unicode from the dialog) →
+     `UnicodeWarning` and spurious recomputes.
+   * `create_tex_sk` wrote the tex wrapper (unicode once the dialog's
+     unicode text was substituted) to a text-mode file →
+     `UnicodeEncodeError`; the subsequent transaction abort cascade
+     (`AbortTransactionError`) was only a symptom of this.
+   **Fixed**: `Sketch.Lib.util` gained `as_unicode(s)` (utf-8 decode of
+   byte strings) and `format()` normalizes template, dict values and
+   converter outputs and always returns unicode; the status-bar label
+   sink `tkext.UpdatedLabel.Update` normalizes its text the same way
+   (Tk labels expect unicode — this also covers e.g. Russian file
+   names); `latextext.py` compares and slices via `as_unicode` and
+   encodes the tex wrapper to utf-8 before writing (the wrapper declares
+   `\usepackage[utf8]{inputenc}`, so utf-8 is exactly what the
+   toolchain expects).
 
 More instances of this class are expected; the py3 port changes the
 semantics again (`str` unifies both, but bytes handling becomes
@@ -79,6 +103,32 @@ loads, saves **byte-identical** to master's output, and a unicode name
 created inside modernized skencil is saved as `\x`-escaped utf-8 and
 reloads; full suite green (51/51), including the previously red
 `test_save_reload_stable[zz.fig]` / `test_fixture_baseline[zz.fig]`.
+
+**Conventions after instance 4 (2026-10-21):**
+
+* *Serialization sinks* (`sksaver`) write utf-8 `\x`-escaped byte
+  strings (above).
+* *Display sinks* (`util.format`, `tkext.UpdatedLabel.Update`) normalize
+  to unicode via `util.as_unicode` (Tk labels expect unicode; byte
+  strings at runtime are utf-8).  New display code should route text
+  through one of these.
+* *Type-mixed comparisons* (e.g. model attributes that can come from a
+  file as bytes or from a dialog as unicode) must compare via
+  `as_unicode` on both sides.
+* External programs: pass utf-8 bytes explicitly (encode before
+  `file.write`/subprocess), and declare the encoding in the generated
+  content (the LaTeX wrapper uses `inputenc utf8`).
+
+**Toolchain caveat found while testing instance 4:** pstoedit 3.78's
+Sketch driver (`-f sk`) returns an empty document for *any* input
+(verified even with trivial hand-written PostScript; the dxf driver
+works, so the ghostscript interpretation backend is fine).  A
+recompiled LtxObj therefore renders empty on such systems, and the
+empty plugin compound is then deliberately not loaded again
+(`Sketch/Base/load.py: check_object` ignores empty plugins).  The
+LaTeX test (`test/ui/test_latex.py`) tolerates this (`LTXGROUP:empty`)
+and asserts the full round trip only when the driver works
+(`LTXGROUP:ok`).
 
 ## Part 2 — proactive analysis of this bug class (PLANNED, NOT EXECUTED)
 

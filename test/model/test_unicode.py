@@ -57,6 +57,54 @@ def round_trip_stable(out1, out2):
     assert first == second, '%s: .sk round trip is not stable' % out1
 
 
+# ------------------------------------------------- display/compare paths
+
+def test_util_format_mixed_unicode_bytes():
+    # the SELECTION status-bar path: unicode template from _(), utf-8
+    # byte values from the document (layer name), unicode value from
+    # LtxObj.Info().  util.format must normalize and return unicode.
+    sk = testsupport.sketch()
+    from Sketch.Lib.util import format, as_unicode
+    template = u"%(object)s on `%(layer)s'"
+    dict = {'layer': U_LAYER_NAME.encode('utf-8'),
+            'object': u'LaTeX Text: `\\preamble, size 25'}
+    text = format(template, {}, dict)
+    assert isinstance(text, unicode)
+    assert as_unicode(U_LAYER_NAME) in text
+
+
+def test_selection_info_text():
+    # the full status-bar path as driven by the canvas
+    doc = load()
+    doc.SelectAll()
+    template, dict = doc.SelectionInfoText()
+    sk = testsupport.sketch()
+    from Sketch.Lib.util import format
+    from Sketch.UI import converters
+    text = format(template, converters.converters, dict)
+    assert isinstance(text, unicode)
+    # the utf-8 layer name 'База' must appear decoded, no exception
+    assert u'\u0411\u0430\u0437\u0430' in text
+
+
+def test_ltxobj_info():
+    # LtxObj.Info() truncates the text to 20 chars; with utf-8 byte
+    # strings it must decode before slicing (also: non-ascii leading
+    # text must not crash the unicode template)
+    doc = load()
+    obj = first_ltxobj(doc)
+    assert obj is not None, 'no LtxObj in %s' % FIXTURE
+    sk = testsupport.sketch()
+    from Sketch.Lib.util import as_unicode
+    info = obj.Info()
+    assert isinstance(info, unicode)
+    assert '\\preamble' in info        # first 20 bytes are ascii preamble
+    obj.text = U_PLUGIN_TEXT           # leading non-ascii
+    info = obj.Info()
+    assert isinstance(info, unicode)
+    assert as_unicode(U_PLUGIN_TEXT)[:20] in info
+
+
 def test_unicode_layer_name_save_reload():
     # inject a unicode layer name (as _()-derived defaults do), save and
     # reread: the file must contain the utf-8 bytes in master's

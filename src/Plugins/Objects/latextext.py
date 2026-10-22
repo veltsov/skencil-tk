@@ -52,6 +52,7 @@ from __future__ import print_function
 from Sketch import Scale, TrafoPlugin, PolyBezier, CreatePath, main
 from Sketch import load, Group, SketchError
 from Sketch import config
+from Sketch.Lib.util import as_unicode
 from tempfile import mkdtemp
 
 import os
@@ -115,7 +116,11 @@ class LtxObj(TrafoPlugin):
         self.group.Transform(self.trafo.inverse())
 
     def recompute(self):
-        if  self.text != self.ptext or self.size != self.psize:
+        # self.text may be a byte string (loaded from a .sk file) or
+        # unicode (from the plugin dialog); compare in unicode to avoid
+        # the UnicodeWarning and spurious recomputes
+        if  as_unicode(self.text) != as_unicode(self.ptext) \
+                or self.size != self.psize:
             #text is new or changed
             self.ptext = self.text
             self.psize = self.size
@@ -150,7 +155,10 @@ class LtxObj(TrafoPlugin):
 			       self.trafo.coeff())
 
     def Info(self):
-        return _("LaTeX Text: `%s', size %g") % (self.text[:20],self.size)
+        # decode first: slicing the utf-8 bytes could split a character
+        # (and non-ascii bytes would crash the unicode template)
+        return _("LaTeX Text: `%s', size %g") \
+               % (as_unicode(self.text)[:20],self.size)
 
     def AsBezier(self):
 	return self.objects[0].AsBezier()
@@ -225,7 +233,13 @@ def create_tex_sk(text,fontsz,doc=None):
     try:
         chdir(tdir)
         with open('sk.tex','w') as tfile:
-            tfile.write(texwrapper)
+            tex = texwrapper
+            if isinstance(tex, unicode):
+                # the text (and possibly the preamble) is unicode; the
+                # wrapper declares \usepackage[utf8]{inputenc}, so write
+                # utf-8 bytes
+                tex = tex.encode('utf-8')
+            tfile.write(tex)
         if not exists('sk.tex'):
             raise cm_exc("LaTeX", "Can't create tempory file %s" %  os.path.join(tdir,'sk.tex'))
 
