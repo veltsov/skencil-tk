@@ -231,6 +231,12 @@ class SketchMainWindow(Publisher):
         compressed = self.document.meta.compressed
         app = self.application
         if use_dialog or not filename or not native_format:
+            if not use_dialog:
+                # The document has no filename or native format yet
+                # (an untitled document), so an ordinary Save (or the
+                # save-changes prompt shown on Exit) has to ask for a
+                # file name: act like Save As, not like Export.
+                use_dialog = 1
             dir = self.document.meta.directory
             if not dir:
                 dir = os.getcwd()
