@@ -75,7 +75,7 @@ font_path = ['/usr/X11R6/lib/X11/fonts/Type1', '/usr/share/fonts/X11/Type1',
 
 
 # Subdirectory for plugins
-plugin_dir = 'Plugins/'
+plugin_dir = 'Sketch/Plugins/'
 
 # Directories where Sketch searches for plugins. The expanded plugin_dir
 # is appended to this

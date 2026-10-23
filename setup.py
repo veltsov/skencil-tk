@@ -315,13 +315,13 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
                 'Sketch.Modules',
                 'Sketch.Scripting',
                 'Sketch.UI',
-                'Plugins',
-                'Plugins.Filters',
-                'Plugins.Filters.Lib',
-                'Plugins.Objects',
-                'Plugins.Objects.Lib',
-                'Plugins.Objects.Lib.multilinetext',
-                'Plugins.Objects.Lib.autoshapes',
+                'Sketch.Plugins',
+                'Sketch.Plugins.Filters',
+                'Sketch.Plugins.Filters.Lib',
+                'Sketch.Plugins.Objects',
+                'Sketch.Plugins.Objects.Lib',
+                'Sketch.Plugins.Objects.Lib.multilinetext',
+                'Sketch.Plugins.Objects.Lib.autoshapes',
                 'Sketch.Scripts',
                 'Sketch.Scripts.pathutils',
                 'Resources'
@@ -330,7 +330,6 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
             package_dir={
                 'Sketch': 'src/Sketch',
                 'Sketch.Modules': 'src/Sketch/Modules',
-                'Plugins': 'src/Plugins',
                 'Resources': 'src/Resources',
             },
             
@@ -340,7 +339,7 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
                                         'Misc/tkdefaults',
                                         'Pixmaps/*.*',
                                         'Pixmaps/New12/*.*'] + messages_dirs,
-                          'Plugins.Objects.Lib.autoshapes': ['icons/*.*'],
+                          'Sketch.Plugins.Objects.Lib.autoshapes': ['icons/*.*'],
                           
             },
            

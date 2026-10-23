@@ -18,7 +18,9 @@
 from __future__ import print_function
 import sys, os
 
-import re, imp
+import re
+import importlib
+import types
 
 from Sketch.Base.skexceptions import SketchError
 from Sketch.Base.warn import warn_tb, warn, USER, INTERNAL, pdebug
@@ -37,13 +39,23 @@ _plugin_package_name = "Sketch.Plugins"
 
 def create_packages(package):
     """
-    Return the package's module and create it and it's parents if necessary
+    Return the package's module and create it and it's parents if
+    necessary.  For the built-in plugin categories real packages exist
+    (Sketch.Plugins.Filters etc., see devdocs/import-restructure.md);
+    fake namespace modules are only created for user-defined nested
+    categories.
     """
+    try:
+        # a real package (or an already created fake) wins
+        return importlib.import_module(package)
+    except ImportError:
+        pass
     names = package.split('.')
     for i in range(1, len(names) + 1):
         name = '.'.join(names[:i])
         if name not in sys.modules:
-            module = imp.new_module(name)
+            # py2: ModuleType requires a byte string
+            module = types.ModuleType(str(name))
             module.__path__ = []
             sys.modules[name] = module
     return sys.modules[name]
@@ -71,25 +83,17 @@ class ConfigInfo:
     def load_module(self):
         if self.module is not None:
             return self.module
+        # The module is imported through its package (a real package for
+        # the built-in categories; the scanned directories are registered
+        # on the package's __path__ by _search_dir).
+        create_packages(self.package)
+        module_name = self.package + '.' + self.module_name
         try:
-            file, filename, desc = imp.find_module(self.module_name,
-                                                   [self.dir])
+            self.module = importlib.import_module(module_name)
         except:
-            warn_tb(INTERNAL, 'Cannot find plugin module %s', self.module_name)
-            return None
-        try:
-            try:
-                create_packages(self.package)
-                module_name = self.package + '.' + self.module_name
-                self.module = imp.load_module(module_name, file, filename,
-                                              desc)
-            except:
-                warn_tb(USER, _("Cannot load plugin module %s"),
-                        self.module_name)
-                raise
-        finally:
-            if file is not None:
-                file.close()
+            warn_tb(USER, _("Cannot load plugin module %s"),
+                    self.module_name)
+            raise
         self.module._ = self.nls_function()
         return self.module
 
@@ -358,6 +362,12 @@ def extract_cfg(file):
 
 
 def _search_dir(dir, recurse, package = 'Sketch.Plugins'):
+    # make the scanned directory importable as part of its package
+    # (a no-op for the built-in categories, whose packages already
+    # contain their own directory on __path__)
+    pkg = create_packages(package)
+    if os.path.abspath(dir) not in [os.path.abspath(p) for p in pkg.__path__]:
+        pkg.__path__.append(dir)
     try:
         # unicode dir -> unicode file names (devdocs/string-handling.md)
         files = os.listdir(as_unicode(dir))
@@ -380,7 +390,7 @@ def _search_dir(dir, recurse, package = 'Sketch.Plugins'):
                 # an ordinary directory and we should recurse into it to
                 # find more modules, so do that.
                 _search_dir(filename, recurse - 1, package + '.' + file)
-        elif filename[-3:] == '.py':
+        elif filename[-3:] == '.py' and file != '__init__.py':
             try:
                 module_name = os.path.splitext(os.path.basename(filename))[0]
                 vars = {'_':_}	# hack
