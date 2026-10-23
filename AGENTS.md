@@ -23,6 +23,7 @@ from GTK to **Tk** and added many features (see `README.md`).
 | `devdocs/string-handling.md` | The string-kind taxonomy (origins → types → conversions) and the conventions that replace scattered type checks; feeds the py3 port |
 | `devdocs/glyph-text.md` | The glyph-index text representation of `SimpleText` (global glyph registry, gid arrays, conversions at all sinks); supersedes the byte-per-character K3 form |
 | `devdocs/text-input.md` | Findings and design for the planned text input rework: unicode keyboard input (Cyrillic etc.), keymap dispatch, afii/uniXXXX glyph-name candidates — **planned, not implemented** |
+| `devdocs/import-restructure.md` | The import machinery findings (implicit relative imports, fake plugin packages, `module.so` suffix trick) and the executed restructuring into a canonical real-package layout with absolute imports |
 
 ## Quick facts
 
