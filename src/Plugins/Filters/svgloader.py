@@ -32,7 +32,7 @@ import re
 import string
 import operator
 
-import streamfilter
+from Sketch.Modules import streamfilter
 
 from Sketch import Document, Layer, CreatePath, ContSmooth, \
      SolidPattern, EmptyPattern, LinearGradient, RadialGradient, \

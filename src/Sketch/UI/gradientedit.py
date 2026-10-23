@@ -16,7 +16,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 import PIL.Image
-import X, pax
+from Sketch import x11 as X
+from Sketch.Modules import pax
 
 from Sketch import _, Publisher, SketchError, _sketch
 from Sketch import Blend, CreateRGBColor, MultiGradient

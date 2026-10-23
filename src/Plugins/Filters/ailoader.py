@@ -105,7 +105,7 @@ import string
 
 from PIL import Image
 
-import streamfilter
+from Sketch.Modules import streamfilter
 
 from Sketch import Document, Layer, CreatePath, ContSmooth, \
      SolidPattern, EmptyPattern, LinearGradient, RadialGradient, \
@@ -120,7 +120,7 @@ from Sketch.Base.warn import INTERNAL, warn_tb
 from Sketch.Lib import encoding
 
 from Sketch.Base.load import GenericLoader, EmptyCompositeError
-from Sketch.pstokenize import PSTokenizer, DSC_COMMENT, OPERATOR, END, \
+from Sketch.Modules.pstokenize import PSTokenizer, DSC_COMMENT, OPERATOR, END, \
      MAX_DATA_TOKEN
 
 

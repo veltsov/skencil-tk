@@ -19,7 +19,7 @@
 from math import floor, ceil, hypot
 import operator
 
-import pax
+from Sketch.Modules import pax
 
 from Sketch import StandardColors, GraphicsDevice, Identity
 from Sketch.Base import gtkutils

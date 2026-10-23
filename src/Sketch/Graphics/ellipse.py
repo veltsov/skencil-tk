@@ -36,7 +36,7 @@ from bezier import PolyBezier
 from blend import Blend
 from properties import DefaultGraphicsProperties
 
-from Sketch import _sketch
+from Sketch.Modules import _sketch
 
 
 

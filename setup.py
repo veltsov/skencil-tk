@@ -194,13 +194,13 @@ if __name__ == "__main__":
     # gettext itself).
     
     type1mod_src = src_path + 'extensions/Modules/'                
-    type1mod_module = Extension('Sketch.Modules._type1module',
+    type1mod_module = Extension('Sketch.Modules._type1',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '6')],
             sources=[type1mod_src + '_type1module.c'])
     
     skread_src = src_path + 'extensions/Modules/'                
-    skread_module = Extension('Sketch.Modules.skreadmodule',
+    skread_module = Extension('Sketch.Modules.skread',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '9')],
             sources=[skread_src + 'skreadmodule.c'])
@@ -251,7 +251,7 @@ if __name__ == "__main__":
     
     
     pax_src = src_path + 'extensions/Pax/'
-    pax_module = Extension('Sketch.Modules.paxmodule',
+    pax_module = Extension('Sketch.Modules.pax',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '6')],
             sources=[pax_src + 'borderobject.c', pax_src + 'clipmask.c', pax_src + 'cmapobject.c',
@@ -263,7 +263,7 @@ if __name__ == "__main__":
             libraries=['X11', 'Xext', 'tk' + tcl_ver, 'tcl' + tcl_ver])
     
     skmod_src = src_path + 'extensions/Modules/'    
-    skmod_module = Extension('Sketch.Modules._sketchmodule',
+    skmod_module = Extension('Sketch.Modules._sketch',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '6')],
             include_dirs=[src_path + 'extensions/Pax/'] + pil_include_dir,
@@ -376,8 +376,8 @@ if COPY:
     import platform
     version = sys.version[:3]
     
-    shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/paxmodule.so', 'src/Sketch/Modules/')
-    print '\n paxmodule.so has been copied to src/ directory'
+    shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/pax.so', 'src/Sketch/Modules/')
+    print '\n pax.so has been copied to src/ directory'
     
     shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/pstokenize.so', 'src/Sketch/Modules/')
     print '\n pstokenize.so has been copied to src/ directory'

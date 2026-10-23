@@ -21,7 +21,7 @@
 
 import operator
 
-from X import LineDoubleDash
+from Sketch.x11 import LineDoubleDash
 
 from Sketch.Base.const import JoinMiter, JoinBevel, JoinRound,\
      CapButt, CapProjecting, CapRound

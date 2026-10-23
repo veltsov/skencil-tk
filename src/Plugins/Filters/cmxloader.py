@@ -76,7 +76,7 @@ from math import pi
 from struct import unpack, calcsize
 import struct
 
-from streamfilter import BinaryInput
+from Sketch.Modules.streamfilter import BinaryInput
 
 from Sketch import CreatePath, ContSmooth, ContAngle, ContSymmetrical, \
      SolidPattern, EmptyPattern, LinearGradient, RadialGradient, \

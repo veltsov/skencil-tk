@@ -31,8 +31,8 @@ from math import pi
 
 import PIL.Image
 
-import X
-from pax import PaxRegionType, IntersectMasks, CreateRegion
+from Sketch import x11 as X
+from Sketch.Modules.pax import PaxRegionType, IntersectMasks, CreateRegion
 
 from Sketch.Base.warn import pdebug, warn, INTERNAL, USER
 from Sketch import _, SketchError
@@ -41,7 +41,7 @@ from Sketch.Lib.util import Empty
 
 from Sketch.Base.const import ArcPieSlice, ArcChord
 
-from Sketch import _sketch
+from Sketch.Modules import _sketch
 
 
 from Sketch import Point, Polar, Rect, UnitRect, Identity, SingularMatrix, \

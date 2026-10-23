@@ -351,7 +351,7 @@ class SKLoader(GenericLoader):
     functions.append('bm')
     def bm(self, id, filename = None):
         if filename is None:
-            from streamfilter import Base64Decode, SubFileDecode
+            from Sketch.Modules.streamfilter import Base64Decode, SubFileDecode
             decoder = Base64Decode(SubFileDecode(self.file, '-'))
             data = image.load_image(decoder)
         else:
@@ -466,7 +466,7 @@ class SKLoader(GenericLoader):
         if isinstance(file, (str, unicode)):
             file = open(file, 'r')
         dict = self.get_func_dict()
-        from Sketch import skread
+        from Sketch.Modules import skread
         parse = skread.parse_sk_line2
         readline = file.readline
         bezier_load = self.bezier_load

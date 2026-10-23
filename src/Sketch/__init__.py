@@ -23,14 +23,8 @@ _parentdir = os.path.join(_pkgdir, '..')
 
 SketchVersion = open(os.path.join(_pkgdir, 'VERSION')).read().strip()
 
-for _dir in ('Modules',):
-    __path__.insert(0, os.path.join(_pkgdir, _dir))
-
-
-for _dir in ('Modules',):
-    dir = os.path.abspath(os.path.join(_pkgdir, _dir))
-    if os.path.isdir(dir):
-        sys.path.insert(1, dir)
+# The C extension modules live in the real subpackage Sketch.Modules;
+# no path manipulation is needed (import-restructure.md, batch B2).
 
 
 message_dir = os.path.join(_parentdir, 'Resources/Messages')
@@ -90,25 +84,25 @@ _ = gettext
 from Sketch.Base import gtkutils
 ui_colors = gtkutils.ColorScheme()
 
-import _sketch
-from _sketch import Point, Polar, PointType
+from Sketch.Modules import _sketch
+from Sketch.Modules._sketch import Point, Polar, PointType
 NullPoint = Point(0, 0)
 
-from _sketch import Rect, PointsToRect, UnionRects, IntersectRects, \
+from Sketch.Modules._sketch import Rect, PointsToRect, UnionRects, IntersectRects, \
      EmptyRect, InfinityRect, RectType
 UnitRect = Rect(0, 0, 1, 1)
 
 
-from _sketch import Trafo, Scale, Translation, Rotation, SingularMatrix, \
+from Sketch.Modules._sketch import Trafo, Scale, Translation, Rotation, SingularMatrix, \
      TrafoType
 Identity = Trafo(1, 0, 0, 1, 0, 0)
 IdentityMatrix = Identity.matrix()
 
 
-from _sketch import CreatePath, RectanglePath, RoundedRectanglePath, \
+from Sketch.Modules._sketch import CreatePath, RectanglePath, RoundedRectanglePath, \
      approx_arc, CreateFontMetric, SKCache, TransformRectangle
 
-from _sketch import ContAngle, ContSmooth, ContSymmetrical, \
+from Sketch.Modules._sketch import ContAngle, ContSmooth, ContSymmetrical, \
      SelNone, SelNodes, SelSegmentFirst, SelSegmentLast, Bezier, Line
 
 from Sketch.Base import config
@@ -211,7 +205,7 @@ def init_ui():
         __import__(name)
 
 def init_modules_from_widget(root):
-    import pax
+    from Sketch.Modules import pax
     import UI.skpixmaps, Graphics.graphics
     import UI.tkext, Graphics.color
     UI.tkext.InitFromTkapp(root.tk)

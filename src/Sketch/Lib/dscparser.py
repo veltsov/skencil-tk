@@ -27,7 +27,7 @@
 from __future__ import print_function
 import re, string
 
-import streamfilter
+from Sketch.Modules import streamfilter
 
 try:
     from warn import warn, INTERNAL

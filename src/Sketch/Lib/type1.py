@@ -24,11 +24,11 @@ import sys
 from cStringIO import StringIO
 
 
-import streamfilter
+from Sketch.Modules import streamfilter
 
 from Sketch import Point
-from Sketch._type1 import decode, hexdecode
-from Sketch.pstokenize import PSTokenizer, OPERATOR, NAME, INT, END
+from Sketch.Modules._type1 import decode, hexdecode
+from Sketch.Modules.pstokenize import PSTokenizer, OPERATOR, NAME, INT, END
 
 def read_type1_file(filename):
     data = StringIO()

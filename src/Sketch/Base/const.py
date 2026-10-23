@@ -150,7 +150,7 @@ ArcPieSlice = 2
 #	X specific stuff
 #
 
-import X
+from Sketch import x11 as X
 
 ShiftMask = X.ShiftMask
 LockMask = X.LockMask

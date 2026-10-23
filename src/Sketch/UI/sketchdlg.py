@@ -196,7 +196,7 @@ class SketchPanel(Publisher):
         self.save_prefs()
         self.top.destroy()
         self.master = None
-        import pax
+        from Sketch.Modules import pax
         pax.unregister_object(self)
 
     def create_std_buttons(self, master):

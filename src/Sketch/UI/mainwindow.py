@@ -1104,7 +1104,7 @@ class SketchMainWindow(Publisher):
     def DocumentInfo(self):
         text = self.document.DocumentInfo()
 
-        from Sketch import _sketch
+        from Sketch.Modules import _sketch
         meminfo = 'Memory:\n'\
                 '# Bezier Paths:\t%d\n'\
                 '# RGBColors:\t%d\n' \

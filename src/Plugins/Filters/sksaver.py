@@ -516,7 +516,7 @@ class SKSaver:
         if id(image) not in self.saved_ids:
             imagefile = image.Filename()
             if not imagefile:
-                from streamfilter import Base64Encode
+                from Sketch.Modules.streamfilter import Base64Encode
                 write('bm(%d)\n' % id(image))
                 file = Base64Encode(self.file)
                 image.image.save(file, 'PNG')

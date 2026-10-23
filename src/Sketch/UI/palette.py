@@ -17,7 +17,7 @@
 
 import operator, os
 
-import X
+from Sketch import x11 as X
 
 from Sketch.Base.const import CHANGED, COLOR1, COLOR2, CHANGED, VIEW, \
      DROP_COLOR, CurDragColor

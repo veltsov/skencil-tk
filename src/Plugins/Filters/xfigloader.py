@@ -54,7 +54,7 @@ from Sketch.Base import const
 from Sketch.Base.warn import warn, INTERNAL, warn_tb
 
 from Sketch.Base.load import SimplifiedLoader, EmptyCompositeError
-from Sketch import skread
+from Sketch.Modules import skread
 from Sketch.Base import load
 tokenize = skread.tokenize_line
 

@@ -29,7 +29,7 @@ def read_resource_file(filename, magic, errmsg, functions):
         if line[:len(magic)] != magic:
             raise SketchError(errmsg % filename)
 
-        from skread import parse_sk_line
+        from Sketch.Modules.skread import parse_sk_line
 
         linenr = 1
         while 1:

@@ -23,7 +23,7 @@ import os, re, string
 from array import array
 
 
-import streamfilter
+from Sketch.Modules import streamfilter
 
 from Sketch import _, Point, TrafoType, Scale, \
      SketchError, SketchInternalError, Subscribe, CreatePath, \

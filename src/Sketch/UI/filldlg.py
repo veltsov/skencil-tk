@@ -22,7 +22,7 @@
 import os
 from math import atan2, sin, cos, pi
 
-import X
+from Sketch import x11 as X
 Xconst = X
 from Tkinter import Frame, Label, IntVar, DoubleVar, Radiobutton, StringVar
 from Tkinter import RIGHT, BOTTOM, X, Y, LEFT, TOP, W, E, N
