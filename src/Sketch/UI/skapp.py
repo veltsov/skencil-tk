@@ -87,6 +87,7 @@ psfiletypes = (('PostScript', '.ps'),)
 imagefiletypes = ((_("All Files"), '*'),
                   (_("Encapsulated PostScript"), ('.eps', '.ps')),
                   (_("JPEG"),	('.jpg', '.jpeg')),
+                  (_("PNG"),	'.png'),
                   (_("GIF"),	'.gif'),
                   (_("Portable Bitmap"),	'.pbm'),
                   (_("Portable Graymap"),	'.pgm'),
