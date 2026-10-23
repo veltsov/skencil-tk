@@ -836,7 +836,7 @@ initpstokenize(void)
     ADD_INT(MAX_DATA_TOKEN);
     
     /* import some objects from filter */
-    filter = PyImport_ImportModule("streamfilter");
+    filter = PyImport_ImportModule("Sketch.Modules.streamfilter");
     if (filter)
     {
 	Filter_Type = PyObject_GetAttrString(filter, "FilterType");

@@ -81,8 +81,8 @@ def dgettext(domain, text):
 
 _ = gettext
 
-from Sketch.Base import gtkutils
-ui_colors = gtkutils.ColorScheme()
+from Sketch.UI import tkutils
+ui_colors = tkutils.ColorScheme()
 
 from Sketch.Modules import _sketch
 from Sketch.Modules._sketch import Point, Polar, PointType

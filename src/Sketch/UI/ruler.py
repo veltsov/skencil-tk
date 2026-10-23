@@ -22,7 +22,7 @@ import operator
 from Sketch.Modules import pax
 
 from Sketch import StandardColors, GraphicsDevice, Identity
-from Sketch.Base import gtkutils
+from Sketch.UI import tkutils
 from Sketch import GuideLine, Point, ui_colors
 from Sketch.Base import config, const
 from Sketch.Base.warn import warn, USER
@@ -102,7 +102,7 @@ class Ruler(PyWidget):
         start = ui_colors.menubackground
         stop = ui_colors.light_border
         for pos in range(20):
-            color = gtkutils.middle_color(start, stop, pos * 3.5 /100)
+            color = tkutils.middle_color(start, stop, pos * 3.5 /100)
             self.gradient.append(XRGBColor(color))
             
 

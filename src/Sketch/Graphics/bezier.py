@@ -32,7 +32,7 @@ from Sketch.UI.command import AddCmd
 import Sketch.UI.skpixmaps
 pixmaps = Sketch.UI.skpixmaps.PixmapTk
 
-from Sketch._sketch import ContAngle, ContSmooth, ContSymmetrical, \
+from Sketch.Modules._sketch import ContAngle, ContSmooth, ContSymmetrical, \
      SelNone, SelNodes, SelSegmentFirst, SelSegmentLast, Bezier, Line
 
 import handle

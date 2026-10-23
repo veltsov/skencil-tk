@@ -19,7 +19,8 @@ import sys
 
 from Sketch.Base.warn import pdebug
 from Sketch import _, Publisher
-from Sketch.Base import config, plugins, gtkutils
+from Sketch.Base import config, plugins
+from Sketch.UI import tkutils
 import Sketch
 from Sketch.Graphics import document
 
@@ -133,8 +134,8 @@ class TkApplication:
         # module did (Tkinter.py sets wantobjects to 1 by default)
         self.root.tk.wantobjects(0)
 
-        gtkutils.set_ui_font(self.root, config.preferences.ui_font)
-        gtkutils.set_ui_colors(self.root, config.preferences.ui_color_scheme)
+        tkutils.set_ui_font(self.root, config.preferences.ui_font)
+        tkutils.set_ui_colors(self.root, config.preferences.ui_color_scheme)
         
         # Reset locale again to make sure we get properly translated
         # messages if desired by the user. For some reason it may

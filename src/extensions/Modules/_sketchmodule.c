@@ -183,7 +183,7 @@ init_sketch(void)
     _SKCurve_InitCurveObject();
 
     /* import some objects from pax */
-    pax = PyImport_ImportModule("pax");
+    pax = PyImport_ImportModule("Sketch.Modules.pax");
     if (pax)
     {
 	Pax_GCType = PyObject_GetAttrString(pax, "PaxGCType");

@@ -17,7 +17,7 @@
 
 from Sketch import CreatePath, Rotation, Translation, Scale
 
-from Sketch._sketch import ContAngle, ContSmooth, ContSymmetrical, Bezier, Line
+from Sketch.Modules._sketch import ContAngle, ContSmooth, ContSymmetrical, Bezier, Line
 
 
 def arrow_vectors(path, arrow1, arrow2):

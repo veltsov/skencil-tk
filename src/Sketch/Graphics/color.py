@@ -21,7 +21,7 @@
 
 
 from Sketch.Base.warn import warn, INTERNAL, USER
-from Sketch._sketch import RGBColor, XVisual
+from Sketch.Modules._sketch import RGBColor, XVisual
 from Sketch import _
 from Sketch.Base import config
 
