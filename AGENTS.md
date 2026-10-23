@@ -39,7 +39,10 @@ from GTK to **Tk** and added many features (see `README.md`).
 - **Build:** `python2 setup.py build` (distutils). Result goes to
   `build/lib.linux-x86_64-2.7/` and the launcher to
   `build/scripts-2.7/skencil`. The app is run *directly from the build
-  directory*, no install needed (see `README.md`).
+  directory*, no install needed (see `README.md`). Because of this,
+  **every source change (including plain `.py` files) must be followed
+  by a rebuild** — `src/` is not on the runtime `sys.path`; the app only
+  reads from `build/lib.linux-x86_64-2.7/`.
 - **Version:** `1.1` (`src/Sketch/VERSION`, also `setup.py` and
   `PKG-INFO`; shown by `--version` and in the PostScript Creator
   comment).
@@ -89,8 +92,11 @@ from GTK to **Tk** and added many features (see `README.md`).
   Python 3 port is done (see `devdocs/python3-porting.md` for the port plan).
 - Never reformat or whitespace-fix old files wholesale; edits should be
   minimal and localized.
-- After changing C extensions or `setup.py`, rebuild with
-  `python2 setup.py build` and test from the build tree.
+- After **any** source change — C extensions, `setup.py`, *and plain
+  Python files* — rebuild with `python2 setup.py build` and test from
+  the build tree. The app imports from `build/lib.linux-x86_64-2.7/`,
+  not from `src/`, so editing a `.py` file in `src/` has no effect on
+  the running application until the build copies it over.
 - Localization: user-visible strings should go through `_()` from `Sketch`
   (standard `gettext` module; per-domain caching shim in
   `Sketch/__init__.py` — the former `intl` C extension was dropped).

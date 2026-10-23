@@ -24,6 +24,13 @@ python2 setup.py build
 - Builds the 6 C extension modules (into
   `build/lib.linux-x86_64-2.7/Sketch/Modules/`) and copies the Python
   tree into `build/lib.linux-x86_64-2.7/`, plus `compileall` on it.
+- **The copy step applies to all Python sources, not only to
+  C-extension-dependent files.** The runtime imports exclusively from
+  `build/lib.linux-x86_64-2.7/` (`src/` is not on `sys.path`), so any
+  edit to a `.py` file under `src/` (and `Plugins/`, `Script/`) is
+  invisible to the running application until you re-run
+  `python2 setup.py build`. Incremental builds are cheap: distutils
+  only re-copies changed files (by timestamp) and re-runs `compileall`.
 - Also regenerates locale `.mo` files from `po/` into
   `src/Resources/Messages` (done automatically for every command except
   `sdist`).
