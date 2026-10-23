@@ -427,6 +427,14 @@ tkwin_ShmCreateImage(TkWinObject *self, PyObject *args)
     else
 	shminfo->readOnly = False;
 
+    /*
+     * Mark the segment for removal right away.  The kernel then
+     * destroys it as soon as the last attachment disappears, so it
+     * cannot be leaked if this process exits without running
+     * image_dealloc() (e.g. a crash or os._exit()).
+     */
+    shmctl(shminfo->shmid, IPC_RMID, 0);
+
     if (!XShmAttach(Tk_Display(self->tkwin), shminfo))
     {
 	PyErr_SetString(PyExc_RuntimeError, "XShmAttach failed");
