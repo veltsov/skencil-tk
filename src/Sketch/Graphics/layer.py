@@ -19,9 +19,10 @@
 #       The layer classes. 
 #
 
-from Sketch.const import LAYER_STATE, LAYER_COLOR
+from Sketch.Base.const import LAYER_STATE, LAYER_COLOR
 
-from Sketch import _, NullUndo, EmptyRect, InfinityRect, Point, config, _sketch
+from Sketch import _, NullUndo, EmptyRect, InfinityRect, Point, _sketch
+from Sketch.Base import config
 
 import color
 import selinfo

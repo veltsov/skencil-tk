@@ -57,8 +57,8 @@
 
 from __future__ import print_function
 
-from Sketch.warn import warn, USER
-from Sketch.const import SELECTION
+from Sketch.Base.warn import warn, USER
+from Sketch.Base.const import SELECTION
 from Sketch import _
 
 from Tkinter import Label, IntVar, DoubleVar, StringVar, RIGHT, E, W, Text, \

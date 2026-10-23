@@ -38,9 +38,9 @@
 import os, string
 import time
 
-import config, plugins
-from warn import warn, INTERNAL, pdebug
-from const import ArcPieSlice
+from Sketch.Base import config, plugins
+from Sketch.Base.warn import warn, INTERNAL, pdebug
+from Sketch.Base.const import ArcPieSlice
 
 from Sketch.Graphics import document, layer, group, text
 from Sketch import _, PolyBezier, Rectangle, Ellipse, Trafo, Translation, \

@@ -19,8 +19,8 @@
 import types
 
 from Sketch import Publisher
-from Sketch.const import CHANGED, SELECTION
-from Sketch.warn import warn, warn_tb, INTERNAL
+from Sketch.Base.const import CHANGED, SELECTION
+from Sketch.Base.warn import warn, warn_tb, INTERNAL
 
 #
 #	Command Class

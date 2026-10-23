@@ -23,7 +23,7 @@ import operator
 
 from X import LineDoubleDash
 
-from Sketch.const import JoinMiter, JoinBevel, JoinRound,\
+from Sketch.Base.const import JoinMiter, JoinBevel, JoinRound,\
      CapButt, CapProjecting, CapRound
 from Sketch.Lib import util
 from Sketch import _, Trafo, SimpleGC, SolidPattern, EmptyPattern, \

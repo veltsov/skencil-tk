@@ -20,12 +20,13 @@ import sys, os
 
 import re, imp
 
-from skexceptions import SketchError
-from warn import warn_tb, warn, USER, INTERNAL, pdebug
-import config
+from Sketch.Base.skexceptions import SketchError
+from Sketch.Base.warn import warn_tb, warn, USER, INTERNAL, pdebug
+from Sketch.Base import config
 
 from Sketch import _, dgettext, gettext, bindtextdomain, message_dir, \
-     Subscribe, config, const
+     Subscribe
+from Sketch.Base import config, const
 from Sketch.Lib.util import as_unicode
 
 

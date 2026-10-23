@@ -25,7 +25,7 @@ import sys
 
 import Sketch
 
-app = Sketch.main.application
+app = Sketch.Base.main.application
 win = app.main_window
 doc = win.document
 assert doc is not None, 'no document open'
@@ -84,7 +84,7 @@ def body():
             status = 'empty'
         sys.stdout.write('LTXGROUP:%s\n' % status)
         sys.stdout.flush()
-        from Sketch import plugins
+        from Sketch.Base import plugins
         saver = plugins.find_export_plugin(
             plugins.guess_export_plugin('.sk'))
         saver(doc, OUT)

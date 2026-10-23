@@ -18,10 +18,11 @@
 
 import pax
 
-from Sketch import _, Publisher, StandardColors, config
+from Sketch import _, Publisher, StandardColors
+from Sketch.Base import config
 from Sketch.Lib.util import as_unicode
-from Sketch.const import CHANGED, DROP_COLOR, COMMAND, SELECTION
-from Sketch.warn import warn_tb, INTERNAL
+from Sketch.Base.const import CHANGED, DROP_COLOR, COMMAND, SELECTION
+from Sketch.Base.warn import warn_tb, INTERNAL
 
 
 from Tkinter import Widget, Menu, Menubutton, Frame

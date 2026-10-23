@@ -18,9 +18,9 @@
 
 
 from Sketch import _
-from Sketch.const import SCRIPT_UNDO, SCRIPT_GET, SCRIPT_OBJECT, \
+from Sketch.Base.const import SCRIPT_UNDO, SCRIPT_GET, SCRIPT_OBJECT, \
      SCRIPT_OBJECTLIST, SelectSet
-from Sketch.warn import warn, USER
+from Sketch.Base.warn import warn, USER
 
 class UndoMethodWrapper:
 

@@ -19,10 +19,11 @@ import operator, os
 
 import X
 
-from Sketch.const import CHANGED, COLOR1, COLOR2, CHANGED, VIEW, \
+from Sketch.Base.const import CHANGED, COLOR1, COLOR2, CHANGED, VIEW, \
      DROP_COLOR, CurDragColor
-from Sketch.warn import warn, INTERNAL, USER, pdebug, warn_tb
-from Sketch import Publisher, config, SketchError, _
+from Sketch.Base.warn import warn, INTERNAL, USER, pdebug, warn_tb
+from Sketch import Publisher, SketchError, _
+from Sketch.Base import config
 from Sketch import CreateRGBColor, StandardColors, GraphicsDevice, Identity
 
 from tkext import PyWidget

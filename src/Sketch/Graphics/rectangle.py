@@ -26,10 +26,10 @@
 
 from math import hypot
 
-from Sketch.const import corners, AlternateMask
+from Sketch.Base.const import corners, AlternateMask
 from Sketch import _, SingularMatrix, PointsToRect, Trafo, Polar,\
      RoundedRectanglePath, RectanglePath, NullUndo
-from Sketch.warn import warn, INTERNAL
+from Sketch.Base.warn import warn, INTERNAL
 
 import Sketch.UI.skpixmaps
 pixmaps = Sketch.UI.skpixmaps.PixmapTk

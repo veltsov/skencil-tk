@@ -25,9 +25,10 @@ from tkext import UpdatedButton, MyEntry
 from view import SketchView
 import skapp
 
-from Sketch import _, config
+from Sketch import _
+from Sketch.Base import config
 from Sketch.Lib import util
-from Sketch.warn import warn_tb, INTERNAL
+from Sketch.Base.warn import warn_tb, INTERNAL
 import Sketch
 
 

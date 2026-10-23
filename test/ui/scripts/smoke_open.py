@@ -1,12 +1,12 @@
 # --run-script payload: sanity operations on the opened document, then
 # a clean quit.  Executed by mainwindow.py before the mainloop starts;
-# Sketch.main.application is the running SketchApplication.
+# Sketch.Base.main.application is the running SketchApplication.
 
 import os
 
 import Sketch
 
-app = Sketch.main.application
+app = Sketch.Base.main.application
 win = app.main_window
 doc = win.document
 assert doc is not None, 'no document open'

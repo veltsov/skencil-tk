@@ -19,7 +19,8 @@
 import sys, string
 import traceback
 
-import config
+import Sketch.Base.config
+config = sys.modules["Sketch.Base.config"]
 from Sketch import _
 
 INTERNAL = 'INTERNAL'
@@ -134,4 +135,4 @@ def pdebug(level, message, *args, **kw):
 
 
 # import main last, since main imports warn...
-import main
+from Sketch.Base import main

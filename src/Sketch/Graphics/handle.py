@@ -62,7 +62,8 @@
 # a class hierarchy might be used for the various types of handles.
 #
 
-from Sketch import const, Point
+from Sketch import Point
+from Sketch.Base import const
 
 class Handle:
 

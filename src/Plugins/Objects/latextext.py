@@ -49,9 +49,11 @@ from __future__ import print_function
 (''"Text")
 (''"Size")
 
-from Sketch import Scale, TrafoPlugin, PolyBezier, CreatePath, main
-from Sketch import load, Group, SketchError
-from Sketch import config
+from Sketch import Scale, TrafoPlugin, PolyBezier, CreatePath
+from Sketch.Base import main
+from Sketch import Group, SketchError
+from Sketch.Base import load
+from Sketch.Base import config
 from Sketch.Lib.util import as_unicode
 from tempfile import mkdtemp
 

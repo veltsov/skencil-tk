@@ -16,8 +16,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 import os
-import connector
-from const import CHANGED
+from Sketch.Base import connector
+from Sketch.Base.const import CHANGED
 
 #
 #	some fundamental defaults for Sketch
@@ -497,6 +497,6 @@ normal_font = '-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1'
 #
 #
 #
-from configutil import init_directories, save_user_preferences, \
+from Sketch.Base.configutil import init_directories, save_user_preferences, \
      add_program_default, get_preference, add_mru_file, remove_mru_file, \
      add_options, load_user_preferences

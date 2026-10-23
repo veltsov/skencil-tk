@@ -60,12 +60,14 @@ except ImportError:
 from math import floor
 
 from Sketch import Document, Layer, CreatePath, ContSmooth, \
-     SolidPattern, EmptyPattern, LinearGradient, RadialGradient,\
-     CreateRGBColor, CreateCMYKColor, MultiGradient, Trafo, Point, Polar, \
-     StandardColors, GetFont, PathText, SimpleText, const, UnionRects, \
-     Arrow, Translation, Trafo, GridLayer, Scale
+     SolidPattern, EmptyPattern, LinearGradient, RadialGradient, \
+     CreateRGBColor, CreateCMYKColor, MultiGradient, Trafo, \
+     Point, Polar, StandardColors, GetFont, \
+     PathText, SimpleText, UnionRects, Arrow, \
+     Translation, Trafo, GridLayer, Scale
+from Sketch.Base import const
 
-from Sketch.load import GenericLoader, EmptyCompositeError
+from Sketch.Base.load import GenericLoader, EmptyCompositeError
 
 from Sketch.Graphics import pagelayout
 

@@ -52,7 +52,7 @@ class Cylinder(AutoshapeBase):
             self.objects[1].SetPaths(top)
         else:
             obj_hull = Sketch.PolyBezier(tuple(hull))
-            obj_hull.SetProperties(line_join=Sketch.const.JoinRound)
+            obj_hull.SetProperties(line_join=Sketch.Base.const.JoinRound)
             obj_top = Sketch.PolyBezier(tuple(top))
             self.set_objects([obj_hull, obj_top])
             

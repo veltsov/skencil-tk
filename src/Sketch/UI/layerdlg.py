@@ -22,7 +22,7 @@
 from Tkinter import Button, Scrollbar, Frame, IntVar, Canvas, Label
 from Tkinter import RIGHT, BOTTOM, X, Y, BOTH, LEFT, W, NW, NORMAL, DISABLED
 
-from Sketch.const import LAYER, LAYER_ACTIVE, LAYER_ORDER, \
+from Sketch.Base.const import LAYER, LAYER_ACTIVE, LAYER_ORDER, \
      SelectSubtract, SelectAdd
 from Sketch import _
 

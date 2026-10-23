@@ -30,7 +30,8 @@ format_name = 'WMF'
 
 import struct
 
-from Sketch import Bezier, EmptyPattern, Point, Polar, Scale, Trafo, const
+from Sketch import Bezier, EmptyPattern, Point, Polar, Scale, Trafo
+from Sketch.Base import const
 
 
 

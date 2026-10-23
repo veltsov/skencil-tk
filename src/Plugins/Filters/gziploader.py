@@ -28,7 +28,8 @@
 
 import os
 
-from Sketch import SketchLoadError, load
+from Sketch import SketchLoadError
+from Sketch.Base import load
 from Sketch.Lib.util import popen_read, sh_quote
 
 class GZIPLoader:

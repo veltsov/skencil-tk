@@ -34,11 +34,12 @@ import PIL.Image
 import X
 from pax import PaxRegionType, IntersectMasks, CreateRegion
 
-from Sketch.warn import pdebug, warn, INTERNAL, USER
-from Sketch import _, SketchError, const, config
+from Sketch.Base.warn import pdebug, warn, INTERNAL, USER
+from Sketch import _, SketchError
+from Sketch.Base import const, config
 from Sketch.Lib.util import Empty
 
-from Sketch.const import ArcPieSlice, ArcChord
+from Sketch.Base.const import ArcPieSlice, ArcChord
 
 from Sketch import _sketch
 

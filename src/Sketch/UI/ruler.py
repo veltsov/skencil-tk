@@ -21,10 +21,12 @@ import operator
 
 import pax
 
-from Sketch import StandardColors, GraphicsDevice, Identity, gtkutils
-from Sketch import config, const, GuideLine, Point, ui_colors
-from Sketch.warn import warn, USER
-from Sketch.const import CHANGED
+from Sketch import StandardColors, GraphicsDevice, Identity
+from Sketch.Base import gtkutils
+from Sketch import GuideLine, Point, ui_colors
+from Sketch.Base import config, const
+from Sketch.Base.warn import warn, USER
+from Sketch.Base.const import CHANGED
 from Sketch.Graphics.color import XRGBColor
 
 from tkext import PyWidget

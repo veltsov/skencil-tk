@@ -25,6 +25,6 @@ import sys
 
 import Sketch
 
-Sketch.config.sketch_command = sys.argv[0]
+Sketch.Base.config.sketch_command = sys.argv[0]
 
-Sketch.main.main()
+Sketch.Base.main.main()

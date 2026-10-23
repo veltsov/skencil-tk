@@ -25,7 +25,8 @@ import PIL.Image
 
 from Sketch.Lib import dscparser, util
 IsEpsFileStart = dscparser.IsEpsFileStart
-from Sketch import _, Point, config
+from Sketch import _, Point
+from Sketch.Base import config
 
 from base import GraphicsObject
 from external import ExternalData, get_cached, ExternalGraphics

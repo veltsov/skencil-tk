@@ -28,16 +28,17 @@ format_name = 'SK-1'
 
 import os, sys
 
-from Sketch.warn import warn, INTERNAL, pdebug, warn_tb
+from Sketch.Base.warn import warn, INTERNAL, pdebug, warn_tb
 
-from Sketch import load, const, plugins, SketchLoadError, SketchError
+from Sketch import SketchLoadError, SketchError
+from Sketch.Base import load, const, plugins
 from Sketch import CreateRGBColor, SolidPattern, HatchingPattern,EmptyPattern,\
      LinearGradient, ConicalGradient, RadialGradient, ImageTilePattern, \
      Style, MultiGradient, Trafo, Translation, Point, \
      GridLayer, GuideLayer, GuideLine, Arrow, CreatePath, StandardColors, \
      GetFont
 
-from Sketch.load import GenericLoader
+from Sketch.Base.load import GenericLoader
 from Sketch.Lib.util import decode_sk_string
 
 from Sketch.Graphics import pagelayout, plugobj, blendgroup, text, image, eps,\

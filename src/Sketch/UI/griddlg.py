@@ -22,7 +22,7 @@
 from Tkinter import Frame, Label
 from Tkinter import BOTTOM, BOTH, TOP, X, E
 
-from Sketch.const import GRID
+from Sketch.Base.const import GRID
 from Sketch import _
 
 from sketchdlg import SketchPanel

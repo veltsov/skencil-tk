@@ -51,8 +51,8 @@ class Cube3D(AutoshapeBase):
             self.objects[0].SetPaths(newpaths)
         else:
             obj = Sketch.PolyBezier(tuple(newpaths))
-            obj.SetProperties(line_cap=Sketch.const.CapButt)
-            obj.SetProperties(line_join=Sketch.const.JoinRound)
+            obj.SetProperties(line_cap=Sketch.Base.const.CapButt)
+            obj.SetProperties(line_join=Sketch.Base.const.JoinRound)
             self.set_objects([obj])
             
     def DragHandle(self, pa, pb, selection):

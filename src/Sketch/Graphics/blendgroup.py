@@ -25,7 +25,7 @@ import operator
 
 from Sketch.UI import command
 
-from Sketch.const import SelectAdd
+from Sketch.Base.const import SelectAdd
 from Sketch import SketchInternalError, _
 from Sketch import NullUndo, CreateListUndo, CreateMultiUndo, Undo, UndoAfter
 

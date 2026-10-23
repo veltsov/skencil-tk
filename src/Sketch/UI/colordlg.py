@@ -21,7 +21,7 @@ from X import GXxor, ZPixmap
 
 from colorsys import hsv_to_rgb, rgb_to_hsv
 
-from Sketch.const import CHANGED, ConstraintMask
+from Sketch.Base.const import CHANGED, ConstraintMask
 
 from Sketch import _sketch
 from Sketch import CreateRGBColor, StandardColors, Trafo, SketchError, \

@@ -18,16 +18,17 @@
 import os, sys, string
 
 from Sketch.Lib import util
-from Sketch.warn import warn, warn_tb, INTERNAL, USER
-from Sketch import _, config, load, plugins, SketchVersion
+from Sketch.Base.warn import warn, warn_tb, INTERNAL, USER
+from Sketch import _, SketchVersion
+from Sketch.Base import config, load, plugins
 from Sketch import Publisher, Point, EmptyFillStyle, EmptyLineStyle, \
      EmptyPattern, Document, GuideLine, PostScriptDevice, SketchError
 import Sketch
 from Sketch.Graphics import image, eps, external
 import Sketch.Scripting
 
-from Sketch.const import DOCUMENT, CLIPBOARD, CLOSED, COLOR1, COLOR2
-from Sketch.const import STATE, VIEW, MODE, SELECTION, POSITION, UNDO, EDITED,\
+from Sketch.Base.const import DOCUMENT, CLIPBOARD, CLOSED, COLOR1, COLOR2
+from Sketch.Base.const import STATE, VIEW, MODE, SELECTION, POSITION, UNDO, EDITED,\
      CURRENTINFO
 
 from Tkinter import TclVersion, TkVersion, Frame, Scrollbar
@@ -929,7 +930,7 @@ class SketchMainWindow(Publisher):
                    self.commands.CreateClone,
                    #self.commands.export_bitmap,
                    ]
-        Sketch.Issue(None, Sketch.const.ADD_TO_SPECIAL_MENU, cmdlist)
+        Sketch.Issue(None, Sketch.Base.const.ADD_TO_SPECIAL_MENU, cmdlist)
         return map(MakeCommand, cmdlist)
 
     def make_script_menu(self):

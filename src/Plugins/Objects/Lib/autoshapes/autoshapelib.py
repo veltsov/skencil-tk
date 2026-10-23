@@ -1,7 +1,8 @@
 from __future__ import print_function
 import Sketch
-from Sketch import _, Trafo, Translation, TrafoPlugin, const, Rotation, \
-     RegisterCommands, NullUndo, PolyBezier
+from Sketch import _, Trafo, Translation, TrafoPlugin, \
+     Rotation, RegisterCommands, NullUndo, PolyBezier
+from Sketch.Base import const
 from Sketch.UI.command import AddCmd
 from Sketch.Graphics.base import Editor
 from Sketch.UI.sketchdlg import SKModal
@@ -22,7 +23,7 @@ def note(msg, *args):
             print(msg)
         
 def report_error(title, message):
-    app = Sketch.main.application
+    app = Sketch.Base.main.application
     app.MessageBox(title = title,
                    message = message,
                    icon = 'warning')
@@ -107,7 +108,7 @@ class AutoshapeBase(TrafoPlugin):
 
     def Help(self):
         # Is there a simpler path to toplevel ?
-        top = Sketch.main.application.main_window.canvas.toplevel
+        top = Sketch.Base.main.application.main_window.canvas.toplevel
         HelpWindow(top, self.help_text)
     AddCmd(commands, 'AutoshapeHelp', _('Help'), Help)
 

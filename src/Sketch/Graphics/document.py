@@ -34,14 +34,15 @@
 import math
 import sys
 
-from Sketch.warn import pdebug, warn, warn_tb, USER, INTERNAL
+from Sketch.Base.warn import pdebug, warn, warn_tb, USER, INTERNAL
 from Sketch import SketchInternalError
 
 
-from Sketch import config, _
-from Sketch.connector import Issue, RemovePublisher, Connect, Disconnect, \
+from Sketch import _
+from Sketch.Base import config
+from Sketch.Base.connector import Issue, RemovePublisher, Connect, Disconnect, \
      QueueingPublisher, Connector
-from Sketch.undodict import UndoDict
+from Sketch.Base.undodict import UndoDict
 
 from Sketch import Rect, Point, UnionRects, InfinityRect, Trafo, Rotation
 from Sketch import UndoRedo, Undo, CreateListUndo, NullUndo, UndoAfter
@@ -57,11 +58,11 @@ from pattern import SolidPattern
 import guide
 from selection import SizeSelection, EditSelection, TrafoSelection
 
-from Sketch.const import STYLE, SELECTION, EDITED, MODE, UNDO, REDRAW, LAYOUT
-from Sketch.const import LAYER, LAYER_ORDER, LAYER_ACTIVE, GUIDE_LINES, GRID
-from Sketch.const import SelectSet, SelectAdd,SelectSubtract,SelectSubobjects,\
+from Sketch.Base.const import STYLE, SELECTION, EDITED, MODE, UNDO, REDRAW, LAYOUT
+from Sketch.Base.const import LAYER, LAYER_ORDER, LAYER_ACTIVE, GUIDE_LINES, GRID
+from Sketch.Base.const import SelectSet, SelectAdd,SelectSubtract,SelectSubobjects,\
      SelectDrag, SelectGuide, Button1Mask
-from Sketch.const import SCRIPT_OBJECT, SCRIPT_OBJECTLIST, SCRIPT_GET
+from Sketch.Base.const import SCRIPT_OBJECT, SCRIPT_OBJECTLIST, SCRIPT_GET
 
 #
 from text import CanCreatePathText, CreatePathText

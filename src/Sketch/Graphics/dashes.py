@@ -19,9 +19,10 @@
 
 import os
 
-from Sketch import config, _
-from Sketch.warn import warn_tb, USER
-from Sketch.loadres import read_resource_file
+from Sketch import _
+from Sketch.Base import config
+from Sketch.Base.warn import warn_tb, USER
+from Sketch.Base.loadres import read_resource_file
 
 std_dashes = None
 

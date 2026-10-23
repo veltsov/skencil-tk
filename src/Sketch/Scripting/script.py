@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-from Sketch.warn import warn_tb, USER
+from Sketch.Base.warn import warn_tb, USER
 import Sketch
 
 from wrapper import DocumentWrapper
@@ -25,7 +25,7 @@ from wrapper import DocumentWrapper
 class Context:
 
     def __init__(self):
-        self.application = Sketch.main.application
+        self.application = Sketch.Base.main.application
         self.main_window = self.application.main_window
         self.document = self.main_window.document
 

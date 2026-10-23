@@ -21,8 +21,8 @@
 
 import os
 
-from Sketch import config
-from Sketch.warn import warn, USER
+from Sketch.Base import config
+from Sketch.Base.warn import warn, USER
 
 _builtin = ['NewDocument', 'Open', 'Save',
             'EditMode', 'SelectionMode',
@@ -125,7 +125,7 @@ make_file_names(_builtin)
 make_file_names(_small, _small_dir)
 
 def make_cursor_names(names):
-    from Sketch import const
+    from Sketch.Base import const
     default = 'X_cursor'	# a standard X cursor
     for name in names:
         fullname = os.path.join(config.pixmap_dir, name + '.xbm')

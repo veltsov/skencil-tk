@@ -1,5 +1,5 @@
 from __future__ import print_function
-from Sketch import const
+from Sketch.Base import const
 
 class Sticky:
     

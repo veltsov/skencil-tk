@@ -23,11 +23,11 @@
 import os
 from math import atan2, sin, cos
 
-from Sketch.warn import warn_tb, USER, pdebug
-from Sketch import config
+from Sketch.Base.warn import warn_tb, USER, pdebug
+from Sketch.Base import config
 from Sketch import _, Trafo, CreatePath, Point
 
-from Sketch.loadres import read_resource_file
+from Sketch.Base.loadres import read_resource_file
 
 class Arrow:
 

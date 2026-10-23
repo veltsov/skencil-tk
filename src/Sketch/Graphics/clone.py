@@ -23,7 +23,7 @@
 
 from Sketch import Translation, NullPoint, Trafo
 from Sketch import PointType, Undo, NullUndo
-from Sketch.const import CHANGED
+from Sketch.Base.const import CHANGED
 from base import Bounded, HierarchyNode
 
 

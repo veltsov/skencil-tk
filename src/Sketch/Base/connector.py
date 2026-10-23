@@ -22,8 +22,8 @@
 from __future__ import print_function
 import types
 
-from skexceptions import SketchInternalError
-from warn import warn_tb, INTERNAL
+from Sketch.Base.skexceptions import SketchInternalError
+from Sketch.Base.warn import warn_tb, INTERNAL
 
 
 class ConnectorError(SketchInternalError):

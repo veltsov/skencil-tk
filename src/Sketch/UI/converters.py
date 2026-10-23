@@ -21,7 +21,7 @@
 #
 
 import math
-from Sketch import config
+from Sketch.Base import config
 from Sketch.Lib.units import unit_dict, unit_names
 from Sketch.Lib.util import format
 

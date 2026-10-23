@@ -27,7 +27,7 @@ by its extension.
 
 import sys, os
 
-from Sketch import load, plugins
+from Sketch.Base import load, plugins
 import Sketch
 
 

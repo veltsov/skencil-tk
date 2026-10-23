@@ -32,7 +32,8 @@ import sys, os
 
 sys.path.insert(0,sys.path[0]+'/../lib.linux-x86_64-2.7')
 
-from Sketch import load, PostScriptDevice
+from Sketch import PostScriptDevice
+from Sketch.Base import load
 from Sketch.Lib import util
 
 def sk2ps(filename, psfilename, **psargs):

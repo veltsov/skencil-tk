@@ -24,7 +24,7 @@ def get_sketch_modules():
     # return the sketch specific modules that are already imported.
     # Sketch specific means that the module comes from a file below the
     # sketch directory or that it has a name starting with "Sketch.".
-    sketch_dir = Sketch.config.sketch_dir
+    sketch_dir = Sketch.Base.config.sketch_dir
     if sketch_dir[-1] != '/':
         sketch_dir = sketch_dir + '/'
     sketch_dir = os.path.normpath(os.path.abspath(sketch_dir))
@@ -44,7 +44,7 @@ def get_sketch_modules():
 
 user_functions = {}
 def add_sketch_objects(dict):
-    from Sketch import main, connector
+    from Sketch.Base import main, connector
     # some useful variables and functions
     dict['app'] = main.application
     dict['canv'] = main.application.main_window.canvas
@@ -65,12 +65,12 @@ def PythonPrompt(prompt = '>>>', prompt2 = '...'):
     try:
         import readline
         have_readline = 1
-        Sketch.Issue(None, Sketch.const.INIT_READLINE)
+        Sketch.Issue(None, Sketch.Base.const.INIT_READLINE)
     except ImportError:
         pass
     globals = {}
-    # put all of Sketch.main and Sketch into the globals
-    exec('from Sketch.main import *', globals)
+    # put all of Sketch.Base.main and Sketch into the globals
+    exec('from Sketch.Base.main import *', globals)
     exec('from Sketch import *', globals)
     # put all sketch specific modules into the globals
     for module in get_sketch_modules():

@@ -31,7 +31,8 @@
 from __future__ import print_function
 import sys, os
 
-from Sketch import load, PostScriptDevice
+from Sketch import PostScriptDevice
+from Sketch.Base import load
 from Sketch.Lib import util
 
 def sk2ps(filename, psfilename, **psargs):

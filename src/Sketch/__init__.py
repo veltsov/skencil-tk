@@ -23,7 +23,7 @@ _parentdir = os.path.join(_pkgdir, '..')
 
 SketchVersion = open(os.path.join(_pkgdir, 'VERSION')).read().strip()
 
-for _dir in ('Modules', 'Base'):
+for _dir in ('Modules',):
     __path__.insert(0, os.path.join(_pkgdir, _dir))
 
 
@@ -87,7 +87,7 @@ def dgettext(domain, text):
 
 _ = gettext
 
-import gtkutils
+from Sketch.Base import gtkutils
 ui_colors = gtkutils.ColorScheme()
 
 import _sketch
@@ -111,15 +111,15 @@ from _sketch import CreatePath, RectanglePath, RoundedRectanglePath, \
 from _sketch import ContAngle, ContSmooth, ContSymmetrical, \
      SelNone, SelNodes, SelSegmentFirst, SelSegmentLast, Bezier, Line
 
-import config
+from Sketch.Base import config
 config.init_directories(_parentdir)
 
-from skexceptions import *
+from Sketch.Base.skexceptions import *
 
-from undo import Undo, UndoList, CreateListUndo, CreateMultiUndo, UndoAfter, \
+from Sketch.Base.undo import Undo, UndoList, CreateListUndo, CreateMultiUndo, UndoAfter, \
      UndoRedo, NullUndo
 
-from connector import Connect, Disconnect, Issue, RemovePublisher, Subscribe, \
+from Sketch.Base.connector import Connect, Disconnect, Issue, RemovePublisher, Subscribe, \
      Publisher, QueueingPublisher
 
 #
@@ -193,7 +193,7 @@ from Graphics.text import SimpleText, SimpleTextCreator, PathText
 
 
 def init_lib():
-    import plugins
+    from Sketch.Base import plugins, const
     config.load_user_preferences()
     Issue(None, const.INITIALIZE)
 

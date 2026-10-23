@@ -23,7 +23,7 @@ from __future__ import print_function
 
 from Tkinter import Toplevel, Label
 
-from Sketch import config
+from Sketch.Base import config
 
 import tkext
 

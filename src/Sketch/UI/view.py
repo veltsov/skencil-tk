@@ -15,13 +15,13 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
-from Sketch.warn import pdebug
+from Sketch.Base.warn import pdebug
 
 from Sketch import Rect, EmptyRect, IntersectRects, Document, GraphicsDevice,\
      SketchInternalError, QueueingPublisher, StandardColors
 
-from Sketch.const import STATE, VIEW, DOCUMENT, LAYOUT, REDRAW
-from Sketch.const import LAYER, LAYER_STATE, LAYER_ORDER, LAYER_COLOR
+from Sketch.Base.const import STATE, VIEW, DOCUMENT, LAYOUT, REDRAW
+from Sketch.Base.const import LAYER, LAYER_STATE, LAYER_ORDER, LAYER_COLOR
 
 from tkext import PyWidget
 from viewport import Viewport

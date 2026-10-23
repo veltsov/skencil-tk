@@ -68,7 +68,7 @@ def select_same_fill_color(context):
                 if prop.HasFill() and prop.fill_pattern.is_Solid \
                    and color == prop.fill_pattern.Color():
                     select.append(obj)
-    doc.SelectObject(select, Sketch.const.SelectAdd)
+    doc.SelectObject(select, Sketch.Base.const.SelectAdd)
 
 
 # register script

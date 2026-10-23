@@ -8,7 +8,7 @@ import sys
 
 import Sketch
 
-app = Sketch.main.application
+app = Sketch.Base.main.application
 shot = os.environ.get('SKENCIL_SHOT_FILE')
 root = app.root
 

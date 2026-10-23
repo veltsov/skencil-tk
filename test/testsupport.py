@@ -75,7 +75,7 @@ def sketch():
 
 def load_document(path):
     sketch()
-    from Sketch import load
+    from Sketch.Base import load
     return load.load_drawing(path)
 
 

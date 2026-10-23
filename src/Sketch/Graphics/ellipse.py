@@ -17,7 +17,7 @@
 
 from math import sin, cos, atan2, hypot, pi, fmod, floor
 
-from Sketch.const import ArcArc, ArcChord, ArcPieSlice, ConstraintMask, \
+from Sketch.Base.const import ArcArc, ArcChord, ArcPieSlice, ConstraintMask, \
      AlternateMask
 
 from Sketch import _, Point, Polar, Trafo, SingularMatrix, Rect, UnionRects, \

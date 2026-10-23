@@ -17,12 +17,13 @@
 
 import sys
 
-from Sketch.warn import pdebug
-from Sketch import _, config, plugins, Publisher, gtkutils
+from Sketch.Base.warn import pdebug
+from Sketch import _, Publisher
+from Sketch.Base import config, plugins, gtkutils
 import Sketch
 from Sketch.Graphics import document
 
-from Sketch.const import CLIPBOARD
+from Sketch.Base.const import CLIPBOARD
 
 from Tkinter import Tk, TclError
 import tkext

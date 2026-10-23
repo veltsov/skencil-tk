@@ -108,16 +108,18 @@ from PIL import Image
 import streamfilter
 
 from Sketch import Document, Layer, CreatePath, ContSmooth, \
-     SolidPattern, EmptyPattern, LinearGradient, RadialGradient,\
-     CreateRGBColor, CreateCMYKColor, MultiGradient, Trafo, Point, Polar, \
-     StandardColors, GetFont, PathText, SimpleText, const, UnionRects
+     SolidPattern, EmptyPattern, LinearGradient, RadialGradient, \
+     CreateRGBColor, CreateCMYKColor, MultiGradient, Trafo, \
+     Point, Polar, StandardColors, GetFont, \
+     PathText, SimpleText, UnionRects
+from Sketch.Base import const
 
 from Sketch.Graphics import text
 
-from Sketch.warn import INTERNAL, warn_tb
+from Sketch.Base.warn import INTERNAL, warn_tb
 from Sketch.Lib import encoding
 
-from Sketch.load import GenericLoader, EmptyCompositeError
+from Sketch.Base.load import GenericLoader, EmptyCompositeError
 from Sketch.pstokenize import PSTokenizer, DSC_COMMENT, OPERATOR, END, \
      MAX_DATA_TOKEN
 

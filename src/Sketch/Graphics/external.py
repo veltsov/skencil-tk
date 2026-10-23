@@ -23,12 +23,13 @@
 # bitmapped images or encapsulated PostScript files.
 
 
-from Sketch import Rect, Trafo, IdentityMatrix, NullUndo, SKCache, main
+from Sketch import Rect, Trafo, IdentityMatrix, NullUndo, SKCache
+from Sketch.Base import main
 
 from base import GraphicsObject, RectangularObject
 from properties import EmptyProperties
 
-from Sketch.const import SELECTION
+from Sketch.Base.const import SELECTION
 
 import os
 import time

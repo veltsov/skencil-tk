@@ -29,9 +29,9 @@ import time
 from Sketch.Lib.util import flatten
 
 from Sketch.UI.skpixmaps import pixmaps
-from Sketch.warn import pdebug, warn, INTERNAL
-from Sketch import const
-from Sketch.const import SelectSet
+from Sketch.Base.warn import pdebug, warn, INTERNAL
+from Sketch.Base import const
+from Sketch.Base.const import SelectSet
 
 from Sketch import _, Point, Polar, Rect, UnionRects, RectType, Identity, \
      Trafo, TrafoType, Rotation, CreateListUndo, NullUndo

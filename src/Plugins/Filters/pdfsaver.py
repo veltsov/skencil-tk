@@ -32,7 +32,8 @@ __version__ = "$Revision: 251 $"
 # $Id: epssaver.py 251 2002-11-02 19:04:18Z bherzog $
 
 import os
-from Sketch import PostScriptDevice, config
+from Sketch import PostScriptDevice
+from Sketch.Base import config
 from Sketch.Lib import util
 
 gs_command =  'gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dCompatibilityLevel=%(compat)s' \

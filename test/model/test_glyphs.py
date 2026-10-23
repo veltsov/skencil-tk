@@ -113,7 +113,7 @@ def test_sk_save_reload_stable():
     original = text.TextAsUnicode()
 
     sk = testsupport.sketch()
-    from Sketch import plugins
+    from Sketch.Base import plugins
     saver = plugins.find_export_plugin(plugins.guess_export_plugin('.sk'))
     out1 = testsupport.output_path('sk', 'glyph_reload1.sk')
     out2 = testsupport.output_path('sk', 'glyph_reload2.sk')

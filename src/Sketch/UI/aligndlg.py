@@ -22,7 +22,7 @@
 from Tkinter import Frame, Radiobutton, IntVar, StringVar
 from Tkinter import BOTH, LEFT, TOP, X, Y
 
-from Sketch.const import SELECTION
+from Sketch.Base.const import SELECTION
 from Sketch import _
 from tkext import UpdatedButton, UpdatedCheckbutton, UpdatedRadiobutton
 from sketchdlg import CommandPanel

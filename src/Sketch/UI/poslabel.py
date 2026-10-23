@@ -16,8 +16,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 
-from Sketch import config
-from Sketch.const import CHANGED
+from Sketch.Base import config
+from Sketch.Base.const import CHANGED
 from Sketch.Lib.units import unit_dict, unit_names
 from tkext import UpdatedLabel, UpdatedMenu, MenuCommand
 

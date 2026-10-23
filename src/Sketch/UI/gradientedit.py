@@ -20,8 +20,8 @@ import X, pax
 
 from Sketch import _, Publisher, SketchError, _sketch
 from Sketch import Blend, CreateRGBColor, MultiGradient
-from Sketch.const import DROP_COLOR
-from Sketch.warn import pdebug
+from Sketch.Base.const import DROP_COLOR
+from Sketch.Base.warn import pdebug
 from Sketch.Graphics import color
 
 from Tkinter import Frame, Button

@@ -21,8 +21,9 @@ import pax
 from Tkinter import IntVar, X, Y, LEFT, RIGHT, E
 from tkext import PyWidget, MyEntry
 
-from Sketch.const import COMMAND
-from Sketch import Publisher, const
+from Sketch.Base.const import COMMAND
+from Sketch import Publisher
+from Sketch.Base import const
 
 cursors = (const.CurUp, const.CurUpDown, const.CurDown)
 

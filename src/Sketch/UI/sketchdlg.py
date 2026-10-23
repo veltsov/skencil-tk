@@ -56,10 +56,10 @@
 #
 
 
-from Sketch.warn import pdebug, warn_tb, INTERNAL
+from Sketch.Base.warn import pdebug, warn_tb, INTERNAL
 from Sketch import _, Publisher
-from Sketch.const import SELECTION, DOCUMENT, EDITED, CLOSED
-from Sketch import config
+from Sketch.Base.const import SELECTION, DOCUMENT, EDITED, CLOSED
+from Sketch.Base import config
 import Sketch
 
 from Tkinter import Toplevel, IntVar, Frame, Checkbutton, Label

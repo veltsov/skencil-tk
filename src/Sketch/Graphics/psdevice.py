@@ -27,8 +27,9 @@ from math import pi, sqrt
 
 from Sketch.Lib.util import Empty
 
-from Sketch import _, config, _sketch, Scale, SketchVersion
-from Sketch.warn import pdebug, warn_tb, warn, USER, INTERNAL
+from Sketch import _, _sketch, Scale, SketchVersion
+from Sketch.Base import config
+from Sketch.Base.warn import pdebug, warn_tb, warn, USER, INTERNAL
 from Sketch.Lib.psmisc import quote_ps_string, make_textline
 
 from Sketch import IdentityMatrix

@@ -1,5 +1,6 @@
 import Sketch
-from Sketch import _, const, Point, SingularMatrix
+from Sketch import _, Point, SingularMatrix
+from Sketch.Base import const
 from Sketch.Graphics.handle import MakeNodeHandle, Handle
 from autoshapelib import StickyObject, VERSION
 

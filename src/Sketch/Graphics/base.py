@@ -22,8 +22,8 @@
 
 from traceback import print_stack
 
-from Sketch.warn import warn, INTERNAL
-from Sketch.const import CHANGED, SelectSet, Button1Mask, ConstraintMask, \
+from Sketch.Base.warn import warn, INTERNAL
+from Sketch.Base.const import CHANGED, SelectSet, Button1Mask, ConstraintMask, \
      SCRIPT_GET, SCRIPT_OBJECT, SCRIPT_UNDO
 from Sketch import NullUndo, CreateMultiUndo, Undo, UndoAfter
 

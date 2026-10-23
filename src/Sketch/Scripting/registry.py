@@ -18,7 +18,7 @@
 
 import operator
 
-from Sketch.warn import warn, USER
+from Sketch.Base.warn import warn, USER
 
 from script import SafeScript
 

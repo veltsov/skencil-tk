@@ -25,12 +25,14 @@ from array import array
 
 import streamfilter
 
-from Sketch import _, config, const, Point, TrafoType, Scale, SketchError, \
-     SketchInternalError, Subscribe, CreatePath, CreateFontMetric, SKCache
+from Sketch import _, Point, TrafoType, Scale, \
+     SketchError, SketchInternalError, Subscribe, CreatePath, \
+     CreateFontMetric, SKCache
+from Sketch.Base import config, const
 from Sketch.Lib import encoding
 from Sketch.Lib import glyphnames
 
-from Sketch.warn import warn, INTERNAL, USER, pdebug
+from Sketch.Base.warn import warn, INTERNAL, USER, pdebug
 from Sketch.Lib.util import find_in_path, find_files_in_path, as_unicode
 
 minus_tilde = string.maketrans('-', '~')

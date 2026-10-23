@@ -20,8 +20,9 @@
 #	A dialog to change some values in config.py
 #
 
-from Sketch.config import preferences
-from Sketch import _, config
+from Sketch.Base.config import preferences
+from Sketch import _
+from Sketch.Base import config
 
 from Tkinter import Toplevel, Frame, Label, Entry, IntVar, DoubleVar, StringVar
 from Tkinter import GROOVE, TOP, BOTTOM, LEFT, RIGHT, E, W, X, BOTH, \

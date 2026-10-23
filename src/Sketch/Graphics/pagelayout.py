@@ -26,7 +26,7 @@
 # XXX: margins are not yet implemented
 
 from papersize import Papersize
-from Sketch import config
+from Sketch.Base import config
 
 Portrait = 0
 Landscape = 1

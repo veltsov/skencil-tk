@@ -24,10 +24,10 @@
 #
 
 
-from config import preferences
+from Sketch.Base.config import preferences
 from sys import maxint
 
-from warn import warn, INTERNAL, warn_tb
+from Sketch.Base.warn import warn, INTERNAL, warn_tb
 
 from Sketch import _
 

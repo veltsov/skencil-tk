@@ -1,6 +1,7 @@
 
 import Sketch
-from Sketch import _, Point, Polar, SingularMatrix, const, config, NullUndo
+from Sketch import _, Point, Polar, SingularMatrix, NullUndo
+from Sketch.Base import const, config
 from Sketch.Lib import units
 from Sketch.Graphics.handle import Handle, MakeControlHandle
 

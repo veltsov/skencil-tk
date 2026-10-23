@@ -25,8 +25,9 @@ import sys
 
 sys.path.insert(0,sys.path[0]+'/../lib.linux-x86_64-2.7')
 import Sketch
+from Sketch.Base import config, main
 
 
-Sketch.config.sketch_command = sys.argv[0]
+config.sketch_command = sys.argv[0]
 
-Sketch.main.main()
+main.main()

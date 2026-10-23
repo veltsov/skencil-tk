@@ -27,7 +27,7 @@ def load(name=FIXTURE):
 
 def save(doc, path):
     sk = testsupport.sketch()
-    from Sketch import plugins
+    from Sketch.Base import plugins
     saver = plugins.find_export_plugin(plugins.guess_export_plugin('.sk'))
     saver(doc, path)
 
@@ -215,7 +215,7 @@ def test_reader_decodes_user_strings():
     assert texts[0].TextAsUnicode() == text_bytes.decode('latin-1')
     font = texts[0].properties.font
     if font is None:
-        from Sketch import config
+        from Sketch.Base import config
         from Sketch.Graphics import font as font_module
         font = font_module.GetFont(config.preferences.fallback_font)
     assert font.EncodedText(texts[0].text) == text_bytes
@@ -235,7 +235,8 @@ def test_preferences_save_repr_plain_utf8_literals():
     # same plain syntax under python2 and python3 (where no conversion
     # is needed at all)
     sk = testsupport.sketch()
-    from Sketch import configutil, Point
+    from Sketch import Point
+    from Sketch.Base import configutil
 
     text = configutil.save_repr([PREFS_U_NAME, 'plain.sk'])
     assert "u'" not in text and 'u"' not in text
@@ -271,7 +272,7 @@ def test_preferences_load_converts_to_unicode():
     import os
     import sys
     import warnings
-    from Sketch import config, configutil
+    from Sketch.Base import config, configutil
 
     mru = [PREFS_U_NAME, 'plain.sk', '', '']
     prefs_dir = testsupport.output_dir('prefs')
@@ -324,7 +325,7 @@ def test_preferences_undecodable_values_dropped():
     import os
     import sys
     from StringIO import StringIO
-    from Sketch import config, configutil
+    from Sketch.Base import config, configutil
 
     prefs_dir = testsupport.output_dir('prefs')
     old_dir = config.user_config_dir
@@ -380,7 +381,7 @@ def test_preferences_short_mru_list_padded():
     sk = testsupport.sketch()
     import os
     import sys
-    from Sketch import config, configutil
+    from Sketch.Base import config, configutil
 
     prefs_dir = testsupport.output_dir('prefs')
     old_dir = config.user_config_dir

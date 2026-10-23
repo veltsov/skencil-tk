@@ -8,7 +8,7 @@ import sys
 
 import Sketch
 
-app = Sketch.main.application
+app = Sketch.Base.main.application
 win = app.main_window
 doc = win.document
 assert doc is not None, 'no document open'

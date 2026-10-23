@@ -21,9 +21,10 @@
 
 
 import Sketch
-from Sketch import _, config
-from Sketch.const import STYLE, SELECTION, COMMAND
-from Sketch.warn import pdebug
+from Sketch import _
+from Sketch.Base import config
+from Sketch.Base.const import STYLE, SELECTION, COMMAND
+from Sketch.Base.warn import pdebug
 from Sketch.Graphics.properties import property_names, property_titles, \
      property_types, FillProperty, LineProperty, FontProperty
 from Tkinter import Button, Scrollbar, Frame, Checkbutton, Label, StringVar, \

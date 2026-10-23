@@ -19,13 +19,14 @@ from math import pi, floor, atan2, ceil, sqrt
 
 from traceback import print_stack
 
-from Sketch.const import SelectSet, SelectAdd, SelectSubtract, SelectDrag, \
+from Sketch.Base.const import SelectSet, SelectAdd, SelectSubtract, SelectDrag, \
      Button1Mask, ConstraintMask,\
      SCRIPT_GET, SCRIPT_OBJECT, SCRIPT_OBJECTLIST, SCRIPT_UNDO
-from Sketch.warn import pdebug, warn, INTERNAL
+from Sketch.Base.warn import pdebug, warn, INTERNAL
 from Sketch import Point, Polar, Rect, EmptyRect, UnionRects, PointsToRect
-from Sketch import _, _sketch, CreatePath, config, RegisterCommands, \
+from Sketch import _, _sketch, CreatePath, RegisterCommands, \
      CreateMultiUndo, NullUndo, Undo
+from Sketch.Base import config
 
 from Sketch.UI.command import AddCmd
 import Sketch.UI.skpixmaps

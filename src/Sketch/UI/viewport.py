@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from Sketch import Trafo, RectType, EmptyRect, InfinityRect
-from Sketch.config import preferences
+from Sketch.Base.config import preferences
 from Sketch.Graphics.papersize import Papersize
 
 

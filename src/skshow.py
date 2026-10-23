@@ -77,7 +77,7 @@ parse_options()
 import Sketch
 Sketch.init_ui()
 
-import Sketch.UI.skapp, Sketch.UI.view, Sketch.load
+import Sketch.UI.skapp, Sketch.UI.view, Sketch.Base.load
 
 from Tkinter import BOTH
 
@@ -158,7 +158,7 @@ class MainWindow:
     def load_file(self, which):
         if self.docs[which] is None:
             filename = self.files[which]
-            doc = Sketch.load.load_drawing(filename)
+            doc = Sketch.Base.load.load_drawing(filename)
             self.docs[which] = doc
         else:
             doc = self.docs[which]
@@ -177,7 +177,7 @@ class MainWindow:
         next = self.current + 1
         if next < len(self.docs) and not self.docs[next]:
             filename = self.files[next]
-            doc = Sketch.load.load_drawing(filename)
+            doc = Sketch.Base.load.load_drawing(filename)
             self.docs[next] = doc
 
 

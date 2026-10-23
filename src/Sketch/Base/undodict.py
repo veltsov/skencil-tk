@@ -21,7 +21,7 @@
 # Name() methods.
 #
 
-from undo import NullUndo
+from Sketch.Base.undo import NullUndo
 
 class UndoDict:
 

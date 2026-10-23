@@ -25,12 +25,13 @@ from tkext import UpdatedButton, MyEntry
 from miniscroll import MiniScroller
 
 from sketchdlg import PropertyPanel
-from Sketch.const import SELECTION
+from Sketch.Base.const import SELECTION
 
 from Sketch.Graphics.blendgroup import BlendGroup, BlendInterpolation, \
      SelectStart, SelectEnd
 
-from Sketch import _, config
+from Sketch import _
+from Sketch.Base import config
 
 
 class BlendPanel(PropertyPanel):

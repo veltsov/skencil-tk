@@ -155,8 +155,8 @@ def main():
                                     options.geometry,
                                     run_script = run_script)
     
-    setattr(Sketch.main, 'application', application)
+    setattr(Sketch.Base.main, 'application', application)
     
-    Sketch.Issue(None, Sketch.const.APP_INITIALIZED, application)
+    Sketch.Issue(None, Sketch.Base.const.APP_INITIALIZED, application)
     application.Run()
     application.SavePreferences()

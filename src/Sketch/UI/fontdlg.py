@@ -24,9 +24,10 @@ import string
 from Tkinter import Scrollbar, Frame, Entry, Label, StringVar, DoubleVar
 from Tkinter import Y, LEFT, W, FLAT, BOTH, RIGHT
 
-from Sketch import config, _
+from Sketch import _
+from Sketch.Base import config
 from Sketch.Graphics import font, text, properties
-from Sketch.const import SELECTION
+from Sketch.Base.const import SELECTION
 
 from Sketch import Document, SimpleText, Identity
 from Sketch.Graphics.pagelayout import PageLayout

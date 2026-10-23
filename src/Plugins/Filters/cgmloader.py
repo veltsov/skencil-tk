@@ -40,13 +40,15 @@ import operator
 import copy
 import types
 
-from Sketch import _, Trafo, Scale, Translation, Point, Polar, CreatePath, \
-     CreateRGBColor, SolidPattern, EmptyPattern, LinearGradient, \
-     MultiGradient, Style, const, StandardColors, GridLayer, GetFont, \
+from Sketch import _, Trafo, Scale, Translation, \
+     Point, Polar, CreatePath, CreateRGBColor, \
+     SolidPattern, EmptyPattern, LinearGradient, MultiGradient, \
+     Style, StandardColors, GridLayer, GetFont, \
      HatchingPattern
+from Sketch.Base import const
 
-from Sketch.warn import INTERNAL, warn_tb
-from Sketch.load import GenericLoader, SketchLoadError
+from Sketch.Base.warn import INTERNAL, warn_tb
+from Sketch.Base.load import GenericLoader, SketchLoadError
 import Sketch.Graphics.font
 from Sketch.Graphics import text
 

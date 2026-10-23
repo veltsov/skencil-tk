@@ -35,15 +35,17 @@ import operator
 import streamfilter
 
 from Sketch import Document, Layer, CreatePath, ContSmooth, \
-     SolidPattern, EmptyPattern, LinearGradient, RadialGradient,\
-     CreateRGBColor, CreateCMYKColor, MultiGradient, \
-     Trafo, Translation, Rotation, Scale, Point, Polar, \
-     StandardColors, GetFont, PathText, SimpleText, const, UnionRects, \
-     Bezier, Line, load_image, skread
+     SolidPattern, EmptyPattern, LinearGradient, RadialGradient, \
+     CreateRGBColor, CreateCMYKColor, MultiGradient, Trafo, \
+     Translation, Rotation, Scale, Point, \
+     Polar, StandardColors, GetFont, PathText, \
+     SimpleText, UnionRects, Bezier, Line, \
+     load_image, skread
+from Sketch.Base import const
 
-from Sketch.warn import INTERNAL, USER, warn_tb
+from Sketch.Base.warn import INTERNAL, USER, warn_tb
 
-from Sketch.load import GenericLoader, EmptyCompositeError
+from Sketch.Base.load import GenericLoader, EmptyCompositeError
 
 from Sketch.Graphics import text, properties
 

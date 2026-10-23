@@ -81,7 +81,7 @@ from Sketch import _, Rect, UnionRects, EmptyRect, NullPoint, Polar, \
      IdentityMatrix, SingularMatrix, Identity, Trafo, Scale, Translation, \
      Rotation, NullUndo, CreateMultiUndo, RegisterCommands, EmptyLineStyle
 from Sketch.UI.command import AddCmd
-from Sketch import const, config
+from Sketch.Base import const, config
 
 import handle
 import selinfo

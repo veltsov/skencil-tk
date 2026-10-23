@@ -65,7 +65,7 @@ def select_same_line_color(context):
                 prop = obj.Properties()
                 if prop.HasLine() and color == prop.line_pattern.Color():
                     select.append(obj)
-    doc.SelectObject(select, Sketch.const.SelectAdd)
+    doc.SelectObject(select, Sketch.Base.const.SelectAdd)
 
 
 # register script

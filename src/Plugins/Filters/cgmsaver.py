@@ -34,7 +34,7 @@ import os.path
 from Sketch import Scale, Translation, Bezier, CreateRGBColor, EmptyPattern, \
      Point
 
-import Sketch.warn
+import Sketch.Base.warn
 
 from math import sqrt, sin, cos
 
@@ -134,7 +134,7 @@ class Warnings:
         if msg != "":
             msg = "The design you tried to save in CGM Version 1 format\n" + \
                 "hit some limitations\n\n" + msg
-            Sketch.warn.warn(Sketch.warn.USER , msg)
+            Sketch.Base.warn.warn(Sketch.Base.warn.USER , msg)
 
 class CGMSaver:
 

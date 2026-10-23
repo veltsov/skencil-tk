@@ -31,7 +31,7 @@ from Tkinter import StringVar, Entry, Label, Button, Frame, Text, END, \
 import os
 from math import ceil
 
-import Sketch.const
+import Sketch.Base.const
 from Sketch import Scale, TrafoPlugin, SimpleText, Translation, Identity, \
      GetFont, StandardColors, SolidPattern, UndoAfter, _
 from Sketch.UI.sketchdlg import SketchPanel
@@ -194,7 +194,7 @@ class MultilineTextDlg(SketchPanel):
         SketchPanel.__init__(self, master, main_window, doc,
                              name = 'multilinetxtdlg')
 
-    receivers.append((Sketch.const.SELECTION, 'Update'))
+    receivers.append((Sketch.Base.const.SELECTION, 'Update'))
     def Update(self):
         """
         This method is used as a callback and

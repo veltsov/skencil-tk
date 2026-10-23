@@ -18,7 +18,7 @@
 
 import operator, string
 
-from Sketch.warn import pdebug, warn_tb, INTERNAL
+from Sketch.Base.warn import pdebug, warn_tb, INTERNAL
 
 from Tkinter import Frame, Scrollbar
 from Tkinter import RIGHT, BOTTOM, X, Y, BOTH, TOP

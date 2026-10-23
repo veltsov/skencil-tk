@@ -85,8 +85,8 @@ from Sketch import CreatePath, ContSmooth, ContAngle, ContSymmetrical, \
      Scale, StandardColors, ImageTilePattern, ImageData, MaskGroup, \
      Arrow
 
-from Sketch.warn import INTERNAL, warn_tb
-from Sketch.load import GenericLoader, SketchLoadError, EmptyCompositeError
+from Sketch.Base.warn import INTERNAL, warn_tb
+from Sketch.Base.load import GenericLoader, SketchLoadError, EmptyCompositeError
 from Sketch.Lib import units
 
 

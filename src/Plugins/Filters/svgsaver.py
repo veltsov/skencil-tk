@@ -27,7 +27,8 @@ format_name = 'SVG'
 import re
 from math import atan2, hypot, pi
 
-from Sketch import const, Bezier, EmptyPattern, Trafo, Rotation, Translation
+from Sketch import Bezier, EmptyPattern, Trafo, Rotation, Translation
+from Sketch.Base import const
 
 def csscolor(color):
     return "#%02x%02x%02x" \

@@ -30,13 +30,14 @@ from tkext import UpdatedButton, UpdatedCheckbutton, ColorButton, MyEntry
 from tkext import PyWidget
 
 from Sketch import _, Publisher, GraphicsDevice, StandardColors, \
-     EmptyFillStyle, EmptyLineStyle, \
-     PropertyStack, SolidPattern, LinearGradient, ConicalGradient, \
-     RadialGradient, HatchingPattern, EmptyPattern, ImageTilePattern, \
-     CreateSimpleGradient, Point, Rect, Trafo, load_image, config
+     EmptyFillStyle, EmptyLineStyle, PropertyStack, SolidPattern, \
+     LinearGradient, ConicalGradient, RadialGradient, HatchingPattern, \
+     EmptyPattern, ImageTilePattern, CreateSimpleGradient, Point, \
+     Rect, Trafo, load_image
+from Sketch.Base import config
 from Sketch.Lib.util import as_display_name
-from Sketch.const import CHANGED, ConstraintMask, DROP_COLOR
-from Sketch.warn import warn_tb, INTERNAL
+from Sketch.Base.const import CHANGED, ConstraintMask, DROP_COLOR
+from Sketch.Base.warn import warn_tb, INTERNAL
 
 from miniscroll import MiniScroller
 from sketchdlg import StylePropertyPanel

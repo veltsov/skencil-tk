@@ -109,7 +109,7 @@ def test_layer_state_survives_save_reload():
     doc = load()
     doc.SetLayerState(0, 0, 1, 0, 1)
     sk = testsupport.sketch()
-    from Sketch import plugins
+    from Sketch.Base import plugins
     saver = plugins.find_export_plugin(plugins.guess_export_plugin('.sk'))
     out = testsupport.output_path('sk', 'layerstate.sk')
     saver(doc, out)
@@ -224,7 +224,7 @@ def test_bezier_edit_survives_save_reload():
 
     _edit_first_bezier_path(doc, shift)
     sk = testsupport.sketch()
-    from Sketch import plugins
+    from Sketch.Base import plugins
     saver = plugins.find_export_plugin(plugins.guess_export_plugin('.sk'))
     out = testsupport.output_path('sk', 'bezedit.sk')
     saver(doc, out)

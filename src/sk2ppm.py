@@ -43,7 +43,7 @@ for dir in ('Lib', 'Filter', 'Pax'):
     if os.path.isdir(dir):
         sys.path.insert(1, dir)
 
-from Sketch import load
+from Sketch.Base import load
 from Script.export_raster import export_raster
 
 
@@ -54,8 +54,8 @@ class Context:
     pass
 
 def main():
-    import Sketch, Sketch.config
-    Sketch.Issue(None, Sketch.const.INITIALIZE)
+    import Sketch, Sketch.Base.config
+    Sketch.Issue(None, Sketch.Base.const.INITIALIZE)
     #plugins.load_plugin_configuration(config.plugin_path)
 
     use_bbox = 0
@@ -89,7 +89,7 @@ def main():
         return -1
 
     if steps is not None:
-        Sketch.config.preferences.gradient_steps_print = steps
+        Sketch.Base.config.preferences.gradient_steps_print = steps
 
     filename = args[0]
     if len(args) > 1:

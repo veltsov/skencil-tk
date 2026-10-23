@@ -125,7 +125,7 @@ Modifier:
             self.objects[0].SetPaths(paths)
         else:
             obj = Sketch.PolyBezier(tuple(paths))
-            obj.SetProperties(line_cap=Sketch.const.CapButt)
+            obj.SetProperties(line_cap=Sketch.Base.const.CapButt)
             self.set_objects([obj])
             
     def DragHandle(self, pa, pb, selection):

@@ -13,7 +13,7 @@ import testsupport
 def save_document(doc, path):
     """Save a document in the native .sk format, headlessly."""
     sk = testsupport.sketch()
-    from Sketch import plugins
+    from Sketch.Base import plugins
     saver = plugins.find_export_plugin(plugins.guess_export_plugin('.sk'))
     saver(doc, path)
 

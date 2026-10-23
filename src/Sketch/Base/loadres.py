@@ -19,8 +19,8 @@
 # Read a Sketch resource file (dashes, arrows...)
 #
 
-from skexceptions import SketchError
-from warn import warn_tb, USER
+from Sketch.Base.skexceptions import SketchError
+from Sketch.Base.warn import warn_tb, USER
 
 def read_resource_file(filename, magic, errmsg, functions):
     file = open(filename, 'r')

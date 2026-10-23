@@ -29,11 +29,12 @@ from Sketch.Lib.util import Empty, format
 from Sketch import _, InvertingDevice, HitTestDevice, StandardColors, Point
 from Sketch.Graphics.selection import SelectionRectangle
 
-from Sketch import const, SketchInternalError, SelectionMode, EditMode
-from Sketch.config import preferences
-from Sketch.warn import pdebug, warn, INTERNAL
+from Sketch import SketchInternalError, SelectionMode, EditMode
+from Sketch.Base import const
+from Sketch.Base.config import preferences
+from Sketch.Base.warn import pdebug, warn, INTERNAL
 
-from Sketch.const import STATE, MODE, SELECTION, VIEW, POSITION, EDITED, \
+from Sketch.Base.const import STATE, MODE, SELECTION, VIEW, POSITION, EDITED, \
      LAYER_STATE, LAYER_ACTIVE, CURRENTINFO, CHANGED, \
      SelectSet, SelectAdd, SelectSubtract, \
      SelectSubobjects, SelectDrag, SelectGuide
@@ -1630,7 +1631,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
         self.set_handles(self.document.GetSelectionHandles())
 
     def set_handles(self, handles):
-        from Sketch.const import HandleLine, Handle_Pixmap, Handle_Caret, \
+        from Sketch.Base.const import HandleLine, Handle_Pixmap, Handle_Caret, \
              Handle_SmallOpenRectList
         points = []
         funcs = []

@@ -22,7 +22,7 @@
 #	entire group
 #
 
-from Sketch.warn import warn_tb, INTERNAL
+from Sketch.Base.warn import warn_tb, INTERNAL
 
 from Sketch.UI.command import AddCmd
 

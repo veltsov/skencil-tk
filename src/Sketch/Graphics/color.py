@@ -20,9 +20,10 @@
 #
 
 
-from Sketch.warn import warn, INTERNAL, USER
+from Sketch.Base.warn import warn, INTERNAL, USER
 from Sketch._sketch import RGBColor, XVisual
-from Sketch import config, _
+from Sketch import _
+from Sketch.Base import config
 
 skvisual = None
 

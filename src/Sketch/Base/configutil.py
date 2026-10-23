@@ -22,8 +22,9 @@
 #
 
 import sys, os
-import config
-from warn import warn_tb, USER
+import Sketch.Base.config
+config = sys.modules["Sketch.Base.config"]
+from Sketch.Base.warn import warn_tb, USER
 from Sketch import PointType
 from Sketch.Lib import util
 

@@ -51,12 +51,14 @@ from math import sin, cos, pi
 from struct import unpack, calcsize
 import struct
 
-from Sketch import _, Trafo, Scale, Translation, Point, Polar, CreatePath, \
-     CreateRGBColor, SolidPattern, EmptyPattern, LinearGradient, \
-     MultiGradient, Style, const, StandardColors
+from Sketch import _, Trafo, Scale, Translation, \
+     Point, Polar, CreatePath, CreateRGBColor, \
+     SolidPattern, EmptyPattern, LinearGradient, MultiGradient, \
+     Style, StandardColors
+from Sketch.Base import const
 
-from Sketch.warn import INTERNAL, warn_tb
-from Sketch.load import GenericLoader, SketchLoadError
+from Sketch.Base.warn import INTERNAL, warn_tb
+from Sketch.Base.load import GenericLoader, SketchLoadError
 
 
 struct_wmf_header = ('<'

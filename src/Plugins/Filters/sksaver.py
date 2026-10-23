@@ -242,7 +242,8 @@ import os
 
 from Sketch.Lib.util import relpath, Empty, skrepr
 from Sketch import IdentityMatrix, EmptyPattern, SolidPattern, Style, \
-     StandardColors, SketchError, const
+     StandardColors, SketchError
+from Sketch.Base import const
 from Sketch.Graphics import properties
 from Sketch.Lib.units import m_to_pt, in_to_pt
 

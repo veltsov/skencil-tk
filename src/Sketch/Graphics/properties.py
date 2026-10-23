@@ -15,12 +15,13 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
-from Sketch import const
+from Sketch.Base import const
 CHANGED = const.CHANGED
-from Sketch.connector import Publisher
+from Sketch.Base.connector import Publisher
 from Sketch import CreateListUndo, UndoAfter, NullUndo, SketchInternalError, _
-from Sketch.warn import pdebug, INTERNAL
-from Sketch import config, Point
+from Sketch.Base.warn import pdebug, INTERNAL
+from Sketch import Point
+from Sketch.Base import config
 from math import sqrt
 
 from pattern import SolidPattern, EmptyPattern
@@ -442,14 +443,14 @@ def FactoryTextStyle():
     import Sketch
     style = factory_text_style.Copy()
     if style.font is None:
-        fontname = Sketch.config.preferences.default_font
+        fontname = Sketch.Base.config.preferences.default_font
         style.font = Sketch.GetFont(fontname)
     return style
 
 def DefaultTextProperties():
     import Sketch
     if default_text_style.font is None:
-        fontname = Sketch.config.preferences.default_font
+        fontname = Sketch.Base.config.preferences.default_font
         default_text_style.font = Sketch.GetFont(fontname)
     return PropertyStack(base = default_text_style.Copy())
 

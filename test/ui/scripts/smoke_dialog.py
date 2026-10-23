@@ -5,7 +5,7 @@ import os
 
 import Sketch
 
-app = Sketch.main.application
+app = Sketch.Base.main.application
 win = app.main_window
 
 win.CreateDialog('layerdlg', 'LayerPanel')
