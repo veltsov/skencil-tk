@@ -217,3 +217,44 @@ def test_out_of_encoding_glyphs_become_notdef():
     gid = font.glyph_registry.index('uni0421')   # cyrillic 'С'
     assert text.properties.font.GlyphCodes([gid]) == [0]
     assert text.properties.font.EncodedText([gid]) == '\x00'
+
+
+def test_insert_hyphen_vs_minus():
+    # C-h inserts the glyph named 'hyphen'; ordinary typing of '-'
+    # yields 'minus' for standard-encoding fonts (the intentional
+    # encoding-table quirk, see devdocs/text-input.md).  Both glyphs
+    # must be distinct and both must be encodable in the font.
+    sk = testsupport.sketch()
+    from Sketch import Document, SimpleText, Translation, EditMode
+    from Sketch.Graphics.properties import DefaultTextProperties
+    from Sketch.Graphics import text as textmod
+    from Sketch.Graphics import font as fontmod
+
+    doc = Document(create_layer = 1)
+    obj = SimpleText(Translation(100, 100), 'A',
+                     properties = DefaultTextProperties())
+    doc.Insert(obj)
+    doc.SelectObject(obj)
+    doc.SetMode(EditMode)
+    font = obj.properties.font
+    doc.CallObjectMethod(textmod.CommonText, u'', 'InsertCharacter', '-')
+    doc.CallObjectMethod(textmod.CommonText, u'', 'InsertHyphen')
+    gids = obj.text
+    assert len(gids) == 3
+    minus_gid, hyphen_gid = gids[0], gids[1]
+    # typing '-' gives the encoding-table glyph, C-h gives 'hyphen'
+    assert fontmod.glyph_registry.name(minus_gid) == 'minus'
+    assert fontmod.glyph_registry.name(hyphen_gid) == 'hyphen'
+    assert minus_gid != hyphen_gid
+    # both are printable (encodable) and round-trip through the codes
+    assert font.IsPrintableGlyph(minus_gid)
+    assert font.IsPrintableGlyph(hyphen_gid)
+    assert font.GlyphCodes([minus_gid, hyphen_gid]) == [45, 173]
+    assert font.EncodedText([hyphen_gid]) == '\xad'
+    # the insertion is undoable as a single transaction
+    doc.Undo()
+    assert len(obj.text) == 2
+    assert fontmod.glyph_registry.name(obj.text[0]) == 'minus'
+    doc.Redo()
+    assert fontmod.glyph_registry.name(obj.text[1]) == 'hyphen'
+

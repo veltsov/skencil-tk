@@ -240,19 +240,43 @@ class CommonTextEditor(Editor):
     def Caret(self):
         return self.caret
 
+    def _insert_gid(self, gid):
+        # insert the glyph GID at the caret, skipping control glyphs
+        # (see devdocs/glyph-text.md)
+        if gid != font_module.NEWLINE_GID \
+           and gid != font_module.CARRIAGE_RETURN_GID:
+            text = self.text; caret = self.caret
+            text = text[:caret] + array('I', [gid]) + text[caret:]
+            return self.SetText(text, caret + 1)
+        return NullUndo
+
     def InsertCharacter(self, char):
         if len(char) == 1:
             font = _text_font(self.properties)
             gid = font.GidForChar(char)
-            if font.IsPrintableGlyph(gid) \
-               and gid != font_module.NEWLINE_GID \
-               and gid != font_module.CARRIAGE_RETURN_GID:
-                text = self.text; caret = self.caret
-                text = text[:caret] + array('I', [gid]) + text[caret:]
-                return self.SetText(text, caret + 1)
+            if font.IsPrintableGlyph(gid):
+                return self._insert_gid(gid)
         return NullUndo
     AddCmd(commands, InsertCharacter, u'', key_stroke = tuple(printable),
            invoke_with_keystroke = 1)
+
+    def InsertHyphen(self):
+        # Insert the glyph named 'hyphen' (C-h).  Typing '-' maps code 45
+        # through the font's encoding, which for standard-encoding fonts
+        # is named 'minus' (an intentional quirk of the hardcoded
+        # encoding table, see devdocs/text-input.md), making the
+        # 'hyphen' glyph unreachable by ordinary typing.  'hyphen' is
+        # encodable in all fonts that have the glyph (code 173 for
+        # standard-encoding fonts, code 45 for fonts whose own encoding
+        # names it so), so the printable-glyph gate is the right check
+        # here as well.  No fallback: fonts without the glyph reject the
+        # insertion like any other non-printable glyph.
+        font = _text_font(self.properties)
+        gid = font_module.glyph_registry.index('hyphen')
+        if font.IsPrintableGlyph(gid):
+            return self._insert_gid(gid)
+        return NullUndo
+    AddCmd(commands, InsertHyphen, u'', key_stroke = 'C-h')
 
     def DeleteCharBackward(self):
         if self.text and self.caret > 0:

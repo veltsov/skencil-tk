@@ -160,3 +160,15 @@ Interim consequences to keep in mind:
   same reason; the unicode↔name layer planned above must be designed
   around this (candidate names should include both `'hyphen'` and
   `'minus'` for U+002D) rather than silently "correcting" the table.
+
+**Interim workaround implemented (2026-10-23): Ctrl+H inserts
+'hyphen'.**  The text editor command `InsertHyphen`
+(`src/Sketch/Graphics/text.py`, bound to `C-h`, active during text
+input) inserts the gid of the glyph named `'hyphen'` directly,
+bypassing the code-45 mapping.  The glyph is encodable in every font
+that has it — code 173 (0xAD) for standard-encoding fonts (the
+`iso_latin_1` table has `'hyphen'` there), code 45 for fonts whose own
+encoding names it so — so the usual `IsPrintableGlyph` gate accepts
+it; fonts without the glyph reject the insertion (no fallback to
+'minus').  Ordinary `-` typing keeps producing `'minus'` unchanged.
+Pinned by `test_insert_hyphen_vs_minus` (`test/model/test_glyphs.py`).
