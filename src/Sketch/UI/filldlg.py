@@ -26,8 +26,8 @@ from Sketch import x11 as X
 Xconst = X
 from Tkinter import Frame, Label, IntVar, DoubleVar, Radiobutton, StringVar
 from Tkinter import RIGHT, BOTTOM, X, Y, LEFT, TOP, W, E, N
-from tkext import UpdatedButton, UpdatedCheckbutton, ColorButton, MyEntry
-from tkext import PyWidget
+from Sketch.UI.tkext import UpdatedButton, UpdatedCheckbutton, ColorButton, MyEntry
+from Sketch.UI.tkext import PyWidget
 
 from Sketch import _, Publisher, GraphicsDevice, StandardColors, \
      EmptyFillStyle, EmptyLineStyle, PropertyStack, SolidPattern, \
@@ -39,12 +39,12 @@ from Sketch.Lib.util import as_display_name
 from Sketch.Base.const import CHANGED, ConstraintMask, DROP_COLOR
 from Sketch.Base.warn import warn_tb, INTERNAL
 
-from miniscroll import MiniScroller
-from sketchdlg import StylePropertyPanel
-from lengthvar import LengthVar, create_unit_menu
-import gradientedit
+from Sketch.UI.miniscroll import MiniScroller
+from Sketch.UI.sketchdlg import StylePropertyPanel
+from Sketch.UI.lengthvar import LengthVar, create_unit_menu
+from Sketch.UI import gradientedit
 
-import skpixmaps
+from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
 
 def make_button(*args, **kw):

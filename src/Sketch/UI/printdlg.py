@@ -17,13 +17,13 @@
 
 import os
 
-from sketchdlg import SketchPanel
+from Sketch.UI.sketchdlg import SketchPanel
 from Tkinter import BOTH, LEFT, TOP, X
 from Tkinter import Frame, Label, IntVar, StringVar, Radiobutton, Checkbutton
-from tkext import UpdatedButton, MyEntry
+from Sketch.UI.tkext import UpdatedButton, MyEntry
 
-from view import SketchView
-import skapp
+from Sketch.UI.view import SketchView
+from Sketch.UI import skapp
 
 from Sketch import _
 from Sketch.Base import config

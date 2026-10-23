@@ -34,21 +34,21 @@ from Sketch.Base.const import STATE, VIEW, MODE, SELECTION, POSITION, UNDO, EDIT
 from Tkinter import TclVersion, TkVersion, Frame, Scrollbar
 from Tkinter import X, BOTTOM, BOTH, TOP, HORIZONTAL, LEFT, Y
 import Tkinter
-from tkext import AppendMenu, UpdatedLabel, UpdatedButton, CommandButton, \
+from Sketch.UI.tkext import AppendMenu, UpdatedLabel, UpdatedButton, CommandButton, \
      CommandCheckbutton, MakeCommand, MultiButton
-import tkext
+from Sketch.UI import tkext
 
-from command import CommandClass, Keymap, Commands
+from Sketch.UI.command import CommandClass, Keymap, Commands
 
-from canvas import SketchCanvas
-import ruler
-from poslabel import PositionLabel
-import palette, tooltips
+from Sketch.UI.canvas import SketchCanvas
+from Sketch.UI import ruler
+from Sketch.UI.poslabel import PositionLabel
+from Sketch.UI import palette, tooltips
 
-import skpixmaps
+from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
 
-import skapp
+from Sketch.UI import skapp
 
 
 
@@ -558,14 +558,14 @@ class SketchMainWindow(Publisher):
         if info.HasCustomDialog():
             dialog = info.CreateCustomDialog(self.root, self, self.document)
         else:
-            from plugindlg import PluginPanel
+            from Sketch.UI.plugindlg import PluginPanel
             dialog = PluginPanel(self.root, self, self.document, info)
         dialog.Subscribe(CLOSED, self.__dlg_closed, info.class_name)
         self.dialogs[info.class_name] = dialog
 
     AddCmd('SetOptions', _("Options..."))
     def SetOptions(self):
-        import optiondlg
+        from Sketch.UI import optiondlg
         optiondlg.OptionDialog(self.root, self.canvas)
 
     def set_window_title(self):
@@ -1135,7 +1135,7 @@ class SketchMainWindow(Publisher):
     AddCmd('python_prompt', u'Python Prompt')
     def python_prompt(self):
         if config.preferences.show_special_menu:
-            import prompt
+            from Sketch.UI import prompt
             prompt.PythonPrompt()
 
 
@@ -1207,7 +1207,7 @@ class SketchMainWindow(Publisher):
            sensitive_cb = ('document', 'CanCreateStyle'),
            subscribe_to = SELECTION)
     def CreateStyleFromSelection(self):
-        import styledlg
+        from Sketch.UI import styledlg
         doc = self.document
         object = doc.CurrentObject()
         style_names = doc.GetStyleNames()
@@ -1218,7 +1218,7 @@ class SketchMainWindow(Publisher):
                 doc.CreateStyleFromSelection(name, which_properties)
 
     def no_pattern(self, category):
-        import styledlg
+        from Sketch.UI import styledlg
         if category == 'fill':
             title = _("No Fill")
             prop = 'fill_pattern'

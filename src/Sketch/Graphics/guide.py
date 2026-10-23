@@ -17,7 +17,7 @@
 
 
 from Sketch import _, Point, PointType, InfinityRect
-from base import GraphicsObject, Draggable
+from Sketch.Graphics.base import GraphicsObject, Draggable
 
 class GuideLine(GraphicsObject, Draggable):
 

@@ -18,8 +18,8 @@
 from Sketch.Base.warn import warn_tb, INTERNAL
 from Sketch import _
 
-from compound import EditableCompound
-from blend import Blend, MismatchError
+from Sketch.Graphics.compound import EditableCompound
+from Sketch.Graphics.blend import Blend, MismatchError
 
 class Group(EditableCompound):
 

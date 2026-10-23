@@ -23,8 +23,8 @@ from Sketch import Rect, EmptyRect, IntersectRects, Document, GraphicsDevice,\
 from Sketch.Base.const import STATE, VIEW, DOCUMENT, LAYOUT, REDRAW
 from Sketch.Base.const import LAYER, LAYER_STATE, LAYER_ORDER, LAYER_COLOR
 
-from tkext import PyWidget
-from viewport import Viewport
+from Sketch.UI.tkext import PyWidget
+from Sketch.UI.viewport import Viewport
 
 
 class SketchView(PyWidget, Viewport, QueueingPublisher):

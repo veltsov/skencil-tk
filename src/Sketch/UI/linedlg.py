@@ -31,12 +31,12 @@ from Sketch import _, Trafo, SimpleGC, SolidPattern, EmptyPattern, \
 
 
 from Tkinter import Frame, Label, IntVar, LEFT, X, E, W, GROOVE
-from tkext import ColorButton, UpdatedCheckbutton, MyOptionMenu2
+from Sketch.UI.tkext import ColorButton, UpdatedCheckbutton, MyOptionMenu2
 
-from sketchdlg import StylePropertyPanel
-from lengthvar import create_length_entry
+from Sketch.UI.sketchdlg import StylePropertyPanel
+from Sketch.UI.lengthvar import create_length_entry
 
-import skpixmaps
+from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
 
 

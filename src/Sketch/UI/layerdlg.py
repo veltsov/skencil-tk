@@ -26,10 +26,10 @@ from Sketch.Base.const import LAYER, LAYER_ACTIVE, LAYER_ORDER, \
      SelectSubtract, SelectAdd
 from Sketch import _
 
-from tkext import UpdatedButton, MyEntry, UpdatedCheckbutton, \
+from Sketch.UI.tkext import UpdatedButton, MyEntry, UpdatedCheckbutton, \
      ColorButton, UpdatedRadiobutton, MenuCommand, UpdatedMenu, MakeCommand
-from sketchdlg import SketchPanel, SKModal
-import skpixmaps
+from Sketch.UI.sketchdlg import SketchPanel, SKModal
+from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
 
 class MutableNumber:

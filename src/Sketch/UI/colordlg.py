@@ -30,11 +30,11 @@ from Sketch.Graphics import color
 
 from Tkinter import Frame, Button, Label, DoubleVar, IntVar
 from Tkinter import TOP, BOTTOM, LEFT, RIGHT, X, BOTH
-from tkext import PyWidget
-from miniscroll import create_mini_entry
-from sketchdlg import SKModal
+from Sketch.UI.tkext import PyWidget
+from Sketch.UI.miniscroll import create_mini_entry
+from Sketch.UI.sketchdlg import SKModal
 
-import skpixmaps
+from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
 
 

@@ -19,7 +19,7 @@
 from Sketch import _, SketchError, CreateListUndo, Undo, \
      Trafo, Translation, Scale, Identity, TrafoType
 
-from compound import Compound
+from Sketch.Graphics.compound import Compound
 
 
 class PluginCompound(Compound):

@@ -17,13 +17,13 @@
 
 
 from __future__ import print_function
-from sketchdlg import SketchPanel
+from Sketch.UI.sketchdlg import SketchPanel
 from Tkinter import X, BOTH, LEFT, TOP
 from Tkinter import Frame, Label
-from tkext import UpdatedButton, MyEntry, UpdatedCheckbutton, \
+from Sketch.UI.tkext import UpdatedButton, MyEntry, UpdatedCheckbutton, \
      MyOptionMenu2
 
-from view import SketchView
+from Sketch.UI.view import SketchView
 
 bitmap_types = [('Portable Pixmap (PPM)', 'ppmraw'),
                 ('Portable Graymap (PGM)', 'pgmraw'),

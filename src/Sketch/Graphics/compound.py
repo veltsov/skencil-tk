@@ -27,11 +27,11 @@ import operator
 from Sketch import _, SketchError, UnionRects, EmptyRect, _sketch
 from Sketch import NullUndo, CreateListUndo, Undo
 
-from base import GraphicsObject, Bounded, CHANGED
-from blend import Blend, MismatchError
-from properties import EmptyProperties
+from Sketch.Graphics.base import GraphicsObject, Bounded, CHANGED
+from Sketch.Graphics.blend import Blend, MismatchError
+from Sketch.Graphics.properties import EmptyProperties
 
-from selinfo import prepend_idx, select_range, build_info, list_to_tree2, \
+from Sketch.Graphics.selinfo import prepend_idx, select_range, build_info, list_to_tree2, \
      list_to_tree_sliced
 
 

@@ -31,8 +31,8 @@ from Sketch.Lib.units import unit_dict, unit_names
 
 from Tkinter import TclError, StringVar, DoubleVar
 from Tkinter import LEFT, RIGHT, X, Y, E, W
-from tkext import MyEntry, MyOptionMenu
-from miniscroll import MiniScroller
+from Sketch.UI.tkext import MyEntry, MyOptionMenu
+from Sketch.UI.miniscroll import MiniScroller
 
 
 class LengthVar:

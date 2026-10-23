@@ -19,7 +19,7 @@
 from Sketch.Base.warn import warn_tb, USER
 import Sketch
 
-from wrapper import DocumentWrapper
+from Sketch.Scripting.wrapper import DocumentWrapper
 
 
 class Context:

@@ -25,8 +25,8 @@ from Tkinter import BOTTOM, BOTH, TOP, X, E
 from Sketch.Base.const import GRID
 from Sketch import _
 
-from sketchdlg import SketchPanel
-from lengthvar import create_length_entry
+from Sketch.UI.sketchdlg import SketchPanel
+from Sketch.UI.lengthvar import create_length_entry
 
 
 class GridPanel(SketchPanel):

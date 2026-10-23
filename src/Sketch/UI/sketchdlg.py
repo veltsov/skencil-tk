@@ -65,9 +65,9 @@ import Sketch
 from Tkinter import Toplevel, IntVar, Frame, Checkbutton, Label
 from Tkinter import TOP, LEFT, RIGHT, BOTTOM, X, BOTH, TkVersion
 
-from tkext import UpdatedButton
-import tkext
-import skpixmaps
+from Sketch.UI.tkext import UpdatedButton
+from Sketch.UI import tkext
+from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
 
 
@@ -290,7 +290,7 @@ class StylePropertyPanel(PropertyPanel):
                or config.preferences.set_default_properties
 
     def set_properties(self, title, category, kw):
-        import styledlg
+        from Sketch.UI import styledlg
         styledlg.set_properties(self.master, self.document, title, category,
                                 kw)
 

@@ -27,13 +27,13 @@ from Sketch.Graphics import color
 
 from Tkinter import Frame, Button
 from Tkinter import BOTTOM, LEFT, RIGHT, BOTH
-from tkext import PyWidget, MenuCommand, UpdatedMenu
-import tkext
+from Sketch.UI.tkext import PyWidget, MenuCommand, UpdatedMenu
+from Sketch.UI import tkext
 
-from colordlg import GetColor
-from sketchdlg import SKModal
+from Sketch.UI.colordlg import GetColor
+from Sketch.UI.sketchdlg import SKModal
 
-import skpixmaps
+from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
 
 

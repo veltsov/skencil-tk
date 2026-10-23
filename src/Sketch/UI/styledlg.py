@@ -31,12 +31,12 @@ from Tkinter import Button, Scrollbar, Frame, Checkbutton, Label, StringVar, \
      IntVar
 from Tkinter import RIGHT, BOTTOM, X, Y, BOTH, LEFT, TOP, W, DISABLED, NORMAL,\
      END
-from tkext import UpdatedButton, UpdatedListbox, MyEntry, MessageDialog
+from Sketch.UI.tkext import UpdatedButton, UpdatedListbox, MyEntry, MessageDialog
 
-import skpixmaps
+from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
 
-from sketchdlg import PropertyPanel, SKModal
+from Sketch.UI.sketchdlg import PropertyPanel, SKModal
 
 class StylePanel(PropertyPanel):
 

@@ -23,10 +23,10 @@ from Sketch.Graphics.pagelayout import PageLayout, Portrait, Landscape
 
 from Tkinter import Frame, Label, StringVar, IntVar, DoubleVar
 from Tkinter import RIGHT, BOTTOM, X, BOTH, LEFT, TOP, W, E, DISABLED, NORMAL
-from tkext import UpdatedButton, MyEntry, MyOptionMenu, UpdatedRadiobutton
+from Sketch.UI.tkext import UpdatedButton, MyEntry, MyOptionMenu, UpdatedRadiobutton
 
-from lengthvar import LengthVar, create_unit_menu
-from sketchdlg import SketchPanel
+from Sketch.UI.lengthvar import LengthVar, create_unit_menu
+from Sketch.UI.sketchdlg import SketchPanel
 
 
 USER_SPECIFIC = '<User Specific>'

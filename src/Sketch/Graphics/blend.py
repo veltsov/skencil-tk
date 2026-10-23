@@ -37,7 +37,7 @@ def Blend(obj1, obj2, frac1, frac2 = None):
     except MismatchError:
         pass
     try:
-        from bezier import PolyBezier
+        from Sketch.Graphics.bezier import PolyBezier
         if not isinstance(obj1,PolyBezier) and not isinstance(obj2,PolyBezier)\
            and obj1.is_curve and obj2.is_curve:
             paths = BlendPaths(obj1.Paths(), obj2.Paths(), frac1, frac2)

@@ -36,9 +36,9 @@ from Sketch.Base.const import SelectSet
 from Sketch import _, Point, Polar, Rect, UnionRects, RectType, Identity, \
      Trafo, TrafoType, Rotation, CreateListUndo, NullUndo
 
-import handle
-from base import SelectAndDrag, Bounded
-import selinfo
+from Sketch.Graphics import handle
+from Sketch.Graphics.base import SelectAndDrag, Bounded
+from Sketch.Graphics import selinfo
 
 
 class SelRectBase(SelectAndDrag, Bounded):

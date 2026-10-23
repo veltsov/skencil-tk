@@ -63,11 +63,11 @@ from Sketch import _
 
 from Tkinter import Label, IntVar, DoubleVar, StringVar, RIGHT, E, W, Text, \
     WORD, Checkbutton, Radiobutton
-from tkext import MyEntry, MyOptionMenu
-from miniscroll import MiniScroller
+from Sketch.UI.tkext import MyEntry, MyOptionMenu
+from Sketch.UI.miniscroll import MiniScroller
 
-from sketchdlg import PropertyPanel
-from lengthvar import create_length_widgets
+from Sketch.UI.sketchdlg import PropertyPanel
+from Sketch.UI.lengthvar import create_length_widgets
 
 
 

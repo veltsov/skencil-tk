@@ -83,17 +83,17 @@ from Sketch import _, Rect, UnionRects, EmptyRect, NullPoint, Polar, \
 from Sketch.UI.command import AddCmd
 from Sketch.Base import const, config
 
-import handle
-import selinfo
-from base import Primitive, RectangularPrimitive, Creator, Editor
-from compound import Compound
-from group import Group
-from bezier import PolyBezier, CombineBeziers
-from blend import Blend, MismatchError, BlendTrafo
-from properties import PropertyStack, FactoryTextStyle, DefaultTextProperties
-import color, pattern
+from Sketch.Graphics import handle
+from Sketch.Graphics import selinfo
+from Sketch.Graphics.base import Primitive, RectangularPrimitive, Creator, Editor
+from Sketch.Graphics.compound import Compound
+from Sketch.Graphics.group import Group
+from Sketch.Graphics.bezier import PolyBezier, CombineBeziers
+from Sketch.Graphics.blend import Blend, MismatchError, BlendTrafo
+from Sketch.Graphics.properties import PropertyStack, FactoryTextStyle, DefaultTextProperties
+from Sketch.Graphics import color, pattern
 
-import graphics, font
+from Sketch.Graphics import graphics, font
 font_module = font
 
 from Sketch.Lib import encoding; iso_latin_1 = encoding.iso_latin_1

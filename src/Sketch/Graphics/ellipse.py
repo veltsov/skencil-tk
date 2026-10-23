@@ -23,18 +23,18 @@ from Sketch.Base.const import ArcArc, ArcChord, ArcPieSlice, ConstraintMask, \
 from Sketch import _, Point, Polar, Trafo, SingularMatrix, Rect, UnionRects, \
      CreateMultiUndo, NullUndo, RegisterCommands
 
-import graphics
+from Sketch.Graphics import graphics
 
 from Sketch.UI.command import AddCmd
 import Sketch.UI.skpixmaps
 pixmaps = Sketch.UI.skpixmaps.PixmapTk
 
-import handle
-from base import Primitive, RectangularPrimitive, RectangularCreator, Creator,\
+from Sketch.Graphics import handle
+from Sketch.Graphics.base import Primitive, RectangularPrimitive, RectangularCreator, Creator,\
      Editor
-from bezier import PolyBezier
-from blend import Blend
-from properties import DefaultGraphicsProperties
+from Sketch.Graphics.bezier import PolyBezier
+from Sketch.Graphics.blend import Blend
+from Sketch.Graphics.properties import DefaultGraphicsProperties
 
 from Sketch.Modules import _sketch
 

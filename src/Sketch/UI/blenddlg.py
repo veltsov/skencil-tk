@@ -16,15 +16,15 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 
-import sketchdlg
+from Sketch.UI import sketchdlg
 from Tkinter import Frame, Label, IntVar
 from Tkinter import RIGHT, BOTTOM, X, Y, BOTH, LEFT, TOP, GROOVE, E,\
      DISABLED, NORMAL
-from tkext import UpdatedButton, MyEntry
+from Sketch.UI.tkext import UpdatedButton, MyEntry
 
-from miniscroll import MiniScroller
+from Sketch.UI.miniscroll import MiniScroller
 
-from sketchdlg import PropertyPanel
+from Sketch.UI.sketchdlg import PropertyPanel
 from Sketch.Base.const import SELECTION
 
 from Sketch.Graphics.blendgroup import BlendGroup, BlendInterpolation, \

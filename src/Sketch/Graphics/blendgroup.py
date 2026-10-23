@@ -29,10 +29,10 @@ from Sketch.Base.const import SelectAdd
 from Sketch import SketchInternalError, _
 from Sketch import NullUndo, CreateListUndo, CreateMultiUndo, Undo, UndoAfter
 
-import selinfo
-from compound import Compound
-from blend import Blend
-from group import Group
+from Sketch.Graphics import selinfo
+from Sketch.Graphics.compound import Compound
+from Sketch.Graphics.blend import Blend
+from Sketch.Graphics.group import Group
 
 SelectStart = 0
 SelectEnd = 1

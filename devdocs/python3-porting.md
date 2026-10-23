@@ -76,6 +76,15 @@ files containing the construct, not occurrences).
    conversion; `_LoadedPreferences`, `_assign_preferences`,
    `_mru_list` and the save side stay as they are.
 
+## Import mechanics: resolved (2026-10-23)
+
+The import-system blockers (implicit relative imports, the `module.so`
+suffix trick, the fake plugin packages, bare C-module imports, all
+`sys.path`/`__path__` manipulation) were eliminated by the import
+restructuring — see `devdocs/import-restructure.md`.  The Python-side
+port diff no longer contains any import/package mechanics; what remains
+here are the purely syntactic and semantic items below.
+
 ## Inventory of Python-2-only constructs (updated 2026-10-20)
 
 The modernize batch (see `devdocs/modernize-roadmap.md`) already

@@ -29,9 +29,9 @@ from Sketch import NullUndo, CreateMultiUndo, Undo, UndoAfter
 
 from Sketch import Point, NullPoint, UnionRects, Identity, Translation, Trafo
 
-from blend import Blend, MismatchError, BlendTrafo
-from properties import PropertyStack
-import properties
+from Sketch.Graphics.blend import Blend, MismatchError, BlendTrafo
+from Sketch.Graphics.properties import PropertyStack
+from Sketch.Graphics import properties
 
 
 # Class Draggable

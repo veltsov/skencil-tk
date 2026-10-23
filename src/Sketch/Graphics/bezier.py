@@ -35,10 +35,10 @@ pixmaps = Sketch.UI.skpixmaps.PixmapTk
 from Sketch.Modules._sketch import ContAngle, ContSmooth, ContSymmetrical, \
      SelNone, SelNodes, SelSegmentFirst, SelSegmentLast, Bezier, Line
 
-import handle
-from base import Primitive, Creator, Editor
-from blend import Blend, BlendPaths, MismatchError
-from properties import DefaultGraphicsProperties
+from Sketch.Graphics import handle
+from Sketch.Graphics.base import Primitive, Creator, Editor
+from Sketch.Graphics.blend import Blend, BlendPaths, MismatchError
+from Sketch.Graphics.properties import DefaultGraphicsProperties
 
 #
 # PolyBezier

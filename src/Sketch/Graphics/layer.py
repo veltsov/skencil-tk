@@ -24,10 +24,10 @@ from Sketch.Base.const import LAYER_STATE, LAYER_COLOR
 from Sketch import _, NullUndo, EmptyRect, InfinityRect, Point, _sketch
 from Sketch.Base import config
 
-import color
-import selinfo
+from Sketch.Graphics import color
+from Sketch.Graphics import selinfo
 
-from compound import EditableCompound
+from Sketch.Graphics.compound import EditableCompound
 
 class Layer(EditableCompound):
 

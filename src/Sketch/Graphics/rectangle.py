@@ -34,10 +34,10 @@ from Sketch.Base.warn import warn, INTERNAL
 import Sketch.UI.skpixmaps
 pixmaps = Sketch.UI.skpixmaps.PixmapTk
 
-from base import Primitive, RectangularPrimitive, RectangularCreator, Editor
-from bezier import PolyBezier
-import handle
-from properties import DefaultGraphicsProperties
+from Sketch.Graphics.base import Primitive, RectangularPrimitive, RectangularCreator, Editor
+from Sketch.Graphics.bezier import PolyBezier
+from Sketch.Graphics import handle
+from Sketch.Graphics.properties import DefaultGraphicsProperties
 
 class Rectangle(RectangularPrimitive):
 

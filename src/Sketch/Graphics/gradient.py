@@ -19,7 +19,7 @@
 #	color gradient classes
 #
 
-from blend import Blend, MismatchError
+from Sketch.Graphics.blend import Blend, MismatchError
 
 class Gradient:
 

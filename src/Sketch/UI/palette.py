@@ -26,7 +26,7 @@ from Sketch import Publisher, SketchError, _
 from Sketch.Base import config
 from Sketch import CreateRGBColor, StandardColors, GraphicsDevice, Identity
 
-from tkext import PyWidget
+from Sketch.UI.tkext import PyWidget
 
 
 class NameInUse(SketchError):

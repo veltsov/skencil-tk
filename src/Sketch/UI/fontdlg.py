@@ -32,10 +32,10 @@ from Sketch.Base.const import SELECTION
 from Sketch import Document, SimpleText, Identity
 from Sketch.Graphics.pagelayout import PageLayout
 
-from tkext import UpdatedListbox, MyEntry
-from sketchdlg import StylePropertyPanel
-from miniscroll import MiniScroller
-from view import SketchView
+from Sketch.UI.tkext import UpdatedListbox, MyEntry
+from Sketch.UI.sketchdlg import StylePropertyPanel
+from Sketch.UI.miniscroll import MiniScroller
+from Sketch.UI.view import SketchView
 
 std_sizes = (8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 25, 28, 32, 36, 48, 72)
 

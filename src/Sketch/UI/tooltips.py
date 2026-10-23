@@ -21,11 +21,17 @@
 
 from __future__ import print_function
 
+import sys
+
 from Tkinter import Toplevel, Label
 
 from Sketch.Base import config
 
-import tkext
+# tkext imports this module at its own module level (see tkext.py);
+# use the partial module from sys.modules to survive the cycle
+# (same idiom as Sketch.Base.warn, see devdocs/import-restructure.md).
+import Sketch.UI.tkext
+tkext = sys.modules['Sketch.UI.tkext']
 
 
 class Tooltips:

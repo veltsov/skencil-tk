@@ -47,16 +47,16 @@ from Sketch.Base.undodict import UndoDict
 from Sketch import Rect, Point, UnionRects, InfinityRect, Trafo, Rotation
 from Sketch import UndoRedo, Undo, CreateListUndo, NullUndo, UndoAfter
 
-import color, selinfo, pagelayout
+from Sketch.Graphics import color, selinfo, pagelayout
 
-from base import Protocols
-from layer import Layer, GuideLayer, GridLayer
-from group import Group
-from bezier import CombineBeziers
-from properties import EmptyProperties
-from pattern import SolidPattern
-import guide
-from selection import SizeSelection, EditSelection, TrafoSelection
+from Sketch.Graphics.base import Protocols
+from Sketch.Graphics.layer import Layer, GuideLayer, GridLayer
+from Sketch.Graphics.group import Group
+from Sketch.Graphics.bezier import CombineBeziers
+from Sketch.Graphics.properties import EmptyProperties
+from Sketch.Graphics.pattern import SolidPattern
+from Sketch.Graphics import guide
+from Sketch.Graphics.selection import SizeSelection, EditSelection, TrafoSelection
 
 from Sketch.Base.const import STYLE, SELECTION, EDITED, MODE, UNDO, REDRAW, LAYOUT
 from Sketch.Base.const import LAYER, LAYER_ORDER, LAYER_ACTIVE, GUIDE_LINES, GRID
@@ -65,7 +65,7 @@ from Sketch.Base.const import SelectSet, SelectAdd,SelectSubtract,SelectSubobjec
 from Sketch.Base.const import SCRIPT_OBJECT, SCRIPT_OBJECTLIST, SCRIPT_GET
 
 #
-from text import CanCreatePathText, CreatePathText
+from Sketch.Graphics.text import CanCreatePathText, CreatePathText
 
 
 # SketchDocument is derived from Protocols for the benefit of the loader
@@ -1402,7 +1402,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
             # object, turn the copy into a normal simple text object.
             # Thsi avoids some of the problems when you "Copy" an
             # internal path text.
-            import text
+            from Sketch.Graphics import text
             if copies.is_PathTextText:
                 properties = copies.Properties().Duplicate()
                 copies = text.SimpleText(text = copies.Text(),
@@ -1507,7 +1507,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
             self.begin_transaction(_("Create Mask Group"))
             try:
                 try:
-                    import maskgroup
+                    from Sketch.Graphics import maskgroup
                     self.add_undo(self.remove_selected())
                     objects = self.selection.GetObjects()
                     if config.preferences.topmost_is_mask:
@@ -1757,7 +1757,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
         elif len(path1) != len(path2):
             return
         if steps >= 2:
-            import blendgroup, blend
+            from Sketch.Graphics import blendgroup, blend
             self.begin_transaction(_("Blend"))
             try:
                 try:
@@ -1865,7 +1865,7 @@ class EditDocument(SketchDocument, QueueingPublisher):
             self.begin_transaction(_("Create Clone"))
             try:
                 try:
-                    from clone import CreateClone
+                    from Sketch.Graphics.clone import CreateClone
                     object = self.selection.GetObjects()[0]
                     clone, undo_clone = CreateClone(object)
                     self.add_undo(undo_clone)

@@ -26,8 +26,8 @@
 from Sketch import Rect, Trafo, IdentityMatrix, NullUndo, SKCache
 from Sketch.Base import main
 
-from base import GraphicsObject, RectangularObject
-from properties import EmptyProperties
+from Sketch.Graphics.base import GraphicsObject, RectangularObject
+from Sketch.Graphics.properties import EmptyProperties
 
 from Sketch.Base.const import SELECTION
 

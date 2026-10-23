@@ -40,16 +40,16 @@ from Sketch.Base.const import STATE, MODE, SELECTION, VIEW, POSITION, EDITED, \
      SelectSubobjects, SelectDrag, SelectGuide
 import Sketch
 
-import command
-import skpixmaps
+from Sketch.UI import command
+from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
-from tkext import MakeCommand, UpdatedMenu, utf8_to_latin1
+from Sketch.UI.tkext import MakeCommand, UpdatedMenu, utf8_to_latin1
 
-from cursorstack import CursorStack
-from view import SketchView
-from modes import MajorMode, TemporaryMode, WidgetWithModes, noop
+from Sketch.UI.cursorstack import CursorStack
+from Sketch.UI.view import SketchView
+from Sketch.UI.modes import MajorMode, TemporaryMode, WidgetWithModes, noop
 
-from converters import converters
+from Sketch.UI.converters import converters
 
 
 constraint_keysyms =   {'Control_L' : const.ControlMask,
@@ -1916,7 +1916,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
         # solid fill of color COL. If COL is None let the user
         # interactively select a color.
         if col is None:
-            import colordlg
+            from Sketch.UI import colordlg
             current_color = self.document.CurrentFillColor()
             if current_color is None:
                 current_color = StandardColors.white
@@ -1924,7 +1924,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
             if not col:
                 return
         from Sketch import SolidPattern
-        import styledlg
+        from Sketch.UI import styledlg
         styledlg.set_properties(self.master, self.document,
                                 _("Set Fill Color"), 'fill',
                                 {'fill_pattern' : SolidPattern(col)})
@@ -1941,7 +1941,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
             self.call_document_method('SetLineColor', color)
         else:
             from Sketch import SolidPattern
-            import styledlg
+            from Sketch.UI import styledlg
             styledlg.set_properties(self.master, self.document,
                                     _("Set Line Color"), 'line',
                                     {'line_pattern' : SolidPattern(color)})

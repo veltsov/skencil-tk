@@ -27,11 +27,11 @@ from Sketch.Base.const import GUIDE_LINES, SELECTION
 from Sketch import _, Point
 from Sketch.Base import config
 
-from tkext import UpdatedButton, MyEntry, UpdatedListbox
-from miniscroll import MiniScroller
+from Sketch.UI.tkext import UpdatedButton, MyEntry, UpdatedListbox
+from Sketch.UI.miniscroll import MiniScroller
 
-from sketchdlg import SketchPanel
-from lengthvar import LengthVar, create_unit_menu
+from Sketch.UI.sketchdlg import SketchPanel
+from Sketch.UI.lengthvar import LengthVar, create_unit_menu
 
 
 class GuidePanel(SketchPanel):

@@ -20,8 +20,8 @@ from math import atan2, hypot, pi, sin, cos
 
 from Sketch import Point, Rotation, Translation, Trafo, NullPoint, NullUndo
 
-from blend import Blend, MismatchError, BlendTrafo
-import color
+from Sketch.Graphics.blend import Blend, MismatchError, BlendTrafo
+from Sketch.Graphics import color
 
 
 

@@ -29,7 +29,7 @@ from Sketch.Base.warn import warn, USER
 from Sketch.Base.const import CHANGED
 from Sketch.Graphics.color import XRGBColor
 
-from tkext import PyWidget
+from Sketch.UI.tkext import PyWidget
 
 from Sketch.Lib import units
 

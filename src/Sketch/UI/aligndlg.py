@@ -24,9 +24,9 @@ from Tkinter import BOTH, LEFT, TOP, X, Y
 
 from Sketch.Base.const import SELECTION
 from Sketch import _
-from tkext import UpdatedButton, UpdatedCheckbutton, UpdatedRadiobutton
-from sketchdlg import CommandPanel
-import skpixmaps
+from Sketch.UI.tkext import UpdatedButton, UpdatedCheckbutton, UpdatedRadiobutton
+from Sketch.UI.sketchdlg import CommandPanel
+from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
 
 def make_button(*args, **kw):

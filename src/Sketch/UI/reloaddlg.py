@@ -22,10 +22,10 @@ from Sketch.Base.warn import pdebug, warn_tb, INTERNAL
 
 from Tkinter import Frame, Scrollbar
 from Tkinter import RIGHT, BOTTOM, X, Y, BOTH, TOP
-from tkext import UpdatedButton, UpdatedListbox, COMMAND
+from Sketch.UI.tkext import UpdatedButton, UpdatedListbox, COMMAND
 
-from sketchdlg import SketchPanel
-import prompt
+from Sketch.UI.sketchdlg import SketchPanel
+from Sketch.UI import prompt
 
 
 class ReloadPanel(SketchPanel):

@@ -16,14 +16,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 
-import sketchdlg
+from Sketch.UI import sketchdlg
 from Tkinter import Frame
 from Tkinter import BOTTOM, X, BOTH, TOP, CENTER
-from tkext import UpdatedButton, CommandButton
+from Sketch.UI.tkext import UpdatedButton, CommandButton
 
 from Sketch import _
 
-from sketchdlg import CommandPanel
+from Sketch.UI.sketchdlg import CommandPanel
 
 
 class CurvePanel(CommandPanel):

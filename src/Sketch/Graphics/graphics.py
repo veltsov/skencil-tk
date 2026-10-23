@@ -47,10 +47,10 @@ from Sketch.Modules import _sketch
 from Sketch import Point, Polar, Rect, UnitRect, Identity, SingularMatrix, \
      Trafo, Rotation, Scale, Translation, Undo, TransformRectangle
 
-from color import StandardColors
-import color
-from properties import SolidLine, PropertyStack
-from pattern import SolidPattern, EmptyPattern
+from Sketch.Graphics.color import StandardColors
+from Sketch.Graphics import color
+from Sketch.Graphics.properties import SolidLine, PropertyStack
+from Sketch.Graphics.pattern import SolidPattern, EmptyPattern
 
 
 # approximate a unit circle

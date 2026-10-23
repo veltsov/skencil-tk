@@ -19,7 +19,7 @@
 from Sketch.Base import config
 from Sketch.Base.const import CHANGED
 from Sketch.Lib.units import unit_dict, unit_names
-from tkext import UpdatedLabel, UpdatedMenu, MenuCommand
+from Sketch.UI.tkext import UpdatedLabel, UpdatedMenu, MenuCommand
 
 # NLS:
 formats = {'in': '(%3.3f", %3.3f")',

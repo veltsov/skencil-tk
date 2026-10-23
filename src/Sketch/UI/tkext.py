@@ -29,8 +29,8 @@ from Tkinter import Widget, Menu, Menubutton, Frame
 from Tkinter import LEFT, DISABLED, NORMAL, END, RAISED, Y, X, TOP
 import Tkinter
 
-import command
-from skpixmaps import PixmapTk
+from Sketch.UI import command
+from Sketch.UI.skpixmaps import PixmapTk
 
 class SketchDropTarget:
 
@@ -513,7 +513,7 @@ class MultiButton(UpdatedButton):
             UpdatedButton._call_cmd(*(self,) + args)
 
 
-import tooltips
+from Sketch.UI import tooltips
 
 class CommandButton(Tkinter.Button):
 
@@ -750,7 +750,7 @@ def MessageDialog(master, title, message, buttons = Ok, default = 0,
                   icon = 'warning'):
     if not isinstance(buttons, tuple):
         buttons = (buttons,)
-    from sketchdlg import MessageDialog
+    from Sketch.UI.sketchdlg import MessageDialog
     dlg = MessageDialog(master, title, message, buttons, default, icon)
     result = dlg.RunDialog()
     if result is not None:
@@ -802,7 +802,7 @@ class ColorButton(WidgetWithCommand, Tkinter.Button, SketchDropTarget):
         return self.color
 
     def _call_cmd(self, *args):
-        import colordlg
+        from Sketch.UI import colordlg
         new_color = colordlg.GetColor(self.dialog_master, self.color)
         if new_color:
             self.set_color(new_color)

@@ -20,7 +20,7 @@ import operator
 
 from Sketch.Base.warn import warn, USER
 
-from script import SafeScript
+from Sketch.Scripting.script import SafeScript
 
 
 class ScriptRegistry:

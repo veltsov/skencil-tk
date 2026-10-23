@@ -142,48 +142,48 @@ def RegisterCommands(aclass):
 
 # from Graphics.base import GraphicsObject, Primitive
 
-from Graphics.arrow import StandardArrows, Arrow
-from Graphics.properties import Style, FillStyle, EmptyFillStyle, \
+from Sketch.Graphics.arrow import StandardArrows, Arrow
+from Sketch.Graphics.properties import Style, FillStyle, EmptyFillStyle, \
      LineStyle, EmptyLineStyle, PropertyStack, EmptyProperties
 
-from Graphics.blend import MismatchError, Blend, BlendTrafo
-from Graphics.blendgroup import BlendGroup, CreateBlendGroup, \
+from Sketch.Graphics.blend import MismatchError, Blend, BlendTrafo
+from Sketch.Graphics.blendgroup import BlendGroup, CreateBlendGroup, \
      BlendInterpolation
 
-from Graphics.color import CreateRGBColor, XRGBColor, CreateCMYKColor, \
+from Sketch.Graphics.color import CreateRGBColor, XRGBColor, CreateCMYKColor, \
      StandardColors
-from Graphics.compound import Compound, EditableCompound
-from Graphics.dashes import StandardDashes
+from Sketch.Graphics.compound import Compound, EditableCompound
+from Sketch.Graphics.dashes import StandardDashes
 
-from Graphics.document import EditDocument, SelectionMode, EditMode
+from Sketch.Graphics.document import EditDocument, SelectionMode, EditMode
 Document = EditDocument
 
-from Graphics.font import GetFont
-from Graphics.gradient import MultiGradient, CreateSimpleGradient
-from Graphics.graphics import SimpleGC, GraphicsDevice, InvertingDevice, \
+from Sketch.Graphics.font import GetFont
+from Sketch.Graphics.gradient import MultiGradient, CreateSimpleGradient
+from Sketch.Graphics.graphics import SimpleGC, GraphicsDevice, InvertingDevice, \
      HitTestDevice
 
-from Graphics.group import Group
-from Graphics.guide import GuideLine
-from Graphics.image import Image, load_image, ImageData
-from Graphics.layer import Layer, GuideLayer, GridLayer
+from Sketch.Graphics.group import Group
+from Sketch.Graphics.guide import GuideLine
+from Sketch.Graphics.image import Image, load_image, ImageData
+from Sketch.Graphics.layer import Layer, GuideLayer, GridLayer
 
-from Graphics.maskgroup import MaskGroup
+from Sketch.Graphics.maskgroup import MaskGroup
 
-from Graphics.pattern import EmptyPattern, SolidPattern, HatchingPattern, \
+from Sketch.Graphics.pattern import EmptyPattern, SolidPattern, HatchingPattern, \
      LinearGradient, RadialGradient, ConicalGradient, ImageTilePattern
 
-from Graphics.plugobj import PluginCompound, TrafoPlugin
+from Sketch.Graphics.plugobj import PluginCompound, TrafoPlugin
 
-from Graphics.rectangle import Rectangle, RectangleCreator
-from Graphics.ellipse import Ellipse, EllipseCreator
-from Graphics.bezier import PolyBezier, PolyBezierCreator, PolyLineCreator, \
+from Sketch.Graphics.rectangle import Rectangle, RectangleCreator
+from Sketch.Graphics.ellipse import Ellipse, EllipseCreator
+from Sketch.Graphics.bezier import PolyBezier, PolyBezierCreator, PolyLineCreator, \
     CombineBeziers, CreatePath, ContAngle, ContSmooth, ContSymmetrical
 
-from Graphics.psdevice import PostScriptDevice
+from Sketch.Graphics.psdevice import PostScriptDevice
 
 
-from Graphics.text import SimpleText, SimpleTextCreator, PathText
+from Sketch.Graphics.text import SimpleText, SimpleTextCreator, PathText
 
 
 def init_lib():

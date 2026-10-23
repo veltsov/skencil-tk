@@ -27,11 +27,11 @@ from Sketch.Graphics import document
 from Sketch.Base.const import CLIPBOARD
 
 from Tkinter import Tk, TclError
-import tkext
+from Sketch.UI import tkext
 
-import tooltips
+from Sketch.UI import tooltips
 
-import skpixmaps
+from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
 
 #
@@ -260,7 +260,7 @@ class SketchApplication(TkApplication, Publisher):
         config.add_options(root)
 
     def build_window(self):
-        from mainwindow import SketchMainWindow
+        from Sketch.UI.mainwindow import SketchMainWindow
         self.main_window = SketchMainWindow(self, self.filename,
                                             self.run_script)
 

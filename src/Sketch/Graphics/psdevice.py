@@ -35,10 +35,10 @@ from Sketch.Lib.psmisc import quote_ps_string, make_textline
 from Sketch import IdentityMatrix
 from Sketch.Lib import type1
 
-from graphics import CommonDevice
-import color
-import pagelayout
-import font
+from Sketch.Graphics.graphics import CommonDevice
+from Sketch.Graphics import color
+from Sketch.Graphics import pagelayout
+from Sketch.Graphics import font
 
 
 class _DummyLineStyle:

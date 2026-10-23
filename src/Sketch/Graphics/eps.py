@@ -28,8 +28,8 @@ IsEpsFileStart = dscparser.IsEpsFileStart
 from Sketch import _, Point
 from Sketch.Base import config
 
-from base import GraphicsObject
-from external import ExternalData, get_cached, ExternalGraphics
+from Sketch.Graphics.base import GraphicsObject
+from Sketch.Graphics.external import ExternalData, get_cached, ExternalGraphics
 
 
 gs_command = ('gs -sDEVICE=ppmraw -r%(resolution)d -dNOPAUSE -dSAFER -q'

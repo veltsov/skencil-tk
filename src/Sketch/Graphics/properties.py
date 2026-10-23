@@ -24,9 +24,9 @@ from Sketch import Point
 from Sketch.Base import config
 from math import sqrt
 
-from pattern import SolidPattern, EmptyPattern
-from color import StandardColors
-from blend import Blend
+from Sketch.Graphics.pattern import SolidPattern, EmptyPattern
+from Sketch.Graphics.color import StandardColors
+from Sketch.Graphics.blend import Blend
 
 
 class Style(Publisher):

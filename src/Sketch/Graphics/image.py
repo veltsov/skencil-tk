@@ -28,7 +28,7 @@ import PIL.Image, PIL.ImageChops
 from Sketch import _, RegisterCommands
 from Sketch.UI.command import AddCmd
 
-from external import ExternalData, get_cached, ExternalGraphics
+from Sketch.Graphics.external import ExternalData, get_cached, ExternalGraphics
 
 class ImageData(ExternalData):
 

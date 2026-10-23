@@ -121,22 +121,63 @@ works during `Sketch/__init__.py` execution (Sketch is already in
 used anywhere — also because `Script`-style payload files may be
 exec'd top-level, where relative syntax raises `ValueError`.
 
-## Executed batches (each: build + test suite + Xvfb smoke)
+## Status: executed (B0–B6, 2026-10-23); 85/85 tests green after every
+batch, baselines unchanged
 
 - **B0** — this document.
 - **B1** — `Base` real (`__init__.py`; imports to `Sketch.Base.*`;
   `__path__` loop for `Base` removed).
 - **B2** — C module canonicalization: setup.py Extension names
-  `Sketch.Modules.pax` / `Sketch.Modules._sketch`; Python imports to
-  `Sketch.Modules.*`; `X.py` to `Sketch/x11.py`; `Modules/__init__.py`;
-  `Modules` `__path__` extension + `sys.path` insert removed.
+  `Sketch.Modules.pax` / `_sketch` / `skread` / `_type1` (the old
+  Extension names never matched the C init functions; they only worked
+  through the legacy `module.so` suffix, dropped in py3); Python
+  imports to `Sketch.Modules.*`; `X.py` to `Sketch/x11.py`;
+  `Modules/__init__.py`; `Modules` `__path__` extension and the
+  `sys.path` insert removed.
 - **B3** — `gtkutils.py` to `UI/tkutils.py`.
 - **B4** — `src/Script` to `src/Sketch/Scripts`; `standard_scripts`
   names; script-internal sibling imports.
 - **B5** — `src/Plugins` to `src/Sketch/Plugins`; real `__init__.py`s;
-  loader on `importlib`; user-dir `__path__` registration;
-  `create_packages`/`imp` deleted; plugin imports rewritten.
-- **B6** — sweep of all remaining bare sibling imports (UI, Graphics,
-  Lib, Scripting, Sketch/__init__); `userhooks` by file path;
-  `build&copy` / packages list updates; docs.
+  loader on `importlib`; scanned directories registered on their
+  package's `__path__` (user plugins import as `Sketch.Plugins.*` with
+  no `__init__.py` of their own); `create_packages` prefers real
+  packages and only fakes user-defined nested categories; `imp` fully
+  removed; all plugin-internal imports rewritten.
+- **B6** — sweep of all remaining bare sibling imports (58 files in
+  UI, Graphics, Lib, Scripting, plus `Sketch/__init__.py` itself);
+  `userhooks` executed by file path — the last `sys.path` insertion
+  is gone.
+
+## Additional findings made during execution
+
+1. **The C extensions import sibling modules by bare name at init:**
+   `_sketchmodule.c` did `PyImport_ImportModule("pax")` and
+   `pstokenize.c` `PyImport_ImportModule("streamfilter")`.  Both are
+   canonical now (`Sketch.Modules.pax` / `Sketch.Modules.streamfilter`).
+   This was masked during B2 by a stale build tree (see item 3).
+2. **Module-level import cycles** survive the from-submodule form only
+   via the `sys.modules` partial-module idiom (plain `import` used to
+   short-circuit them implicitly).  Two cycles existed:
+   `config -> connector -> warn -> config` (fixed in B1) and
+   `tkext -> tooltips -> tkext` (fixed in B6, `tooltips.py`).  The
+   idiom: `import Sketch.PKG.X` + `X = sys.modules['Sketch.PKG.X']`.
+3. **distutils quirks:** `build_scripts` skipped recopying the changed
+   launchers (run `python2 setup.py build_scripts --force` after
+   changing `src/skencil`/`src/sk2ps`); the known mtime-equality trap
+   also applies to renamed extensions (delete the stale `.o`).
+4. **User code had to be updated, as planned:**
+   `~/.sketch/userhooks.py` (`import Sketch.config` ->
+   `from Sketch.Base import config`) and the user plugin
+   `~/.sketch/Plugins/latextext2.py` (`from Sketch import ..., main` ->
+   `from Sketch.Base import main, load`).  Both failures surfaced as
+   modal dialogs / missing fonts under the UI (the hooks extend the
+   font path), i.e. they fail loudly, not silently.
+5. **Remaining non-import py2 syntax** (for the py3 port): a py3
+   `compileall` over `Sketch/` reports only 22 SyntaxErrors (old-style
+   except/raise remnants in a handful of files) — the import-level py3
+   blockers are all gone.  Pre-existing broken modules unrelated to
+   this work and left as-is: `svgloader.py` (`xml.sax.saxlib`, roadmap
+   item C1) and `simpleblocktext.py` (imports a `lib.blocktext` that
+   does not exist anywhere in the tree).
+
 

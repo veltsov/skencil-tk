@@ -1,6 +1,6 @@
 # Tamito KAJIYAMA <25 June 2002>
 
-import base
+from Sketch.Scripts.pathutils import base
 
 from Sketch.Scripts.pathutils.minus import minus
 

@@ -27,8 +27,8 @@ from Sketch.Base.warn import warn_tb, INTERNAL
 from Sketch.UI.command import AddCmd
 
 from Sketch import _, IntersectRects, RegisterCommands
-from compound import EditableCompound
-from properties import EmptyFillStyle, EmptyLineStyle
+from Sketch.Graphics.compound import EditableCompound
+from Sketch.Graphics.properties import EmptyFillStyle, EmptyLineStyle
 
 class MaskGroup(EditableCompound):
 

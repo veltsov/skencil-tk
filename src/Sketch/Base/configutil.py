@@ -149,11 +149,34 @@ def _assign_preferences(values):
         setattr(preferences, key, value)
 
 
+def _load_userhooks():
+    # Execute the optional userhooks.py from the user config directory
+    # by file path; no sys.path manipulation (import-restructure.md).
+    filename = os.path.join(config.user_config_dir, 'userhooks.py')
+    if not os.path.isfile(filename):
+        return
+    try:
+        f = open(filename)
+    except IOError:
+        warn_tb(USER, "Cannot import the userhooks file")
+        return
+    try:
+        data = f.read()
+    finally:
+        f.close()
+    # Execute by file path into a registered module object; this works
+    # identically under python3 (no imp module, no sys.path changes).
+    import types
+    module = types.ModuleType('userhooks')
+    sys.modules['userhooks'] = module
+    try:
+        exec(compile(data, filename, 'exec'), module.__dict__)
+    except:
+        warn_tb(USER, "Cannot import the userhooks file")
+
+
 def load_user_preferences():
     # Load the user specific configuration.
-    if os.path.isdir(config.user_config_dir):
-        sys.path.insert(0, config.user_config_dir)
-
     filename = os.path.join(config.user_config_dir, config.user_settings_file)
     if os.path.isfile(filename):
         # Execute the file into an intermediate object and convert the
@@ -168,22 +191,7 @@ def load_user_preferences():
             warn_tb(USER, "Cannot read the preferences file")
         else:
             _assign_preferences(loaded.__dict__)
-    try:
-        import userhooks
-    except ImportError:
-        tb = sys.exc_info()[2]
-        try:
-            if tb.tb_next is not None:
-                # The ImportError exception was raised from inside the
-                # userhooks module.
-                warn_tb(USER, "Cannot import the userhooks file")
-            else:
-                # There's no userhooks module.
-                pass
-        finally:
-            del tb
-    except:
-        warn_tb(USER, "Cannot import the userhooks file")
+    _load_userhooks()
 
 
 def _string_repr(s):

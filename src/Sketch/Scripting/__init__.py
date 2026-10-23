@@ -17,8 +17,8 @@
 # USA
 
 
-from registry import ScriptRegistry
-from script import SafeScript, AdvancedScript
+from Sketch.Scripting.registry import ScriptRegistry
+from Sketch.Scripting.script import SafeScript, AdvancedScript
 
 Registry = ScriptRegistry()
 

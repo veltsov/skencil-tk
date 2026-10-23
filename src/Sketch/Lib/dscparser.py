@@ -30,7 +30,7 @@ import re, string
 from Sketch.Modules import streamfilter
 
 try:
-    from warn import warn, INTERNAL
+    from Sketch.Base.warn import warn, INTERNAL
 except ImportError:
     def warn(*args):
         pass
