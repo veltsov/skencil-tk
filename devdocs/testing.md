@@ -112,18 +112,26 @@ input test).  All comparisons go through `test/testsupport.py`.
   Guarded by `test_typing_via_call_object_method` and
   `test_command_menu_names_are_unicode` in
   `test/model/test_glyphs.py`.
-- **`u'...'` in the preferences file (same regression class, fixed
-  2026-10-22).**  `configutil.save_repr` used plain `repr`, so
-  unicode preference values (the `mru_files` list in particular,
-  `sample_text` potentially) were saved as `u'...'` with `\u` escapes
-  into `preferences.py`.  Fix: `save_repr` serializes strings and
-  containers `.sk`-style via `util.skrepr` (promoted from `sksaver.py`
-  to `Sketch/Lib/util.py`), and `mru_files` is normalized back to
-  unicode after loading (`normalize_mru_files`) — bytes read back by
-  `execfile` otherwise poison the `filename in mru_list` lookups
-  (UnicodeWarning/UnicodeDecodeError on mixed kinds).  Guarded by
-  `test_preferences_save_repr_uses_sk_style` and
-  `test_preferences_mru_normalized_to_unicode_on_load` in
+- **`u'...'` in the preferences file (same regression class; fixed
+  2026-10-22, superseded 2026-10-23).**  `configutil.save_repr` used
+  plain `repr`, so unicode preference values (the `mru_files` list in
+  particular, `sample_text` potentially) were saved as `u'...'` with
+  `\u` escapes into `preferences.py`.  The 2026-10-22 fix serialized
+  `.sk`-style (utf-8 `\x`-escaped byte reprs) and normalized
+  `mru_files` after loading — but the post-hoc fix-up assignment
+  compared the byte values read by `execfile` against the unicode
+  list inside `ProgramDefaults.__setattr__`, printing the startup
+  `UnicodeWarning` from `config.py:112` for non-ascii MRU names.
+  Current fix: the preferences file has its own format — plain utf-8
+  string literals (coding cookie in the header, no `u'...'` prefix,
+  no `\x` escapes; identical syntax under py3, where no conversion is
+  needed at all) — and the loader executes the file into an
+  intermediate attribute bag (`configutil._LoadedPreferences`),
+  converting all values strictly to unicode before anything is
+  assigned to the live preferences object.  Guarded by
+  `test_preferences_save_repr_plain_utf8_literals`,
+  `test_preferences_load_converts_to_unicode` and
+  `test_preferences_undecodable_values_dropped` in
   `test/model/test_unicode.py`.
 
 - **bm()/im() ids.**  Saved `.sk` files embed `id(image_data)` in

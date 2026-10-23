@@ -56,6 +56,22 @@ Known instances (see also `modernize-roadmap.md`, section C, item 7):
    encodes the tex wrapper to utf-8 before writing (the wrapper declares
    `\usepackage[utf8]{inputenc}`, so utf-8 is exactly what the
    toolchain expects).
+5. **the preferences file round trip** (found 2026-10-23 via the
+   startup console): the preferences file serialized unicode
+   `.sk`-style (utf-8 `\x`-escaped byte reprs), `execfile` read the
+   values back as byte strings, and the post-hoc `normalize_mru_files`
+   fix-up assignment compared bytes against unicode inside
+   `ProgramDefaults.__setattr__` → `UnicodeWarning` at `config.py:112`
+   on every startup with non-ascii MRU names.
+   **Fixed**: the preferences file now uses plain utf-8 string
+   literals (its own format; coding cookie in the header, no u prefix,
+   no \x escapes — identical syntax under py3, where no conversion is
+   needed) and the loader executes it into an intermediate attribute
+   bag, converting all values strictly to unicode before assigning
+   them to the live preferences object
+   (`configutil._LoadedPreferences`/`_decode_item`).  The py2
+   str/unicode handling for preferences is contained in the
+   reading/writing code (`configutil`) only.
 
 More instances of this class are expected; the py3 port changes the
 semantics again (`str` unifies both, but bytes handling becomes

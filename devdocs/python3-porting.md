@@ -59,6 +59,23 @@ files containing the construct, not occurrences).
    which is the Stage-4 checklist for the remaining str/bytes work
    (text content and file names stay byte strings by design).
 
+   The **preferences file** (`~/.sketch/preferences.py`) is already
+   py3-ready (2026-10-23): `configutil.save_repr` writes plain
+   utf-8 string literals — the characters directly, no `u'...'`
+   prefix, no `\x` escapes, `-*- coding: utf-8 -*-` cookie in the
+   header — so py3 parses the file with no conversion at all.  The
+   py2-specific part is contained in the reading code
+   (`configutil.load_user_preferences`): the file is executed into an
+   intermediate attribute bag (`_LoadedPreferences`) and all values
+   are converted strictly to unicode (`_decode_item`) before they are
+   assigned to the live preferences object; `mru_files` is padded to
+   its four slots (`_mru_list`).  For the port: replace `execfile`
+   (gone in py3) with
+   `exec(compile(open(filename, 'rb').read(), filename, 'exec'), ...)`
+   (compile honors the coding cookie) and delete the `_decode_item`
+   conversion; `_LoadedPreferences`, `_assign_preferences`,
+   `_mru_list` and the save side stay as they are.
+
 ## Inventory of Python-2-only constructs (updated 2026-10-20)
 
 The modernize batch (see `devdocs/modernize-roadmap.md`) already

@@ -221,54 +221,191 @@ def test_reader_decodes_user_strings():
     assert font.EncodedText(texts[0].text) == text_bytes
 
 
-# ------------------------------------------- preferences file serialization
+# --------------------------------------------- preferences file format
 
-def test_preferences_save_repr_uses_sk_style():
-    # preferences.py is written via configutil.save_repr; unicode
-    # strings and containers of them (e.g. the mru_files list) must be
-    # serialized as utf-8 byte-string reprs -- the .sk style --, not as
-    # u'...' with \u escapes (the same regression class as the .sk
-    # u'...' leak, see devdocs/testing.md)
+# '/изо' and '/рус/Слой.sk' -- non-ascii preference values
+PREFS_U_DIR = u'\u0438\u0437\u043e'
+PREFS_U_NAME = u'/\u0440\u0443\u0441/\u0421\u043b\u043e\u0439.sk'
+
+
+def test_preferences_save_repr_plain_utf8_literals():
+    # preferences.py is written via configutil.save_repr as plain
+    # string literals containing the utf-8 characters directly -- no
+    # u'...' prefixes and no \x byte escapes -- so the file has the
+    # same plain syntax under python2 and python3 (where no conversion
+    # is needed at all)
     sk = testsupport.sketch()
     from Sketch import configutil, Point
 
-    mru = [u'\u0421\u043b\u043e\u0439.sk', u'plain.sk']
-    text = configutil.save_repr(mru)
-    assert 'u\'' not in text and 'u"' not in text
-    assert '\\xd0' in text            # the utf-8 bytes of the Cyrillic name
-    assert eval(text) == [mru[0].encode('utf-8'), mru[1].encode('utf-8')]
+    text = configutil.save_repr([PREFS_U_NAME, 'plain.sk'])
+    assert "u'" not in text and 'u"' not in text
+    assert '\\x' not in text                       # no byte escapes
+    assert PREFS_U_NAME in text                    # characters as-is
 
-    # single strings, tuples, dicts and Points
-    s = configutil.save_repr(u'\u0444')
-    assert 'u\'' not in s and eval(s) == u'\u0444'.encode('utf-8')
-    t = configutil.save_repr((u'\u0444', 'x'))
-    assert 'u\'' not in t and eval(t) == (u'\u0444'.encode('utf-8'), 'x')
-    d = configutil.save_repr({u'\u0444': [u'\u043b']})
-    assert 'u\'' not in d and eval(d) == {u'\u0444'.encode('utf-8'):
-                                          [u'\u043b'.encode('utf-8')]}
+    # only the characters that would break the literal are escaped
+    assert configutil.save_repr("a'b\\c\nd\x01e") == \
+        "'a\\'b\\\\c\\nd\\x01e'"
+    # byte-string stragglers (ascii-only Tk values) are decoded first
+    assert configutil.save_repr('plain.sk') == "'plain.sk'"
     assert configutil.save_repr(Point(1, 2)) == 'Point(1, 2)'
 
 
-def test_preferences_mru_normalized_to_unicode_on_load():
-    # execfile reads the preferences back as byte strings; the loaded
-    # mru_files must be normalized to unicode (K2) -- otherwise the
-    # mixed kinds crash `filename in mru_list' comparisons for
-    # non-ascii names
+def _write_preferences_file(dirpath, lines):
+    import os
+    if not os.path.isdir(dirpath):
+        os.makedirs(dirpath)
+    path = os.path.join(dirpath, 'preferences.py')
+    with open(path, 'wb') as f:
+        f.write(''.join(lines).encode('utf-8'))
+    return path
+
+
+def test_preferences_load_converts_to_unicode():
+    # save_user_preferences writes plain utf-8 literals; the loader
+    # executes the file into an intermediate attribute bag and
+    # converts the values to unicode before they reach the live
+    # preferences object (devdocs/string-handling.md).  The load below
+    # runs with UnicodeWarning raised as an error: no mixed bytes/
+    # unicode comparison may happen anywhere on the path.
     sk = testsupport.sketch()
+    import os
+    import sys
+    import warnings
     from Sketch import config, configutil
 
-    u_name = u'\u0421\u043b\u043e\u0439.sk'
-    old = config.preferences.mru_files
+    mru = [PREFS_U_NAME, 'plain.sk', '', '']
+    prefs_dir = testsupport.output_dir('prefs')
+    old_dir = config.user_config_dir
+    old_file = config.user_settings_file
+    old_mru = config.preferences.mru_files
+    old_image_dir = config.preferences.image_dir
     try:
-        config.preferences.mru_files = [u_name.encode('utf-8'), 'plain.sk',
-                                        u'\u0444'.encode('utf-8')]
-        configutil.normalize_mru_files()
-        assert config.preferences.mru_files == [u_name, 'plain.sk', u'\u0444']
-        # the runtime add/remove lookups work on the normalized list
+        config.user_config_dir = prefs_dir
+        config.user_settings_file = 'preferences.py'
+        config.preferences.mru_files = mru
+        config.preferences.image_dir = PREFS_U_DIR
+        configutil.save_user_preferences()
+
+        path = os.path.join(prefs_dir, 'preferences.py')
+        with open(path, 'rb') as f:
+            data = f.read()
+        assert data.startswith('#### -*- coding: utf-8 -*-\n')
+        assert "u'" not in data
+        assert PREFS_U_NAME.encode('utf-8') in data
+
+        # simulate a fresh start: defaults, then load
+        config.preferences.mru_files = ['', '', '', '']
+        config.preferences.image_dir = ''
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', UnicodeWarning)
+            configutil.load_user_preferences()
+
+        assert config.preferences.mru_files == mru
+        assert config.preferences.image_dir == PREFS_U_DIR
+        assert isinstance(config.preferences.mru_files[0], unicode)
+        # the runtime mru lookups work with non-ascii names
         configutil.add_mru_file(u'\u0444')
         assert config.preferences.mru_files[0] == u'\u0444'
     finally:
-        config.preferences.mru_files = old
+        config.user_config_dir = old_dir
+        config.user_settings_file = old_file
+        config.preferences.mru_files = old_mru
+        config.preferences.image_dir = old_image_dir
+        if prefs_dir in sys.path:
+            sys.path.remove(prefs_dir)
+
+
+def test_preferences_undecodable_values_dropped():
+    # a hand-written (or old-format) preferences file may contain byte
+    # strings that are not valid utf-8: the loader warns on the
+    # console, skips the undecodable mru_files entries and resets
+    # image_dir to the current directory
+    sk = testsupport.sketch()
+    import os
+    import sys
+    from StringIO import StringIO
+    from Sketch import config, configutil
+
+    prefs_dir = testsupport.output_dir('prefs')
+    old_dir = config.user_config_dir
+    old_file = config.user_settings_file
+    old_mru = config.preferences.mru_files
+    old_image_dir = config.preferences.image_dir
+    had_sample = hasattr(config.preferences, 'sample_text')
+    old_sample = getattr(config.preferences, 'sample_text', None)
+    try:
+        config.user_config_dir = prefs_dir
+        config.user_settings_file = 'preferences.py'
+        _write_preferences_file(prefs_dir, [
+            '#### -*- coding: utf-8 -*-\n',
+            "preferences.mru_files = ['good.sk', "
+            "'\\xff\\xfebad', 'also good.sk']\n",
+            "preferences.image_dir = '\\xff\\xfe'\n",
+            "preferences.sample_text = 'plain text'\n",
+        ])
+
+        buf = StringIO()
+        old_stderr = sys.stderr
+        sys.stderr = buf
+        try:
+            configutil.load_user_preferences()
+        finally:
+            sys.stderr = old_stderr
+
+        assert config.preferences.mru_files == ['good.sk', 'also good.sk',
+                                                '', '']
+        assert config.preferences.image_dir == os.getcwdu()
+        assert config.preferences.sample_text == 'plain text'
+        assert isinstance(config.preferences.sample_text, unicode)
+        assert buf.getvalue().count('not valid utf-8') == 2
+    finally:
+        config.user_config_dir = old_dir
+        config.user_settings_file = old_file
+        config.preferences.mru_files = old_mru
+        config.preferences.image_dir = old_image_dir
+        if had_sample:
+            config.preferences.sample_text = old_sample
+        else:
+            config.preferences.__dict__.pop('sample_text', None)
+        if prefs_dir in sys.path:
+            sys.path.remove(prefs_dir)
+
+
+def test_preferences_short_mru_list_padded():
+    # a hand-edited preferences file may contain fewer mru entries
+    # than the four slots that the LoadMRU0..3 commands access
+    # unconditionally in mainwindow.py (name_cb and LoadFromFile);
+    # the loader pads the list to four entries (regression:
+    # IndexError in the name_cb crashed the startup)
+    sk = testsupport.sketch()
+    import os
+    import sys
+    from Sketch import config, configutil
+
+    prefs_dir = testsupport.output_dir('prefs')
+    old_dir = config.user_config_dir
+    old_file = config.user_settings_file
+    old_mru = config.preferences.mru_files
+    try:
+        config.user_config_dir = prefs_dir
+        config.user_settings_file = 'preferences.py'
+        _write_preferences_file(prefs_dir, [
+            '#### -*- coding: utf-8 -*-\n',
+            "preferences.mru_files = ['only.sk', 'two.sk']\n",
+        ])
+        configutil.load_user_preferences()
+        mru = config.preferences.mru_files
+        assert mru == ['only.sk', 'two.sk', '', '']
+        assert isinstance(mru[0], unicode)
+        # the unconditional accesses of the LoadMRU commands work
+        assert mru[3] == ''
+        assert os.path.split(mru[3])[1] == ''
+    finally:
+        config.user_config_dir = old_dir
+        config.user_settings_file = old_file
+        config.preferences.mru_files = old_mru
+        if prefs_dir in sys.path:
+            sys.path.remove(prefs_dir)
 
 
 def test_reader_decodes_style_names_for_use_style():

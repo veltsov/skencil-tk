@@ -92,12 +92,18 @@ and normalize at construction.
 * Import filters: SVG (SAX unicode), AI/WMF/CMX/XFig (bytes) — text
   content (K3); the byte/unicode forms are coerced to glyph ids when
   the `SimpleText` is constructed (`Font.TextGids`).
-* The preferences file — saved via `configutil.save_repr`, which
-  serializes strings and containers of them `.sk`-style
-  (`util.skrepr`: utf-8 `\x`-escaped byte reprs, no `u'...'` prefix)
-  and is executed on load; `mru_files` is normalized back to unicode
-  after loading (`configutil.normalize_mru_files`), so the model only
-  ever sees K2 unicode.
+* The preferences file — written by `configutil.save_repr` as plain
+  string literals containing the utf-8 characters directly (only `\`,
+  `'` and C0 controls escaped; the header declares
+  `-*- coding: utf-8 -*-`; no `u'...'` prefix, no `\x` byte escapes).
+  The syntax is identical under python3, where no conversion is
+  needed at all.  On load (python2) the file is executed into an
+  intermediate attribute bag (`configutil._LoadedPreferences`) and
+  `_decode_item` converts the byte strings strictly to unicode (K2)
+  before anything is assigned to the live `preferences` object;
+  undecodable values are dropped with a console warning (undecodable
+  list entries are skipped, `image_dir` is reset to the current
+  directory), so the model only ever sees K2 unicode.
 
 ## Sink rules
 
