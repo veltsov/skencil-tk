@@ -2,7 +2,7 @@
 
 import base
 
-from minus import minus
+from Sketch.Scripts.pathutils.minus import minus
 
 def run_script(context):
     objects = base.get_selection(context)

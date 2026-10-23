@@ -1,6 +1,6 @@
 # Tamito KAJIYAMA <2 July 2002>
 
-import base
+from Sketch.Scripts.pathutils import base
 
 def run_script(context, target):
     objects = base.get_selection(context)

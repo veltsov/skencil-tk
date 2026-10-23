@@ -464,15 +464,15 @@ class ProgramDefaults(connector.Publisher):
     #   Load these standard scripts at runtime in interactive mode. This
     #   is really just a list of module names that are passed to
     #   __import__, but don't count on it.
-    standard_scripts = ["Script.export_raster", "Script.simple_separation",
-                        "Script.spread", "Script.reload_image",
-                        "Script.create_star", "Script.create_star_outline",
-                        "Script.create_spiral", "Script.read_gimp_path",
-                        "Script.save_selection", "Script.inspect_beziers",
-                        "Script.select_same_fill_color", "Script.select_same_line_color",
-                        "Script.average_points", "Script.TeX",
-                        "Script.transform", "Script.curvetext",
-                        "Script.pathutils"
+    standard_scripts = ["Sketch.Scripts.export_raster", "Sketch.Scripts.simple_separation",
+                        "Sketch.Scripts.spread", "Sketch.Scripts.reload_image",
+                        "Sketch.Scripts.create_star", "Sketch.Scripts.create_star_outline",
+                        "Sketch.Scripts.create_spiral", "Sketch.Scripts.read_gimp_path",
+                        "Sketch.Scripts.save_selection", "Sketch.Scripts.inspect_beziers",
+                        "Sketch.Scripts.select_same_fill_color", "Sketch.Scripts.select_same_line_color",
+                        "Sketch.Scripts.average_points", "Sketch.Scripts.TeX",
+                        "Sketch.Scripts.transform", "Sketch.Scripts.curvetext",
+                        "Sketch.Scripts.pathutils"
                         ]
 
     #   UI font. If None, used Tk default. In modern Tk, it usually adapts to the desktop

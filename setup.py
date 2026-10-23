@@ -322,8 +322,8 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
                 'Plugins.Objects.Lib',
                 'Plugins.Objects.Lib.multilinetext',
                 'Plugins.Objects.Lib.autoshapes',
-                'Script',
-                'Script.pathutils',
+                'Sketch.Scripts',
+                'Sketch.Scripts.pathutils',
                 'Resources'
             ],
             
@@ -331,7 +331,6 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
                 'Sketch': 'src/Sketch',
                 'Sketch.Modules': 'src/Sketch/Modules',
                 'Plugins': 'src/Plugins',
-                'Script': 'src/Script',
                 'Resources': 'src/Resources',
             },
             

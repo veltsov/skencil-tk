@@ -44,7 +44,7 @@ for dir in ('Lib', 'Filter', 'Pax'):
         sys.path.insert(1, dir)
 
 from Sketch.Base import load
-from Script.export_raster import export_raster
+from Sketch.Scripts.export_raster import export_raster
 
 
 def print_usage():

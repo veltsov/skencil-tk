@@ -27,7 +27,7 @@ from Sketch.UI.sketchdlg import SKModal
 
 from Tkinter import *
 
-import unit
+from Sketch.Scripts import unit
 
 class CreateStarDlg(SKModal):
 

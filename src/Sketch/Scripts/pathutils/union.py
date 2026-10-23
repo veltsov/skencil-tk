@@ -1,6 +1,6 @@
 # Tamito KAJIYAMA <25 June 2002>
 
-import base
+from Sketch.Scripts.pathutils import base
 
 def run_script(context):
     objects = base.get_selection(context)
@@ -8,35 +8,33 @@ def run_script(context):
         return
     object = objects[-1]
     for i in range(len(objects)-1):
-        object = intersect([object, objects[i]])
-        if object is None:
-            break
+        object = union([object, objects[i]])
     context.document.RemoveSelected()
-    if object is not None:
-        context.document.Insert(object)
+    context.document.Insert(object)
 
-def intersect(objects):
+def union(objects):
     assert len(objects) == 2
     buffer = []
     new_paths, untouched_paths = base.intersect_objects(objects)
-    if not new_paths:
-        return None
     for i, paths in new_paths:
         if i == 0:
             container = objects[1]
         else:
             container = objects[0]
         for cp1, path, cp2 in paths:
-            if base.contained(path, container):
+            if not base.contained(path, container):
                 buffer.append((cp1, path, cp2))
+    paths = base.join(buffer)
+    for i, path in untouched_paths:
+        paths.append(path)
     object = objects[0].Duplicate()
-    object.SetPaths(base.join(buffer))
+    object.SetPaths(paths)
     return object
 
 ###   REGISTRY   ###
 
 import Sketch.Scripting
 
-Sketch.Scripting.AddFunction("Intersect", "2. Intersect", run_script,
+Sketch.Scripting.AddFunction("Union", "1. Union", run_script,
                              menu="PathUtils",
                              script_type=Sketch.Scripting.AdvancedScript)

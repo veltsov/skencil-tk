@@ -26,7 +26,7 @@ as a group of bezier-objects.
 Place this script into ~/.sketch or some other directory on Python's
 path as curvetext.py, and put the line
 
-import curvetext
+from Sketch.Scripts import curvetext
 
 into ~/.sketch/userhooks.py. This will create a menu entry "Create Curve
 Text" in the "Scripts" menu.
@@ -52,7 +52,7 @@ curvetext.py has two global variables that you can modify:
         Set this to true (e.g. 1) to include the font's Sketch's text
         objects know about to the list.
 
-To set these variables assign a new value after the "import curvetext"
+To set these variables assign a new value after the "from Sketch.Scripts import curvetext"
 in userhooks.py
 
 """
