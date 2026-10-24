@@ -34,7 +34,7 @@
 #
 
 from __future__ import print_function
-import sys, getopt, string
+import os, sys, getopt, string
 
 import Sketch
 from Sketch.Lib import util
@@ -48,6 +48,8 @@ skencil accepts these options:
   -d --display=DISPLAY	Use DISPLAY a X Display
   -g --geometry=WxH+X+Y	The geometry of the main window in standard X fashion
   --run-script=script   Execute the file script after startup
+  --configdir=DIR	Use DIR as the user configuration directory
+		(default: $XDG_CONFIG_HOME/skencil or ~/.config/skencil)
   --version		Print the version number to stdout
 
 for compatibility with other X software skencil also accepts geometry
@@ -90,14 +92,15 @@ def process_args(args):
 
     opts, args = getopt.getopt(args, 'd:g:hi',
                                ['display=', 'geometry=', 'help', 'run-script=',
-                                'version'])
+                                'configdir=', 'version'])
     # the option -i is a hack to allow sketch to be used as a `python
     # interpreter' in the python shell in python-mode.el
 
     options = util.Empty(args = args,
                          display = None,
                          geometry = None,
-                         run_script = None)
+                         run_script = None,
+                         configdir = None)
 
     for optchar, value in opts:
         if optchar == '-d' or optchar == '--display':
@@ -106,6 +109,8 @@ def process_args(args):
             options.geometry = value
         elif optchar == '--run-script':
             options.run_script = value
+        elif optchar == '--configdir':
+            options.configdir = value
         elif optchar == '-h' or optchar == '--help':
             print(Sketch._(usage))
             sys.exit(0)
@@ -144,6 +149,14 @@ def main():
         filename = util.as_display_name(options.args[0])
     else:
         filename = ''
+
+    if options.configdir:
+        # override the user configuration directory before anything
+        # reads it (preferences, userhooks, user Plugins/Scripts dirs;
+        # the default was computed at `import Sketch` time)
+        from Sketch.Base import config
+        config.user_config_dir = os.path.expanduser(
+            util.as_display_name(options.configdir))
 
     Sketch.init_ui()
 

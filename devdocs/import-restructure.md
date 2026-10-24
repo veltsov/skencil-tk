@@ -101,17 +101,31 @@ Canonical import forms: `from Sketch.Base.warn import ...`,
 
 ### User plugin/script directories
 
-User content keeps working from the user settings directory
-(`~/.sketch/`), **without `__init__.py` in the user's directories**:
-the loader appends
+The user configuration directory is `$XDG_CONFIG_HOME/skencil`
+(default `~/.config/skencil`), overridable with the `--configdir=DIR`
+option (`Base/main.py`, applied between option parsing and `init_ui`;
+the default itself is computed at `import Sketch` time by
+`configutil.init_directories` via `user_config_directory()`).  This
+deliberately differs from the pre-reorganization `~/.sketch`, so this
+version and master can coexist without sharing any user state.
 
-- `~/.sketch/Plugins/Filters`  to `Sketch.Plugins.Filters.__path__`
-- `~/.sketch/Plugins/Objects`  to `Sketch.Plugins.Objects.__path__`
-- `~/.sketch/Scripts`          to `Sketch.Scripts.__path__`
+User content lives below the configuration directory, **without
+`__init__.py` in the user's directories**:
 
-so a user file `~/.sketch/Plugins/Filters/myformat.py` imports as
-`Sketch.Plugins.Filters.myformat`.  `userhooks` is loaded by file path,
-removing the last `sys.path` insertion (`Base/configutil.py`).
+- `Plugins/` is appended to `config.plugin_path` and scanned like the
+  built-in tree; a user file `Plugins/Filters/myformat.py` imports as
+  `Sketch.Plugins.Filters.myformat`, `Plugins/<name>.py` as
+  `Sketch.Plugins.<name>`.
+- `Scripts/` is appended to `Sketch.Scripts.__path__`; a user script
+  `Scripts/myscript.py` is importable as `Sketch.Scripts.myscript`
+  (usable in the `standard_scripts` preference).
+- `userhooks.py` is executed by file path.  The `config` object
+  (`Sketch.Base.config`) is predefined in its namespace — hooks
+  reference `config.user_config_dir`, `config.plugin_path`, ... without
+  imports or hardcoded paths.
+
+Guarded by `test/model/test_config.py` (XDG resolution, --configdir
+parsing).
 
 ### The import rule
 

@@ -94,9 +94,11 @@ tk_defaults = 'tkdefaults'
 #	user config settings
 #
 
-# directory in the user's home directory that contains userspecific
-# files
-user_config_dir = '.sketch'
+# the user configuration directory, determined on startup (see
+# configutil.init_directories): the --configdir option, else
+# $XDG_CONFIG_HOME/skencil, else ~/.config/skencil.  User content
+# (Plugins/, Scripts/, userhooks.py, preferences.py) lives below it.
+user_config_dir = ''
 # the user's home directory. Set on startup
 user_home_dir = ''
 

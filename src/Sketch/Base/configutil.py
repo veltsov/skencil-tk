@@ -32,6 +32,22 @@ from Sketch.Lib import util
 #	Directories..
 #
 
+def user_config_directory(home = None):
+    """Return the default user configuration directory:
+    $XDG_CONFIG_HOME/skencil, or ~/.config/skencil when XDG_CONFIG_HOME
+    is unset or empty (XDG base directory specification)."""
+    if home is None:
+        home = util.gethome()
+    xdg = os.environ.get('XDG_CONFIG_HOME')
+    if xdg:
+        # environment bytes are utf-8 on the assumed systems
+        # (devdocs/string-handling.md)
+        base = util.as_display_name(xdg)
+    else:
+        base = os.path.join(home, '.config')
+    return os.path.join(base, 'skencil')
+
+
 def init_directories(base_dir):
     config.sketch_dir = base_dir
     dirs = ('pixmap_dir', 'fontmetric_dir', 'resource_dir', 'std_res_dir',
@@ -51,8 +67,21 @@ def init_directories(base_dir):
     check_path(config.plugin_path)
 
     config.user_home_dir = util.gethome()
-    config.user_config_dir = os.path.join(config.user_home_dir,
-					  config.user_config_dir)
+    if not config.user_config_dir:
+        # empty unless already overridden (--configdir, applied between
+        # option parsing and init_ui in Base/main.py)
+        config.user_config_dir = user_config_directory(config.user_home_dir)
+    # User content lives below the configuration directory: Plugins/ is
+    # scanned like the built-in plugin tree, Scripts/ becomes importable
+    # as Sketch.Scripts.<name> (devdocs/import-restructure.md).
+    user_plugin_dir = os.path.join(config.user_config_dir, 'Plugins')
+    if os.path.isdir(user_plugin_dir):
+        config.plugin_path.append(user_plugin_dir)
+    user_scripts_dir = os.path.join(config.user_config_dir, 'Scripts')
+    if os.path.isdir(user_scripts_dir):
+        import Sketch.Scripts
+        if user_scripts_dir not in Sketch.Scripts.__path__:
+            Sketch.Scripts.__path__.append(user_scripts_dir)
 
 def check_path(path):
     # remove all non-directory or non existing entries from path
@@ -169,6 +198,9 @@ def _load_userhooks():
     import types
     module = types.ModuleType('userhooks')
     sys.modules['userhooks'] = module
+    # the configuration is predefined, so the hooks can reference it
+    # (config.user_config_dir, config.plugin_path, ...) without imports
+    module.__dict__['config'] = config
     try:
         exec(compile(data, filename, 'exec'), module.__dict__)
     except:
