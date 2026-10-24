@@ -77,6 +77,31 @@ More instances of this class are expected; the py3 port changes the
 semantics again (`str` unifies both, but bytes handling becomes
 explicit), so the audit tooling below should also feed the port.
 
+6. **single-letter nested submenus in the Script menu** (found
+   2026-10-23 by hand): `ScriptRegistry.Add` (Scripting/registry.py)
+   wraps a string `menu=` argument into a tuple only when it is
+   `unicode`.  Commit `7359b47` had tightened the check from the old
+   `type(menu) == StringType` (via the modernize batch's
+   `isinstance(menu, basestring)`) to unicode-only, assuming menu
+   paths are K1/K2 — but the shipped scripts passed *byte-string*
+   literals (`menu = "TeX"`, `menu="PathUtils"`, `menu = 'Arrange'`,
+   `menu = "User's Guide"`).  A byte string fell through the check and
+   `for item in menu:` iterated its characters: the Script menu showed
+   `Script -> T -> e -> X` and `Script -> P -> a -> t -> h ...`
+   (scripts using `_()`-wrapped unicode menus, e.g. `Create Objects`,
+   were unaffected).  **Fixed on the origins** per the strict unicode
+   policy: all shipped scripts pass `u'...'` menu paths now, and
+   `ScriptRegistry.Add` raises `TypeError` for byte-string paths or
+   components (same enforcement style as `undo.check_info`).
+   Guarded by `test/model/test_scripting.py` (menu tree structure and
+   the TypeError rejections); an Xvfb probe of the running app asserts
+   the real menu tree has no single-character submenu keys.  Audit
+   note: all other `isinstance(..., unicode)` sites introduced by
+   `735b947` were reviewed against this class; the remaining ones sit
+   on genuine K1/K2/K3 boundaries or behind an explicit
+   `decode_sk_string` (skloader `layout()`), none accepts script
+   identifiers.
+
 ## The .sk fix and the encoding decision (2026-10-21)
 
 **Fix (write side only; the input route was deliberately left

@@ -148,6 +148,14 @@ command menu names and `BeginTransaction` arguments) are K1 unicode;
 `UndoTypeError` rather than being tolerated — the origins must be
 fixed instead; see `devdocs/testing.md`, UndoTypeError finding).
 
+Scripting menu paths (the `menu=` argument of the script commands,
+used both as submenu titles and as the tree key) are K1 unicode as
+well.  `ScriptRegistry.Add` rejects byte-string paths and byte-string
+components with a `TypeError` (a byte string would be iterated
+character by character, producing single-letter nested submenus; see
+`devdocs/unicode-runtime-audit.md`, instance 6).  The shipped scripts
+pass `u'...'` literals.
+
 ## Validation and enforcement
 
 * The suite guards the on-disk format: `test/model/test_unicode.py`

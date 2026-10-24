@@ -30,8 +30,16 @@ class ScriptRegistry:
         self.menu = {}
 
     def Add(self, script, menu = ()):
+        # Menu path components are user-visible strings (K1): the
+        # origins (the scripts) pass unicode literals.  A byte string
+        # is rejected loudly instead of being iterated character by
+        # character (see devdocs/unicode-runtime-audit.md, instance 6).
         if isinstance(menu, unicode):
             menu = (menu,)
+        for item in menu:
+            if not isinstance(item, unicode):
+                raise TypeError('menu path components must be unicode,'
+                                ' got %r' % (item,))
         self.registry[script.name] = script
         submenu = self.menu
         for item in menu:

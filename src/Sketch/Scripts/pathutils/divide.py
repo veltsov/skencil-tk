@@ -59,5 +59,5 @@ def divide(object1, object2):
 import Sketch.Scripting
 
 Sketch.Scripting.AddFunction("Divide", "6. Divide", run_script,
-                             menu="PathUtils",
+                             menu=u"PathUtils",
                              script_type=Sketch.Scripting.AdvancedScript)
