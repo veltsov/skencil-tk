@@ -586,7 +586,7 @@ class PostScriptDevice(CommonDevice):
             write('%%%%BeginData: %d Hex Lines\n' % (lines + 1))
             write('skgimg\n')
 
-        _sketch.write_ps_hex(image.im, self.file)
+        _sketch.write_ps_hex(image.data, image.mode, w, h, self.file)
         write('%%EndData\n')
         if clip:
             write('pusht [%g %g %g %g %g %g] concat\n' % trafo.coeff())
@@ -671,12 +671,12 @@ class PostScriptDevice(CommonDevice):
             max_size = 65536 / len(mode)
             width = int(sqrt(max_size * ratio))
             height = int(sqrt(max_size / ratio))
-            tile = image.im.resize((width, height))
+            tile = image.Resize((width, height))
             length = width * height * len(mode)
             trafo = trafo(Scale(float(image.size[0]) / width,
                                 float(image.size[1]) / height))
         else:
-            tile = image.im
+            tile = image
         write = self.file.write
         write('%d %d %d [%g %g %g %g %g %g]\n'
               % ((width, height, len(mode)) + trafo.coeff()))
@@ -685,7 +685,7 @@ class PostScriptDevice(CommonDevice):
         write('%%%%BeginData: %d Hex Lines\n' % (lines + 1))
         write("tileimage\n")
         # write_ps_hex treats RGBA like RGB
-        _sketch.write_ps_hex(tile, self.file)
+        _sketch.write_ps_hex(tile.data, tile.mode, tile.size[0], tile.size[1], self.file)
         write('%%EndData\n')
 
     #

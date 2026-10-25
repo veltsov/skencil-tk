@@ -24,7 +24,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include "Imaging.h"
 #include <imageobject.h>
 #include <regionobject.h>
 
@@ -36,16 +35,118 @@
 #define PI 3.14159265358979323846264338327
 #endif
 
-/* redefine the ImagingObject struct defined in _imagingmodule.c */
-/* there should be a better way to do this... */
+/* INT32/UINT8 used to be provided by PIL's Imaging.h */
+typedef int INT32;
+typedef unsigned char UINT8;
+
+/* Pixel images are passed from Python as plain buffers of packed
+ * bytes (Sketch.Graphics.image.RasterImage / ImageData):
+ *
+ *   mode "L"   : one byte per pixel
+ *   mode "RGB" : four bytes per pixel (R, G, B and padding)
+ *   mode "RGBA": four bytes per pixel (R, G, B and alpha)
+ *
+ * This replaces the former direct use of PIL's private `Imaging`
+ * struct (Imaging.h plus a local copy of `ImagingObject` from
+ * `_imagingmodule.c`).  The row pointers below are built from the
+ * packed buffer so that the fill/scale/transform code can keep
+ * indexing rows directly.  The alpha channel is passed through
+ * unchanged; the display code currently treats RGBA like RGB.
+ */
 typedef struct {
-    PyObject_HEAD
-    Imaging image;
-} ImagingObject;
+    int xsize, ysize;
+    int pixelsize;
+    char *mode;
+    int linesize;
+    INT32 **image32;
+    UINT8 **image8;
+    char **image;
+} SKImageData;
+
+static int
+skimage_mode_pixelsize(const char * mode)
+{
+    if (strcmp(mode, "L") == 0)
+	return 1;
+    if (strncmp(mode, "RGB", 3) == 0)
+	return 4;
+    return 0;
+}
+
+/* Fill IM from the Python buffer object OBJ.  MODE, WIDTH and HEIGHT
+ * must already have been parsed from the argument list.  For WRITABLE
+ * images (the fill functions) OBJ must expose a writable buffer, e.g.
+ * a bytearray.  Returns 1 on success; on failure returns 0 with an
+ * exception set, and neither IM nor VIEW may be used afterwards. */
+static int
+skimage_from_buffer(PyObject * obj, char * mode, int width, int height,
+		    int writable, SKImageData * im, Py_buffer * view)
+{
+    int pixelsize = skimage_mode_pixelsize(mode);
+    long expected;
+    int y;
+    char ** rows;
+
+    im->image = NULL;
+    if (!pixelsize)
+    {
+	PyErr_Format(PyExc_ValueError, "unsupported image mode '%.20s'",
+		     mode);
+	return 0;
+    }
+    if (width <= 0 || height <= 0)
+    {
+	PyErr_Format(PyExc_ValueError, "invalid image size %d x %d",
+		     width, height);
+	return 0;
+    }
+    if (PyObject_GetBuffer(obj, view,
+			   writable ? PyBUF_WRITABLE : PyBUF_SIMPLE) < 0)
+	return 0;
+    expected = (long)width * height * pixelsize;
+    if (view->len != expected)
+    {
+	PyErr_Format(PyExc_ValueError,
+		     "image buffer has %zd bytes, expected %ld"
+		     " (%d x %d x %d bytes per pixel)",
+		     (Py_ssize_t)view->len, expected, width, height,
+		     pixelsize);
+	PyBuffer_Release(view);
+	return 0;
+    }
+
+    rows = malloc(height * sizeof(char *));
+    if (!rows)
+    {
+	PyBuffer_Release(view);
+	PyErr_NoMemory();
+	return 0;
+    }
+    for (y = 0; y < height; y++)
+	rows[y] = (char *)view->buf + (long)y * width * pixelsize;
+
+    im->xsize = width;
+    im->ysize = height;
+    im->pixelsize = pixelsize;
+    im->mode = mode;
+    im->linesize = width * pixelsize;
+    im->image = rows;
+    im->image8 = (UINT8 **)rows;
+    im->image32 = (INT32 **)rows;
+    return 1;
+}
+
+static void
+skimage_free(SKImageData * im, Py_buffer * view)
+{
+    free(im->image);
+    im->image = NULL;
+    PyBuffer_Release(view);
+}
 
 
 static void
-image_scale_rgb_16(SKVisualObject * visual, Imaging image, XImage * ximage,
+image_scale_rgb_16(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 		   int startx, int starty, int width, int height,
 		   int dest_y, int dest_height, int flip_y,
 		   int * origx, int * origy)
@@ -85,7 +186,7 @@ image_scale_rgb_16(SKVisualObject * visual, Imaging image, XImage * ximage,
 }
 
 static void
-image_scale_rgb_24(SKVisualObject * visual, Imaging image, XImage * ximage,
+image_scale_rgb_24(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 		   int startx, int starty, int width, int height,
 		   int dest_y, int dest_height, int flip_y,
 		   int * origx, int * origy)
@@ -134,7 +235,7 @@ image_scale_rgb_24(SKVisualObject * visual, Imaging image, XImage * ximage,
 }
 
 static void
-image_scale_rgb_8(SKVisualObject * visual, Imaging image, XImage * ximage,
+image_scale_rgb_8(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 		  int startx, int starty, int width, int height,
 		  int dest_y, int dest_height, int flip_y,
 		  int * origx, int * origy)
@@ -175,7 +276,7 @@ image_scale_rgb_8(SKVisualObject * visual, Imaging image, XImage * ximage,
 }
 
 static void
-image_scale_gray_16(SKVisualObject * visual, Imaging image, XImage * ximage,
+image_scale_gray_16(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 		    int startx, int starty, int width, int height,
 		    int dest_y, int dest_height, int flip_y,
 		    int * origx, int * origy)
@@ -212,7 +313,7 @@ image_scale_gray_16(SKVisualObject * visual, Imaging image, XImage * ximage,
 }
 
 static void
-image_scale_gray_24(SKVisualObject * visual, Imaging image, XImage * ximage,
+image_scale_gray_24(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 		    int startx, int starty, int width, int height,
 		    int dest_y, int dest_height, int flip_y,
 		    int * origx, int * origy)
@@ -258,7 +359,7 @@ image_scale_gray_24(SKVisualObject * visual, Imaging image, XImage * ximage,
 }
 
 static void
-image_scale_gray_8(SKVisualObject * visual, Imaging image, XImage * ximage,
+image_scale_gray_8(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 		   int startx, int starty, int width, int height,
 		   int dest_y, int dest_height, int flip_y,
 		   int * origx, int * origy)
@@ -298,7 +399,7 @@ image_scale_gray_8(SKVisualObject * visual, Imaging image, XImage * ximage,
 }
 
 static void
-scale_image(SKVisualObject * visual, Imaging image, XImage * ximage,
+scale_image(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 	    int dest_x, int dest_y, int dest_width, int dest_height,
 	    int flip_x, int flip_y)
 {
@@ -414,27 +515,37 @@ scale_image(SKVisualObject * visual, Imaging image, XImage * ximage,
 PyObject *
 copy_image_to_ximage(PyObject * self, PyObject * args)
 {
-    ImagingObject * src;
-    PaxImageObject * dest;
     SKVisualObject * visual;
+    PyObject * src_obj;
+    char * src_mode;
+    int src_width, src_height;
+    PaxImageObject * dest;
     int dest_x, dest_y, dest_width, dest_height;
+    SKImageData src, *srcp = &src;
+    Py_buffer view;
 
-    if (!PyArg_ParseTuple(args, "O!OO!iiii", &SKVisualType, &visual,
-			  &src, Pax_ImageType, &dest,
+    if (!PyArg_ParseTuple(args, "O!OsiiO!iiii", &SKVisualType, &visual,
+			  &src_obj, &src_mode, &src_width, &src_height,
+			  Pax_ImageType, &dest,
 			  &dest_x, &dest_y, &dest_width, &dest_height))
 	return NULL;
 
-    scale_image(visual, src->image, dest->ximage,
+    if (!skimage_from_buffer(src_obj, src_mode, src_width, src_height,
+			     0, srcp, &view))
+	return NULL;
+
+    scale_image(visual, srcp, dest->ximage,
 		dest_x, dest_y, abs(dest_width), abs(dest_height),
 		dest_width < 0, dest_height < 0);
 
+    skimage_free(srcp, &view);
     Py_INCREF(Py_None);
     return Py_None;
 }
 
 
 static void
-image_trafo_rgb_16(SKVisualObject * visual, Imaging image, XImage * ximage,
+image_trafo_rgb_16(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 		   SKTrafoObject * trafo, int startx, int starty, int height,
 		   int * minx, int * maxx)
 {
@@ -469,7 +580,7 @@ image_trafo_rgb_16(SKVisualObject * visual, Imaging image, XImage * ximage,
 }
 
 static void
-image_trafo_rgb_24(SKVisualObject * visual, Imaging image, XImage * ximage,
+image_trafo_rgb_24(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 		   SKTrafoObject * trafo, int startx, int starty, int height,
 		   int * minx, int * maxx)
 {
@@ -513,7 +624,7 @@ image_trafo_rgb_24(SKVisualObject * visual, Imaging image, XImage * ximage,
 }
 
 static void
-image_trafo_rgb_8(SKVisualObject * visual, Imaging image, XImage * ximage,
+image_trafo_rgb_8(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 		  SKTrafoObject * trafo, int startx, int starty, int height,
 		  int * minx, int * maxx)
 {
@@ -558,7 +669,7 @@ image_trafo_rgb_8(SKVisualObject * visual, Imaging image, XImage * ximage,
 }
 
 static void
-image_trafo_gray_16(SKVisualObject * visual, Imaging image, XImage * ximage,
+image_trafo_gray_16(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 		    SKTrafoObject * trafo, int startx, int starty, int height,
 		    int * minx, int * maxx)
 {
@@ -591,7 +702,7 @@ image_trafo_gray_16(SKVisualObject * visual, Imaging image, XImage * ximage,
 }
 
 static void
-image_trafo_gray_24(SKVisualObject * visual, Imaging image, XImage * ximage,
+image_trafo_gray_24(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 		    SKTrafoObject * trafo, int startx, int starty, int height,
 		    int * minx, int * maxx)
 {
@@ -632,7 +743,7 @@ image_trafo_gray_24(SKVisualObject * visual, Imaging image, XImage * ximage,
 }
 
 static void
-image_trafo_gray_8(SKVisualObject * visual, Imaging image, XImage * ximage,
+image_trafo_gray_8(SKVisualObject * visual, SKImageData *image, XImage * ximage,
 		   SKTrafoObject * trafo, int startx, int starty, int height,
 		   int * minx, int * maxx)
 {
@@ -782,7 +893,7 @@ make_region(SKTrafoObject * trafo, int xsize, int ysize,
 
 static PyObject *
 transform_image(SKVisualObject * visual, SKTrafoObject * trafo,
-		Imaging image, XImage * ximage, int dest_x, int dest_y,
+		SKImageData *image, XImage * ximage, int dest_x, int dest_y,
 		int dest_width, int dest_height, Region region)
 {
     int startx = dest_x, starty = dest_y;
@@ -888,33 +999,52 @@ PyObject *
 transform_to_ximage(PyObject * self, PyObject * args)
 {
     SKVisualObject * visual;
-    ImagingObject * src;
-    PaxImageObject * dest;
     SKTrafoObject * trafo;
+    PyObject * src_obj;
+    char * src_mode;
+    int src_width, src_height;
+    PaxImageObject * dest;
     PaxRegionObject * region;
     int dest_x, dest_y, dest_width, dest_height;
+    SKImageData src, *srcp = &src;
+    Py_buffer view;
 
-    if (!PyArg_ParseTuple(args, "O!O!OO!iiiiO",	 &SKVisualType, &visual,
-			  &SKTrafoType, &trafo, &src, Pax_ImageType, &dest,
+    if (!PyArg_ParseTuple(args, "O!O!OsiiO!iiiiO",
+			  &SKVisualType, &visual,
+			  &SKTrafoType, &trafo,
+			  &src_obj, &src_mode, &src_width, &src_height,
+			  Pax_ImageType, &dest,
 			  &dest_x, &dest_y, &dest_width, &dest_height,
 			  &region))
 	return NULL;
 
-    return transform_image(visual, trafo, src->image, dest->ximage,
-			   dest_x, dest_y, dest_width, dest_height,
-			   region->region);
+    if (!skimage_from_buffer(src_obj, src_mode, src_width, src_height,
+			     0, srcp, &view))
+	return NULL;
+
+    transform_image(visual, trafo, srcp, dest->ximage,
+		    dest_x, dest_y, dest_width, dest_height,
+		    region->region);
+    skimage_free(srcp, &view);
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 PyObject *
 fill_rgb_xy(PyObject * self, PyObject * args)
 {
-    ImagingObject * image;
+    PyObject * imobj;
+    char * mode;
+    int im_width, im_height;
+    SKImageData imagebuf, *image = &imagebuf;
+    Py_buffer view;
     int x, y, width, height;
     int xidx, yidx, otheridx, othercolor;
     double color[3];
     unsigned char *dest;
 
-    if (!PyArg_ParseTuple(args, "Oii(ddd)", &image, &xidx, &yidx,
+    if (!PyArg_ParseTuple(args, "Osiii(ddd)", &imobj, &mode,
+			  &im_width, &im_height, &xidx, &yidx,
 			  &color[0], &color[1], &color[2]))
 	return NULL;
 
@@ -924,13 +1054,17 @@ fill_rgb_xy(PyObject * self, PyObject * args)
 			    "and in the range [0..2] (x:%d, y:%d)",
 			    xidx, yidx);
 
+    if (!skimage_from_buffer(imobj, mode, im_width, im_height, 1,
+			     image, &view))
+	return NULL;
+
     otheridx = 3 - xidx - yidx;
     othercolor = 255 * color[otheridx];
-    width = image->image->xsize - 1;
-    height = image->image->ysize - 1;
+    width = image->xsize - 1;
+    height = image->ysize - 1;
     for (y = 0; y <= height; y++)
     {
-	dest = (unsigned char*)(image->image->image32[y]);
+	dest = (unsigned char*)(image->image32[y]);
 	for (x = 0; x <= width; x++, dest += 4)
 	{
 	    dest[xidx] = (255 * x) / width;
@@ -939,6 +1073,7 @@ fill_rgb_xy(PyObject * self, PyObject * args)
 	}
     }
 
+    skimage_free(image, &view);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -946,14 +1081,19 @@ fill_rgb_xy(PyObject * self, PyObject * args)
 PyObject *
 fill_rgb_z(PyObject * self, PyObject * args)
 {
-    ImagingObject * image;
+    PyObject * imobj;
+    char * mode;
+    int im_width, im_height;
+    SKImageData imagebuf, *image = &imagebuf;
+    Py_buffer view;
     int x, y, width, height;
     int idx, idx1, idx2, val1, val2;
     double r, g, b;
     unsigned char *dest;
 
 
-    if (!PyArg_ParseTuple(args, "Oi(ddd)", &image, &idx, &r, &g, &b))
+    if (!PyArg_ParseTuple(args, "Osiii(ddd)", &imobj, &mode,
+			  &im_width, &im_height, &idx, &r, &g, &b))
 	return NULL;
 
     switch (idx)
@@ -975,11 +1115,15 @@ fill_rgb_z(PyObject * self, PyObject * args)
 	return NULL;
     }
 
-    width = image->image->xsize - 1;
-    height = image->image->ysize - 1;
+    if (!skimage_from_buffer(imobj, mode, im_width, im_height, 1,
+			     image, &view))
+	return NULL;
+
+    width = image->xsize - 1;
+    height = image->ysize - 1;
     for (y = 0; y <= height; y++)
     {
-	dest = (unsigned char*)(image->image->image32[y]);
+	dest = (unsigned char*)(image->image32[y]);
 	for (x = 0; x <= width; x++, dest += 4)
 	{
 	    dest[idx1] = val1;
@@ -988,6 +1132,7 @@ fill_rgb_z(PyObject * self, PyObject * args)
 	}
     }
 
+    skimage_free(image, &view);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -1033,13 +1178,18 @@ hsv_to_rgb(double h, double s, double v, unsigned char * rgb)
 PyObject *
 fill_hsv_xy(PyObject * self, PyObject * args)
 {
-    ImagingObject * image;
+    PyObject * imobj;
+    char * mode;
+    int im_width, im_height;
+    SKImageData imagebuf, *image = &imagebuf;
+    Py_buffer view;
     int x, y, width, height;
     int xidx, yidx;
     double color[3];
     unsigned char *dest;
 
-    if (!PyArg_ParseTuple(args, "Oii(ddd)", &image, &xidx, &yidx,
+    if (!PyArg_ParseTuple(args, "Osiii(ddd)", &imobj, &mode,
+			  &im_width, &im_height, &xidx, &yidx,
 			  &color[0], &color[1], &color[2]))
 	return NULL;
 
@@ -1049,11 +1199,15 @@ fill_hsv_xy(PyObject * self, PyObject * args)
 			    "[0..2] (x:%d, y:%d)",
 			    xidx, yidx);
 
-    width = image->image->xsize - 1;
-    height = image->image->ysize - 1;
+    if (!skimage_from_buffer(imobj, mode, im_width, im_height, 1,
+			     image, &view))
+	return NULL;
+
+    width = image->xsize - 1;
+    height = image->ysize - 1;
     for (y = 0; y <= height; y++)
     {
-	dest = (unsigned char*)(image->image->image32[y]);
+	dest = (unsigned char*)(image->image32[y]);
 	for (x = 0; x <= width; x++, dest += 4)
 	{
 	    color[xidx] = (double)x / width;
@@ -1062,6 +1216,7 @@ fill_hsv_xy(PyObject * self, PyObject * args)
 	}
     }
 
+    skimage_free(image, &view);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -1070,14 +1225,19 @@ fill_hsv_xy(PyObject * self, PyObject * args)
 PyObject *
 fill_hsv_z(PyObject * self, PyObject * args)
 {
-    ImagingObject * image;
+    PyObject * imobj;
+    char * mode;
+    int im_width, im_height;
+    SKImageData imagebuf, *image = &imagebuf;
+    Py_buffer view;
     int x, y, width, height;
     int idx;
     double hsv[3];
     unsigned char *dest;
 
 
-    if (!PyArg_ParseTuple(args, "Oi(ddd)", &image, &idx,
+    if (!PyArg_ParseTuple(args, "Osiii(ddd)", &imobj, &mode,
+			  &im_width, &im_height, &idx,
 			  &hsv[0], &hsv[1], &hsv[2]))
 	return NULL;
 
@@ -1087,11 +1247,15 @@ fill_hsv_z(PyObject * self, PyObject * args)
 	return NULL;
     }
 
-    width = image->image->xsize - 1;
-    height = image->image->ysize - 1;
+    if (!skimage_from_buffer(imobj, mode, im_width, im_height, 1,
+			     image, &view))
+	return NULL;
+
+    width = image->xsize - 1;
+    height = image->ysize - 1;
     for (y = 0; y <= height; y++)
     {
-	dest = (unsigned char*)(image->image->image32[y]);
+	dest = (unsigned char*)(image->image32[y]);
 	for (x = 0; x <= width; x++, dest += 4)
 	{
 	    hsv[idx] = (double)(height - y) / height;
@@ -1099,6 +1263,7 @@ fill_hsv_z(PyObject * self, PyObject * args)
 	}
     }
 
+    skimage_free(image, &view);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -1108,7 +1273,7 @@ fill_hsv_z(PyObject * self, PyObject * args)
  */
 
 static void
-fill_transformed_tile_gray(ImagingObject * image, ImagingObject * tile,
+fill_transformed_tile_gray(SKImageData *image, SKImageData *tile,
 			   SKTrafoObject * trafo)
 {
     int x, y, width, height, itx, ity;
@@ -1116,15 +1281,15 @@ fill_transformed_tile_gray(ImagingObject * image, ImagingObject * tile,
     double tx, ty, dx, dy;
     UINT8 *dest, **src;
 
-    width = image->image->xsize;
-    height = image->image->ysize;
-    tile_width = tile->image->xsize;
-    tile_height = tile->image->ysize;
-    src = tile->image->image8;
+    width = image->xsize;
+    height = image->ysize;
+    tile_width = tile->xsize;
+    tile_height = tile->ysize;
+    src = tile->image8;
     dx = trafo->m11; dy = trafo->m21;
     for (y = 0; y < height; y++)
     {
-	dest = (UINT8*)(image->image->image32[y]);
+	dest = (UINT8*)(image->image32[y]);
 	tx = y * trafo->m12 + trafo->v1;
 	ty = y * trafo->m22 + trafo->v2;
 	for (x = 0; x < width; x++, dest += 4, tx += dx, ty += dy)
@@ -1141,7 +1306,7 @@ fill_transformed_tile_gray(ImagingObject * image, ImagingObject * tile,
 }
 
 static void
-fill_transformed_tile_rgb(ImagingObject * image, ImagingObject * tile,
+fill_transformed_tile_rgb(SKImageData *image, SKImageData *tile,
 			  SKTrafoObject * trafo)
 {
     int x, y, width, height, itx, ity;
@@ -1149,15 +1314,15 @@ fill_transformed_tile_rgb(ImagingObject * image, ImagingObject * tile,
     double tx, ty, dx, dy;
     INT32 *dest, **src;
 
-    width = image->image->xsize;
-    height = image->image->ysize;
-    tile_width = tile->image->xsize;
-    tile_height = tile->image->ysize;
-    src = tile->image->image32;
+    width = image->xsize;
+    height = image->ysize;
+    tile_width = tile->xsize;
+    tile_height = tile->ysize;
+    src = tile->image32;
     dx = trafo->m11; dy = trafo->m21;
     for (y = 0; y < height; y++)
     {
-	dest = image->image->image32[y];
+	dest = image->image32[y];
 	tx = y * trafo->m12 + trafo->v1;
 	ty = y * trafo->m22 + trafo->v2;
 	for (x = 0; x < width; x++, dest++, tx += dx, ty += dy)
@@ -1178,26 +1343,50 @@ fill_transformed_tile_rgb(ImagingObject * image, ImagingObject * tile,
 PyObject *
 fill_transformed_tile(PyObject * self, PyObject * args)
 {
-    ImagingObject * image, *tile;
+    PyObject * imobj, * tileobj;
+    char * mode, * tilemode;
+    int im_width, im_height, tile_width, tile_height;
+    SKImageData imagebuf, *image = &imagebuf;
+    SKImageData tilebuf, *tile = &tilebuf;
+    Py_buffer view, tileview;
     SKTrafoObject * trafo;
-    
 
-    if (!PyArg_ParseTuple(args, "OOO!", &image, &tile, &SKTrafoType, &trafo))
+
+    if (!PyArg_ParseTuple(args, "OsiiOsiiO!", &imobj, &mode,
+			  &im_width, &im_height,
+			  &tileobj, &tilemode, &tile_width, &tile_height,
+			  &SKTrafoType, &trafo))
 	return NULL;
 
-    if (strncmp(tile->image->mode, "RGB", 3) == 0)
+    if (!skimage_from_buffer(imobj, mode, im_width, im_height, 1,
+			     image, &view))
+	return NULL;
+    if (!skimage_from_buffer(tileobj, tilemode, tile_width, tile_height,
+			     0, tile, &tileview))
+    {
+	skimage_free(image, &view);
+	return NULL;
+    }
+
+    if (strncmp(tile->mode, "RGB", 3) == 0)
     {
 	fill_transformed_tile_rgb(image, tile, trafo);
     }
-    else if (strcmp(tile->image->mode, "L") == 0)
+    else if (strcmp(tile->mode, "L") == 0)
     {
 	fill_transformed_tile_gray(image, tile, trafo);
     }
     else
+    {
+	skimage_free(tile, &tileview);
+	skimage_free(image, &view);
 	return PyErr_Format(PyExc_TypeError,
 			    "Images of mode %s cannot be used as tiles",
-			    tile->image->mode);
+			    tile->mode);
+    }
 
+    skimage_free(tile, &tileview);
+    skimage_free(image, &view);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -1319,17 +1508,17 @@ store_gradient_color(Gradient gradient, int length, double t,
 
 
 static void
-horizontal_axial_gradient(ImagingObject * image, Gradient gradient, int length,
+horizontal_axial_gradient(SKImageData *image, Gradient gradient, int length,
 			  int x0, int x1)
 {
     unsigned char *dest;
     int maxx, height, x, y;
     double factor = 1.0 / (x1 - x0);
 
-    maxx = image->image->xsize - x0;
-    height = image->image->ysize;
+    maxx = image->xsize - x0;
+    height = image->ysize;
 
-    dest = (unsigned char*)(image->image->image32[0]);
+    dest = (unsigned char*)(image->image32[0]);
     for (x = -x0; x < maxx; x++, dest += 4)
     {
 	store_gradient_color(gradient, length, factor * x, dest);
@@ -1337,24 +1526,24 @@ horizontal_axial_gradient(ImagingObject * image, Gradient gradient, int length,
 
     for (y = 1; y < height; y++)
     {
-	memcpy(image->image->image32[y], image->image->image32[0],
-	       4 * image->image->xsize);
+	memcpy(image->image32[y], image->image32[0],
+	       4 * image->xsize);
     }
 }    
 
 static void
-vertical_axial_gradient(ImagingObject * image, Gradient gradient, int length,
+vertical_axial_gradient(SKImageData *image, Gradient gradient, int length,
 			int y0, int y1)
 {
     INT32 *dest;
     int height, width, x, y;
     double factor = 1.0 / (y1 - y0);
 
-    width = image->image->xsize;
-    height = image->image->ysize;
+    width = image->xsize;
+    height = image->ysize;
     for (y = 0; y < height; y++)
     {
-	dest = image->image->image32[y];
+	dest = image->image32[y];
 	store_gradient_color(gradient, length, factor * (y - y0),
 			     (unsigned char*)dest);
 	for (x = 1; x < width; x++)
@@ -1369,7 +1558,11 @@ vertical_axial_gradient(ImagingObject * image, Gradient gradient, int length,
 PyObject *
 fill_axial_gradient(PyObject * self, PyObject * args)
 {
-    ImagingObject * image;
+    PyObject * imobj;
+    char * mode;
+    int im_width, im_height;
+    SKImageData imagebuf, *image = &imagebuf;
+    Py_buffer view;
     int x, y, maxx, maxy;
     double x0, y0, x1, y1, dx, dy, angle;
     int length;
@@ -1377,7 +1570,9 @@ fill_axial_gradient(PyObject * self, PyObject * args)
     PyObject * list;
     Gradient gradient;
 
-    if (!PyArg_ParseTuple(args, "OOdddd", &image, &list, &x0, &y0, &x1, &y1))
+    if (!PyArg_ParseTuple(args, "OsiiOdddd", &imobj, &mode,
+			  &im_width, &im_height,
+			  &list, &x0, &y0, &x1, &y1))
 	return NULL;
 
     if (!PySequence_Check(list))
@@ -1397,6 +1592,13 @@ fill_axial_gradient(PyObject * self, PyObject * args)
     gradient = gradient_from_list(list);
     if (!gradient)
 	return NULL;
+
+    if (!skimage_from_buffer(imobj, mode, im_width, im_height, 1,
+			     image, &view))
+    {
+	free_gradient(gradient);
+	return NULL;
+    }
 
     dx = x1 - x0; dy = y1 - y0;
     angle = atan2(dy, dx);
@@ -1419,11 +1621,11 @@ fill_axial_gradient(PyObject * self, PyObject * args)
 	lensqr *= lensqr;
 	dt = dx / lensqr;
 	
-	maxx = image->image->xsize;
-	maxy = image->image->ysize;
+	maxx = image->xsize;
+	maxy = image->ysize;
 	for (y = 0; y < maxy; y++)
 	{
-	    dest = (unsigned char*)(image->image->image32[y]);
+	    dest = (unsigned char*)(image->image32[y]);
 	    t = (dx * -x0 + dy * (y - y0)) / lensqr;
 	    for (x = 0; x < maxx; x++, dest += 4, t += dt)
 	    {
@@ -1432,6 +1634,7 @@ fill_axial_gradient(PyObject * self, PyObject * args)
 	}
     }
     free_gradient(gradient);
+    skimage_free(image, &view);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -1441,7 +1644,7 @@ fill_axial_gradient(PyObject * self, PyObject * args)
 PyObject *
 fill_axial_gradient(PyObject * self, PyObject * args)
 {
-    ImagingObject * image;
+    SKImageData *image;
     int x, y, maxx, maxy, dx, dy;
     int x0, y0, x1, y1;
     int length;
@@ -1487,11 +1690,11 @@ fill_axial_gradient(PyObject * self, PyObject * args)
 	lensqr *= lensqr;
 	dt = dx / lensqr;
 	
-	maxx = image->image->xsize - x0;
-	maxy = image->image->ysize - y0;
+	maxx = image->xsize - x0;
+	maxy = image->ysize - y0;
 	for (y = -y0; y < maxy; y++)
 	{
-	    dest = (unsigned char*)(image->image->image32[y + y0]);
+	    dest = (unsigned char*)(image->image32[y + y0]);
 	    t = (dx * -x0 + dy * y) / lensqr;
 	    for (x = -x0; x < maxx; x++, dest += 4, t += dt)
 	    {
@@ -1509,7 +1712,11 @@ fill_axial_gradient(PyObject * self, PyObject * args)
 PyObject *
 fill_radial_gradient(PyObject * self, PyObject * args)
 {
-    ImagingObject * image;
+    PyObject * imobj;
+    char * mode;
+    int im_width, im_height;
+    SKImageData imagebuf, *image = &imagebuf;
+    Py_buffer view;
     int x, y, maxx, maxy;
     int cx, cy, r0, r1;
     double factor;
@@ -1518,7 +1725,9 @@ fill_radial_gradient(PyObject * self, PyObject * args)
     PyObject * list;
     Gradient gradient;
 
-    if (!PyArg_ParseTuple(args, "OOiiii", &image, &list, &cx, &cy, &r0, &r1))
+    if (!PyArg_ParseTuple(args, "OsiiOiiii", &imobj, &mode,
+			  &im_width, &im_height,
+			  &list, &cx, &cy, &r0, &r1))
 	return NULL;
 
     if (!PySequence_Check(list))
@@ -1533,12 +1742,19 @@ fill_radial_gradient(PyObject * self, PyObject * args)
     if (!gradient)
 	return NULL;
 
+    if (!skimage_from_buffer(imobj, mode, im_width, im_height, 1,
+			     image, &view))
+    {
+	free_gradient(gradient);
+	return NULL;
+    }
+
     factor = 1.0 / (r1 - r0);
-    maxx = image->image->xsize - cx;
-    maxy = image->image->ysize - cy;
+    maxx = image->xsize - cx;
+    maxy = image->ysize - cy;
     for (y = -cy; y < maxy; y++)
     {
-	dest = (unsigned char*)(image->image->image32[y + cy]);
+	dest = (unsigned char*)(image->image32[y + cy]);
 	for (x = -cx; x < maxx; x++, dest += 4)
 	{
 	    store_gradient_color(gradient, length, factor * (hypot(x, y) - r0),
@@ -1547,6 +1763,7 @@ fill_radial_gradient(PyObject * self, PyObject * args)
     }
     
     free_gradient(gradient);
+    skimage_free(image, &view);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -1555,7 +1772,11 @@ fill_radial_gradient(PyObject * self, PyObject * args)
 PyObject *
 fill_conical_gradient(PyObject * self, PyObject * args)
 {
-    ImagingObject * image;
+    PyObject * imobj;
+    char * mode;
+    int im_width, im_height;
+    SKImageData imagebuf, *image = &imagebuf;
+    Py_buffer view;
     int x, y, maxx, maxy;
     int cx, cy;
     double angle, t;
@@ -1564,7 +1785,8 @@ fill_conical_gradient(PyObject * self, PyObject * args)
     PyObject * list;
     Gradient gradient;
 
-    if (!PyArg_ParseTuple(args, "OOiid", &image, &list, &cx, &cy, &angle))
+    if (!PyArg_ParseTuple(args, "OsiiOiid", &imobj, &mode,
+			  &im_width, &im_height, &list, &cx, &cy, &angle))
 	return NULL;
 
     if (!PySequence_Check(list))
@@ -1579,17 +1801,24 @@ fill_conical_gradient(PyObject * self, PyObject * args)
     if (!gradient)
 	return NULL;
 
+    if (!skimage_from_buffer(imobj, mode, im_width, im_height, 1,
+			     image, &view))
+    {
+	free_gradient(gradient);
+	return NULL;
+    }
+
     angle = fmod(angle, 2 * PI);
     if (angle < -PI)
 	angle += 2 * PI;
     else if (angle > PI)
 	angle -= 2 * PI;
     
-    maxx = image->image->xsize - cx;
-    maxy = image->image->ysize - cy;
+    maxx = image->xsize - cx;
+    maxy = image->ysize - cy;
     for (y = -cy; y < maxy; y++)
     {
-	dest = (unsigned char*)(image->image->image32[y + cy]);
+	dest = (unsigned char*)(image->image32[y + cy]);
 	for (x = -cx; x < maxx; x++, dest += 4)
 	{
 	    if (x || y)
@@ -1608,6 +1837,7 @@ fill_conical_gradient(PyObject * self, PyObject * args)
     }
     
     free_gradient(gradient);
+    skimage_free(image, &view);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -1691,28 +1921,37 @@ write_ps_hex_gray(FILE * out, int width, int height, char ** data,
 PyObject *
 skimage_write_ps_hex(PyObject * self, PyObject * args)
 {
-    PyObject * pyfile;
-    ImagingObject * imobj;
+    PyObject * pyfile, * imobj;
+    char * mode;
+    int im_width, im_height;
+    SKImageData imagebuf, *image = &imagebuf;
+    Py_buffer view;
     int line_length = 80;
     char * prefix = NULL;
 
-    if (!PyArg_ParseTuple(args, "OO!|is", &imobj, &PyFile_Type, &pyfile,
+    if (!PyArg_ParseTuple(args, "OsiiO!|is", &imobj, &mode,
+			  &im_width, &im_height,
+			  &PyFile_Type, &pyfile,
 			  &line_length, &prefix))
 	return NULL;
 
-    
+    if (!skimage_from_buffer(imobj, mode, im_width, im_height, 0,
+			     image, &view))
+	return NULL;
+
     line_length = line_length - 2;
     if (line_length < 0)
 	line_length = 0;
-    if (imobj->image->pixelsize == 4)
-	write_ps_hex_rgb(PyFile_AsFile(pyfile), imobj->image->linesize,
-			 imobj->image->ysize, imobj->image->image,
+    if (image->pixelsize == 4)
+	write_ps_hex_rgb(PyFile_AsFile(pyfile), image->linesize,
+			 image->ysize, image->image,
 			 line_length, prefix);
-    else if (imobj->image->pixelsize == 1)
-	write_ps_hex_gray(PyFile_AsFile(pyfile), imobj->image->linesize,
-			  imobj->image->ysize, imobj->image->image,
+    else if (image->pixelsize == 1)
+	write_ps_hex_gray(PyFile_AsFile(pyfile), image->linesize,
+			  image->ysize, image->image,
 			  line_length, prefix);
 
+    skimage_free(image, &view);
     Py_INCREF(Py_None);
     return Py_None;
 }

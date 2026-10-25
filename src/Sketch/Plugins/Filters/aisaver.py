@@ -305,11 +305,13 @@ class AISaver:
         write("%AI5_File:\n%AI5_BeginRaster\n")
         write("[%g %g %g %g %g %g] " % object.Trafo().coeff())
         bbox = object.bounding_rect
-        image = object.Data().image # .image is the PIL image
+        image = object.Data() # an ImageData
         write("0 0 %d %d " % image.size)
         write("%d %d " % image.size)
         write("8 %d 0 0 0 0 XI\n" % len(image.mode))
-        _sketch.write_ps_hex(image.im, self.file, 72, '%')
+        _sketch.write_ps_hex(image.data, image.mode,
+                             image.size[0], image.size[1],
+                             self.file, 72, '%')
         write("%AI5_EndRaster\n")
         # for whatever reason an image has to be followed by a N operator
         write("N\n")

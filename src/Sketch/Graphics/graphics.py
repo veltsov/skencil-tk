@@ -29,10 +29,9 @@ import sys
 import operator, string
 from math import pi
 
-import PIL.Image
-
 from Sketch import x11 as X
 from Sketch.Modules.pax import PaxRegionType, IntersectMasks, CreateRegion
+from Sketch.Graphics.image import RasterImage
 
 from Sketch.Base.warn import pdebug, warn, INTERNAL, USER
 from Sketch import _, SketchError
@@ -543,7 +542,7 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             t = max(t, cy);	b = min(b, cy + ch)
         if l >= r or t >= b:
             return None, None, None
-        image = PIL.Image.new('RGB', (r - l, b - t), (255, 255, 255))
+        image = RasterImage('RGB', (r - l, b - t), fill = 255)
         trafo = Translation(-l, -t)(self.doc_to_win)
         return image, trafo, (l, t)
 
@@ -556,7 +555,8 @@ class GraphicsDevice(SimpleGC, CommonDevice):
         ximage = self.ximage
         x, y = pos
         w, h = image.size
-        _sketch.copy_image_to_ximage(self.visual, image.im, ximage, x, y, w, h)
+        _sketch.copy_image_to_ximage(self.visual, image.data, image.mode,
+                                     w, h, ximage, x, y, w, h)
         if use_shm_images:
             self.gc.ShmPutImage(ximage, x, y, x, y, w, h, 0)
             self.images_drawn = 1
@@ -573,7 +573,9 @@ class GraphicsDevice(SimpleGC, CommonDevice):
         x1, y1 = trafo(p1)
         #import time
         #_t = time.clock()
-        _sketch.fill_axial_gradient(image.im, gradient.Colors(), x0,y0, x1,y1)
+        _sketch.fill_axial_gradient(image.data, image.mode,
+                                    image.size[0], image.size[1],
+                                    gradient.Colors(), x0, y0, x1, y1)
         #_t = time.clock() - _t
         #print 'axial:', _t
         self.draw_pattern_image(image, pos)
@@ -589,7 +591,9 @@ class GraphicsDevice(SimpleGC, CommonDevice):
         r1 = int(round(abs(trafo.DTransform(r1, 0))))
         #import time
         #_t = time.clock()
-        _sketch.fill_radial_gradient(image.im, gradient.Colors(), x, y, r0, r1)
+        _sketch.fill_radial_gradient(image.data, image.mode,
+                                     image.size[0], image.size[1],
+                                     gradient.Colors(), x, y, r0, r1)
         #_t = time.clock() - _t
         #print 'radial:', _t
         self.draw_pattern_image(image, pos)
@@ -604,8 +608,9 @@ class GraphicsDevice(SimpleGC, CommonDevice):
         cx, cy = trafo.DocToWin(p)
         #import time
         #_t = time.clock()
-        _sketch.fill_conical_gradient(image.im, gradient.Colors(), cx, cy,
-                                      -angle)
+        _sketch.fill_conical_gradient(image.data, image.mode,
+                                      image.size[0], image.size[1],
+                                      gradient.Colors(), cx, cy, -angle)
         #_t = time.clock() - _t
         #print 'conical:', _t
         self.draw_pattern_image(image, pos)
@@ -632,8 +637,9 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             ximage = self.create_sized_ximage(abs(width), abs(height))
             pixmap = self.widget.CreatePixmap(abs(width), abs(height),
                                               ximage.depth)
-            _sketch.copy_image_to_ximage(self.visual, tile.im, ximage,
-                                         0, 0, width, height)
+            _sketch.copy_image_to_ximage(self.visual, tile.data, tile.mode,
+                                         tile.size[0], tile.size[1],
+                                         ximage, 0, 0, width, height)
             gc = pixmap.CreateGC()
             gc.PutImage(ximage, 0, 0, 0, 0, abs(width), abs(height))
             self.gc.SetForegroundAndFill(pixmap)
@@ -646,7 +652,10 @@ class GraphicsDevice(SimpleGC, CommonDevice):
                 return
             trafo = temp_trafo(trafo)
             try:
-                _sketch.fill_transformed_tile(image.im, tile.im,
+                _sketch.fill_transformed_tile(image.data, image.mode,
+                                              image.size[0], image.size[1],
+                                              tile.data, tile.mode,
+                                              tile.size[0], tile.size[1],
                                               trafo.inverse())
                 self.draw_pattern_image(image, pos)
             except SingularMatrix:
@@ -1083,8 +1092,9 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             else:
                 sy = lly;	h = lly - uly - 1
 
-            _sketch.copy_image_to_ximage(self.visual, image.im, ximage,
-                                         sx, sy, w, h)
+            _sketch.copy_image_to_ximage(self.visual, image.data, image.mode,
+                                         image.size[0], image.size[1],
+                                         ximage, sx, sy, w, h)
             if w < 0:	w = -w
             if h < 0:	h = -h
             if not clip:
@@ -1121,7 +1131,9 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             region = self.widget.CreateRegion()
             #print >>sys.stderr, 'YYY'
             _sketch.transform_to_ximage(self.visual, inverse,
-                                        image.im, ximage, sx, sy, w, h, region)
+                                        image.data, image.mode,
+                                        image.size[0], image.size[1],
+                                        ximage, sx, sy, w, h, region)
             #print >>sys.stderr, 'XXX'
             if not clip:
                 self.PushClip()

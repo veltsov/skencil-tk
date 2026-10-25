@@ -519,7 +519,7 @@ class SKSaver:
                 from Sketch.Modules.streamfilter import Base64Encode
                 write('bm(%d)\n' % id(image))
                 file = Base64Encode(self.file)
-                image.image.save(file, 'PNG')
+                image.Image().save(file, 'PNG')
                 file.close()
                 write('-\n')
             else:

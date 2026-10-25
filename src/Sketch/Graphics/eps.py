@@ -24,6 +24,7 @@ import os, math
 import PIL.Image
 
 from Sketch.Lib import dscparser, util
+from Sketch.Graphics.image import RasterImage, image_from_pil
 IsEpsFileStart = dscparser.IsEpsFileStart
 from Sketch import _, Point
 from Sketch.Base import config
@@ -60,7 +61,7 @@ def render_preview(filename, startx, starty, width, height, resolution = None):
 
         image = PIL.Image.open(temp)
         image.load()
-        return image
+        return RasterImage(*image_from_pil(image))
     finally:
         try:
             os.unlink(temp)

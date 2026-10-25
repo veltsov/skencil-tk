@@ -44,7 +44,8 @@ resolved there is done.
   content under the XDG configuration directory
   (`$XDG_CONFIG_HOME/skencil`, default `~/.config/skencil`,
   `--configdir` override).
-- **Validation**: `test/run_tests.sh` — 95 tests (headless model,
+- **Validation**: `test/run_tests.sh` — 111 tests (headless model
+  including the image-representation suite `test/model/test_image.py`,
   format round-trips against master baselines including a ghostscript
   raster comparison, Xvfb app smoke, LaTeX recompile).  The suite is
   the gate for every porting step; `--record` regenerates baselines
@@ -119,22 +120,58 @@ pstokenize keep their names), `PyString_*` → `PyUnicode_*` for text and
 → `long`/`PyLong`, `PyCObject` → `PyCapsule`, `tp_compare`/slot review.
 Single-phase init is sufficient (no per-subinterpreter state needed).
 
-### The one real design problem: skimage vs. the PIL C API
+### The former one real design problem: skimage vs. the PIL C API — solved
 
-`skimage.c` (1719 lines) implements the X11 display scaling and the
-gradient/pattern fill math in C.  It reaches into PIL's *private* C
-internals: `#include "Imaging.h"`, a local re-declaration of the
-`ImagingObject` struct from `_imagingmodule.c`, and Python passing
+This section documents the (now implemented) rework of the image
+handling.  On 2026-10-24 option 4 below was implemented on the main
+branch (suite-gated): `skimage.c` no longer contains any PIL symbol —
+`Imaging.h`, the `ImagingObject` re-declaration, the untyped `"O"`
+casts and `setup.py`'s `/usr/include/python2.7/Imaging` handling are
+gone — and its py3 port is now mechanical (standard
+`PyModuleDef`/`PyUnicode`/`PyBytes` work).
+
+Original problem: `skimage.c` (1719 lines) implements the X11 display
+scaling and the gradient/pattern fill math in C.  It reached into PIL's
+*private* C internals: `#include "Imaging.h"`, a local re-declaration of
+the `ImagingObject` struct from `_imagingmodule.c`, and Python passing
 `PIL.Image.Image.im` (the internal core handle) into
 `_sketch.copy_image_to_ximage`, `fill_{axial,radial,conical}_gradient`,
-`fill_transformed_tile`, `write_ps_hex` and `fill_hsv_*` (call sites in
-`graphics.py`, `psdevice.py`, `colordlg.py`, `gradientedit.py`).
-Modern Pillow neither installs usable third-party headers nor
-guarantees that struct layout — this cannot simply be recompiled.
+`fill_transformed_tile`, `write_ps_hex` and `fill_hsv_*`.  Modern
+Pillow neither installs usable third-party headers nor guarantees that
+struct layout — this could not simply be recompiled.
 
-Options (decision required before porting skimage):
+#### What PIL is actually used for (inventory, verified 2026-10-24)
 
-1. **Buffer-protocol shim (recommended)**: pass raw pixel bytes
+Surprisingly little.  All per-pixel work in the interactive path
+(scaling, affine transform, gradient/tile fills, dithering, hex export)
+is Skencil's own C (`skimage.c`/`skdither.c`); PIL's algorithms never
+run there.  In the rendering path PIL provides only *allocation*
+(`PIL.Image.new` scratch buffers in `graphics.py:546`, `colordlg.py:145`,
+`gradientedit.py:48`), *metadata* (`mode`, `size`) and *raw memory*
+(`.im`, poked directly by skimage).  On the model/IO level the complete
+list of PIL API use is:
+
+| Use | Where |
+|---|---|
+| format decode on import (`Image.open`); `.sk` embedded images (base64/subfile stream → `load_image`); EPS preview (ghostscript temp file); cmxloader `fromstring` for embedded bitmaps | `Graphics/image.py:86`, `Plugins/Filters/skloader.py:355–361`, `Graphics/eps.py:61`, `cmxloader.py:797,844,851`, `ailoader.py`, `drawinput.py` |
+| force lazy decode (`load()`) | `image.py:46`, `eps.py:62` |
+| mode normalization at load + Grayscale command (`convert`) | `image.py:44,69` |
+| Invert command (`ImageChops.invert`) | `image.py:74` |
+| `.sk` embedded-image encoding (`save(file, 'PNG')`) | `Plugins/Filters/sksaver.py:522` |
+| PS-export tile scaling (`im.resize`; again via `.im` internals) | `Graphics/psdevice.py:674` |
+| export script only (`invert`, `convert`, `putalpha`, `save`) | `Scripts/export_raster.py:198–202` |
+
+So the PIL object is the model's image container for historical
+convenience — free universal codec, free pixel buffer with a
+C-accessible layout, free one-off `convert`/`invert`/`resize` — not
+because PIL's algorithms are needed.  The model only ever requires
+mode ∈ {L, RGB, RGBA}, size, and packed raw bytes that C can read and
+fill.  `Graphics/image.py` even states the original intent:
+"It uses the Python Image Library for file I/O."
+
+#### Options (decision made: option 4, implemented 2026-10-24)
+
+1. **Buffer-protocol shim**: pass raw pixel bytes
    (`PIL.Image.tobytes()` / `frombytes`) plus mode and size into the C
    functions instead of `ImagingObject*`.  Keeps all the C math;
    changes ~15 call sites in skimage.c plus the Python callers; adds
@@ -142,10 +179,94 @@ Options (decision required before porting skimage):
 2. Reimplement the fill/scale math in Python (numpy or plain) — no C
    build issue, but the canvas redraw path gets slower.
 3. Vendor a minimal Imaging subset inside skimage (own struct, convert
-   from PIL at the boundary) — most work, keeps zero-copy.
+   from PIL at the boundary) — most work, keeps zero-copy; superseded
+   by option 4, which achieves the same from the model side.
+4. **Internal image object (decided, preferred)**: replace the PIL
+   object as the model's image representation with a minimal internal
+   payload in `ImageData` — mode ∈ {L, RGB, RGBA}, size, packed
+   `bytes`/`bytearray` pixels — and keep PIL strictly as the format
+   codec at the boundaries (all import filters, `.sk` embedded-PNG
+   encode/decode, ghostscript temp files for EPS previews,
+   `export_raster.py`).  `skimage.c` then consumes the internal buffer
+   via the buffer protocol: no PIL symbol remains in any C source;
+   `Imaging.h`, the `ImagingObject` re-declaration, the untyped `"O"`
+   casts and `setup.py`'s `/usr/include/python2.7/Imaging` handling all
+   disappear.
+   - **Faster than option 1**: display scale/transform reads
+     zero-copy from the stored buffer and gradient fills write
+     zero-copy into a `bytearray` scratch buffer (replacing
+     `PIL.Image.new`); copies remain only at format boundaries
+     (PIL decode → `tobytes()` → internal object on load; internal
+     object → PIL → PNG on `.sk` save).
+   - **RGBA is part of the design**: current display treats RGBA as
+     opaque RGB (`scale_image` dispatches on
+     `strncmp(image->mode, "RGB", 3)` and reads 4-byte pixels;
+     `write_ps_hex` also ignores A).  This accident must become
+     explicit behavior: the internal model keeps the alpha channel
+     when present (never discards A at load), so image transparency
+     support can be added later without another representation
+     change; display keeps compositing onto the background for now.
+   - **Off-display-path PIL operations are fine**: the Invert and
+     Grayscale commands, the PS-export tile `resize`, and any future
+     image operations may round-trip internal → PIL → PIL operation →
+     internal; one copy per operation is acceptable there, since
+     these run per user command or at export time, never per redraw.
+   - Cost: touches ~10–12 files (`Graphics/image.py`, `external.py`,
+     `pattern.py`, `skloader.py`/`sksaver.py`, `Base/load.py`,
+     `psdevice.py`, the `graphics.py` display sites, `colordlg.py`,
+     `gradientedit.py`) plus the skimage call sites.  Image
+     caching/undo semantics (`ExternalData` filename cache,
+     `SetData`) and the `.sk` file format (filename link or
+     base64-PNG blob) must be preserved; the format round-trip and
+     Xvfb tests are the gate.
+   - Staging: fully doable on python2 first (stage A below,
+     suite-gated): introduce the internal buffer, add
+     buffer-protocol variants of the `_sketch` image functions,
+     switch the call sites.  The py3 port of skimage then becomes
+     mechanical (standard `PyModuleDef`/`PyUnicode`/`PyBytes` work).
 
-`setup.py`'s `/usr/include/python2.7/Imaging` include-dir handling goes
-away with whichever option is chosen.
+Implementation notes (as done, 2026-10-24):
+
+- **C side** (`skimage.c`): a local `SKImageData` struct (xsize/ysize/
+  mode/pixelsize/linesize plus `image32`/`image8`/`image` row-pointer
+  arrays) replaces the PIL `Imaging`/`ImagingObject` types; it is built
+  from the Python-side packed buffer by `skimage_from_buffer()`
+  (`PyObject_GetBuffer`, `PyBUF_WRITABLE` for the fill functions,
+  `PyBUF_SIMPLE` for reads; `INT32`/`UINT8` are now defined locally —
+  they used to come from `Imaging.h`).  All 11 entry points
+  (`copy_image_to_ximage`, `transform_to_ximage`, the 3 gradient
+  fills, `fill_transformed_tile`, the 4 HSV/RGB ramps, `write_ps_hex`)
+  now take `(buffer, mode, width, height)` in place of the image
+  object; the inner per-pixel loops are unchanged.  Wrong sizes and
+  unsupported modes raise `ValueError` instead of being able to
+  segfault (the former untyped-cast hazard).
+- **Python side**: `Sketch/Graphics/image.py` defines `RasterImage`
+  (mode ∈ {L, RGB, RGBA}, size, packed `data`; RGB/RGBA are 4 bytes per
+  pixel like PIL's internal layout, L is 1) with the PIL boundary
+  helpers `image_from_pil`/`image_to_pil` (raw modes `L`/`RGBX`/
+  `RGBA`; note PIL's `frombuffer` map-buffer fast path returns mode
+  `RGBX` for rawmode `RGBX`, so `image_to_pil` converts back to
+  `RGB`).  `ImageData` stores that payload directly (no `__getattr__`
+  forwarding, no `.im` anywhere); `Convert`/`Invert`/`Resize` round-trip
+  through PIL off the display path.  Call sites switched: `graphics.py`
+  (pattern images and gradients use `RasterImage` scratch buffers,
+  `DrawImage` uses the ImageData/RasterImage buffer directly),
+  `psdevice.py`, `colordlg.py`, `gradientedit.py`, `sksaver.py`,
+  `aisaver.py`; `eps.py` converts the ghostscript preview to a
+  `RasterImage`.
+- **Behavior preserved**: the display treats RGBA as opaque RGB
+  (unchanged), but the alpha channel is now kept end to end; `.sk`
+  embedded-image format (base64 PNG) and the EPS/PS hex output are
+  byte-identical to master (the format baselines pass unchanged).
+  One subtlety worth remembering: in the display functions the
+  source width/height are the image's own pixel size while the
+  destination rectangle is computed separately in the caller
+  (`DrawImage` scales/transforms the full image into a possibly
+  different dest rect) — the initial port got this mixed up and the
+  Xvfb smoke tests caught it.
+
+`setup.py`'s `/usr/include/python2.7/Imaging` include-dir handling is
+gone.
 
 ## Porting plan
 
@@ -164,10 +285,17 @@ gate throughout; baselines are compared against master's
   maintainer approval; the `from __future__ import division` rollout
   with suite-validated fixes; version-parameterize `setup.py` (build
   dir names via `sys.version_info`), `src/skencil` (lib dir) and
-  `devtools/`.  Gate: build + 95 tests + Xvfb smoke after each batch.
+  `devtools/`; the image-model rework per the skimage decision
+  (option 4 in the C-extensions section: internal image buffer with
+  RGBA kept, buffer-protocol `_sketch` image functions, PIL as
+  codec-only at the boundaries) — done 2026-10-24, see the
+  implementation notes there.  Gate: build + 111 tests + Xvfb
+  smoke after each batch.
 - **Stage B — C extensions on a port branch (python3):** in the order
   `_sketch` (geometry) → `streamfilter`/`_type1`/`skread`/
-  `pstokenize` → `pax` → `skimage` last (design decision above first).
+  `pstokenize` → `pax` → `skimage` last (its design decision is made
+  and the model-side rework is already implemented on the main branch
+  — option 4; the py3 port of skimage is now mechanical).
   Per module: `PyModuleDef` + `PyInit_`, the bytes/unicode split per
   the taxonomy, `PyCapsule` bridges, warning-free compile.  Gate per
   module: import + the headless model tests under py3
@@ -186,7 +314,11 @@ gate throughout; baselines are compared against master's
 
 ## Known risks
 
-- **skimage/PIL** — the only genuinely open design question (above).
+- **skimage/PIL** — solved (option 4 implemented 2026-10-24: internal
+  image object, PIL as boundary codec; see the implementation notes
+  in the C-extensions section).  Remaining py3 work there is
+  mechanical; `write_ps_hex`'s `PyFile_AsFile` is py2-only and is
+  handled with the rest of the stage-B module port.
 - **pax under py3 tkinter** — the GIL/`tcl_tstate` analysis
   (`modernize-paxtkinter.md`) was done on py2; the py3 `_tkinter` C
   source differs (multi-phase init, capsule-based internals), so the

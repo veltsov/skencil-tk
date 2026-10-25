@@ -236,11 +236,9 @@ if __name__ == "__main__":
             tcl_ver = '8.6'
 
     #Fix for CentOS
-    if os.path.isfile('/usr/include/python2.7/Imaging/Imaging.h'):
-        pil_include_dir = ['/usr/include/python2.7/Imaging']
-    else:
-        pil_include_dir = [ ]
-            
+    # (the former PIL include-dir handling for skimage.c is gone:
+    # skimage no longer uses PIL's private C API)
+
     if not tcl_ver:
         print 'System tcl/tk =>8.5 libraries have not found!'
         sys.exit(1)
@@ -266,7 +264,7 @@ if __name__ == "__main__":
     skmod_module = Extension('Sketch.Modules._sketch',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '6')],
-            include_dirs=[src_path + 'extensions/Pax/'] + pil_include_dir,
+            include_dirs=[src_path + 'extensions/Pax/'],
             sources=[skmod_src + 'curvedraw.c', skmod_src + 'curvefunc.c', skmod_src + 'curvelow.c',
                     skmod_src + 'curvemisc.c', skmod_src + 'curveobject.c', skmod_src + 'skaux.c',
                     skmod_src + 'skcolor.c', skmod_src + 'skdither.c', skmod_src + '_sketchmodule.c',

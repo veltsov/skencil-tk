@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 
-import PIL.Image
+from Sketch.Graphics.image import RasterImage
 from Sketch.x11 import GXxor, ZPixmap
 
 from colorsys import hsv_to_rgb, rgb_to_hsv
@@ -128,8 +128,10 @@ class ImageView(PyWidget):
         self.image = image
         if self.ximage:
             ximage = self.ximage
-            _sketch.copy_image_to_ximage(self.visual, image.im, ximage,
-                                         0, 0, ximage.width, ximage.height)
+            _sketch.copy_image_to_ximage(self.visual, image.data, image.mode,
+                                         image.size[0], image.size[1],
+                                         ximage, 0, 0,
+                                         ximage.width, ximage.height)
             self.UpdateWhenIdle()
 
     def RedrawMethod(self, region = None):
@@ -142,7 +144,7 @@ class ImageView(PyWidget):
 class ChooseComponent(ImageView, Publisher):
 
     def __init__(self, master, width, height, color = (0, 0, 0), **kw):
-        image = PIL.Image.new('RGB', (width, height))
+        image = RasterImage('RGB', (width, height))
         ImageView.__init__(*(self, master, image), **kw)
         self.set_color(color)
         self.drawn = 0
@@ -235,7 +237,9 @@ class ChooseRGBXY(ChooseComponent):
         self.show_mark()
 
     def update_ramp(self):
-        _sketch.fill_hsv_xy(self.image.im, self.xcomp, self.ycomp, self.color)
+        _sketch.fill_hsv_xy(self.image.data, self.image.mode,
+                            self.image.size[0], self.image.size[1],
+                            self.xcomp, self.ycomp, self.color)
         self.set_image(self.image)
 
     def move_to(self, p, state):
@@ -291,7 +295,9 @@ class ChooseRGBZ(ChooseComponent):
             self.UpdateWhenIdle()
 
     def update_ramp(self):
-        _sketch.fill_hsv_z(self.image.im, self.comp, self.color)
+        _sketch.fill_hsv_z(self.image.data, self.image.mode,
+                           self.image.size[0], self.image.size[1],
+                           self.comp, self.color)
         self.set_image(self.image)
 
     def move_to(self, p, state):

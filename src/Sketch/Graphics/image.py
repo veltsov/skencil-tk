@@ -15,10 +15,13 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
-# A simple graphics object that represents a pixel image. It uses the
-# Python Image Library for file I/O. The ExternalData baseclass
-# maintains a cache of images to avoid having multiple copies of data in
-# memory.
+# A simple graphics object that represents a pixel image.  The pixels
+# are kept in an internal packed buffer (RasterImage/ImageData); PIL is
+# used only to decode and encode image file formats at the IO
+# boundaries (import filters, .sk embedded PNGs, EPS previews, and
+# image operations off the display path).  The ExternalData baseclass
+# maintains a cache of images to avoid having multiple copies of data
+# in memory.
 #
 
 import os
@@ -30,31 +33,83 @@ from Sketch.UI.command import AddCmd
 
 from Sketch.Graphics.external import ExternalData, get_cached, ExternalGraphics
 
+
+# PIL 'raw' encoder/decoder names for the internal representation:
+# RGB/RGBA are stored as four bytes per pixel (R, G, B and alpha or
+# padding, in that byte order -- like PIL's internal layout and what
+# the C display code in skimage.c expects), L as one byte per pixel.
+# The alpha channel is always preserved; the current display treats
+# RGBA like opaque RGB, but the data is kept for future transparency
+# support.
+_RAWMODE = {'L': 'L', 'RGB': 'RGBX', 'RGBA': 'RGBA'}
+
+
+def image_from_pil(image):
+    """Convert a PIL image into the internal representation,
+    (mode, size, data).  Images of other modes are converted to L or
+    RGB; an alpha channel, when present, is kept."""
+    if image.mode not in _RAWMODE:
+        mode = 'L' if image.mode == '1' else 'RGB'
+        image = image.convert(mode)
+    else:
+        image.load()
+    return image.mode, image.size, image.tobytes('raw', _RAWMODE[image.mode])
+
+
+def image_to_pil(mode, size, data):
+    """Convert the internal representation back into a PIL image (IO
+    boundary: file encoding and PIL-based image operations off the
+    display path)."""
+    pil = PIL.Image.frombuffer(mode, size, data, 'raw', _RAWMODE[mode], 0, 1)
+    if pil.mode != mode:
+        # PIL's memory-mapping fast path returns the decoder's mode;
+        # for RGB that is 'RGBX' (4 bytes per pixel with padding)
+        pil = pil.convert(mode)
+    return pil
+
+
+class RasterImage(object):
+
+    """A minimal internal raster image: a mode ('L', 'RGB' or 'RGBA'),
+    a size (width, height) and the packed raw pixel data (see above).
+    This is the internal payload of ImageData and is also used for the
+    scratch images filled by the C display code (gradient fills, color
+    dialog ramps, etc.)."""
+
+    def __init__(self, mode, size, data = None, fill = 0):
+        self.mode = mode
+        self.size = size
+        if data is None:
+            bytes_per_pixel = 1 if mode == 'L' else 4
+            # py2: str is bytes, so chr(fill) repeated is the raw data
+            data = chr(fill) * (size[0] * size[1] * bytes_per_pixel)
+        self.data = data
+
+    def AsPILImage(self):
+        """Return a PIL image for IO operations (boundary)."""
+        return image_to_pil(self.mode, self.size, self.data)
+
+
 class ImageData(ExternalData):
 
-    attributes = {'mode':0, 'size':0, 'im':0, 'info':0}
+    attributes = {'mode':0, 'size':0, 'data':0, 'info':0}
 
     def __init__(self, image, filename = '', cache = 1):
-        # convert image to mode 'L' or 'RGB' if necessary
-        if image.mode not in ('RGB', 'RGBA', 'L'):
-            if image.mode == '1':
-                mode = 'L'
-            else:
-                mode = 'RGB'
-            image = image.convert(mode)
+        # IMAGE is either a RasterImage (the internal representation)
+        # or a PIL image (the IO boundary, e.g. from the file loaders).
+        if isinstance(image, RasterImage):
+            self.mode = image.mode
+            self.size = image.size
+            self.data = image.data
+            self.info = {}
         else:
-            image.load()
-        self.image = image
+            self.mode, self.size, self.data = image_from_pil(image)
+            self.info = dict(getattr(image, 'info', None) or {})
         ExternalData.__init__(self, filename, cache)
-
-    def __getattr__(self, attr):
-        if attr in self.attributes:
-            return getattr(self.image, attr)
-        raise AttributeError(attr)
 
     def AsEmbedded(self):
         if self.filename:
-            return ImageData(self.image)
+            return ImageData(RasterImage(self.mode, self.size, self.data))
         else:
             return self
 
@@ -62,16 +117,22 @@ class ImageData(ExternalData):
         return self.size
 
     def Image(self):
-        return self.image
+        """Return a PIL image for IO operations (boundary)."""
+        return image_to_pil(self.mode, self.size, self.data)
+
+    def Resize(self, size):
+        """Return a resized copy (PIL-based; used off the display path,
+        e.g. for the PostScript image tile export)."""
+        return RasterImage(*image_from_pil(self.Image().resize(size)))
 
     def Convert(self, mode):
-        if mode != self.image.mode:
-            return ImageData(self.image.convert(mode))
+        if mode != self.mode:
+            return ImageData(self.Image().convert(mode))
         else:
             return self
 
     def Invert(self):
-        return ImageData(PIL.ImageChops.invert(self.image))
+        return ImageData(PIL.ImageChops.invert(self.Image()))
 
     def new_from_file(self):
         return load_image(self.filename)

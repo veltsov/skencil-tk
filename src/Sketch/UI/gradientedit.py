@@ -15,9 +15,9 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
-import PIL.Image
 from Sketch import x11 as X
 from Sketch.Modules import pax
+from Sketch.Graphics.image import RasterImage
 
 from Sketch import _, Publisher, SketchError, _sketch
 from Sketch import Blend, CreateRGBColor, MultiGradient
@@ -45,7 +45,7 @@ class GradientView(PyWidget, Publisher):
     accept_drop = (DROP_COLOR,)
 
     def __init__(self, master, width, height, gradient, **kw):
-        image = PIL.Image.new('RGB', (width, height))
+        image = RasterImage('RGB', (width, height))
         self.orig_x = handle_height / 2
         if 'width' not in kw:
             kw["width"] = width + handle_height
@@ -104,8 +104,10 @@ class GradientView(PyWidget, Publisher):
         self.image = image
         if self.ximage:
             ximage = self.ximage
-            _sketch.copy_image_to_ximage(self.visual, image.im, ximage,
-                                         0, 0, ximage.width, ximage.height)
+            _sketch.copy_image_to_ximage(self.visual, image.data, image.mode,
+                                         image.size[0], image.size[1],
+                                         ximage, 0, 0,
+                                         ximage.width, ximage.height)
             self.UpdateWhenIdle()
 
     def ResizedMethod(self, width, height):
@@ -233,7 +235,9 @@ class GradientView(PyWidget, Publisher):
         return self.context_idx >= 0
 
     def update_gradient(self):
-        _sketch.fill_axial_gradient(self.image.im, self.gradient,
+        _sketch.fill_axial_gradient(self.image.data, self.image.mode,
+                                    self.image.size[0], self.image.size[1],
+                                    self.gradient,
                                     0, 0, self.image.size[0] - 1, 0)
         self.set_image(self.image)
 

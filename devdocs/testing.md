@@ -30,7 +30,7 @@ staleness warning.
 | `test/collect_refs.py` | extracts `eps()`/`bm()` file references from `.sk` files; used by add-fixture |
 | `test/record.py` | regenerate baselines for given fixtures (used by add-fixture) |
 | `test/data/` | fixtures: `.sk` files + every external file they reference, `fixtures.txt` manifest |
-| `test/model/` | layer 1: headless document-model tests (load, save/reload, mutations, undo, bezier node edits) |
+| `test/model/` | layer 1: headless document-model tests (load, save/reload, mutations, undo, bezier node edits) and the internal raster image representation (`test_image.py`: RasterImage/ImageData, the buffer-protocol image functions of `_sketch`, embedded-image `.sk` round trips) |
 | `test/formats/` | layer 2: `sk2ps` output vs baseline EPS (byte compare, then ghostscript raster compare), fig import |
 | `test/ui/` | layers 3+4: full app under Xvfb driven by `--run-script` payloads (`test/ui/scripts/`), screenshot comparisons |
 | `test/baselines/` | golden artifacts recorded from master: `sk/` (.sk saves), `eps/` (EPS + rasterized PNG), `shots/` (screenshots), `BASELINE-REV` |
