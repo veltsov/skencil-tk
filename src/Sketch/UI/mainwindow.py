@@ -607,7 +607,8 @@ class SketchMainWindow(Publisher):
             from Sketch.Scripting.script import Context
             dict = {'context': Context()}
             try:
-                execfile(self.run_script, dict)
+                exec(compile(open(self.run_script, 'rb').read(),
+                             self.run_script, 'exec'), dict)
             except:
                 warn_tb(USER, _("Error running script `%s'"), self.run_script)
         self.application.Mainloop()

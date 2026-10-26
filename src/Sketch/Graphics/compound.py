@@ -24,6 +24,8 @@
 
 import operator
 
+from functools import reduce
+
 from Sketch import _, SketchError, UnionRects, EmptyRect, _sketch
 from Sketch import NullUndo, CreateListUndo, Undo
 

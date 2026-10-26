@@ -77,6 +77,7 @@
 
 from __future__ import division
 from math import sin, cos, atan2, hypot, pi, fmod, floor
+from functools import reduce
 
 from Sketch import _, Rect, UnionRects, EmptyRect, NullPoint, Polar, \
      IdentityMatrix, SingularMatrix, Identity, Trafo, Scale, Translation, \

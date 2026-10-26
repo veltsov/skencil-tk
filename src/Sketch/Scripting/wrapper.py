@@ -56,7 +56,6 @@ safe_special_methods = {
     "__eq__": 1,
     "__lt__": 1,
     "__gt__": 1,
-    "__cmp__": 1,
     "__repr__": 1,
     "__str__": 1,
     "__coerce__": 1,

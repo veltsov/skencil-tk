@@ -27,6 +27,8 @@ from __future__ import division
 import operator, math
 import time
 
+from functools import reduce
+
 from Sketch.Lib.util import flatten
 
 from Sketch.UI.skpixmaps import pixmaps
@@ -397,6 +399,7 @@ class Selection(Bounded):
         return len(self.objects)
 
     __nonzero__ = __len__
+    __bool__ = __len__
 
     def update_rects(self):
         objects = self.GetObjects()

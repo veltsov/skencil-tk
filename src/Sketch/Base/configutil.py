@@ -218,7 +218,8 @@ def load_user_preferences():
         # unicode and it disappears.
         loaded = _LoadedPreferences()
         try:
-            execfile(filename, {'preferences': loaded})
+            exec(compile(open(filename, 'rb').read(), filename, 'exec'),
+                 {'preferences': loaded})
         except:
             warn_tb(USER, "Cannot read the preferences file")
         else:

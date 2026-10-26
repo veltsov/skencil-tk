@@ -35,6 +35,8 @@ from __future__ import division
 import math
 import sys
 
+from functools import reduce
+
 from Sketch.Base.warn import pdebug, warn, warn_tb, USER, INTERNAL
 from Sketch import SketchInternalError
 
