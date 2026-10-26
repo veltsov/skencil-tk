@@ -1043,7 +1043,7 @@ fill_rgb_xy(PyObject * self, PyObject * args)
     double color[3];
     unsigned char *dest;
 
-    if (!PyArg_ParseTuple(args, "Osiii(ddd)", &imobj, &mode,
+    if (!PyArg_ParseTuple(args, "Osiiii(ddd)", &imobj, &mode,
 			  &im_width, &im_height, &xidx, &yidx,
 			  &color[0], &color[1], &color[2]))
 	return NULL;
@@ -1188,7 +1188,7 @@ fill_hsv_xy(PyObject * self, PyObject * args)
     double color[3];
     unsigned char *dest;
 
-    if (!PyArg_ParseTuple(args, "Osiii(ddd)", &imobj, &mode,
+    if (!PyArg_ParseTuple(args, "Osiiii(ddd)", &imobj, &mode,
 			  &im_width, &im_height, &xidx, &yidx,
 			  &color[0], &color[1], &color[2]))
 	return NULL;

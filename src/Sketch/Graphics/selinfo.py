@@ -196,9 +196,11 @@ def list_to_tree_sliced(infolist):
     result = []
     slice_start = slice_end = -1
     last_obj = None
-    for idx, list in list_to_tree2(infolist):
-        if not isinstance(list, list):
-            # list is a child
+    # NOTE: don't name the loop variable `list' -- it would shadow the
+    # builtin needed in the isinstance check below (see 370cfcb)
+    for idx, entry in list_to_tree2(infolist):
+        if not isinstance(entry, list):
+            # entry is a child
             if idx == slice_end:
                 slice_end = idx + 1
             else:
@@ -209,9 +211,9 @@ def list_to_tree_sliced(infolist):
                         result.append((slice_start, last_obj))
                 slice_start = idx
                 slice_end = idx + 1
-                last_obj = list
+                last_obj = entry
         else:
-            # list is a list of children of child
+            # entry is a list of children of child
             if slice_start > -1:
                 if slice_end > slice_start + 1:
                     result.append((slice_start, slice_end))
@@ -220,7 +222,7 @@ def list_to_tree_sliced(infolist):
             slice_start = -1
             slice_end = -1
             last_obj = None
-            result.append((idx, list))
+            result.append((idx, entry))
     else:
         if slice_start > -1:
             if slice_end > slice_start + 1:

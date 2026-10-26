@@ -45,7 +45,7 @@ class GradientView(PyWidget, Publisher):
     accept_drop = (DROP_COLOR,)
 
     def __init__(self, master, width, height, gradient, **kw):
-        image = RasterImage('RGB', (width, height))
+        image = RasterImage('RGB', (width, height), writable = 1)
         self.orig_x = handle_height / 2
         if 'width' not in kw:
             kw["width"] = width + handle_height

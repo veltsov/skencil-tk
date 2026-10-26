@@ -119,6 +119,11 @@ pstokenize keep their names), `PyString_*` → `PyUnicode_*` for text and
 `PyBytes_*` for binary (split per the string-kind taxonomy), `PyInt_*`
 → `long`/`PyLong`, `PyCObject` → `PyCapsule`, `tp_compare`/slot review.
 Single-phase init is sufficient (no per-subinterpreter state needed).
+Note (verified 2026-10-26, see `divaudit-findings.md`): all live
+`PyInt_AsLong` sites are preceded by `PyInt_Check` guards that reject
+floats loudly -- preserve those guards in the port (as
+`PyLong_Check`/`PyIndex_Check`); no silent-conversion hardening is
+needed on the py2 side.
 
 ### The former one real design problem: skimage vs. the PIL C API — solved
 

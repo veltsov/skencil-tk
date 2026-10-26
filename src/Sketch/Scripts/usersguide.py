@@ -8,5 +8,5 @@ def hello_world(context):
 
 # register scripts
 import Sketch.Scripting
-Sketch.Scripting.AddFunction('ug_hello_world', 'Hello World',
+Sketch.Scripting.AddFunction('ug_hello_world', u'Hello World',
                              hello_world, menu = u"User's Guide")

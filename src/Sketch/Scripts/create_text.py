@@ -37,6 +37,6 @@ def create_text(context):
     # document, the Insert method takes care of undo information itself.
     context.document.Insert(text)
 
-Sketch.Scripting.AddFunction('create_text', 'Create Text', create_text,
+Sketch.Scripting.AddFunction('create_text', u'Create Text', create_text,
                              script_type = Sketch.Scripting.AdvancedScript)
 

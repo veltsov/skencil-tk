@@ -200,6 +200,6 @@ def Transform(context):
     dlg = TransformDlg(context.application.root, context)
 
 
-Sketch.Scripting.AddFunction('Transform', 'Transform',
+Sketch.Scripting.AddFunction('Transform', u'Transform',
                              Transform,
                              script_type = Sketch.Scripting.AdvancedScript)

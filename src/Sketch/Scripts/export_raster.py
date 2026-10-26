@@ -252,7 +252,7 @@ Sketch.Scripting.AddFunction('export_raster',"With parameters",
                              export_raster_more_interactive,
                              menu = _("Export Raster"),
                              script_type = Sketch.Scripting.AdvancedScript)
-#Sketch.Scripting.AddFunction('export_raster', 'Export Raster Alpha (Default)',
+#Sketch.Scripting.AddFunction('export_raster', u'Export Raster Alpha (Default)',
 #                             export_raster_interactive, args = (1,0),
 #                             script_type = Sketch.Scripting.AdvancedScript)
 Sketch.Scripting.AddFunction('export_raster',
@@ -260,6 +260,6 @@ Sketch.Scripting.AddFunction('export_raster',
                              export_raster_interactive, args = (1,0,100),
                              menu = _("Export Raster"),
                              script_type = Sketch.Scripting.AdvancedScript)
-#Sketch.Scripting.AddFunction('export_raster', 'Export Raster Alpha (120ppi)',
+#Sketch.Scripting.AddFunction('export_raster', u'Export Raster Alpha (120ppi)',
 #                             export_raster_interactive, args = (1,0,120),
 #                             script_type = Sketch.Scripting.AdvancedScript)

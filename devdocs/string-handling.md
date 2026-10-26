@@ -154,7 +154,11 @@ well.  `ScriptRegistry.Add` rejects byte-string paths and byte-string
 components with a `TypeError` (a byte string would be iterated
 character by character, producing single-letter nested submenus; see
 `devdocs/unicode-runtime-audit.md`, instance 6).  The shipped scripts
-pass `u'...'` literals.
+pass `u'...'` literals.  (2026-10-26: the division-audit interactive
+session surfaced 23 straggler plain-str `AddFunction` titles --
+Script -> Average Points crashed in `check_info` for exactly this
+reason; all shipped titles are `u'...'` literals now, see
+`divaudit-findings.md`.)
 
 ## Validation and enforcement
 

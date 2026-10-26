@@ -35,6 +35,6 @@ def union(objects):
 
 import Sketch.Scripting
 
-Sketch.Scripting.AddFunction("Union", "1. Union", run_script,
+Sketch.Scripting.AddFunction("Union", u"1. Union", run_script,
                              menu=u"PathUtils",
                              script_type=Sketch.Scripting.AdvancedScript)

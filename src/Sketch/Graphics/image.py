@@ -76,13 +76,19 @@ class RasterImage(object):
     scratch images filled by the C display code (gradient fills, color
     dialog ramps, etc.)."""
 
-    def __init__(self, mode, size, data = None, fill = 0):
+    def __init__(self, mode, size, data = None, fill = 0, writable = 0):
         self.mode = mode
         self.size = size
         if data is None:
             bytes_per_pixel = 1 if mode == 'L' else 4
             # py2: str is bytes, so chr(fill) repeated is the raw data
             data = chr(fill) * (size[0] * size[1] * bytes_per_pixel)
+        if writable and not isinstance(data, bytearray):
+            # scratch image filled in place by the C display code
+            # (gradient fills, color dialog ramps): py2 str is an
+            # immutable buffer, so the C fillers would raise
+            # BufferError.  bytearray provides a writable buffer.
+            data = bytearray(data)
         self.data = data
 
     def AsPILImage(self):

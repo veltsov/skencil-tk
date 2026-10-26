@@ -153,6 +153,9 @@ class CGMSaver:
         self.file.write(struct.pack(*args))
 
     def putstr(self, Id , str):
+        if isinstance(str, unicode):
+            # K2 names are unicode; the binary CGM sink needs bytes
+            str = str.encode('utf-8')
         lng = len(str)
         if lng < 30:
             self.pack("!H" , Id | (lng + 1))

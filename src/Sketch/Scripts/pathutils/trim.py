@@ -19,6 +19,6 @@ def run_script(context):
 
 import Sketch.Scripting
 
-Sketch.Scripting.AddFunction("Trim", "7. Trim", run_script,
+Sketch.Scripting.AddFunction("Trim", u"7. Trim", run_script,
                              menu=u"PathUtils",
                              script_type=Sketch.Scripting.AdvancedScript)

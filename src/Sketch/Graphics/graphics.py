@@ -31,6 +31,7 @@ from math import pi
 
 from Sketch import x11 as X
 from Sketch.Modules.pax import PaxRegionType, IntersectMasks, CreateRegion
+from Sketch.Graphics.font import glyph_registry
 from Sketch.Graphics.image import RasterImage
 
 from Sketch.Base.warn import pdebug, warn, INTERNAL, USER
@@ -542,7 +543,7 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             t = max(t, cy);	b = min(b, cy + ch)
         if l >= r or t >= b:
             return None, None, None
-        image = RasterImage('RGB', (r - l, b - t), fill = 255)
+        image = RasterImage('RGB', (r - l, b - t), fill = 255, writable = 1)
         trafo = Translation(-l, -t)(self.doc_to_win)
         return image, trafo, (l, t)
 
@@ -883,7 +884,7 @@ class GraphicsDevice(SimpleGC, CommonDevice):
                 ux, uy = up
                 lx = ux / 2; ly = uy / 2
                 uppercase = string.ascii_uppercase
-                registry = font.glyph_registry
+                registry = glyph_registry
                 draw = gc.DrawLine # we should draw rectangles...
                 for i in range(len(text)):
                     x, y = pos[i]

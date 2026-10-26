@@ -44,10 +44,10 @@ def minus(objects):
 
 import Sketch.Scripting
 
-Sketch.Scripting.AddFunction("Minus Front", "4. Minus Front", run_script,
+Sketch.Scripting.AddFunction("Minus Front", u"4. Minus Front", run_script,
                              menu=u"PathUtils", args=(0,),
                              script_type=Sketch.Scripting.AdvancedScript)
 
-Sketch.Scripting.AddFunction("Minus Back", "5. Minus Back", run_script,
+Sketch.Scripting.AddFunction("Minus Back", u"5. Minus Back", run_script,
                              menu=u"PathUtils", args=(-1,),
                              script_type=Sketch.Scripting.AdvancedScript)

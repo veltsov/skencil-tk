@@ -138,5 +138,5 @@ def run(context):
         document.AddUndo(undo)
 
 import Sketch.Scripting
-Sketch.Scripting.AddFunction('average_points', 'Average Points', run,
+Sketch.Scripting.AddFunction('average_points', u'Average Points', run,
                              script_type = Sketch.Scripting.AdvancedScript)

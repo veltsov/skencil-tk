@@ -144,7 +144,7 @@ class ImageView(PyWidget):
 class ChooseComponent(ImageView, Publisher):
 
     def __init__(self, master, width, height, color = (0, 0, 0), **kw):
-        image = RasterImage('RGB', (width, height))
+        image = RasterImage('RGB', (width, height), writable = 1)
         ImageView.__init__(*(self, master, image), **kw)
         self.set_color(color)
         self.drawn = 0

@@ -115,6 +115,6 @@ def foot_prints_along_path(context):
             doc.Insert(Group(foot_prints))
 
 
-Sketch.Scripting.AddFunction('foot_prints_along_path', 'Foot Prints',
+Sketch.Scripting.AddFunction('foot_prints_along_path', u'Foot Prints',
                              foot_prints_along_path,
                              script_type = Sketch.Scripting.AdvancedScript)

@@ -87,6 +87,6 @@ def abut_horizontal(context):
 
 # register script
 import Sketch.Scripting
-Sketch.Scripting.AddFunction('abut_horizontal', 'Abut Horizontal',
+Sketch.Scripting.AddFunction('abut_horizontal', u'Abut Horizontal',
                              abut_horizontal, menu = u'Arrange')
 

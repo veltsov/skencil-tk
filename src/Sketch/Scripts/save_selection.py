@@ -61,7 +61,7 @@ def save_selection_as_ps(context):
             seldoc.Draw(ps_dev)
             ps_dev.Close()
 
-Sketch.Scripting.AddFunction('save_selection_as_ps', 'Save Selection As EPS',
+Sketch.Scripting.AddFunction('save_selection_as_ps', u'Save Selection As EPS',
                              save_selection_as_ps,
                              script_type = Sketch.Scripting.AdvancedScript)
 

@@ -71,14 +71,19 @@ class AISaver:
 
 
     def analyze(self, object):
+        # plugin compounds (e.g. autoshapes) set has_fill but carry no
+        # properties of their own; their children carry them
+        properties = getattr(object, 'properties', None)
+        if properties is None:
+            return
         if object.has_fill:
-            fill = object.properties.fill_pattern
+            fill = properties.fill_pattern
             if fill.is_Gradient:
                 key = self.gradient_id(fill)
                 if key is not None:
                     self.gradients[key[0]] = key
         if object.has_font:
-            font = object.properties.font
+            font = properties.font
             self.fonts[font.PostScriptName()] = 1
 
     def gradient_id(self, fill):

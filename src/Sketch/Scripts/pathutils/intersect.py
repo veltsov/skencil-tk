@@ -37,6 +37,6 @@ def intersect(objects):
 
 import Sketch.Scripting
 
-Sketch.Scripting.AddFunction("Intersect", "2. Intersect", run_script,
+Sketch.Scripting.AddFunction("Intersect", u"2. Intersect", run_script,
                              menu=u"PathUtils",
                              script_type=Sketch.Scripting.AdvancedScript)
