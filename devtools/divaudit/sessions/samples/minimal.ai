@@ -1,0 +1,54 @@
+%!PS-Adobe-2.0 EPSF-2.0
+%%Creator: Adobe Illustrator(R) 8.0
+%%AI8_CreatorVersion: 8.0
+%%For: divaudit
+%%Title: (minimal.ai)
+%%CreationDate: 10/25/2026
+%%BoundingBox: 0 0 200 150
+%%HiResBoundingBox: 0 0 200 150
+%%DocumentProcessColors: Cyan Magenta Yellow Black
+%AI5_FileFormat 4.0
+%AI3_ColorUsage: Color
+%AI5_ArtSize: 200 150
+%AI5_ArtFlags: 0 0 0 1 0 0 1 0 0
+%AI5_TargetResolution: 800
+%AI5_NumLayers: 1
+%AI5_OpenToView: 0 150 1 1024 768 18 0 1 4 40 0 0
+%AI5_PageOrigin: 0 0
+%%EndComments
+%%BeginProlog
+%%EndProlog
+%%BeginSetup
+%%EndSetup
+%AI5_BeginLayer
+1 1 1 1 0 0 0 79 128 255 L 1
+lb
+0 A
+0 R 0 G 0 B
+1 w
+0 j 0 J
+[] 0 d
+0 0 m
+200 0 L
+200 150 L
+0 150 L
+0 0 l
+s
+0.5 w
+0 0 1 R
+10 10 m
+50 100 L
+100 10 l
+s
+1 0 0 R
+2 w
+[3 2] 0 d
+20 120 m
+180 120 L
+S
+LB
+%AI5_EndLayer--
+%%PageTrailer
+gsave annotatepage grestore showpage
+%%Trailer
+%%EOF

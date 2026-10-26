@@ -1,0 +1,118 @@
+INTERACTIVE DIVISION-AUDIT SCENARIO  (devtools/divaudit/sessions/)
+====================================================================
+
+Start:  devtools/divaudit/sessions/run_interactive.sh /tmp/divaudit/out/rich.sk
+(rich.sk was produced by build_rich.py: autoshapes, arrows, dashes,
+gradient fill, text, guides.  If it does not exist, run
+devtools/divaudit/python2-divaudit devtools/divaudit/sessions/build_rich.py
+first, or just start without a file and create objects in section B.)
+
+Work through the sections in order; repeat each action 2-3 times.
+Check off [x] as you go.  If anything crashes or looks odd, write a
+one-line note next to the item and continue.  Finish with File > Quit
+(needed so the audit log is flushed).  The log is
+/tmp/divaudit/session-interactive.jsonl.
+
+A. VIEWPORT / CANVAS / RULERS  (viewport, canvas, ruler, miniscroll)
+[x] Resize the window several times, small -> large
+[x] Zoom in / Zoom out (menu or keys) repeatedly
+[x] Zoom tool: drag a rectangle to zoom into a small area
+[x] Zoom to fit page / 100%
+[x] Scroll with the wheel, both axes; drag both scrollbars
+[x] Drag the horizontal ruler onto the canvas to create a guide
+[x] Move the mouse slowly all over the canvas (ruler tracking)
+[x] Scroll the page partly out of view, then pan back
+
+B. CREATE OBJECTS WITH TOOLS  (rectangle, ellipse, bezier, graphics)
+[x] Rectangle tool: draw several; try rounded corners if offered
+[x] Ellipse tool: draw; try arc / pie / chord modes if offered
+[x] Bezier tool: draw a multi-segment curve with clicks; close it
+[x] Polyline / freehand tool if present
+[x] Text tool: click, type a word, click elsewhere
+[x] Draw small objects near page edges and half off-page
+
+C. BEZIER NODE EDITING  (bezier, curveop, selection)
+[x] Select one of the bezier stars -> enter node-edit mode
+    (double-click or Enter)
+[x] Drag single nodes; drag several selected nodes
+[x] Toggle segment types (smooth/corner/symmetrical) on selected
+    segments, via menu or keys
+[x] Insert a node on a segment; delete a node; subdivide a segment
+[x] Select 3+ nodes, then Script menu -> Average Points -> OK
+    (this one has ~10 own division sites)
+    
+
+D. SELECTION / OBJECT OPS  (selection, graphics, compound, blend)
+[x] Marquee-select by dragging; shift-click to add/remove
+[x] SelectAll, then arrow-key nudge the selection
+[x] Group (Ctrl+G), ungroup; group 3+ objects: 
+[x] Duplicate (Ctrl+D) several times, drag copies apart
+[x] Transform via dialogs: rotate by 17 deg, scale by 1.5, shear
+[x] Select two objects -> Script menu -> all 8 Spread entries
+[x] Two objects -> Create menu -> Blend... -> OK; then unblend
+[x] Raise/lower, move to front/back.
+
+E. TEXT  (text.py)
+[x] Double-click the text object to edit; type more text
+[x] Change font size / alignment via the text dialog or panel
+[x] Scale the text object with handles
+[x] Create a second text object, select both, group them.
+
+F. GUIDES / PAGE / CONVERSIONS  (guidedlg, papersize, units,
+   converters, poslabel, lengthvar)
+[x] Guides dialog (Layout menu -> Guide Lines...): add horizontal
+    and vertical guides, move one by number, delete one.
+[x] Page Layout dialog: change page size (A4->Letter), orientation,
+    and the measurement unit (pt<->mm) -- twice
+[x] Select and move an object while the position/length fields are
+    visible; watch them update
+[x] Create one object exactly on a guide (snapping)
+
+G. PANELS  (filldlg, linedlg, colordlg, gradientedit, palette,
+   layerdlg)
+[x] Line panel: set widths 0.5/2/7, each dash style once, arrows on
+    both ends, then no arrows
+[x] Fill panel: cycle fill types; apply solid colors
+[x] Fill panel: apply a GRADIENT fill (the on-screen gradient draw
+    used to crash with BufferError -- fixed 2026-10-26; if it still
+    crashes, note it and restart run_interactive.sh -- earlier logs
+    are preserved)
+[x] Open the gradient editor, drag the color stops, add one, apply
+[x] Color dialog: move RGB sliders, then CMYK, apply each
+Color selection dialog does not work: Color palette not visible. Crash on OK.
+(FIXED 2026-10-26: skimage.c fill_rgb_xy/z + fill_hsv_xy/z format
+strings were one 'i' short after the image rework -- see
+divaudit-findings.md #7)
+[x] Click different cells in the color palette
+[x] Layer panel: add a layer, double-click-rename every layer to
+    plain ASCII (L1, L2, ...), move objects between layers, toggle
+    layer visibility, duplicate a layer, reorder layers
+
+H. AUTOSHAPES  (the 13 shapes in rich.sk; angle/measure/rim are the
+   biggest files)
+[x] Select each autoshape in turn and enter its edit mode
+[x] Drag every edit handle at least once
+[x] Press +/- (parameter up/down) on the selected shapes. Does not work
+[x] Rotate/scale each autoshape; toggle direction if offered
+[x] Duplicate one autoshape and edit the copy differently
+
+I. EXPORT ROUND  (wmfsaver, cgmsaver, aisaver, psdevice, pattern)
+   (after G: layer names are now plain ASCII, which unblocks CGM)
+[x] Save As -> .sk
+[x] Save As -> EPS; Save As -> PostScript
+[x] Save As -> AI  (fixed 2026-10-26; should now work)
+[x] Save As -> WMF (DeprecationWarning); Save As -> CGM (fixed 2026-10-26); Save As -> SVG;
+    Save As -> PDF
+[x] Print / Save as PostScript with a different page size
+[x] File > Quit
+
+NOTES (crashes, oddities, error messages):
+
+
+After quitting, tell the analyst; the merged analysis is:
+  python2 devtools/divaudit/report.py -s /tmp/divaudit/static.json \
+      -r /tmp/divaudit/runtime.jsonl \
+      -r /tmp/divaudit/session-model.jsonl \
+      -r /tmp/divaudit/session-load.jsonl \
+      -r /tmp/divaudit/session-ui.jsonl \
+      -r /tmp/divaudit/session-interactive.jsonl

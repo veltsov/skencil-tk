@@ -1,0 +1,53 @@
+#!/bin/sh
+# Run python2 with the integer-division audit instrumentation:
+#
+#   -Qwarnall         warn on every `/` with an integer operand (the
+#                     warning carries the exact file:line of the site)
+#   -W always:...     keep the per-location warning registry from
+#                     deduplicating the classic-division warnings
+#   hook/sitecustomize.py  (put on PYTHONPATH) records the
+#                     classic-division warnings into $DIVAUDIT_LOG and
+#                     suppresses their console output
+#
+# Usage:
+#   devtools/divaudit/python2-divaudit script.py [args...]
+#   PYTHON=devtools/divaudit/python2-divaudit \
+#       test/run_tests.sh -p no:warnings
+#
+# Environment:
+#   DIVAUDIT_LOG   JSON-lines output path
+#                  (default /tmp/divaudit/warnings.jsonl)
+#   DIVAUDIT_MODE  collect (default) or error (turn the warnings into
+#                  exceptions, e.g. to make pytest fail on new sites
+#                  as a burn-down gate)
+#
+# Note: app subprocesses launched by the UI tests (via sys.executable
+# and the launcher script) do not get -Qwarnall; only the pytest
+# process itself -- where the model/format tests run in-process -- is
+# instrumented.  The `-p no:warnings' argument is required so that
+# pytest's warnings plugin does not replace warnings.showwarning per
+# test, which would bypass the collector hook.
+
+set -e
+
+DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HOOKDIR="$DIR/hook"
+
+: "${DIVAUDIT_LOG:=/tmp/divaudit/warnings.jsonl}"
+mkdir -p "$(dirname -- "$DIVAUDIT_LOG")"
+export DIVAUDIT_LOG
+
+PYTHONPATH="$HOOKDIR${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH
+
+case "${DIVAUDIT_MODE:-collect}" in
+    error)
+        ACTION=error ;;
+    *)
+        ACTION=always ;;
+esac
+
+exec python2 -Qwarnall \
+    -W "${ACTION}:classic int division::" \
+    -W "${ACTION}:classic float division::" \
+    "$@"
