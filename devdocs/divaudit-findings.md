@@ -63,11 +63,66 @@ The rollout documented above has been carried out:
   (`graphics.py` LineHit, `ellipse.py` coord-rect growth --
   `properties.line_width` is float-typed, e.g. 0.9 from the XFig
   72.0/80.0 scaling).
-- **257 unverified-division markers** (`# divaudit: unverified`) on
-  53 files -- every division site not exercised by the audit, except
-  the draw-import pair (`drawinput.py`/`spritefile.py` are excluded
-  from flagging *and* from the rollout; they keep py2 semantics until
-  reviewed with real `.draw` samples).
+- **257 → 41 unverified-division markers** (`# divaudit: unverified`)
+  on ~30 files -- every division site not exercised by the audit,
+  except the draw-import pair (`drawinput.py`/`spritefile.py` are
+  excluded from flagging *and* from the rollout; they keep py2
+  semantics until reviewed with real `.draw` samples).  Several
+  classifier refinements pruned the noise: a `float-safe` category
+  (an operand statically float by construction: float literal,
+  `float(...)` call, math constants/functions like `pi`/`atan2`, or an
+  expression containing either; pi-derived names -- `pi4 = pi / 4`,
+  `pi12 = pi / 12`, `degrees = pi / 180.0` -- are propagated to a
+  fixpoint); an `int-coerced` category (`int(a / b)` is
+  value-preserving under py3 -- `int()` truncates toward zero exactly
+  like py2 int division, regardless of operand types); C-boundary
+  argument-flow tracing (a division feeding a `"d"`/`"f"` parameter of
+  a C function from `ctypes_catalog.json` is float-intended ->
+  `c-float`, one feeding `"i"`/`"l"` is int-intended -> `c-int`); an
+  `int-attr` category (both operands are attributes/len() results the
+  catalogue types as int, e.g. font-metric bbox members); and manual
+  prunes with documented reasoning (`cgmloader.py` normalizes by a
+  float-by-construction cross-product length; one `c-float` site in
+  `svgloader.py`).  Applied fixes surfaced by the tracing: `cmxloader.py:464`
+  `(len(data) / 2) * 'h'` (string-repeat count) converted to `//`, and
+  `text.py:441/448` `(llx - urx) / 2` → `int((llx - urx) / 2)` (the
+  font-metric bbox attrs are `T_INT` and `llx - urx` is *negative* --
+  py2 int division truncates toward zero, so `//` would floor one off;
+  the EPS baseline caught it: the avortsel text x-position drifted
+  ~1pt).  (the remaining 41 marker lines all carry
+  genuinely int-semantics-suspect `dynamic` sites that need eyeball
+  review before the py3 switch; bezier.py fully cleared after
+  verifying that `selected_idx` is the float curve parameter in the
+  SelCurvePoint branches -- `path.nearest_point` returns
+  `PyFloat_FromDouble`, curveobject.c/curvemisc.c).  Separately documented in the source
+  (one NOTE comment per site): `round(div)` sites snap/size
+  differently under py3 -- py2 `round()` is half-away-from-zero and
+  returns a float, py3 is half-to-even and returns an int -- an
+  accepted one-increment difference at exact midpoints
+  (`external.py`, `layer.py` grid snap, `selection.py`/`bezier.py`
+  45-degree rotation snap, `export_raster.py` raster size).  Manual
+  review round 2 (2026-10-26): `int()` coercion applied at the bpl
+  byte-count sites (`graphics.py`/`colordlg.py`/`gradientedit.py` --
+  the result feeds the C CreateImage "i" argument), the skapp.py
+  window-position math (`%d` formatting), and the pdfsaverpage.py
+  gs `-g` dimensions (the ghostscript manual specifies integers);
+  float-safe prunes confirmed by usage: `selection.py` Point/Trafo
+  results, `ellipse.py` Point midpoint, `canvas.py` zoom math
+  (scale[xy] from bounding_rect floats), `viewport.py` self.scale,
+  autoshape `arrow.py` self.h2.
+
+**Conclusion (2026-10-26): the division hunt is concluded.**  The
+remaining 41 markers sit almost exclusively in the old-format I/O
+filters (cgm/wmf/ai/cmx/xfig loaders and savers) and in
+`svgloader.py` (which needs its own separate fix anyway, see the
+svgloader `xml.sax` rewrite item).  They stay in place as review
+markers: their divisions now run under py3 division semantics
+(future division is rolled out in those files), so they fail loudly
+rather than corrupt if the formats are exercised, and the marker
+records the one thing the audit could not prove -- the intended
+int/float semantics.  Review them only if/when the corresponding
+formats become relevant; the draw-import pair is likewise deferred
+until real `.draw` samples exist.
 - **`from __future__ import division` in 86 files** (every file with a
   division site except the draw-import pair).
 

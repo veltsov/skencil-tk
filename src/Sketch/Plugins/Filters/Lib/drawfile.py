@@ -54,7 +54,7 @@ units_per_point = 640
 
 # Compatibility with future versions of Python with different division
 # semantics:
-points_per_inch = int(units_per_inch/units_per_point)  # divaudit: unverified (not exercised by the audit)
+points_per_inch = int(units_per_inch/units_per_point)
 
 class drawfile_object:
 
@@ -103,14 +103,14 @@ class drawfile_object:
 
         if exponent > 0:
 
-            value = float(fraction << exponent) / float(1L << 52)  # divaudit: unverified (not exercised by the audit)
+            value = float(fraction << exponent) / float(1L << 52)
 
         elif exponent == 0:
 
-            value = float(fraction) / float(1L << 52)  # divaudit: unverified (not exercised by the audit)
+            value = float(fraction) / float(1L << 52)
 
         else:
-            value = float(fraction >> -exponent) / float(1L << 52)  # divaudit: unverified (not exercised by the audit)
+            value = float(fraction >> -exponent) / float(1L << 52)
 
         if sign == 1:
             return -value

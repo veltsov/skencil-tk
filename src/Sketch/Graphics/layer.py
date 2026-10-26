@@ -359,8 +359,12 @@ class GridLayer(SpecialLayer):
 
     def Snap(self, p):
         xorg, yorg, xwidth, ywidth = self.geometry
-        sx = round((p.x - xorg) / xwidth) * xwidth + xorg  # divaudit: unverified (not exercised by the audit)
-        sy = round((p.y - yorg) / ywidth) * ywidth + yorg  # divaudit: unverified (not exercised by the audit)
+        # NOTE: py2 round() rounds half away from zero and returns a
+        # float, py3 round() rounds half to even and returns an int --
+        # a point exactly in the middle of a grid cell snaps to the
+        # other side under py3 (accepted difference)
+        sx = round((p.x - xorg) / xwidth) * xwidth + xorg
+        sy = round((p.y - yorg) / ywidth) * ywidth + yorg
         result = Point(sx, sy)
         return (abs(result - p), result)
 

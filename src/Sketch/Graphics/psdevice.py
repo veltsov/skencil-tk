@@ -205,7 +205,7 @@ class PostScriptDevice(CommonDevice):
         write('%%Page: 1 1\n')
         write('SketchDict begin\n')
         if rotate:
-            self.Rotate(pi/2)  # divaudit: unverified (not exercised by the audit)
+            self.Rotate(pi/2)
             self.Translate(0, -height)
 
     def init_props(self):
@@ -571,7 +571,7 @@ class PostScriptDevice(CommonDevice):
             if digits <= 0:
                 # an empty image. (it should never be < 0 ...)
                 return
-            lines = (digits - 1) / 80 + 1  # divaudit: unverified (not exercised by the audit)
+            lines = (digits - 1) // 80 + 1
             write('%d %d ' % image.size)
             write('[%g %g %g %g %g %g] true\n' % trafo.coeff())
             write('%%%%BeginData: %d Hex Lines\n' % (lines + 1))
@@ -581,7 +581,7 @@ class PostScriptDevice(CommonDevice):
             if digits <= 0:
                 # an empty image. (it should never be < 0 ...)
                 return
-            lines = (digits - 1) / 80 + 1  # divaudit: unverified (not exercised by the audit)
+            lines = (digits - 1) // 80 + 1
             write('%d %d ' % image.size)
             write('[%g %g %g %g %g %g] true\n' % trafo.coeff())
             write('%%%%BeginData: %d Hex Lines\n' % (lines + 1))
@@ -668,21 +668,21 @@ class PostScriptDevice(CommonDevice):
             # the tile image is too large to fit into a PostScript
             # string. Resize it.
             #warn(USER, "Image data to big for tiling, resizing...")
-            ratio = float(width) / height  # divaudit: unverified (not exercised by the audit)
-            max_size = 65536 / len(mode)  # divaudit: unverified (not exercised by the audit)
+            ratio = float(width) / height
+            max_size = 65536 // len(mode)
             width = int(sqrt(max_size * ratio))
-            height = int(sqrt(max_size / ratio))  # divaudit: unverified (not exercised by the audit)
+            height = int(sqrt(max_size / ratio))
             tile = image.Resize((width, height))
             length = width * height * len(mode)
-            trafo = trafo(Scale(float(image.size[0]) / width,  # divaudit: unverified (not exercised by the audit)
-                                float(image.size[1]) / height))  # divaudit: unverified (not exercised by the audit)
+            trafo = trafo(Scale(float(image.size[0]) / width,
+                                float(image.size[1]) / height))
         else:
             tile = image
         write = self.file.write
         write('%d %d %d [%g %g %g %g %g %g]\n'
               % ((width, height, len(mode)) + trafo.coeff()))
         digits = length * 2	# 2 digits per byte
-        lines = (digits - 1) / 80 + 1  # divaudit: unverified (not exercised by the audit)
+        lines = (digits - 1) // 80 + 1
         write('%%%%BeginData: %d Hex Lines\n' % (lines + 1))
         write("tileimage\n")
         # write_ps_hex treats RGBA like RGB

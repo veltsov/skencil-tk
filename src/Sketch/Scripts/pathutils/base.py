@@ -175,7 +175,7 @@ def coord_rect(points):
 
 def index(cp, p0, t0, p1, t1):
     if p1.x - p0.x == 0:
-        return subdivide(t0, t1, (cp.y - p0.y) / (p1.y - p0.y))  # divaudit: unverified (not exercised by the audit)
+        return subdivide(t0, t1, (cp.y - p0.y) / (p1.y - p0.y))
     else:
         return subdivide(t0, t1, (cp.x - p0.x) / (p1.x - p0.x))
 

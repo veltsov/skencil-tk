@@ -125,7 +125,6 @@ class Rectangle(RectangularPrimitive):
             maxy = 1 - self.radius2
             if minx < x < maxx:
                 if miny < y < maxy:
-    # divaudit: unverified (not exercised by the audit)
                     ratio = hypot(self.trafo.m11, self.trafo.m21) \
                           / hypot(self.trafo.m12, self.trafo.m22)
                     if x < 0.5:
@@ -136,7 +135,7 @@ class Rectangle(RectangularPrimitive):
                         dy = y
                     else:
                         dy = 1 - y
-                    if dy / dx > ratio:  # divaudit: unverified (not exercised by the audit)
+                    if dy / dx > ratio:
                         x = round(x)
                     else:
                         y = round(y)
@@ -311,33 +310,33 @@ class RectangleEditor(Editor):
             if code == 1:
                 t = Trafo(1, 0, 0, 1 - y, 0, y)
                 if y != 1:
-                    radius2 = radius2 / abs(1 - y)  # divaudit: unverified (not exercised by the audit)
+                    radius2 = radius2 / abs(1 - y)
                 else:
                     radius1 = radius2 = 0
             elif code == 2:
                 t = Trafo(x, 0, 0, 1, 0, 0)
                 if x != 0:
-                    radius1 = radius1 / abs(x)  # divaudit: unverified (not exercised by the audit)
+                    radius1 = radius1 / abs(x)
                 else:
                     radius1 = radius2 = 0
             elif code == 3:
                 t = Trafo(1, 0, 0, y, 0, 0)
                 if y != 0:
-                    radius2 = radius2 / abs(y)  # divaudit: unverified (not exercised by the audit)
+                    radius2 = radius2 / abs(y)
                 else:
                     radius1 = radius2 = 0
             elif code == 4:
                 t = Trafo(1 - x, 0, 0, 1, x, 0)
                 if x != 1:
-                    radius1 = radius1 / abs(1 - x)  # divaudit: unverified (not exercised by the audit)
+                    radius1 = radius1 / abs(1 - x)
                 else:
                     radius1 = radius2 = 0
             trafo = trafo(t)
             if radius1 != 0 or radius2 != 0:
-                ratio = radius1 / radius2  # divaudit: unverified (not exercised by the audit)
+                ratio = radius1 / radius2
                 if radius1 > 0.5:
                     radius1 = 0.5
-                    radius2 = radius1 / ratio  # divaudit: unverified (not exercised by the audit)
+                    radius2 = radius1 / ratio
                 if radius2 > 0.5:
                     radius2 = 0.5
                     radius1 = radius2 * ratio
@@ -346,11 +345,11 @@ class RectangleEditor(Editor):
             if radius1 == radius2 == 0:
                 ratio = height / width
             else:
-                ratio = radius1 / radius2  # divaudit: unverified (not exercised by the audit)
+                ratio = radius1 / radius2
 
             if ratio > 1:
                 max1 = 0.5
-                max2 = max1 / ratio  # divaudit: unverified (not exercised by the audit)
+                max2 = max1 / ratio
             else:
                 max2 = 0.5
                 max1 = max2 * ratio

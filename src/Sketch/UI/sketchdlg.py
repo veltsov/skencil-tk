@@ -177,10 +177,8 @@ class SketchPanel(Publisher):
         top = self.top
         width = float(master.winfo_width())
         height = float(master.winfo_height())
-    # divaudit: unverified (not exercised by the audit)
         posx = (top.winfo_rootx() + self.x_correction - master.winfo_rootx())\
              / width
-    # divaudit: unverified (not exercised by the audit)
         posy = (top.winfo_rooty() + self.y_correction - master.winfo_rooty())\
              / height
         setattr(config.preferences, self.pref_pos_name, (posx, posy))

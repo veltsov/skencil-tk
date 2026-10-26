@@ -246,7 +246,7 @@ def Read_X_RGB_TXT(filename):
 
         rgb = []
         for value in values:
-            value = round(value / 255.0, 3)  # divaudit: unverified (not exercised by the audit)
+            value = round(value / 255.0, 3)
             if value < 0:
                 value = 0.0
             elif value > 1.0:

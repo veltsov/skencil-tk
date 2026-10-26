@@ -337,8 +337,8 @@ class CGMSaver:
                     S,E = trf.DTransform(S) , trf.DTransform(E)
                 else:
                     S,E = trf.DTransform(E) , trf.DTransform(S)
-                S = 1000000 * S / abs(S)  # divaudit: unverified (not exercised by the audit)
-                E = 1000000 * E / abs(E)  # divaudit: unverified (not exercised by the audit)
+                S = 1000000 * S / abs(S)
+                E = 1000000 * E / abs(E)
                 if ell.arc_type == 0 \
                    and ell.Properties().fill_pattern == EmptyPattern:
                     self.LineStyle(ell.Properties())
@@ -368,8 +368,8 @@ class CGMSaver:
                 P2 = trf(Point(0,1))
                 S = trf.DTransform(Point(cos(ell.start_angle) , sin(ell.start_angle)))
                 E = trf.DTransform(Point(cos(ell.end_angle) , sin(ell.end_angle)))
-                S = 1000000 * S / abs(S)  # divaudit: unverified (not exercised by the audit)
-                E = 1000000 * E / abs(E)  # divaudit: unverified (not exercised by the audit)
+                S = 1000000 * S / abs(S)
+                E = 1000000 * E / abs(E)
                 if ell.arc_type == 0 and ell.Properties().fill_pattern == EmptyPattern:
                     self.LineStyle(ell.Properties())
                     self.putlongseq(0x4240 ,  map(rndtoint , tuple(self.trafo(C)) \

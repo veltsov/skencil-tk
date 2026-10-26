@@ -1293,10 +1293,10 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
             scalex = width / rw
             scaley = height / rh
             if zoom_out:
-                scale = (self.scale ** 2) / max(scalex, scaley)  # divaudit: unverified (not exercised by the audit)
+                scale = (self.scale ** 2) / max(scalex, scaley)
                 x, y = self.DocToWin(rect.center())
-                center = rect.center() + Point(width / 2 - x,  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
-                                               -height / 2 + y) / scale  # divaudit: unverified (not exercised by the audit)
+                center = rect.center() + Point(width / 2 - x,
+                                               -height / 2 + y) / scale
             else:
                 scale = min(scalex, scaley, self.max_scale)
                 center = rect.center()
@@ -1871,7 +1871,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
             return
         self.begin_transaction()
         try:
-            self.document.TranslateSelected(Point(shiftx,shifty)/self.scale)  # divaudit: unverified (not exercised by the audit)
+            self.document.TranslateSelected(Point(shiftx,shifty)/self.scale)
         finally:
             self.end_transaction()
         

@@ -15,7 +15,7 @@ class Cylinder(AutoshapeBase):
     h = 5
 
     def GetHandles(self):
-        p = Point(width/2., width-self.h)  # divaudit: unverified (not exercised by the audit)
+        p = Point(width/2., width-self.h)
         return [handle.MakeNodeHandle(self.trafo(p))]
                 
     def recompute(self):
@@ -25,8 +25,8 @@ class Cylinder(AutoshapeBase):
         h = self.h
         dh = 0.55197 * h
         d = l = width
-        dd = 0.55197 * d /2.  # divaudit: unverified (not exercised by the audit)
-        c = d/2.  # divaudit: unverified (not exercised by the audit)
+        dd = 0.55197 * d /2.
+        c = d/2.
         
         path.AppendLine((0, l))
         path.AppendBezier((0, l+dh), (c-dd, l+h), (c, l+h))

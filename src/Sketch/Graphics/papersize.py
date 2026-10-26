@@ -56,7 +56,7 @@ def _european_sizes():
     height = 2.0**0.25
     for i in range(8):
         sizes.append(('A' + repr(i), width * m_to_pt, height * m_to_pt))
-        width, height = height / 2, width  # divaudit: unverified (not exercised by the audit)
+        width, height = height / 2, width
     return sizes[3:]
 
 # The more accurate way to specify the european sizes, contributed by

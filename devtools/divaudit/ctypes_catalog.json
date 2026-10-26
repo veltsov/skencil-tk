@@ -1,0 +1,1501 @@
+{
+ "attrs": {
+  "ai_dsc": [
+   "other"
+  ], 
+  "ai_pseudo_comments": [
+   "other"
+  ], 
+  "ascender": [
+   "int"
+  ], 
+  "bitmap_bit_order": [
+   "int"
+  ], 
+  "bitmap_pad": [
+   "int"
+  ], 
+  "bitmap_unit": [
+   "int"
+  ], 
+  "bits_per_pixel": [
+   "int"
+  ], 
+  "bits_per_rgb": [
+   "int"
+  ], 
+  "blue": [
+   "float"
+  ], 
+  "blue_mask": [
+   "other", 
+   "other"
+  ], 
+  "bottom": [
+   "float"
+  ], 
+  "byte_order": [
+   "int"
+  ], 
+  "bytes_per_line": [
+   "int"
+  ], 
+  "c_class": [
+   "int"
+  ], 
+  "closed": [
+   "other"
+  ], 
+  "colormap_size": [
+   "int"
+  ], 
+  "depth": [
+   "int", 
+   "int"
+  ], 
+  "descender": [
+   "int"
+  ], 
+  "format": [
+   "int"
+  ], 
+  "green": [
+   "float"
+  ], 
+  "green_mask": [
+   "other", 
+   "other"
+  ], 
+  "height": [
+   "int"
+  ], 
+  "italic_angle": [
+   "float"
+  ], 
+  "left": [
+   "float"
+  ], 
+  "len": [
+   "int"
+  ], 
+  "llx": [
+   "int"
+  ], 
+  "lly": [
+   "int"
+  ], 
+  "m11": [
+   "float"
+  ], 
+  "m12": [
+   "float"
+  ], 
+  "m21": [
+   "float"
+  ], 
+  "m22": [
+   "float"
+  ], 
+  "red": [
+   "float"
+  ], 
+  "red_mask": [
+   "other", 
+   "other"
+  ], 
+  "right": [
+   "float"
+  ], 
+  "source": [
+   "other", 
+   "other"
+  ], 
+  "stream": [
+   "other", 
+   "other"
+  ], 
+  "target": [
+   "other"
+  ], 
+  "top": [
+   "float"
+  ], 
+  "urx": [
+   "int"
+  ], 
+  "ury": [
+   "int"
+  ], 
+  "v1": [
+   "float"
+  ], 
+  "v2": [
+   "float"
+  ], 
+  "width": [
+   "int"
+  ], 
+  "xoffset": [
+   "int"
+  ]
+ }, 
+ "methods": {
+  "ASCII85Decode": [
+   [
+    "other"
+   ]
+  ], 
+  "ASCII85Encode": [
+   [
+    "other", 
+    "int"
+   ]
+  ], 
+  "AllocColor": [
+   [
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "AllocColorCells": [
+   [
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "AllocNamedColor": [
+   [
+    "other"
+   ]
+  ], 
+  "AppendBezier": [
+   [
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "int"
+   ]
+  ], 
+  "AppendLine": [
+   [
+    "float", 
+    "float", 
+    "int"
+   ]
+  ], 
+  "AppendSegment": [
+   [
+    "int", 
+    "other", 
+    "other", 
+    "int"
+   ]
+  ], 
+  "Base64Decode": [
+   [
+    "other"
+   ]
+  ], 
+  "Base64Encode": [
+   [
+    "other"
+   ]
+  ], 
+  "BinaryInput": [
+   [
+    "other", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "Blend": [
+   [
+    "other", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "BorderGC": [
+   [
+    "int"
+   ]
+  ], 
+  "ClearArea": [
+   [
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "ClipBox": [
+   []
+  ], 
+  "ClosePath": [
+   [
+    "other"
+   ]
+  ], 
+  "Continuity": [
+   [
+    "int"
+   ]
+  ], 
+  "CopyArea": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ], 
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "CopyColormapAndFree": [
+   []
+  ], 
+  "CopyPlane": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "CreateColormap": [
+   [
+    "int"
+   ]
+  ], 
+  "CreateFontMetric": [
+   [
+    "int", 
+    "int", 
+    "int", 
+    "float", 
+    "other"
+   ]
+  ], 
+  "CreateGC": [
+   [
+    "other"
+   ], 
+   [
+    "other"
+   ]
+  ], 
+  "CreateImage": [
+   [
+    "int", 
+    "int", 
+    "int", 
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "CreatePath": [
+   [
+    "int"
+   ]
+  ], 
+  "CreatePixmap": [
+   [
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "CreateRegion": [
+   [
+    "other", 
+    "int"
+   ]
+  ], 
+  "DTransform": [
+   [
+    "other"
+   ]
+  ], 
+  "DocToWin": [
+   [
+    "other"
+   ]
+  ], 
+  "Draw3DPolygon": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "Draw3DRectangle": [
+   [
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "DrawBezier": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "DrawGrid": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "Duplicate": [
+   [
+    "int"
+   ]
+  ], 
+  "EmptyRegion": [
+   []
+  ], 
+  "EqualRegion": [
+   [
+    "other"
+   ]
+  ], 
+  "Fill3DPolygon": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "Fill3DRectangle": [
+   [
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "FlateDecode": [
+   [
+    "other"
+   ]
+  ], 
+  "FreeColors": [
+   [
+    "other", 
+    "int"
+   ]
+  ], 
+  "GetCharStruct": [
+   [
+    "int"
+   ]
+  ], 
+  "GetGC": [
+   [
+    "other"
+   ]
+  ], 
+  "GetGeometry": [
+   []
+  ], 
+  "GetPixel": [
+   [
+    "other", 
+    "other"
+   ], 
+   [
+    "int", 
+    "int"
+   ]
+  ], 
+  "GetPropertyDict": [
+   [
+    "int"
+   ]
+  ], 
+  "GetXbmStrings": [
+   [
+    "other"
+   ]
+  ], 
+  "HexDecode": [
+   [
+    "other"
+   ]
+  ], 
+  "HexEncode": [
+   [
+    "other", 
+    "int"
+   ]
+  ], 
+  "HorizontalBevel": [
+   [
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "IdIndex": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "IntersectMasks": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "IntersectRects": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "IntersectRegion": [
+   [
+    "other"
+   ]
+  ], 
+  "Intersected": [
+   [
+    "other"
+   ]
+  ], 
+  "LineDecode": [
+   [
+    "other"
+   ]
+  ], 
+  "ListFonts": [
+   [
+    "other"
+   ]
+  ], 
+  "LoadQueryFont": [
+   [
+    "other"
+   ]
+  ], 
+  "LookupColor": [
+   [
+    "other"
+   ]
+  ], 
+  "Node": [
+   [
+    "int"
+   ]
+  ], 
+  "NodeList": [
+   []
+  ], 
+  "NullDecode": [
+   [
+    "other"
+   ]
+  ], 
+  "NullEncode": [
+   [
+    "other"
+   ]
+  ], 
+  "OffsetRegion": [
+   [
+    "int", 
+    "int"
+   ]
+  ], 
+  "PSTokenizer": [
+   [
+    "other"
+   ]
+  ], 
+  "ParseColor": [
+   [
+    "other"
+   ]
+  ], 
+  "Point": [
+   [
+    "float", 
+    "float"
+   ]
+  ], 
+  "PointInRegion": [
+   [
+    "int", 
+    "int"
+   ]
+  ], 
+  "PointsToRect": [
+   [
+    "other"
+   ]
+  ], 
+  "Polar": [
+   [
+    "float", 
+    "float"
+   ]
+  ], 
+  "PolygonRegion": [
+   [
+    "other", 
+    "int"
+   ]
+  ], 
+  "PutPixel": [
+   [
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "QueryBestCursor": [
+   [
+    "int", 
+    "int"
+   ]
+  ], 
+  "QueryColor": [
+   [
+    "int"
+   ]
+  ], 
+  "QueryColors": [
+   [
+    "other"
+   ]
+  ], 
+  "QueryPointer": [
+   []
+  ], 
+  "RGBColor": [
+   [
+    "float", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "ReadBitmapFile": [
+   [
+    "other"
+   ]
+  ], 
+  "Rect": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "RectInRegion": [
+   [
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "RectanglePath": [
+   [
+    "other"
+   ]
+  ], 
+  "Rotation": [
+   [
+    "float", 
+    "other"
+   ]
+  ], 
+  "RoundedRectanglePath": [
+   [
+    "other", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "Scale": [
+   [
+    "float"
+   ]
+  ], 
+  "Segment": [
+   [
+    "int"
+   ]
+  ], 
+  "SegmentSelected": [
+   [
+    "int"
+   ]
+  ], 
+  "SegmentType": [
+   [
+    "int"
+   ]
+  ], 
+  "SelectSegment": [
+   [
+    "int", 
+    "int"
+   ]
+  ], 
+  "SetBackground": [
+   [
+    "other"
+   ]
+  ], 
+  "SetBezier": [
+   [
+    "int", 
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "int"
+   ]
+  ], 
+  "SetBorder": [
+   [
+    "int"
+   ]
+  ], 
+  "SetBorderWidth": [
+   [
+    "int"
+   ]
+  ], 
+  "SetColormap": [
+   [
+    "other"
+   ]
+  ], 
+  "SetContinuity": [
+   [
+    "int", 
+    "int"
+   ]
+  ], 
+  "SetLine": [
+   [
+    "int", 
+    "float", 
+    "float", 
+    "int"
+   ]
+  ], 
+  "SetSegment": [
+   [
+    "int", 
+    "int", 
+    "other", 
+    "other", 
+    "int"
+   ]
+  ], 
+  "ShmCheckExtension": [
+   [
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "ShmCompletionEventType": [
+   [
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "ShmCreateImage": [
+   [
+    "int", 
+    "int", 
+    "other", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "ShmQueryExtension": [
+   [
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "ShmQueryVersion": [
+   [
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "ShrinkRegion": [
+   [
+    "int", 
+    "int"
+   ]
+  ], 
+  "StoreColors": [
+   [
+    "other"
+   ]
+  ], 
+  "StringDecode": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "SubFileDecode": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "SubtractRegion": [
+   [
+    "other"
+   ]
+  ], 
+  "TextExtents": [
+   [
+    "other"
+   ]
+  ], 
+  "TextWidth": [
+   [
+    "other"
+   ]
+  ], 
+  "Trafo": [
+   [
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "Transform": [
+   [
+    "other"
+   ]
+  ], 
+  "TransformRectangle": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "Translate": [
+   [
+    "float", 
+    "float"
+   ]
+  ], 
+  "Translation": [
+   [
+    "other"
+   ]
+  ], 
+  "UnionRectWithRegion": [
+   [
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "UnionRects": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "UnionRegion": [
+   [
+    "other"
+   ]
+  ], 
+  "VerticalBevel": [
+   [
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "XVisual": [
+   [
+    "other", 
+    "other", 
+    "other"
+   ]
+  ], 
+  "XorRegion": [
+   [
+    "other"
+   ]
+  ], 
+  "_set_nodes_and_segments": [
+   [
+    "other", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "_undo_close": [
+   [
+    "int", 
+    "int", 
+    "int", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "accurate_rect": [
+   [
+    "other"
+   ]
+  ], 
+  "append_from_file": [
+   [
+    "other"
+   ]
+  ], 
+  "append_from_string": [
+   [
+    "other"
+   ]
+  ], 
+  "approx_arc": [
+   [
+    "float", 
+    "float", 
+    "int"
+   ]
+  ], 
+  "arc_lengths": [
+   [
+    "float"
+   ]
+  ], 
+  "blend_paths": [
+   [
+    "other", 
+    "other", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "center": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "close": [
+   []
+  ], 
+  "coeff": [
+   [
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "colormap": [
+   []
+  ], 
+  "colors_allocated": [
+   [
+    "other", 
+    "other", 
+    "other"
+   ]
+  ], 
+  "contains_point": [
+   [
+    "other"
+   ]
+  ], 
+  "contains_rect": [
+   [
+    "other"
+   ]
+  ], 
+  "coord_rect": [
+   [
+    "other"
+   ]
+  ], 
+  "copy_image_to_ximage": [
+   [
+    "other", 
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "create_tcl_commands": [
+   [
+    "other"
+   ]
+  ], 
+  "decode": [
+   [
+    "other", 
+    "int"
+   ]
+  ], 
+  "deselect": [
+   [
+    "other", 
+    "int", 
+    "other", 
+    "other"
+   ]
+  ], 
+  "draw_dragged_nodes": [
+   [
+    "other", 
+    "int", 
+    "other", 
+    "other"
+   ]
+  ], 
+  "draw_multipath": [
+   [
+    "other", 
+    "other", 
+    "other", 
+    "other", 
+    "other", 
+    "other", 
+    "other", 
+    "other", 
+    "other", 
+    "other", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "draw_not_last": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "draw_transformed": [
+   [
+    "other", 
+    "other", 
+    "other", 
+    "other", 
+    "other"
+   ]
+  ], 
+  "draw_unselected": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "dump_data": [
+   [
+    "other"
+   ]
+  ], 
+  "fill_axial_gradient": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "other", 
+    "float", 
+    "float", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "fill_conical_gradient": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "other", 
+    "int", 
+    "int", 
+    "float"
+   ]
+  ], 
+  "fill_hsv_xy": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "float"
+   ]
+  ], 
+  "fill_hsv_z": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "float"
+   ]
+  ], 
+  "fill_radial_gradient": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "fill_rgb_xy": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "float"
+   ]
+  ], 
+  "fill_rgb_z": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "float"
+   ]
+  ], 
+  "fill_transformed_tile": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "other"
+   ]
+  ], 
+  "flush": [
+   [
+    "int"
+   ]
+  ], 
+  "get_pixel": [
+   [
+    "other"
+   ]
+  ], 
+  "get_save": [
+   [
+    "other"
+   ]
+  ], 
+  "glyph_bbox": [
+   [
+    "int"
+   ]
+  ], 
+  "glyph_width": [
+   [
+    "int"
+   ]
+  ], 
+  "grown": [
+   [
+    "float"
+   ]
+  ], 
+  "guess_continuity": [
+   [
+    "int"
+   ]
+  ], 
+  "hexdecode": [
+   [
+    "other"
+   ]
+  ], 
+  "hit_point": [
+   [
+    "other"
+   ]
+  ], 
+  "inverse": [
+   [
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "load_close": [
+   [
+    "int"
+   ]
+  ], 
+  "matrix": [
+   [
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "move_selected_nodes": [
+   [
+    "other"
+   ]
+  ], 
+  "multicurve_region": [
+   [
+    "other", 
+    "other", 
+    "other", 
+    "other"
+   ]
+  ], 
+  "name_to_window": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "nearest_point": [
+   [
+    "float", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "next": [
+   [
+    "int"
+   ]
+  ], 
+  "next_dsc": [
+   [
+    "int"
+   ]
+  ], 
+  "node_selected": [
+   [
+    "int"
+   ]
+  ], 
+  "normalized": [
+   []
+  ], 
+  "offset": [
+   [
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "overlaps": [
+   [
+    "other"
+   ]
+  ], 
+  "parse_sk_line": [
+   [
+    "other", 
+    "other"
+   ]
+  ], 
+  "parse_sk_line2": [
+   [
+    "other"
+   ]
+  ], 
+  "point_at": [
+   [
+    "float"
+   ]
+  ], 
+  "read": [
+   [
+    "int"
+   ], 
+   [
+    "int"
+   ], 
+   [
+    "int"
+   ]
+  ], 
+  "read_struct": [
+   [
+    "other"
+   ]
+  ], 
+  "readline": [
+   [
+    "int"
+   ]
+  ], 
+  "readlines": [
+   [
+    "int"
+   ]
+  ], 
+  "region_from_ptr": [
+   [
+    "other"
+   ]
+  ], 
+  "register_object": [
+   [
+    "other"
+   ]
+  ], 
+  "seek": [
+   [
+    "int"
+   ], 
+   [
+    "int"
+   ]
+  ], 
+  "select_rect": [
+   [
+    "other", 
+    "int"
+   ]
+  ], 
+  "select_segment": [
+   [
+    "int", 
+    "int"
+   ]
+  ], 
+  "selection_count": [
+   [
+    "int"
+   ]
+  ], 
+  "set_gamma": [
+   [
+    "float"
+   ]
+  ], 
+  "shm_get_image": [
+   [
+    "other", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "string_bbox": [
+   [
+    "other"
+   ]
+  ], 
+  "string_width": [
+   [
+    "other", 
+    "int"
+   ]
+  ], 
+  "subfile": [
+   [
+    "int"
+   ]
+  ], 
+  "tell": [
+   [
+    "other", 
+    "int", 
+    "int"
+   ], 
+   []
+  ], 
+  "test_transformed": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "int"
+   ]
+  ], 
+  "tokenize_line": [
+   [
+    "other", 
+    "int"
+   ]
+  ], 
+  "trafos_allocted": [
+   [
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float", 
+    "float"
+   ]
+  ], 
+  "transform_to_ximage": [
+   [
+    "other", 
+    "other", 
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "other", 
+    "int", 
+    "int", 
+    "int", 
+    "int", 
+    "other"
+   ]
+  ], 
+  "translated": [
+   [
+    "other"
+   ]
+  ], 
+  "typeset_string": [
+   [
+    "other"
+   ]
+  ], 
+  "unregister_object": [
+   [
+    "other"
+   ]
+  ], 
+  "write": [
+   [
+    "other"
+   ]
+  ], 
+  "write_ps_hex": [
+   [
+    "other", 
+    "other", 
+    "int", 
+    "int", 
+    "other", 
+    "int", 
+    "other"
+   ]
+  ], 
+  "write_to_file": [
+   [
+    "other"
+   ]
+  ], 
+  "xlfd_char_range": [
+   [
+    "other"
+   ]
+  ]
+ }
+}

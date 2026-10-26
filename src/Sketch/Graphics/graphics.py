@@ -1055,9 +1055,9 @@ class GraphicsDevice(SimpleGC, CommonDevice):
         if depth > 16:
             bpl = 4 * width
         elif depth > 8:
-            bpl = ((2 * width + 3) / 4) * 4  # divaudit: unverified (not exercised by the audit)
+            bpl = int((2 * width + 3) / 4) * 4
         elif depth == 8:
-            bpl = ((width + 3) / 4) * 4  # divaudit: unverified (not exercised by the audit)
+            bpl = int((width + 3) / 4) * 4
         else:
             raise SketchError('unsupported depth for images')
         return w.CreateImage(w.depth, X.ZPixmap, 0, None, width, height,
@@ -1174,7 +1174,7 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             self.PopTrafo()
         else:
             resolution = config.preferences.eps_preview_resolution
-            self.DrawImage(data.image, trafo(Scale(72.0 / resolution)))  # divaudit: unverified (not exercised by the audit)
+            self.DrawImage(data.image, trafo(Scale(72.0 / resolution)))
 
     #
     #
@@ -1209,16 +1209,16 @@ class GraphicsDevice(SimpleGC, CommonDevice):
         # make the minimum distance between drawn points at least 5
         # pixels XXX: should be configurable
         if xwinwidth < 5:
-            xwinwidth = (int(5.0 / xwinwidth) + 1) * xwinwidth  # divaudit: unverified (not exercised by the audit)
+            xwinwidth = (int(5.0 / xwinwidth) + 1) * xwinwidth
             xwidth = self.LengthToDoc(xwinwidth)
         if ywinwidth < 5:
-            ywinwidth = (int(5.0 / ywinwidth) + 1) * ywinwidth  # divaudit: unverified (not exercised by the audit)
+            ywinwidth = (int(5.0 / ywinwidth) + 1) * ywinwidth
             ywidth = self.LengthToDoc(ywinwidth)
-        startx = int((rect.left - orig_x) / xwidth) * xwidth + orig_x  # divaudit: unverified (not exercised by the audit)
-        starty = int((rect.top - orig_y) / ywidth) * ywidth + orig_y  # divaudit: unverified (not exercised by the audit)
+        startx = int((rect.left - orig_x) / xwidth) * xwidth + orig_x
+        starty = int((rect.top - orig_y) / ywidth) * ywidth + orig_y
         winx, winy = self.DocToWinPoint((startx, starty))
-        nx = int((rect.right - rect.left) / xwidth) + 2  # divaudit: unverified (not exercised by the audit)
-        ny = int((rect.top - rect.bottom) / ywidth) + 2  # divaudit: unverified (not exercised by the audit)
+        nx = int((rect.right - rect.left) / xwidth) + 2
+        ny = int((rect.top - rect.bottom) / ywidth) + 2
         if self.line:
             self.properties.ExecuteLine(self)
         _sketch.DrawGrid(self.gc, winx, winy, xwinwidth, ywinwidth, nx, ny)

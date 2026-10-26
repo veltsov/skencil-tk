@@ -87,7 +87,7 @@ Modifier:
             else:
                 self.r1 = min(r2, r1+rb-ra)
         else:
-            n = n+int(2* gamma / alpha)      # divaudit: unverified (not exercised by the audit)
+            n = n+int(2* gamma / alpha)
             if n >= 1:
                 self.n = n  
 

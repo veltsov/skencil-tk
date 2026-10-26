@@ -211,7 +211,9 @@ def Cnt3Pnt(P1, P2, P3):
     N = 2 * cr3(P1, P2, P3)
     Nx = cr3(Q1, Q2, Q3)
     Ny = cr3(R1, R2, R3)
-    return Point(Nx/N , Ny/N)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
+    # Nx/N and Ny/N are float by construction: N normalizes a normal
+    # vector built from cross products of Points (double coordinates)
+    return Point(Nx/N , Ny/N)
 
 def transform_base(po, px, py):
     return Trafo(*tuple(px - po) + tuple(py - po) + tuple(po))
@@ -416,11 +418,11 @@ class CGMLoader(GenericLoader):
 
     def fip32(self):
         t = self.unpack("!hH")
-        return t[0] + t[1] / 65536.0  # divaudit: unverified (not exercised by the audit)
+        return t[0] + t[1] / 65536.0
 
     def fip64(self):
         t = self.unpack("!hH")
-        return t[0] + t[1] / (65536.0 * 65536.0)  # divaudit: unverified (not exercised by the audit)
+        return t[0] + t[1] / (65536.0 * 65536.0)
 
     def flp32(self):
         return self.unpack("!f")[0]
@@ -553,7 +555,7 @@ class CGMLoader(GenericLoader):
     def integerprec(self, size):
         bits = self.Int()
         if bits in (8,16,24,32):
-            reff.intsize = (bits / 8)   # divaudit: unverified (not exercised by the audit)
+            reff.intsize = (bits // 8)
             reff.intprec = reff.intsize - 1
         else:
             raise SketchLoadError("This implementation can't work with %d bit integers" % (bits,))
@@ -582,7 +584,7 @@ class CGMLoader(GenericLoader):
     def indexprec(self, size):
         bits = self.Int()
         if bits in (8,16,24,32):
-            reff.inxsize = (bits / 8)   # divaudit: unverified (not exercised by the audit)
+            reff.inxsize = (bits // 8)
             reff.inxprec = reff.inxsize - 1
         else:
             raise SketchLoadError("This implementation can't work with %d bit indices" % (bits,))
@@ -695,13 +697,13 @@ class CGMLoader(GenericLoader):
             right, top = extend[1]
             width = right - left
             height = top - bottom
-            sc = 841 / (1.0 * max(abs(width) , abs(height)))  # divaudit: unverified (not exercised by the audit)
+            sc = 841 / (1.0 * max(abs(width) , abs(height)))
         else:
             left = 0
             bottom = 0
             width = 1
             height = 1
-            sc = reff.scale.metric * 72 / 25.4  # divaudit: unverified (not exercised by the audit)
+            sc = reff.scale.metric * 72 / 25.4
         self.Scale = sc
         self.trafo = Scale(sign(width)*sc , sign(height)*sc)(Translation(-left , -bottom))
 
@@ -756,7 +758,7 @@ class CGMLoader(GenericLoader):
 
     def Path(self, size):
         path = CreatePath()
-        for i in range(size / (2 * reff.vdc.size)):  # divaudit: unverified (not exercised by the audit)
+        for i in range(size // (2 * reff.vdc.size)):
             path.AppendLine(self.trafo(self.Pnt()))
         return path
 
@@ -779,7 +781,7 @@ class CGMLoader(GenericLoader):
 #   0x4040:
     def DISJTLINE(self, size):
         path = ()
-        for i in range(size / (4 * reff.vdc.size)):  # divaudit: unverified (not exercised by the audit)
+        for i in range(size // (4 * reff.vdc.size)):
             subpath = CreatePath()
             P = self.Pnt()
             subpath.AppendLine(self.trafo(P))
@@ -836,7 +838,7 @@ class CGMLoader(GenericLoader):
     def POLYGONSET(self, size):
         path = ()
         subpath = CreatePath()
-        for i in range(size / (2 * reff.vdc.size + 2)):  # divaudit: unverified (not exercised by the audit)
+        for i in range(size // (2 * reff.vdc.size + 2)):
             P = self.Pnt()
             F = self.Enum()
             subpath.AppendLine(self.trafo(P))

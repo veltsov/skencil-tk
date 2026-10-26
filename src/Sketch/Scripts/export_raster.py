@@ -160,6 +160,9 @@ def export_raster(context, filename, resolution, use_bbox, format = None,
     else:
         width, height = context.document.PageSize()
         x = y = 0
+    # NOTE: py3 round() rounds half to even (py2: half away from
+    # zero) -- exported raster sizes can differ by one pixel when the
+    # size lands exactly on .5 (accepted difference)
     width = round(width * resolution / 72.0)
     height = round(height * resolution / 72.0)
 
@@ -188,8 +191,11 @@ def export_alpha(context, filename, resolution, use_bbox = 0):
 
     ps = make_ps(context.document)
 
-    width = round(width * resolution / 72.0)  # divaudit: unverified (not exercised by the audit)
-    height = round(height * resolution / 72.0)  # divaudit: unverified (not exercised by the audit)
+    # NOTE: py3 round() rounds half to even (py2: half away from
+    # zero) -- exported raster sizes can differ by one pixel when the
+    # size lands exactly on .5 (accepted difference)
+    width = round(width * resolution / 72.0)
+    height = round(height * resolution / 72.0)
     rgb = render_ps(ps, resolution, width, height,
                     orig_x = x, orig_y = y, antialias = 2)
     alpha = render_ps(ps, resolution, width, height,

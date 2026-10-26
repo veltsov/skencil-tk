@@ -342,8 +342,8 @@ class PolyBezierCreator(Creator):
 
         if state & ConstraintMask:
             radius, angle = (p - node).polar()
-            pi12 = pi / 12  # divaudit: unverified (not exercised by the audit)
-            angle = pi12 * floor(angle / pi12 + 0.5)  # divaudit: unverified (not exercised by the audit)
+            pi12 = pi / 12
+            angle = pi12 * floor(angle / pi12 + 0.5)
             p = node + Polar(radius, angle)
         return p
 
@@ -610,9 +610,12 @@ class PolyBezierEditor(Editor):
     def apply_constraints(self, p, state):
         if state & ConstraintMask:
             if self.selection_type == SelNodes:
-                pi4 = pi / 4  # divaudit: unverified (not exercised by the audit)
+                pi4 = pi / 4
                 off = p - self.drag_start
-                d = Polar(pi4 * round(atan2(off.y, off.x) / pi4))  # divaudit: unverified (not exercised by the audit)
+                # NOTE: py3 round() rounds half to even (py2: half away
+                # from zero) -- at exact 45-degree angles the constrained
+                # rotation snaps one increment differently (accepted)
+                d = Polar(pi4 * round(atan2(off.y, off.x) / pi4))
                 p = self.drag_start + (off * d) * d
             elif self.selection_type in (SelSegmentFirst, SelSegmentLast):
                 path = self.paths[self.selected_path]
@@ -621,8 +624,8 @@ class PolyBezierEditor(Editor):
                 else:
                     node = path.Node(self.selected_idx)
                 radius, angle = (p - node).polar()
-                pi12 = pi / 12  # divaudit: unverified (not exercised by the audit)
-                angle = pi12 * floor(angle / pi12 + 0.5)  # divaudit: unverified (not exercised by the audit)
+                pi12 = pi / 12
+                angle = pi12 * floor(angle / pi12 + 0.5)
                 p = node + Polar(radius, angle)
         return p
 
@@ -678,12 +681,12 @@ class PolyBezierEditor(Editor):
             if type == Bezier:
                 p1, p2 = control
                 if t <= 0.5:
-                    alpha = ((t * 2) ** 3) / 2  # divaudit: unverified (not exercised by the audit)
+                    alpha = ((t * 2) ** 3) / 2
                 else:
-                    alpha = 1 - (((1 - t) * 2) ** 3) / 2  # divaudit: unverified (not exercised by the audit)
+                    alpha = 1 - (((1 - t) * 2) ** 3) / 2
 
-                p1 = p1 + (self.off / (3 * t * (1 - t)**2)) * (1 - alpha)  # divaudit: unverified (not exercised by the audit)
-                p2 = p2 + (self.off / (3 * t**2 * (1 - t))) * alpha  # divaudit: unverified (not exercised by the audit)
+                p1 = p1 + (self.off / (3 * t * (1 - t)**2)) * (1 - alpha)
+                p2 = p2 + (self.off / (3 * t**2 * (1 - t))) * alpha
 
                 path.SetBezier(segment + 1, p1, p2, node, cont)
             else:
@@ -762,12 +765,12 @@ class PolyBezierEditor(Editor):
             if type == Bezier:
                 p1, p2 = control
                 if t <= 0.5:
-                    alpha = ((t * 2) ** 3) / 2  # divaudit: unverified (not exercised by the audit)
+                    alpha = ((t * 2) ** 3) / 2
                 else:
-                    alpha = 1 - (((1 - t) * 2) ** 3) / 2  # divaudit: unverified (not exercised by the audit)
+                    alpha = 1 - (((1 - t) * 2) ** 3) / 2
 
-                p1 = p1 + (self.off / (3 * t * (1 - t)**2)) * (1 - alpha)  # divaudit: unverified (not exercised by the audit)
-                p2 = p2 + (self.off / (3 * t**2 * (1 - t))) * alpha  # divaudit: unverified (not exercised by the audit)
+                p1 = p1 + (self.off / (3 * t * (1 - t)**2)) * (1 - alpha)
+                p2 = p2 + (self.off / (3 * t**2 * (1 - t))) * alpha
 
                 device.Bezier(prevnode, p1, p2, node)
                 device.DrawSmallRectHandle(p1)
@@ -1269,7 +1272,7 @@ def segments_to_lines(path):
     return newpath
 
 def segments_to_beziers(path):
-    f13 = 1.0 / 3.0;	f23 = 2.0 / 3.0  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
+    f13 = 1.0 / 3.0;	f23 = 2.0 / 3.0
     newpath = CreatePath()
     newpath.AppendLine(path.Node(0))
     for i in range(1, path.len):
@@ -1417,8 +1420,8 @@ def segment_to_curve(path, at):
     if path.SegmentType(index + 1) == Line:
         newpath = CreatePath()
         copy_path(newpath, path, 0, index)
-        f13 = 1.0 / 3.0;  # divaudit: unverified (not exercised by the audit)
-        f23 = 2.0 / 3.0  # divaudit: unverified (not exercised by the audit)
+        f13 = 1.0 / 3.0;
+        f23 = 2.0 / 3.0
         node1 = path.Node(index);
         node2 = path.Node(index + 1)
         p1 = f23 * node1 + f13 * node2

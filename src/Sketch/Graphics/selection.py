@@ -144,7 +144,7 @@ class SelectionRectangle(SelRectBase):
                 start = self.start
             self.drag_start = self.drag_cur = start
             return (p - start, self.coord_rect.translated(-start))
-        ds_x , ds_y = (self.start + self.end) / 2  # divaudit: unverified (not exercised by the audit)
+        ds_x , ds_y = (self.start + self.end) / 2
         if sel in self.selLeft:
             ds_x = self.start.x
         if sel in self.selTop:
@@ -550,7 +550,7 @@ class SizeRectangle(SelectionRectangle):
                     h = p.y - ref_y
                     if w == 0:
                         w = 0.00001
-                    a = h / w  # divaudit: unverified (not exercised by the audit)
+                    a = h / w
                     if a > 0:
                         sign = 1
                     else:
@@ -558,12 +558,15 @@ class SizeRectangle(SelectionRectangle):
                     if abs(a) > aspect:
                         h = sign * w * aspect
                     else:
-                        w = sign * h / aspect  # divaudit: unverified (not exercised by the audit)
+                        w = sign * h / aspect
                     p = Point(ref_x + w, ref_y + h)
             elif self.selection == -1:
-                pi4 = math.pi / 4  # divaudit: unverified (not exercised by the audit)
+                pi4 = math.pi / 4
                 off = p - self.drag_start
-                d = Polar(pi4 * round(math.atan2(off.y, off.x) / pi4))  # divaudit: unverified (not exercised by the audit)
+                # NOTE: py3 round() rounds half to even (py2: half away
+                # from zero) -- at exact 45-degree angles the constrained
+                # rotation snaps one increment differently (accepted)
+                d = Polar(pi4 * round(math.atan2(off.y, off.x) / pi4))
                 p = self.drag_start + (off * d) * d
         return p
 
@@ -717,8 +720,8 @@ class TrafoRectangle(SelRectBase):
             angle = math.atan2(vec.y, vec.x)
             angle = angle - self.start_angle + 2 * math.pi
             if state & const.ConstraintMask:
-                pi12 = math.pi / 12  # divaudit: unverified (not exercised by the audit)
-                angle = pi12 * int(angle / pi12 + 0.5)  # divaudit: unverified (not exercised by the audit)
+                pi12 = math.pi / 12
+                angle = pi12 * int(angle / pi12 + 0.5)
             self.trafo = Rotation(angle, self.center)
             self.trafo_desc = (1, angle)
         elif sel in self.selShear:
@@ -734,7 +737,7 @@ class TrafoRectangle(SelRectBase):
                 # vert. shear
                 width = self.drag_start.x - self.reference
                 if width:
-                    ratio = self.off.y / width  # divaudit: unverified (not exercised by the audit)
+                    ratio = self.off.y / width
                     self.trafo = Trafo(1, ratio, 0, 1, 0,
                                        - ratio * self.reference)
                     self.trafo_desc = (3, ratio)
@@ -795,13 +798,13 @@ class TrafoRectangle(SelRectBase):
             elif p.x > 0.25 * start.x + 0.75 * end.x:
                 x = end.x
             else:
-                x = (start.x + end.x) / 2  # divaudit: unverified (not exercised by the audit)
+                x = (start.x + end.x) / 2
             if p.y < 0.75 * start.y + 0.25 * end.y:
                 y = start.y
             elif p.y > 0.25 * start.y + 0.75 * end.y:
                 y = end.y
             else:
-                y = (start.y + end.y) / 2  # divaudit: unverified (not exercised by the audit)
+                y = (start.y + end.y) / 2
             return Point(x, y)
         return p
 

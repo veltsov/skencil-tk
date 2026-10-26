@@ -192,8 +192,8 @@ class InteractiveSample(PatternSample, Publisher):
     def constrain_center(self, x, y):
         width = self.tkwin.width
         height = self.tkwin.height
-        x = float(x) / width  # divaudit: unverified (not exercised by the audit)
-        y = float(y) / height  # divaudit: unverified (not exercised by the audit)
+        x = float(x) / width
+        y = float(y) / height
         if   x < 0.25:	x = 0
         elif x < 0.75:	x = 0.5
         else:		x = 1.0
@@ -216,8 +216,8 @@ class InteractiveSample(PatternSample, Publisher):
 
             angle = atan2(y - cy, x - cx) + 2 * pi
             if constraint:
-                pi12 = pi / 12  # divaudit: unverified (not exercised by the audit)
-                angle = pi12 * int(angle / pi12 + 0.5)  # divaudit: unverified (not exercised by the audit)
+                pi12 = pi / 12
+                angle = pi12 * int(angle / pi12 + 0.5)
 
             x = cx + cos(angle) * 1000.0
             y = cy + sin(angle) * 1000.0
@@ -237,8 +237,8 @@ class InteractiveSample(PatternSample, Publisher):
 
             angle = atan2(y - cy, x - cx) + 2 * pi
             if constraint:
-                pi12 = pi / 12  # divaudit: unverified (not exercised by the audit)
-                angle = pi12 * int(angle / pi12 + 0.5)  # divaudit: unverified (not exercised by the audit)
+                pi12 = pi / 12
+                angle = pi12 * int(angle / pi12 + 0.5)
 
             self.issue(DIRECTION, (cos(angle), -sin(angle)) )
 
@@ -372,7 +372,7 @@ class GradientPatternFrame(PatternFrame):
         self.issue(CHANGED)
 
     def set_border(self, *rest):
-        border = self.var_border.get() / 100.0  # divaudit: unverified (not exercised by the audit)
+        border = self.var_border.get() / 100.0
         if hasattr(self.pattern, 'SetBorder'):
             self.pattern = self.pattern.Duplicate()
             self.pattern.SetBorder(border)

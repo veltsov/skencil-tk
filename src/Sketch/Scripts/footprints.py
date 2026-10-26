@@ -53,7 +53,7 @@ def foot_prints_along_path(context):
         # was important to copy it.
         r = foot_print.coord_rect
         foot_length = r.right - r.left
-        foot_print.Transform(Translation(-r.right + foot_length/2,  # divaudit: unverified (not exercised by the audit)
+        foot_print.Transform(Translation(-r.right + foot_length/2,
                                          -r.bottom))
 
         # Now the path. The Paths() method of an object returns a tuple

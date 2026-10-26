@@ -91,7 +91,7 @@ class Viewport:
         return self.win_to_doc(*args)
 
     def LengthToDoc(self, len):
-        return len / self.scale  # divaudit: unverified (not exercised by the audit)
+        return len / self.scale
 
     #
     #	Redraw Parts of the window.
@@ -399,5 +399,5 @@ class Viewport:
         if self.viewport_ring:
             scale, vx, vy = self.viewport_ring[0]
             del self.viewport_ring[0]
-            self.SetScale(scale / self.pixel_per_point, do_center = 0)  # divaudit: unverified (not exercised by the audit)
+            self.SetScale(scale / self.pixel_per_point, do_center = 0)
             self.set_origin(vx, vy, move_contents = 0)

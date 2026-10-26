@@ -55,7 +55,7 @@ Modifier:
             self.l2 = max(0, l2+dw)
         elif selection == 3:
             self.l3 = l3-dw
-            self.d3 = max(0, d3-dh/2.)  # divaudit: unverified (not exercised by the audit)
+            self.d3 = max(0, d3-dh/2.)
         self.recompute()
         
     def recompute(self):

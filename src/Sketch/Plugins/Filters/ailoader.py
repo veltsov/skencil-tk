@@ -559,7 +559,7 @@ class AILoader(GenericLoader):
             self.pop_multi(n)
             color = StandardColors.black # XXX
         #color = apply(CreateRGBColor, color)
-        self.stack.append((ramp_point / 100.0, color))  # divaudit: unverified (not exercised by the audit)
+        self.stack.append((ramp_point / 100.0, color))
 
     def dummy_gradient_stop(self, color_style, mid_point, ramp_point):
         # same as gradient_stop but ignore all arguments. Illustrator 8
@@ -617,7 +617,7 @@ class AILoader(GenericLoader):
         trafo = Trafo(a, b, c, d, tx, ty)
         trafo = artboard_trafo_inv(trafo(artboard_trafo))
         start = Point(xorig, yorig)
-        end = start + Polar(length, (pi * angle) / 180.0)  # divaudit: unverified (not exercised by the audit)
+        end = start + Polar(length, (pi * angle) / 180.0)
         self.gradient_geo = (name, trafo, start, end)
 
     def make_gradient_pattern(self):
@@ -644,7 +644,7 @@ class AILoader(GenericLoader):
             trafo2 = trafo2.inverse()
             left, bottom, right, top = trafo2(self.current_bounding_rect())
             if right > left:
-                factor = 1 / (right - left)  # divaudit: unverified (not exercised by the audit)
+                factor = 1 / (right - left)
                 offset = -left * factor
             else:
                 factor = 1
@@ -661,8 +661,8 @@ class AILoader(GenericLoader):
                 # an empty coord_rect????
                 center = Point(0, 0)
             else:
-                center = Point((start.x - left) / (right - left),  # divaudit: unverified (not exercised by the audit)
-                               (start.y - bottom) / (top - bottom))  # divaudit: unverified (not exercised by the audit)
+                center = Point((start.x - left) / (right - left),
+                               (start.y - bottom) / (top - bottom))
             radius = max(hypot(left - start.x,  top - start.y),
                          hypot(right - start.x, top - start.y),
                          hypot(right - start.x, bottom - start.y),
@@ -822,7 +822,7 @@ class AILoader(GenericLoader):
         else:
             visible, preview, enabled, printing, dimmed, has_mlm, \
                    color, red, green, blue = self.pop_multi(10)
-        color = CreateRGBColor(red / 255.0, green / 255.0, blue / 255.0)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
+        color = CreateRGBColor(red / 255.0, green / 255.0, blue / 255.0)
         self.layer_kw_args = {'printable': printing,
                               'visible': visible,
                               'locked': not enabled,

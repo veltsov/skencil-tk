@@ -240,8 +240,8 @@ class SketchApplication(TkApplication, Publisher):
             height = self.root.winfo_reqheight()
             if width < 800 : width = 800
             if height < 600 : height = 600
-            posx = (self.root.winfo_screenwidth() - width)/2  # divaudit: unverified (not exercised by the audit)
-            posy = (self.root.winfo_screenheight() - height)/2  # divaudit: unverified (not exercised by the audit)
+            posx = (self.root.winfo_screenwidth() - width)//2
+            posy = (self.root.winfo_screenheight() - height)//2
             self.root.geometry('%dx%d%+d%+d' % (width, height, posx, posy))
         self.main_window.Run()
 

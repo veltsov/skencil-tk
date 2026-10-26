@@ -870,7 +870,7 @@ class RectangularCreator(Creator):
             w, h = p - self.drag_start
             if w == 0:
                 w = 0.00001
-            a = h / w  # divaudit: unverified (not exercised by the audit)
+            a = h / w
             if a > 0:
                 sign = 1
             else:

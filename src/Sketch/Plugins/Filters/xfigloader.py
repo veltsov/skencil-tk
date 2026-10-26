@@ -172,9 +172,9 @@ class XFigLoader(SimplifiedLoader):
                     rgb = self.colors[WHITE]
             else:
                 if style >= 0 and style < 20:
-                    rgb = Blend(self.colors[BLACK], rgb, (20 - style) / 20.0)  # divaudit: unverified (not exercised by the audit)
+                    rgb = Blend(self.colors[BLACK], rgb, (20 - style) / 20.0)
                 elif style > 20 and style <= 40:
-                    rgb = Blend(self.colors[WHITE], rgb, (style - 20) / 20.0)  # divaudit: unverified (not exercised by the audit)
+                    rgb = Blend(self.colors[WHITE], rgb, (style - 20) / 20.0)
         return SolidPattern(rgb)
 
     def line(self, color, width, join, cap, style = 0, style_val = 0):
@@ -188,19 +188,19 @@ class XFigLoader(SimplifiedLoader):
                 dashes = (val, val)
             elif style == 2:
                 # dotted
-                dashes = (1 / width, val)  # divaudit: unverified (not exercised by the audit)
+                dashes = (1 / width, val)
             elif style == 3:
                 # dash-dot
-                dashes = (val, 0.5 * val, 1 / width, 0.5 * val)  # divaudit: unverified (not exercised by the audit)
+                dashes = (val, 0.5 * val, 1 / width, 0.5 * val)
             elif style == 4:
                 # dash-dot-dot
-                dashes = (val, 0.45 * val, 1 / width, 0.333 * val,  # divaudit: unverified (not exercised by the audit)
-                          1 / width, 0.45 * val)  # divaudit: unverified (not exercised by the audit)
+                dashes = (val, 0.45 * val, 1 / width, 0.333 * val,
+                          1 / width, 0.45 * val)
             elif style == 5:
                 # dash-dot-dot-dot
                 dashes = (val, 0.4 * val,
-                          1 / width, 0.333 * val, 1 / width, 0.333 * val,  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
-                          1 / width, 0.4 * val)  # divaudit: unverified (not exercised by the audit)
+                          1 / width, 0.333 * val, 1 / width, 0.333 * val,
+                          1 / width, 0.4 * val)
             try:
                 self.set_properties(line_pattern = pattern,
                                     line_width = width,
@@ -373,7 +373,7 @@ class XFigLoader(SimplifiedLoader):
                 pts[1:])
         elif sub_type in (0, 1):
             # approximated spline
-            f13 = 1.0 / 3.0; f23 = 2.0 / 3.0  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
+            f13 = 1.0 / 3.0; f23 = 2.0 / 3.0
             curve = path.AppendBezier
             straight = path.AppendLine
             last = pts[0]

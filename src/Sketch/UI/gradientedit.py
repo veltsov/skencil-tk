@@ -92,9 +92,9 @@ class GradientView(PyWidget, Publisher):
         if depth > 16:
             bpl = 4 * width
         elif depth > 8:
-            bpl = ((2 * width + 3) / 4) * 4  # divaudit: unverified (not exercised by the audit)
+            bpl = int((2 * width + 3) / 4) * 4
         elif depth == 8:
-            bpl = ((width + 3) / 4) * 4  # divaudit: unverified (not exercised by the audit)
+            bpl = int((width + 3) / 4) * 4
         else:
             raise SketchError('unsupported depth for images')
         self.ximage = w.CreateImage(depth, X.ZPixmap, 0, None, width, height,

@@ -356,7 +356,7 @@ class CharStringInterpreter:
 
     def div(self):
         num1, num2 = self.pop(2)
-        self.stack.append(float(num1) / num2)  # divaudit: unverified (not exercised by the audit)
+        self.stack.append(float(num1) / num2)
     commands[32 + 12] = div
 
     def callothersubr(self):

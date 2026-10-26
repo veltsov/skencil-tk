@@ -153,7 +153,7 @@ class MultilineText(TrafoPlugin):
                 x = x+width+size
                 #
                 # XXX this is very provisional
-                x = ceil(x/50.)*50.  # divaudit: unverified (not exercised by the audit)
+                x = ceil(x/50.)*50.
             else:
                 x = x+width
 

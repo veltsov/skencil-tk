@@ -121,9 +121,9 @@ Modifier:
                 self.r = 0
         if self.control_pressed:
             if selection in (1,3):
-                self.theta1 = int(0.5+self.theta1/5.)*5  # divaudit: unverified (not exercised by the audit)
+                self.theta1 = int(0.5+self.theta1/5.)*5
             elif selection in (2,4):
-                self.theta2 = int(0.5+self.theta2/5.)*5  # divaudit: unverified (not exercised by the audit)
+                self.theta2 = int(0.5+self.theta2/5.)*5
 
         self.recompute()
 
@@ -143,7 +143,7 @@ Modifier:
     def ChangeAngleRounded(self, delta, step=1):
         step = float(step)
         angle = self.theta2-self.theta1
-        theta2 = self.theta1+int(((angle+delta) % 360)/step+0.5)*step  # divaudit: unverified (not exercised by the audit)
+        theta2 = self.theta1+int(((angle+delta) % 360)/step+0.5)*step
         return self.SetParameters({'theta2' : theta2})
 
     def KeyHandler(self, key):

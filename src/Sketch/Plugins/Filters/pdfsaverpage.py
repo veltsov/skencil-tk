@@ -43,8 +43,8 @@ def save(document, file, filename, options = {}):
     llx, lly, urx, ury = bbox
     resolution = config.preferences.pdf_export_resolution
     compat = config.preferences.pdf_compatibility_level
-    width = (urx-llx)*resolution/72  # divaudit: unverified (not exercised by the audit)
-    height = (ury-lly)*resolution/72  # divaudit: unverified (not exercised by the audit)
+    width = int((urx-llx)*resolution/72)
+    height = int((ury-lly)*resolution/72)
 
     filename = util.sh_quote(filename)
     file = util.popen_write(gs_command % locals())

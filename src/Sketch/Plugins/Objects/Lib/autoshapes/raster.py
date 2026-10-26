@@ -168,11 +168,11 @@ Modifier:
         if col is not None:
             cols.append(col)
         else:
-            cols.append(x0+(x1-x0)*float(n_cols)/(n_cols-1))  # divaudit: unverified (not exercised by the audit)
+            cols.append(x0+(x1-x0)*float(n_cols)/(n_cols-1))
         if row is not None:
             rows.append(row)
         else:
-            rows.append(y0+(y1-y0)*float(n_cols)/(n_cols-1))  # divaudit: unverified (not exercised by the audit)
+            rows.append(y0+(y1-y0)*float(n_cols)/(n_cols-1))
         self.recompute()
         return self.RemoveCells,
 
@@ -199,7 +199,7 @@ Modifier:
         if row is not None:
             rows.append(row)
         else:
-            rows.append(y0+(y1-y0)*float(n_rows)/(n_rows-1))  # divaudit: unverified (not exercised by the audit)
+            rows.append(y0+(y1-y0)*float(n_rows)/(n_rows-1))
         self.recompute()
         return self.RemoveRow,
     
@@ -220,7 +220,7 @@ Modifier:
         if col is not None:
             cols.append(col)
         else:
-            cols.append(x0+(x1-x0)*float(n_cols)/(n_cols-1))  # divaudit: unverified (not exercised by the audit)
+            cols.append(x0+(x1-x0)*float(n_cols)/(n_cols-1))
         self.recompute()
         return self.RemoveCol,
     

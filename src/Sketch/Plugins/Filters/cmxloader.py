@@ -351,9 +351,9 @@ class CMXFile:
         self.bbox = left, top, right, bottom
         if self.version == 2.0:
             self.tagged = 1
-            self.angle_factor = pi / 180000000.0  # divaudit: unverified (not exercised by the audit)
+            self.angle_factor = pi / 180000000.0
         else:
-            self.angle_factor = pi / 1800.0  # divaudit: unverified (not exercised by the audit)
+            self.angle_factor = pi / 1800.0
 
         self._print('\nHeader\n------\n')
         fmt = '% 10s: %s\n'
@@ -374,21 +374,21 @@ class CMXFile:
         if model == 2: # CMYK
             c, m, y, k = map(ord, data)
             self._print(repr((c, m, y, k)))
-            colors.append(CreateCMYKColor(c / 100.0, m / 100.0, y / 100.0,  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
-                                          k /100.0))  # divaudit: unverified (not exercised by the audit)
+            colors.append(CreateCMYKColor(c / 100.0, m / 100.0, y / 100.0,
+                                          k /100.0))
         elif model == 3: # CMYK 255
             c, m, y, k = map(ord, data)
             self._print(repr((c, m, y, k)))
-            colors.append(CreateCMYKColor(c / 255.0, m / 255.0, y / 255.0,  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
-                                          k /255.0))  # divaudit: unverified (not exercised by the audit)
+            colors.append(CreateCMYKColor(c / 255.0, m / 255.0, y / 255.0,
+                                          k /255.0))
         elif model == 5: # RGB
             r, g, b = map(ord, data)
             self._print(repr((r, g, b)))
-            colors.append(CreateRGBColor(r / 255.0, g / 255.0, b / 255.0))  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
+            colors.append(CreateRGBColor(r / 255.0, g / 255.0, b / 255.0))
         elif model == 9:
             g = ord(data)
             self._print('gray %d\n', g)
-            colors.append(CreateRGBColor(g / 255.0, g / 255.0, g / 255.0))  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
+            colors.append(CreateRGBColor(g / 255.0, g / 255.0, g / 255.0))
         else:
             #XXX warn
             self.warn(_("Color model %s not implemented. Using black")
@@ -461,7 +461,7 @@ class CMXFile:
         return screens
 
     def append_dashes(self, dashes, data):
-        dashes.append(unpack('<' + (len(data) / 2) * 'h', data))   # divaudit: unverified (not exercised by the audit)
+        dashes.append(unpack('<' + (len(data) // 2) * 'h', data))
         self._print('%3d: %s\n', len(dashes), dashes[-1])
 
     def read_dot(self, chunk):
@@ -818,8 +818,8 @@ class CMXFile:
         xres, yres = header[9:11]
         palette_offset, data_offset = header[11:13]
         # resolution is specified in pixel/km (yes, kilometer).
-        xres = xres * 2.54 / 100000   # divaudit: unverified (not exercised by the audit)
-        yres = yres * 2.54 / 100000  # divaudit: unverified (not exercised by the audit)
+        xres = xres * 2.54 / 100000
+        yres = yres * 2.54 / 100000
         self._print('Rimage:\n')
         self._print('type %d:\n', image_type)
         self._print('size %d %d, planes %d, bits/plane %d, bytes/line %d\n',
@@ -1107,7 +1107,7 @@ class CMXInterpreter16(CMXInterpreter):
                 for i in range(color_count):
                     color, pos = self.source.read_struct('hh')
                     color = self.cmxfile.colors[color]
-                    colors.append((pos / 100.0, color))  # divaudit: unverified (not exercised by the audit)
+                    colors.append((pos / 100.0, color))
                 self._print('fountain: %s pad %d angle %f off %d %d\n',
                             ('linear','radial','conical','square')[fountain],
                             padding, angle, xoff, yoff)
@@ -1116,7 +1116,7 @@ class CMXInterpreter16(CMXInterpreter):
                 self._print('	      colors %s\n', colors)
                 style.fill_pattern = LinearGradient(MultiGradient(colors),
                                                     -Polar(angle),
-                                                    border = padding / 50.0)  # divaudit: unverified (not exercised by the audit)
+                                                    border = padding / 50.0)
             elif fill == 7: # monochrome bitmap 1 (according to cmxbrowser)
                 bitmap = self.get_int16()
                 width, height, xoff, yoff, inter, flags \
@@ -1453,17 +1453,17 @@ class CMXInterpreter32(CMXInterpreter):
                     for i in range(color_count):
                         color, pos = self.source.read_struct('hh')
                         color = self.cmxfile.colors[color]
-                        colors.append((pos / 100.0, color))  # divaudit: unverified (not exercised by the audit)
+                        colors.append((pos / 100.0, color))
                     self._print('	      colors %s\n', colors)
                     if mode == 0 and rate_value != 50 and len(colors) == 2:
                         # len(colors) should always be 2 for mode != 3
                         start = colors[0][1]
                         end = colors[1][1]
-                        colors.insert(1, (rate_value / 100.0,  # divaudit: unverified (not exercised by the audit)
+                        colors.insert(1, (rate_value / 100.0,
                                           start.Blend(end, 0.5, 0.5)))
                     gradient = MultiGradient(colors)
-                    border = padding / 50.0  # divaudit: unverified (not exercised by the audit)
-                    center = Point(xoff / 100.0 + 0.5, yoff / 100.0 + 0.5)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
+                    border = padding / 50.0
+                    center = Point(xoff / 100.0 + 0.5, yoff / 100.0 + 0.5)
                     if fountain == 0:
                         pattern = LinearGradient(gradient, -Polar(angle),
                                                  border = border)
@@ -1516,8 +1516,8 @@ class CMXInterpreter32(CMXInterpreter):
                     pal[767] = foreground.blue * 255
                     image.putpalette(pal, 'RGB')
                     image = image.convert('RGB')
-                    trafo = Trafo(width / image.size[0], 0, 0,  # divaudit: unverified (not exercised by the audit)
-                                  height / image.size[1], 0, 0)  # divaudit: unverified (not exercised by the audit)
+                    trafo = Trafo(width / image.size[0], 0, 0,
+                                  height / image.size[1], 0, 0)
                     style.fill_pattern = ImageTilePattern(ImageData(image),
                                                           trafo = trafo)
                     self.loader.fix_tile = xoff, yoff
@@ -1542,8 +1542,8 @@ class CMXInterpreter32(CMXInterpreter):
                     group = self.loader.pop_last()
                     image = group[0]
                     image_data = image.Data()
-                    trafo = Trafo(width / image_data.size[0], 0, 0,  # divaudit: unverified (not exercised by the audit)
-                                  height / image_data.size[1], 0, 0)  # divaudit: unverified (not exercised by the audit)
+                    trafo = Trafo(width / image_data.size[0], 0, 0,
+                                  height / image_data.size[1], 0, 0)
                     trafo = trafo(image.Trafo())
                     pattern = ImageTilePattern(image_data, trafo = trafo)
                     self.loader.style.fill_pattern = pattern
@@ -1627,7 +1627,7 @@ class CMXInterpreter32(CMXInterpreter):
             byte_order = 1
         self.push_source(BinaryInput(data, byte_order,
                                      self.cmxfile.coord_size))
-        self.push_trafo(Scale(self.trafo.m11 / 50))  # divaudit: unverified (not exercised by the audit)
+        self.push_trafo(Scale(self.trafo.m11 / 50))
         paths = self.read_pointlist()
         self.pop_trafo()
         self.pop_source()
@@ -1675,7 +1675,7 @@ class CMXInterpreter32(CMXInterpreter):
                         self._print('magnifying\n')
                         rate, procedure = self.source.read_struct('hh')
                         self._print('rate %d, procedure %d\n', rate, procedure)
-                        args = (lens, rate / 10.0)  # divaudit: unverified (not exercised by the audit)
+                        args = (lens, rate / 10.0)
                 if tag == 3:
                     frozen, active, x, y = self.source.read_struct('llii')
                     args = args + (self.trafo(x, y),)
@@ -1802,8 +1802,8 @@ class CMXInterpreter32(CMXInterpreter):
                     image = self.cmxfile.GetImage(image1)
                     if image is not None:
                         width, height = image.size
-                        trafo = Trafo(real_width / float(width), 0,  # divaudit: unverified (not exercised by the audit)
-                                      0, real_height / float(height), 0, 0)  # divaudit: unverified (not exercised by the audit)
+                        trafo = Trafo(real_width / float(width), 0,
+                                      0, real_height / float(height), 0, 0)
                         trafo = Trafo(*matrix[:4])(trafo)
                         trafo = Translation(self.trafo(matrix[-2:]))(trafo)
                         self.loader.image(image, trafo)
@@ -1870,7 +1870,7 @@ class CMXLoader(GenericLoader):
                 if pattern.is_Tiled:
                     width, height = pattern.data.size
                     trafo = pattern.trafo
-                    y = height * trafo.m22 * self.fix_tile[1] / 100.0  # divaudit: unverified (not exercised by the audit)
+                    y = height * trafo.m22 * self.fix_tile[1] / 100.0
                     rect = object.coord_rect
                     pattern.Transform(Translation(0, rect.bottom-rect.top + y))
             self.fix_tile = None

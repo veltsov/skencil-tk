@@ -61,7 +61,7 @@ Modifier:
             new = Sketch.CreatePath()
             newpaths.append(new)
 
-            p = p1+(p2-p1)/float(n)*i  # divaudit: unverified (not exercised by the audit)
+            p = p1+(p2-p1)/float(n)*i
             new.AppendLine(p-yvect*h1)
             new.AppendLine(p+yvect*h2)        
             new.Transform(self.trafo)

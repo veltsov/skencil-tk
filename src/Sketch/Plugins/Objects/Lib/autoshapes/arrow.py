@@ -12,7 +12,7 @@ class Arrow(AutoshapeBase):
     w2 = 60
     def GetHandles(self):
         handles = []
-        w = (self.w2+self.w1)/2.  # divaudit: unverified (not exercised by the audit)
+        w = (self.w2+self.w1)/2.
         for p in ((self.w1,-self.h2),
                   (w,-self.h1),
                   (w,self.h1),
@@ -33,7 +33,7 @@ class Arrow(AutoshapeBase):
             if selection == 1:
                 self.w1 = self.w1+dw
                 if self.h2 > 0:
-                    f = 1.-dh / self.h2  # divaudit: unverified (not exercised by the audit)
+                    f = 1.-dh / self.h2
                     self.h1 = f*self.h1
                     self.h2 = f * self.h2
                 else:

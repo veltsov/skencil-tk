@@ -74,10 +74,10 @@ def create_star_path(corners, outer_radius, inner_radius):
     outer_radius = unit.convert(outer_radius)
     inner_radius = unit.convert(inner_radius)
     path = CreatePath()
-    angle = math.pi * 2 / corners  # divaudit: unverified (not exercised by the audit)
+    angle = math.pi * 2 / corners
     for i in range(corners):
         path.AppendLine(Polar(outer_radius, angle * i))
-        path.AppendLine(Polar(inner_radius, angle * i + angle / 2))  # divaudit: unverified (not exercised by the audit)
+        path.AppendLine(Polar(inner_radius, angle * i + angle / 2))
     path.AppendLine(path.Node(0))
     path.ClosePath()
     return path
