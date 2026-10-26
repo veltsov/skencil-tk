@@ -303,6 +303,47 @@ gone.
 
 ## Porting plan
 
+Status 2026-10-26 (end of session): **stage A complete; stage B
+complete (all six C extension modules build and import under py3);
+stage C mostly done (Tkinter renames applied, headless model layer
+works); 86 of 97 headless tests pass; the UI/Xvfb tests and the
+remaining content diffs are open (stage C/D).**
+
+Work is on the branch `py3` (py3-only sources; the `modernize` branch
+remains the py2 reference).  Builds: `python3 setup.py build` →
+`build/lib.linux-x86_64-3.10`; suite: `PYTHON=python3 test/run_tests.sh`.
+
+Remaining py3 issues, verified by the suite (in rough priority order):
+
+1. **Glyph-encoding round-trip (the last content diff):** in
+   `test_save_reload_stable`, a `txt(':')` in font MTMI comes back as
+   `txt('\x00')` after a save/reload/save cycle — the gid →
+   font-encoding byte conversion (`Font.EncodedText`) or the
+   `code_to_gid` table built in `font.py` loses the mapping for this
+   font (suspect: the sfd/encoding tables are read as str now, or an
+   ordering difference in the glyph registry).  This accounts for the
+   save/reload-stable and fixture-baseline failures (the outputs are
+   otherwise byte-identical to each other, just not to the golden
+   baselines).
+2. **`sys.exc_traceback` remnants** in `UI/prompt.py` and
+   `Plugins/Filters/xfigloader.py` (use `sys.exc_info()[2]`).
+3. **`reader_decodes_user_strings` / `reader_decodes_style_names`**:
+   `dict_keys.sort()` style leftovers — `GetStyleNames` is fixed;
+   check the remaining `.sort()` on view objects
+   (`document.py:2334` was one; verify all).
+4. **`test_menu_tree_byte_string_path_rejected`**: ScriptRegistry's
+   byte-string rejection is py2-only; the check needs a py3 form
+   (reject `bytes` paths).
+5. **UI layer (stage C/D):** the Xvfb smoke tests are not run yet
+   (`--ignore=test/ui`); `Sketch/UI/*` imports tkinter now, but the
+   pax Tk integration (`call_py_method`, `wantobjects(0)` behaviour)
+   needs the pre-flight experiment under Xvfb described above.
+6. **Stage D:** devtools (`build-skencil`, `collect-app-dir`,
+   AppImage), README, `.vscode`, `skconvert`/`skshow` launchers
+   (already version-parameterized), user plugin in
+   `~/.config/skencil/Plugins/latextext2.py` (TabError — a user file,
+   not a repo file).
+
 Stages are ordered so that everything that *can* be validated under
 python2 happens first (stage A), the C port happens on a branch (stage
 B), and the final switch is small (stages C–D).  The test suite is the
