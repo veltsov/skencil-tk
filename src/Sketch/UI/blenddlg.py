@@ -17,8 +17,8 @@
 
 
 from Sketch.UI import sketchdlg
-from Tkinter import Frame, Label, IntVar
-from Tkinter import RIGHT, BOTTOM, X, Y, BOTH, LEFT, TOP, GROOVE, E,\
+from tkinter import Frame, Label, IntVar
+from tkinter import RIGHT, BOTTOM, X, Y, BOTH, LEFT, TOP, GROOVE, E,\
      DISABLED, NORMAL
 from Sketch.UI.tkext import UpdatedButton, MyEntry
 

@@ -7,7 +7,7 @@ from Sketch.UI.sketchdlg import SKModal
 from Sketch.Graphics.selection import SizeSelection, \
      TrafoSelection
 
-from Tkinter import StringVar, DoubleVar, Entry, Label, \
+from tkinter import StringVar, DoubleVar, Entry, Label, \
      Button, Frame, Checkbutton, IntVar, BOTH, TOP, LEFT
 from math import pi
 

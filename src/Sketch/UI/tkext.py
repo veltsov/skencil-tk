@@ -25,9 +25,9 @@ from Sketch.Base.const import CHANGED, DROP_COLOR, COMMAND, SELECTION
 from Sketch.Base.warn import warn_tb, INTERNAL
 
 
-from Tkinter import Widget, Menu, Menubutton, Frame
-from Tkinter import LEFT, DISABLED, NORMAL, END, RAISED, Y, X, TOP
-import Tkinter
+from tkinter import Widget, Menu, Menubutton, Frame
+from tkinter import LEFT, DISABLED, NORMAL, END, RAISED, Y, X, TOP
+import tkinter
 
 from Sketch.UI import command
 from Sketch.UI.skpixmaps import PixmapTk
@@ -235,7 +235,7 @@ class MenuCheck(AutoUpdate, WidgetWithCommand, MenuEntry):
     def __init__(self, text = '', command = None, args = (),
                  sensitivecb = None, updatecb = None, bitmap = None,
                  **rest):
-        self.var_on = Tkinter.IntVar()
+        self.var_on = tkinter.IntVar()
         rest['variable'] = self.var_on
         AutoUpdate.__init__(self, sensitivecb, updatecb)
         WidgetWithCommand.__init__(self)
@@ -258,7 +258,7 @@ class MenuCheck2(MenuEntry):
 
     def __init__(self, command, **rest):
         self.command = command
-        self.var_value = Tkinter.IntVar()
+        self.var_value = tkinter.IntVar()
         self.var_value.set(command.IsOn())
         rest['variable'] = self.var_value
         rest = self.add_kw_args(rest)
@@ -454,7 +454,7 @@ def MakeCommand(label, func = None, args = (), sensitive = None, update =None):
         return MenuSeparator()
 
 
-class UpdatedLabel(Tkinter.Label, AutoUpdate):
+class UpdatedLabel(tkinter.Label, AutoUpdate):
 
     def __init__(self, master, **kw):
         AutoUpdate.__init__(self, kw = kw)
@@ -463,26 +463,26 @@ class UpdatedLabel(Tkinter.Label, AutoUpdate):
         kw['padx'] = 0
         kw['pady'] = 0
         kw['highlightthickness'] = 0
-        Tkinter.Label.__init__(*(self, master), **kw)
+        tkinter.Label.__init__(*(self, master), **kw)
 
     def destroy(self):
         AutoUpdate.clean_up(self)
-        Tkinter.Label.destroy(self)
+        tkinter.Label.destroy(self)
 
 
-class UpdatedButton(Tkinter.Button, AutoUpdate, WidgetWithCommand):
+class UpdatedButton(tkinter.Button, AutoUpdate, WidgetWithCommand):
 
     def __init__(self, master, command = None, args = (), **kw):
         AutoUpdate.__init__(self, kw = kw)
         WidgetWithCommand.__init__(self)
-        Tkinter.Button.__init__(*(self, master), **kw)
+        tkinter.Button.__init__(*(self, master), **kw)
         if command:
             self.set_command(command, args)
 
     def destroy(self):
         AutoUpdate.clean_up(self)
         WidgetWithCommand.clean_up(self)
-        Tkinter.Button.destroy(self)
+        tkinter.Button.destroy(self)
 
 class MultiButton(UpdatedButton):
 
@@ -515,7 +515,7 @@ class MultiButton(UpdatedButton):
 
 from Sketch.UI import tooltips
 
-class CommandButton(Tkinter.Button):
+class CommandButton(tkinter.Button):
 
     def __init__(self, master, command = None, args = (), **kw):
         self.command = command
@@ -532,7 +532,7 @@ class CommandButton(Tkinter.Button):
         else:
             kw['text'] = command.button_name
         command.Subscribe(CHANGED, self._update)
-        Tkinter.Button.__init__(*(self, master), **kw)
+        tkinter.Button.__init__(*(self, master), **kw)
         tooltips.AddDescription(self, command.menu_name)
         self._update()
 
@@ -552,7 +552,7 @@ class CommandButton(Tkinter.Button):
         self.command.Unsubscribe(CHANGED, self._update)
         pax.unregister_object(self.command)
         self.command = self.args = None
-        Tkinter.Button.destroy(self)
+        tkinter.Button.destroy(self)
         pax.unregister_object(self)
 
 class CommandCheckbutton(CommandButton):
@@ -570,36 +570,36 @@ class CommandCheckbutton(CommandButton):
         CommandButton._update(self)
 
 
-class UpdatedCheckbutton(Tkinter.Checkbutton, AutoUpdate, WidgetWithCommand):
+class UpdatedCheckbutton(tkinter.Checkbutton, AutoUpdate, WidgetWithCommand):
 
     def __init__(self, master, command = None, args = (), **kw):
         AutoUpdate.__init__(self, kw = kw)
         WidgetWithCommand.__init__(self)
-        Tkinter.Checkbutton.__init__(*(self, master), **kw)
+        tkinter.Checkbutton.__init__(*(self, master), **kw)
         if command:
             self.set_command(command, args)
 
     def destroy(self):
         AutoUpdate.clean_up(self)
         WidgetWithCommand.clean_up(self)
-        Tkinter.Checkbutton.destroy(self)
+        tkinter.Checkbutton.destroy(self)
 
-class UpdatedRadiobutton(Tkinter.Radiobutton, AutoUpdate, WidgetWithCommand):
+class UpdatedRadiobutton(tkinter.Radiobutton, AutoUpdate, WidgetWithCommand):
 
     def __init__(self, master, command = None, args = (), **kw):
         AutoUpdate.__init__(self, kw = kw)
         WidgetWithCommand.__init__(self)
-        Tkinter.Radiobutton.__init__(*(self, master), **kw)
+        tkinter.Radiobutton.__init__(*(self, master), **kw)
         if command:
             self.set_command(command, args)
 
     def destroy(self):
         AutoUpdate.clean_up(self)
         WidgetWithCommand.clean_up(self)
-        Tkinter.Radiobutton.destroy(self)
+        tkinter.Radiobutton.destroy(self)
 
 
-class UpdatedListbox(Tkinter.Listbox, AutoUpdate, WidgetWithCommand):
+class UpdatedListbox(tkinter.Listbox, AutoUpdate, WidgetWithCommand):
 
     tk_widget_has_command = 0
     tk_command_event = '<Double-Button-1>'
@@ -608,7 +608,7 @@ class UpdatedListbox(Tkinter.Listbox, AutoUpdate, WidgetWithCommand):
 
     def __init__(self, master, command = None, args = (), **kw):
         AutoUpdate.__init__(self, kw = kw)
-        Tkinter.Listbox.__init__(*(self, master), **kw)
+        tkinter.Listbox.__init__(*(self, master), **kw)
         WidgetWithCommand.__init__(self)
         if command:
             self.set_command(command, args)
@@ -618,7 +618,7 @@ class UpdatedListbox(Tkinter.Listbox, AutoUpdate, WidgetWithCommand):
     def destroy(self):
         AutoUpdate.clean_up(self)
         WidgetWithCommand.clean_up(self)
-        Tkinter.Listbox.destroy(self)
+        tkinter.Listbox.destroy(self)
 
     def set_command(self, command, args = ()):
         WidgetWithCommand.set_command(self, command, args)
@@ -643,21 +643,21 @@ class UpdatedListbox(Tkinter.Listbox, AutoUpdate, WidgetWithCommand):
     def _call_selection(self, event, *rest):
         self.issue(SELECTION)
 
-class MyEntry(Tkinter.Entry, WidgetWithCommand):
+class MyEntry(tkinter.Entry, WidgetWithCommand):
 
     tk_widget_has_command = 0
     tk_command_event = '<Return>'
     tk_event_bound = 0
 
     def __init__(self, master, command = None, args = (), **kw):
-        Tkinter.Entry.__init__(*(self, master), **kw)
+        tkinter.Entry.__init__(*(self, master), **kw)
         WidgetWithCommand.__init__(self)
         if command:
             self.set_command(command, args)
 
     def destroy(self):
         WidgetWithCommand.clean_up(self)
-        Tkinter.Entry.destroy(self)
+        tkinter.Entry.destroy(self)
 
     def SetText(self, text):
         self.delete(0, END)
@@ -764,7 +764,7 @@ def rgb_to_tk(rgb):
     r, g, b = rgb
     return '#%04x%04x%04x' % (65535 * r, 65535 * g, 65535 * b)
 
-class ColorButton(WidgetWithCommand, Tkinter.Button, SketchDropTarget):
+class ColorButton(WidgetWithCommand, tkinter.Button, SketchDropTarget):
 
     color_option = 'bg'
     accept_drop = (DROP_COLOR,)
@@ -772,7 +772,7 @@ class ColorButton(WidgetWithCommand, Tkinter.Button, SketchDropTarget):
     def __init__(self, master, command = None, args = (),
                  color = None, dialog_master = None, **kw):
         WidgetWithCommand.__init__(self)
-        Tkinter.Button.__init__(*(self, master), **kw)
+        tkinter.Button.__init__(*(self, master), **kw)
         if color is None:
             color = StandardColors.white
         self.set_color(color)
@@ -785,7 +785,7 @@ class ColorButton(WidgetWithCommand, Tkinter.Button, SketchDropTarget):
 
     def destroy(self):
         self.clean_up()
-        Tkinter.Button.destroy(self)
+        tkinter.Button.destroy(self)
 
     def set_color(self, color):
         self.color = color

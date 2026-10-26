@@ -33,6 +33,22 @@ from Sketch.Base import config
 from Sketch.Base.warn import pdebug, warn_tb, warn, USER, INTERNAL
 from Sketch.Lib.psmisc import quote_ps_string, make_textline
 
+
+class _PSBinaryWriter:
+    """File wrapper for the PostScript device: accepts both str (utf-8
+    encoded on the way out) and bytes writes."""
+
+    def __init__(self, file):
+        self.file = file
+
+    def write(self, data):
+        if isinstance(data, str):
+            data = data.encode('utf-8')
+        return self.file.write(data)
+
+    def __getattr__(self, name):
+        return getattr(self.file, name)
+
 from Sketch import IdentityMatrix
 from Sketch.Lib import type1
 
@@ -111,7 +127,10 @@ class PostScriptDevice(CommonDevice):
                                    printable = self.draw_printable)
 
         if isinstance(file, str):
-            file = open(file, 'w')
+            file = open(file, 'wb')
+            # accept both str (utf-8) and bytes writes (embedded EPS
+            # data is copied through as raw bytes)
+            file = _PSBinaryWriter(file)
             self.close_file = 1
         else:
             self.close_file = 0

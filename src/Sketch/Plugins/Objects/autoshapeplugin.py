@@ -17,7 +17,7 @@ from Sketch import _, Trafo, TrafoPlugin, Rotation, RegisterCommands
 from Sketch.UI.sketchdlg import SketchPanel
 
 
-import Tkinter
+import tkinter
 from PIL import Image
 try:
     from PIL import ImageTk
@@ -27,7 +27,7 @@ import array
 import sys
 import string
 from math import pi
-from ScrolledText import ScrolledText
+from tkinter.scrolledtext import ScrolledText
 from Sketch.Plugins.Objects.Lib.autoshapes.autoshapelib import VERSION, Autoshape
         
 
@@ -50,9 +50,9 @@ def highlight(img):
 def grey(img):
     return colorize(img, 0.9, 0.9, 0.9)
 
-class ShapeBtn(Tkinter.Button):
+class ShapeBtn(tkinter.Button):
       def __init__(self, master, img):
-          Tkinter.Button.__init__(self, master)
+          tkinter.Button.__init__(self, master)
           normal = ImageTk.PhotoImage(grey(img))
           highlighted = ImageTk.PhotoImage(highlight(img))
 
@@ -63,7 +63,7 @@ class ShapeBtn(Tkinter.Button):
                          height             = 27,
                          width              = 27,
                          background         = '#ffffff',
-                         relief             = Tkinter.FLAT,
+                         relief             = tkinter.FLAT,
                          borderwidth        = 0,
                          highlightthickness = 0, 
                          activebackground   = '#ffff99'
@@ -87,7 +87,7 @@ class AutoshapeDlg(SketchPanel):
         from Sketch.Plugins.Objects.Lib.autoshapes.icons import icons
         
         top = self.top
-        frame = Tkinter.Frame(top)
+        frame = tkinter.Frame(top)
         text = ScrolledText(frame, background='#ffffff', height=10, width=40)
         self.text = text
 
@@ -170,13 +170,13 @@ class AutoshapeDlg(SketchPanel):
         frame.rowconfigure(0, weight=1)
         frame.columnconfigure(0, weight=1)
         
-        bottom = Tkinter.Frame(frame)    
-        button = Tkinter.Button(bottom, text=_('Close'), \
+        bottom = tkinter.Frame(frame)    
+        button = tkinter.Button(bottom, text=_('Close'), \
                                 command=self.close_dlg)
         button.pack(side='right')
 
         if _debug:
-            button = Tkinter.Button(bottom, text=_('Shell'), \
+            button = tkinter.Button(bottom, text=_('Shell'), \
                                     command=self.open_shell)
             button.pack(side='left')
 

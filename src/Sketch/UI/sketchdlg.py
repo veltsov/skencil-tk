@@ -63,8 +63,8 @@ from Sketch.Base.const import SELECTION, DOCUMENT, EDITED, CLOSED
 from Sketch.Base import config
 import Sketch
 
-from Tkinter import Toplevel, IntVar, Frame, Checkbutton, Label
-from Tkinter import TOP, LEFT, RIGHT, BOTTOM, X, BOTH, TkVersion
+from tkinter import Toplevel, IntVar, Frame, Checkbutton, Label
+from tkinter import TOP, LEFT, RIGHT, BOTTOM, X, BOTH, TkVersion
 
 from Sketch.UI.tkext import UpdatedButton
 from Sketch.UI import tkext

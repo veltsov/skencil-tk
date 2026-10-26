@@ -75,9 +75,9 @@ __version__ = "1.0"
 
 import os.path
 
-from Tkinter import Button, Label, Entry, Frame, Scrollbar, \
+from tkinter import Button, Label, Entry, Frame, Scrollbar, \
      DoubleVar, StringVar, E, W, N, S, END, LEFT, RIGHT, Y
-import Tkinter
+import tkinter
 
 import Sketch, Sketch.UI
 from Sketch import ContAngle, ContSmooth, CreatePath, Point
@@ -259,13 +259,13 @@ def text_as_curves(text, font_format, font_name, size):
     return object
 
     
-class SmartListbox(Tkinter.Listbox):
+class SmartListbox(tkinter.Listbox):
 
     """Smarter Listbox widget that can hold list of objects other than
     strings and return the selected object"""
 
     def __init__(self, master, command = None, args = (), **kw):
-        Tkinter.Listbox.__init__(*(self, master), **kw)
+        tkinter.Listbox.__init__(*(self, master), **kw)
         self.list = []
 
     def SetList(self, list):

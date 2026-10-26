@@ -19,8 +19,8 @@
 # A dialog to rearrange the layers of the document and change some of
 # their properties.
 
-from Tkinter import Button, Scrollbar, Frame, IntVar, Canvas, Label
-from Tkinter import RIGHT, BOTTOM, X, Y, BOTH, LEFT, W, NW, NORMAL, DISABLED
+from tkinter import Button, Scrollbar, Frame, IntVar, Canvas, Label
+from tkinter import RIGHT, BOTTOM, X, Y, BOTH, LEFT, W, NW, NORMAL, DISABLED
 
 from Sketch.Base.const import LAYER, LAYER_ACTIVE, LAYER_ORDER, \
      SelectSubtract, SelectAdd

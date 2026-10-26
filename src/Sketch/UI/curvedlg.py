@@ -17,8 +17,8 @@
 
 
 from Sketch.UI import sketchdlg
-from Tkinter import Frame
-from Tkinter import BOTTOM, X, BOTH, TOP, CENTER
+from tkinter import Frame
+from tkinter import BOTTOM, X, BOTH, TOP, CENTER
 from Sketch.UI.tkext import UpdatedButton, CommandButton
 
 from Sketch import _

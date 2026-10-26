@@ -21,8 +21,8 @@
 
 
 from __future__ import division
-from Tkinter import Frame, Label, DoubleVar, StringVar, Scrollbar
-from Tkinter import BOTTOM, BOTH, LEFT, RIGHT, TOP, X, Y, E, W
+from tkinter import Frame, Label, DoubleVar, StringVar, Scrollbar
+from tkinter import BOTTOM, BOTH, LEFT, RIGHT, TOP, X, Y, E, W
 
 from Sketch.Base.const import GUIDE_LINES, SELECTION
 from Sketch import _, Point

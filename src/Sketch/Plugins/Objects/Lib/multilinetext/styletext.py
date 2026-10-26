@@ -14,7 +14,7 @@
 
 
 from __future__ import print_function
-from ScrolledText import ScrolledText
+from tkinter.scrolledtext import ScrolledText
 from Sketch.Plugins.Objects.Lib.multilinetext.iterator import Style, StyletextError, Pool
 
 class StyleText(ScrolledText):
@@ -371,7 +371,7 @@ class StyleText(ScrolledText):
 
 
 if __name__=='__main__':
-    from Tkinter import *
+    from tkinter import *
     tk = Tk()
     text = StyleText(tk, background='white')
     text.pack(fill=BOTH, expand=1)

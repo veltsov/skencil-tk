@@ -27,7 +27,7 @@ from Sketch.Graphics import document
 
 from Sketch.Base.const import CLIPBOARD
 
-from Tkinter import Tk, TclError
+from tkinter import Tk, TclError
 from Sketch.UI import tkext
 
 from Sketch.UI import tooltips
@@ -132,7 +132,7 @@ class TkApplication:
             sys.exit(1)
 
         # return results of tk.call as strings, like the old paxtkinter
-        # module did (Tkinter.py sets wantobjects to 1 by default)
+        # module did (tkinter.py sets wantobjects to 1 by default)
         self.root.tk.wantobjects(0)
 
         tkutils.set_ui_font(self.root, config.preferences.ui_font)

@@ -20,7 +20,7 @@
 
 from Sketch import Bezier, Line, ContAngle, ContSmooth, ContSymmetrical
 
-from Tkinter import *
+from tkinter import *
 
 class Viewer(Toplevel):
     type_names = {Line: "Line", Bezier: "Bezier"}

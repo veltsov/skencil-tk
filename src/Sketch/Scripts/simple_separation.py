@@ -38,7 +38,7 @@ from Sketch import _, SolidPattern, StandardColors, CreateListUndo, Undo, \
 from Sketch.Lib import util
 from Sketch.UI.sketchdlg import SKModal
 
-from Tkinter import StringVar, Frame, Label, Button, Entry, E, W, X, TOP, \
+from tkinter import StringVar, Frame, Label, Button, Entry, E, W, X, TOP, \
      BOTTOM, LEFT, BOTH
 
 

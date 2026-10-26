@@ -31,9 +31,9 @@ from Sketch.Base.const import DOCUMENT, CLIPBOARD, CLOSED, COLOR1, COLOR2
 from Sketch.Base.const import STATE, VIEW, MODE, SELECTION, POSITION, UNDO, EDITED,\
      CURRENTINFO
 
-from Tkinter import TclVersion, TkVersion, Frame, Scrollbar
-from Tkinter import X, BOTTOM, BOTH, TOP, HORIZONTAL, LEFT, Y
-import Tkinter
+from tkinter import TclVersion, TkVersion, Frame, Scrollbar
+from tkinter import X, BOTTOM, BOTH, TOP, HORIZONTAL, LEFT, Y
+import tkinter
 from Sketch.UI.tkext import AppendMenu, UpdatedLabel, UpdatedButton, CommandButton, \
      CommandCheckbutton, MakeCommand, MultiButton
 from Sketch.UI import tkext
@@ -93,7 +93,7 @@ class SketchMainWindow(Publisher):
         self.document = None
         self.commands = None
         self.auto_reload_id = None
-        self.exporttype = Tkinter.StringVar()
+        self.exporttype = tkinter.StringVar()
         self.NewDocument()
         self.create_commands()
         self.build_window()
@@ -1089,7 +1089,7 @@ class SketchMainWindow(Publisher):
                   % {'version':SketchVersion,
                      'py':sys.version.split()[0],
                      'tcl':TclVersion,
-                     'tkinter':Tkinter.__version__.split()[1],
+                     'tkinter':tkinter.__version__.split()[1],
                      'tk':TkVersion}
 
         self.application.MessageBox(title = _("About Skencil"),

@@ -46,7 +46,7 @@ from Sketch import _, PostScriptDevice
 
 # for parameter dialogs
 from Sketch.UI.sketchdlg import SKModal
-from Tkinter import *
+from tkinter import *
 
 class CreateRasterParametersDlg(SKModal):
     "Create Tk Dialog to ask for raster parameters."

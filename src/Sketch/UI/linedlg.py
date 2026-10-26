@@ -31,7 +31,7 @@ from Sketch import _, Trafo, SimpleGC, SolidPattern, EmptyPattern, \
      StandardDashes, StandardArrows, StandardColors
 
 
-from Tkinter import Frame, Label, IntVar, LEFT, X, E, W, GROOVE
+from tkinter import Frame, Label, IntVar, LEFT, X, E, W, GROOVE
 from Sketch.UI.tkext import ColorButton, UpdatedCheckbutton, MyOptionMenu2
 
 from Sketch.UI.sketchdlg import StylePropertyPanel

@@ -19,8 +19,8 @@
 #	Dialog for aligning objects
 #
 
-from Tkinter import Frame, Radiobutton, IntVar, StringVar
-from Tkinter import BOTH, LEFT, TOP, X, Y
+from tkinter import Frame, Radiobutton, IntVar, StringVar
+from tkinter import BOTH, LEFT, TOP, X, Y
 
 from Sketch.Base.const import SELECTION
 from Sketch import _

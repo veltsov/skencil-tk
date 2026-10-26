@@ -24,8 +24,8 @@ from Sketch.Base.config import preferences
 from Sketch import _
 from Sketch.Base import config
 
-from Tkinter import Toplevel, Frame, Label, Entry, IntVar, DoubleVar, StringVar
-from Tkinter import GROOVE, TOP, BOTTOM, LEFT, RIGHT, E, W, X, BOTH, \
+from tkinter import Toplevel, Frame, Label, Entry, IntVar, DoubleVar, StringVar
+from tkinter import GROOVE, TOP, BOTTOM, LEFT, RIGHT, E, W, X, BOTH, \
      NORMAL, DISABLED
 from Sketch.UI.tkext import UpdatedButton, MyEntry, UpdatedCheckbutton
 from Sketch.UI.lengthvar import LengthVar, create_unit_menu

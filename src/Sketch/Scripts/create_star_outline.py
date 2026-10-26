@@ -22,7 +22,7 @@ from __future__ import division
 from Sketch import _, PolyBezier, CreatePath, Polar
 from Sketch.UI.sketchdlg import SKModal
 
-from Tkinter import *
+from tkinter import *
 
 import math, unit
 

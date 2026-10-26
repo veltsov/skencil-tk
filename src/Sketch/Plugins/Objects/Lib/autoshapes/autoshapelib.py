@@ -6,8 +6,8 @@ from Sketch.Base import const
 from Sketch.UI.command import AddCmd
 from Sketch.Graphics.base import Editor
 from Sketch.UI.sketchdlg import SKModal
-from ScrolledText import ScrolledText
-import Tkinter
+from tkinter.scrolledtext import ScrolledText
+import tkinter
 
 #############
 VERSION = 0.2
@@ -322,7 +322,7 @@ class HelpWindow(SKModal):
         top = self.top
         top.resizable(0, 1)
 
-        frame = Tkinter.Frame(top)
+        frame = tkinter.Frame(top)
         text = ScrolledText(frame, height=13, width=50, background='white')
         text.insert('1.0', self.help_text)
         text.configure(state='disabled')
@@ -330,7 +330,7 @@ class HelpWindow(SKModal):
         frame.columnconfigure(0, weight=1)
         frame.rowconfigure(0, weight=1)
         
-        button = Tkinter.Button(frame, text=_('Close'), command=self.cancel)
+        button = tkinter.Button(frame, text=_('Close'), command=self.cancel)
         button.grid(column=0, row=1)
 
         frame.pack(expand=1, fill='both')

@@ -19,7 +19,7 @@
 from __future__ import division
 from Sketch.Modules import pax
 
-from Tkinter import IntVar, X, Y, LEFT, RIGHT, E
+from tkinter import IntVar, X, Y, LEFT, RIGHT, E
 from Sketch.UI.tkext import PyWidget, MyEntry
 
 from Sketch.Base.const import COMMAND

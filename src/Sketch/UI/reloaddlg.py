@@ -20,8 +20,8 @@ import operator, string
 
 from Sketch.Base.warn import pdebug, warn_tb, INTERNAL
 
-from Tkinter import Frame, Scrollbar
-from Tkinter import RIGHT, BOTTOM, X, Y, BOTH, TOP
+from tkinter import Frame, Scrollbar
+from tkinter import RIGHT, BOTTOM, X, Y, BOTH, TOP
 from Sketch.UI.tkext import UpdatedButton, UpdatedListbox, COMMAND
 
 from Sketch.UI.sketchdlg import SketchPanel

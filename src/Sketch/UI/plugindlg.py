@@ -61,7 +61,7 @@ from Sketch.Base.warn import warn, USER
 from Sketch.Base.const import SELECTION
 from Sketch import _
 
-from Tkinter import Label, IntVar, DoubleVar, StringVar, RIGHT, E, W, Text, \
+from tkinter import Label, IntVar, DoubleVar, StringVar, RIGHT, E, W, Text, \
     WORD, Checkbutton, Radiobutton
 from Sketch.UI.tkext import MyEntry, MyOptionMenu
 from Sketch.UI.miniscroll import MiniScroller

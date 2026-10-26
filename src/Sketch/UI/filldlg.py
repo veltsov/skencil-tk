@@ -25,8 +25,8 @@ from math import atan2, sin, cos, pi
 
 from Sketch import x11 as X
 Xconst = X
-from Tkinter import Frame, Label, IntVar, DoubleVar, Radiobutton, StringVar
-from Tkinter import RIGHT, BOTTOM, X, Y, LEFT, TOP, W, E, N
+from tkinter import Frame, Label, IntVar, DoubleVar, Radiobutton, StringVar
+from tkinter import RIGHT, BOTTOM, X, Y, LEFT, TOP, W, E, N
 from Sketch.UI.tkext import UpdatedButton, UpdatedCheckbutton, ColorButton, MyEntry
 from Sketch.UI.tkext import PyWidget
 

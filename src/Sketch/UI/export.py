@@ -18,8 +18,8 @@
 
 from __future__ import print_function
 from Sketch.UI.sketchdlg import SketchPanel
-from Tkinter import X, BOTH, LEFT, TOP
-from Tkinter import Frame, Label
+from tkinter import X, BOTH, LEFT, TOP
+from tkinter import Frame, Label
 from Sketch.UI.tkext import UpdatedButton, MyEntry, UpdatedCheckbutton, \
      MyOptionMenu2
 

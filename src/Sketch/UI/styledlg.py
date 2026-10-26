@@ -27,9 +27,9 @@ from Sketch.Base.const import STYLE, SELECTION, COMMAND
 from Sketch.Base.warn import pdebug
 from Sketch.Graphics.properties import property_names, property_titles, \
      property_types, FillProperty, LineProperty, FontProperty
-from Tkinter import Button, Scrollbar, Frame, Checkbutton, Label, StringVar, \
+from tkinter import Button, Scrollbar, Frame, Checkbutton, Label, StringVar, \
      IntVar
-from Tkinter import RIGHT, BOTTOM, X, Y, BOTH, LEFT, TOP, W, DISABLED, NORMAL,\
+from tkinter import RIGHT, BOTTOM, X, Y, BOTH, LEFT, TOP, W, DISABLED, NORMAL,\
      END
 from Sketch.UI.tkext import UpdatedButton, UpdatedListbox, MyEntry, MessageDialog
 

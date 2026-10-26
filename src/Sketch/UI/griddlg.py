@@ -19,8 +19,8 @@
 #	Dialog for grid settings
 #
 
-from Tkinter import Frame, Label
-from Tkinter import BOTTOM, BOTH, TOP, X, E
+from tkinter import Frame, Label
+from tkinter import BOTTOM, BOTH, TOP, X, E
 
 from Sketch.Base.const import GRID
 from Sketch import _

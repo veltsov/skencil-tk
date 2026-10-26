@@ -23,7 +23,7 @@ from __future__ import print_function
 
 import sys
 
-from Tkinter import Toplevel, Label
+from tkinter import Toplevel, Label
 
 from Sketch.Base import config
 

@@ -79,7 +79,7 @@ Sketch.init_ui()
 
 import Sketch.UI.skapp, Sketch.UI.view, Sketch.Base.load
 
-from Tkinter import BOTH
+from tkinter import BOTH
 
 
 class ShowView(Sketch.UI.view.SketchView):

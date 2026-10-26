@@ -369,7 +369,7 @@ class Pool(Id):
 
 
 if __name__=='__main__':
-    from Tkinter import *
+    from tkinter import *
     tk = Tk()
     text = Text(tk)
     text.pack()

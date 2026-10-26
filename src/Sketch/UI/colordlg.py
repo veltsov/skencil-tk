@@ -29,8 +29,8 @@ from Sketch import CreateRGBColor, StandardColors, Trafo, SketchError, \
      Publisher, _
 from Sketch.Graphics import color
 
-from Tkinter import Frame, Button, Label, DoubleVar, IntVar
-from Tkinter import TOP, BOTTOM, LEFT, RIGHT, X, BOTH
+from tkinter import Frame, Button, Label, DoubleVar, IntVar
+from tkinter import TOP, BOTTOM, LEFT, RIGHT, X, BOTH
 from Sketch.UI.tkext import PyWidget
 from Sketch.UI.miniscroll import create_mini_entry
 from Sketch.UI.sketchdlg import SKModal

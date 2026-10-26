@@ -6,7 +6,7 @@ from posix import system
 from os.path import exists
 from re import search
 from os import mkdir
-from Tkinter import StringVar, Entry, Label, Button, Frame, Text, END
+from tkinter import StringVar, Entry, Label, Button, Frame, Text, END
 import Sketch.Scripting
 from Sketch.Graphics import image, eps
 from Sketch.UI.sketchdlg import SKModal

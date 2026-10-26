@@ -15,9 +15,9 @@
 
 from __future__ import print_function
 from Sketch.Plugins.Objects.Lib.multilinetext.styletext import StyleText, Style
-import Tkinter
-from Tkconstants import *
-from tkFileDialog import asksaveasfilename, asksaveasfilename, \
+import tkinter
+from tkinter.constants import *
+from tkinter.filedialog import asksaveasfilename, asksaveasfilename, \
      askopenfilename
 from Sketch.Graphics import font
 from Sketch import _
@@ -127,45 +127,45 @@ class TextEditor(StyleText):
         self.register_sort('supersub', self.SupersubSort, 'normal' )
         self.plain_options = {'size':14, 'color':'black'}
 
-        bar = Tkinter.Frame(parent)
+        bar = tkinter.Frame(parent)
         self._make_menu()
 
         self.bind('<ButtonRelease-1>', lambda e, s=self: s.Update())
         self.bind('<KeyRelease>', lambda e, s=self: s.Update())
 
-        rightFrame = Tkinter.Frame(bar)
-        self.button_apply = Tkinter.Button(rightFrame, text='apply')
+        rightFrame = tkinter.Frame(bar)
+        self.button_apply = tkinter.Button(rightFrame, text='apply')
         self.button_apply.pack()
         rightFrame.pack(side='right')
         bar.pack(side = 'top', fill = 'x')
 
     def _make_menu(self):
         # make menu button
-        menu = Tkinter.Menu(self)
-        menu.file = Tkinter.Menu(menu)
+        menu = tkinter.Menu(self)
+        menu.file = tkinter.Menu(menu)
 
         menu.file.add_command(label='Load', command=self.load)
         menu.file.add_command(label='Save', command=self.saveas)
         menu.file.add_command(label='Insert', command=self.insert_file)
 
 
-        menu.options = Tkinter.Menu(menu)
-        self._plainmode_state = Tkinter.IntVar()
+        menu.options = tkinter.Menu(menu)
+        self._plainmode_state = tkinter.IntVar()
         menu.options.add_checkbutton(label='Plain mode', \
                                      variable = self._plainmode_state,
                                      command = lambda s=self: s.fontify('1.0', 'end'))
 
-        menu.family = Tkinter.Menu(menu)
+        menu.family = tkinter.Menu(menu)
         for f in FONTS.families:
             menu.family.add_command(label=f,
                                     command=lambda s=self, f=f: s.change_family(f))
 
-        menu.size = Tkinter.Menu(menu)
+        menu.size = tkinter.Menu(menu)
         for f in std_sizes:
             menu.size.add_command(label=f,
                                   command=lambda s=self, f=f: s.change_size(f))
 
-        menu.color = Tkinter.Menu(menu)
+        menu.color = tkinter.Menu(menu)
         for f in ('black', 'darkgray', 'gray', 'lightgray', 'blue', 'cyan',
                   'green', 'magenta', 'red', 'yellow', 'white'):
             menu.color.add_command(label=f, \
@@ -194,8 +194,8 @@ class TextEditor(StyleText):
             label='Color',
             menu=menu.color)
 
-        self._bold_state = Tkinter.IntVar()
-        self._italic_state = Tkinter.IntVar()
+        self._bold_state = tkinter.IntVar()
+        self._italic_state = tkinter.IntVar()
 
         menu.add_checkbutton(label=_('Bold'), \
                              variable=self._bold_state,
@@ -208,8 +208,8 @@ class TextEditor(StyleText):
                              s.change_italic(i.get())
                              )
 
-        self._subscript_state = Tkinter.IntVar()
-        self._superscript_state = Tkinter.IntVar()
+        self._subscript_state = tkinter.IntVar()
+        self._superscript_state = tkinter.IntVar()
 
         menu.add_checkbutton(label=_("Subscript"), \
                              variable=self._subscript_state,
@@ -408,7 +408,7 @@ class TextEditor(StyleText):
 
 
 def test1():
-    tk = Tkinter.Tk()
+    tk = tkinter.Tk()
     text = TextEditor(tk, background='white')
     text.pack(fill=BOTH, expand=1)
     text.insert(END,'1\n2\n3\n4\n5\n')
@@ -431,7 +431,7 @@ def waste():
 def test2():
     #
     # profiling
-    tk = Tkinter.Tk()
+    tk = tkinter.Tk()
     global text
     text = TextEditor(tk, background='white')
     text.pack(fill=BOTH, expand=1)
@@ -451,7 +451,7 @@ def test2():
     run("waste()")
 
 def test3():
-    tk = Tkinter.Tk()
+    tk = tkinter.Tk()
     text = TextEditor(tk, background='white')
     text.pack(fill=BOTH, expand=1)
     text.insert(END,'1234567890\n')
@@ -465,7 +465,7 @@ def test3():
     text.pool.dump()
 
 def test4():
-    tk = Tkinter.Tk()
+    tk = tkinter.Tk()
     text = TextEditor(tk, background='white')
     text.pack(fill=BOTH, expand=1)
     text.insert(END,'1234567890\n')
@@ -480,7 +480,7 @@ def test4():
 
 
 def test5():
-    tk = Tkinter.Tk()
+    tk = tkinter.Tk()
     text = TextEditor(tk, background='white')
     text.pack(fill=BOTH, expand=1)
     text.insert(END,'1234567890\n')

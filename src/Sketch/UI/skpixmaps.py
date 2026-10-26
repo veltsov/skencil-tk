@@ -89,12 +89,12 @@ class PixmapTk:
     _cache = {}
 
     def load_image(self, name):
-        import Tkinter
+        import tkinter
         if name[0] == '*':
             if config.preferences.color_icons:
                 image = self._cache.get(name)
                 if image is None:
-                    image = Tkinter.PhotoImage(file = name[1:], format = 'GIF')
+                    image = tkinter.PhotoImage(file = name[1:], format = 'GIF')
                     self._cache[name] = image
             else:
                 image = '@' + name[1:-3] + 'xbm'

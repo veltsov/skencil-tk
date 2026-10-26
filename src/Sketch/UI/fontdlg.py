@@ -21,8 +21,8 @@
 
 import string
 
-from Tkinter import Scrollbar, Frame, Entry, Label, StringVar, DoubleVar
-from Tkinter import Y, LEFT, W, FLAT, BOTH, RIGHT
+from tkinter import Scrollbar, Frame, Entry, Label, StringVar, DoubleVar
+from tkinter import Y, LEFT, W, FLAT, BOTH, RIGHT
 
 from Sketch import _
 from Sketch.Base import config

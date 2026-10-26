@@ -21,7 +21,7 @@ from __future__ import division
 from Sketch import CreatePath, Point, _
 from Sketch.UI.sketchdlg import SKModal
 
-from Tkinter import *
+from tkinter import *
 
 AVERAGE_BOTH = 0
 AVERAGE_X = 1

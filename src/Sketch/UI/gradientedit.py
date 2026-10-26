@@ -26,8 +26,8 @@ from Sketch.Base.const import DROP_COLOR
 from Sketch.Base.warn import pdebug
 from Sketch.Graphics import color
 
-from Tkinter import Frame, Button
-from Tkinter import BOTTOM, LEFT, RIGHT, BOTH
+from tkinter import Frame, Button
+from tkinter import BOTTOM, LEFT, RIGHT, BOTH
 from Sketch.UI.tkext import PyWidget, MenuCommand, UpdatedMenu
 from Sketch.UI import tkext
 

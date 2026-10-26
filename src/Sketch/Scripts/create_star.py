@@ -18,7 +18,7 @@
 from __future__ import division
 from math import pi
 
-from Tkinter import IntVar, DoubleVar, Entry, Label, Button, Frame
+from tkinter import IntVar, DoubleVar, Entry, Label, Button, Frame
 
 import Sketch.Scripting
 from Sketch import _, SolidPattern, StandardColors, PolyBezier, CreatePath, \

@@ -24,9 +24,9 @@ from __future__ import division
 
 (''"Multiline Text")
 
-import Tkinter
-from Tkconstants import *
-from Tkinter import StringVar, Entry, Label, Button, Frame, Text, END, \
+import tkinter
+from tkinter.constants import *
+from tkinter import StringVar, Entry, Label, Button, Frame, Text, END, \
      BOTH, LEFT, TOP, X, W, GROOVE, Frame, Label, StringVar, Radiobutton
 
 import os
