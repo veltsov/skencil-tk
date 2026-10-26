@@ -18,6 +18,7 @@
 
 
 #include <math.h>
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 #include "skmember.h"
@@ -357,8 +358,7 @@ sktrafo_richcompare(PyObject * v, PyObject * w, int op)
 }
 
 PyTypeObject SKTrafoType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"sktrafo",
 	sizeof(SKTrafoObject),
 	0,

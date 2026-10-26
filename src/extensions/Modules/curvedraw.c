@@ -22,6 +22,7 @@
  */
 
 #include <math.h>
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <regionobject.h>
 #include <gcobject.h>

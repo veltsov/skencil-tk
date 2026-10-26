@@ -81,8 +81,7 @@ class RasterImage(object):
         self.size = size
         if data is None:
             bytes_per_pixel = 1 if mode == 'L' else 4
-            # py2: str is bytes, so chr(fill) repeated is the raw data
-            data = chr(fill) * (size[0] * size[1] * bytes_per_pixel)
+            data = bytes([fill]) * (size[0] * size[1] * bytes_per_pixel)
         if writable and not isinstance(data, bytearray):
             # scratch image filled in place by the C display code
             # (gradient fills, color dialog ramps): py2 str is an
@@ -146,12 +145,12 @@ class ImageData(ExternalData):
 
 
 def load_image(filename, cache = 1):
-    if isinstance(filename, (str, unicode)):
+    if isinstance(filename, str):
         image = get_cached(filename)
         if image:
             return image
     image = PIL.Image.open(filename)
-    if not isinstance(filename, (str, unicode)):
+    if not isinstance(filename, str):
         filename = ''
     return ImageData(image, filename = filename, cache = cache)
 

@@ -46,7 +46,7 @@ def sk2ps(filename, psfilename, **psargs):
                             printable = psargs.get('printable', 1))
     psargs['bounding_box'] = tuple(bbox)
     psargs['document'] = doc
-    ps = apply(PostScriptDevice, (psfilename,), psargs)
+    ps = PostScriptDevice(psfilename, **psargs)
     doc.Draw(ps)
     ps.Close()
 

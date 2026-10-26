@@ -91,7 +91,7 @@ Modifier:
         except SingularMatrix:
             return
         
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         delta = pb-pa
 
         r1 = self.r1

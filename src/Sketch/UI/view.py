@@ -137,7 +137,7 @@ class SketchView(PyWidget, Viewport, QueueingPublisher):
         if all:
             self.clear_window()
         else:
-            map(self.clear_area_doc, rects)
+            list(map(self.clear_area_doc, rects))
 
     def layout_changed(self):
         self.SetPageSize(self.document.Layout().Size())
@@ -192,7 +192,7 @@ class SketchView(PyWidget, Viewport, QueueingPublisher):
         if __debug__:
             if self.time_redraw:
                 import time
-                start = time.clock()
+                start = time.perf_counter()
         if self.move_window_count >= 2:
             self.clear_window(update = 0)
         self.move_window_count = 0
@@ -240,7 +240,7 @@ class SketchView(PyWidget, Viewport, QueueingPublisher):
 
         if __debug__:
             if self.time_redraw:
-                pdebug('timing', 'redraw', time.clock() - start)
+                pdebug('timing', 'redraw', time.perf_counter() - start)
 
         return region
 

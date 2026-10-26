@@ -228,13 +228,13 @@ static PySequenceMethods skrect_as_sequence = {
 	skrect_length,			/*sq_length*/
 	skrect_concat,			/*sq_concat*/
 	skrect_repeat,			/*sq_repeat*/
-	(ssizeargfunc)skrect_item,	/*sq_item*/
-	skrect_slice,			/*sq_slice*/
-	0,				/*sq_ass_item*/
-	0,				/*sq_ass_slice*/
-	0,                              /*sq_contains*/
-	0,                              /*sq_inplace_concat*/
-	0,                              /*sq_inplace_repeat*/
+	(ssizeargfunc)skrect_item,			/*sq_item*/
+	0,			/*was_sq_slice*/
+	0,			/*sq_ass_item*/
+	0,			/*was_sq_ass_slice*/
+	0,			/*sq_contains*/
+	0,			/*sq_inplace_concat*/
+	0,			/*sq_inplace_repeat*/
 };
 
 
@@ -473,8 +473,7 @@ skrect_richcompare(PyObject * v, PyObject * w, int op)
 }
 
 PyTypeObject SKRectType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"skrect",
 	sizeof(SKRectObject),
 	0,

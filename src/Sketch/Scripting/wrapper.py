@@ -48,7 +48,7 @@ class ObjectListMethodWrapper:
 
     def __call__(self, *args, **kw):
         objects = self.method(*args, **kw)
-        return map(ObjectWrapper, objects, (self.document,) * len(objects))
+        return list(map(ObjectWrapper, objects, (self.document,) * len(objects)))
 
 
 # special methods (__*__) which can be called safely
@@ -112,7 +112,7 @@ class DocumentWrapper(Wrapper):
 
     def SelectObject(self, objects, mode = SelectSet):
         if isinstance(objects, list):
-            objects = map(strip_wrapper, objects)
+            objects = list(map(strip_wrapper, objects))
         else:
             objects = strip_wrapper(objects)
         self._document.SelectObject(objects, mode)

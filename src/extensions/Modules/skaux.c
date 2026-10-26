@@ -21,6 +21,7 @@
 #include <X11/Xutil.h>
 
 #include <Python.h>
+#include "skmember.h"
 #include <gcobject.h>
 /*#include "bezier_low.h"*/
 #include "curvelow.h"
@@ -213,7 +214,7 @@ PyObject *
 xlfd_char_range(PyObject * self, PyObject * args)
 {
     unsigned char * text;
-    int len;
+    Py_ssize_t len;
     PyObject * result;
     int idx, count;
     char used[256];
@@ -346,29 +347,28 @@ SKCache_contains(SKCacheObject * self, PyObject * key)
 }
 
 static PySequenceMethods SKCache_as_sequence = {
-    0,				/*sq_length*/
-    0,				/*sq_concat*/
-    0,				/*sq_repeat*/
-    0,				/*sq_item*/
-    0,				/*sq_slice*/
-    0,				/*sq_ass_item*/
-    0,				/*sq_ass_slice*/
-    (objobjproc)SKCache_contains, /*sq_contains*/
-    0,				/*sq_inplace_concat*/
-    0,				/*sq_inplace_repeat*/
+	0,			/*sq_length*/
+	0,			/*sq_concat*/
+	0,			/*sq_repeat*/
+	0,			/*sq_item*/
+	0,			/*was_sq_slice*/
+	0,			/*sq_ass_item*/
+	0,			/*was_sq_ass_slice*/
+	(objobjproc)SKCache_contains,			/*sq_contains*/
+	0,			/*sq_inplace_concat*/
+	0,			/*sq_inplace_repeat*/
 };
 
 
 static PyMappingMethods SKCache_as_mapping = {
-	(lenfunc)SKCache_length,	/*mp_length*/
-	(binaryfunc)SKCache_subscript,  /*mp_subscript*/
-	(objobjargproc)SKCache_ass_sub, /*mp_ass_subscript*/
+	(lenfunc)SKCache_length,			/*mp_length*/
+	(binaryfunc)SKCache_subscript,			/*mp_subscript*/
+	(objobjargproc)SKCache_ass_sub,			/*mp_ass_subscript*/
 };
 
 
 PyTypeObject SKCacheType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"SKCache",
 	sizeof(SKCacheObject),
 	0,

@@ -172,13 +172,13 @@ class Compound(GraphicsObject):
 
     def update_rects(self):
         # XXX: should we raise an exception here if self.objects is empty?
-        boxes = map(lambda o: o.coord_rect, self.objects)
+        boxes = [o.coord_rect for o in self.objects]
         if boxes:
             self.coord_rect = reduce(UnionRects, boxes, boxes[0])
         else:
             self.coord_rect = EmptyRect
 
-        boxes = map(lambda o: o.bounding_rect, self.objects)
+        boxes = [o.bounding_rect for o in self.objects]
         if boxes:
             self.bounding_rect = reduce(UnionRects, boxes, boxes[0])
         else:
@@ -213,7 +213,7 @@ class Compound(GraphicsObject):
     def ForAll(self, func):
         self.changing_children = 1
         try:
-            return map(func, self.objects)
+            return list(map(func, self.objects))
         finally:
             self.changing_children = 0
 
@@ -237,14 +237,14 @@ class Compound(GraphicsObject):
     def ForAllUndo(self, func):
         if self.objects:
             undo = [self.begin_change_children()]
-            undo = undo + map(func, self.objects)
+            undo = undo + list(map(func, self.objects))
             undo.append(self.end_change_children())
             return CreateListUndo(undo)
         else:
             return NullUndo
 
     def FilterAll(self, func):
-        return filter(func, self.GetObjects())
+        return list(filter(func, self.GetObjects()))
 
     def NumObjects(self):
         return len(self.objects)
@@ -507,9 +507,9 @@ class EditableCompound(Compound):
         if len(objects) != len(permutation):
             raise ValueError('len(permutation) != len(self.objects)')
 
-        result = map(operator.getitem, [objects] * length, permutation)
+        result = list(map(operator.getitem, [objects] * length, permutation))
         inverse = [0] * length
-        map(operator.setitem, [inverse] * length, permutation, identity)
+        list(map(operator.setitem, [inverse] * length, permutation, identity))
         self.objects = result
         self._changed()
         return (self.permute_objects, inverse)

@@ -26,7 +26,7 @@ class ThinHalfTurn(AutoshapeBase):
         except SingularMatrix:
             return
 
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         dw, dh = pb-pa            
 
 

@@ -74,10 +74,10 @@ def textdomain(domain=None):
     return _current_domain[0]
 
 def gettext(text):
-    return _get_translation(_current_domain[0]).ugettext(text)
+    return _get_translation(_current_domain[0]).gettext(text)
 
 def dgettext(domain, text):
-    return _get_translation(domain).ugettext(text)
+    return _get_translation(domain).gettext(text)
 
 _ = gettext
 

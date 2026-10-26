@@ -73,13 +73,13 @@ def glyphname_to_unicode(name):
     None if the name has no sensible unicode equivalent."""
     code = _control_codes.get(name)
     if code is not None:
-        return unichr(code)
+        return chr(code)
     code = _name_to_code.get(name)
     if code is not None:
-        return unichr(code)
+        return chr(code)
     if name.startswith('uni') and len(name) == 7:
         try:
-            return unichr(int(name[3:], 16))
+            return chr(int(name[3:], 16))
         except ValueError:
             return None
     if name.startswith('u') and len(name) in (5, 6, 7):
@@ -89,7 +89,7 @@ def glyphname_to_unicode(name):
         except ValueError:
             return None
         if 0x10000 <= code <= 0x10FFFF:
-            return unichr(code)
+            return chr(code)
     return None
 
 

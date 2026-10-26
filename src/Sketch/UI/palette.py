@@ -91,7 +91,7 @@ class RGBPalette(Publisher):
         return self[idx][0]
 
     def Colors(self):
-        return map(operator.getitem, self.entries, [0] * len(self.entries))
+        return list(map(operator.getitem, self.entries, [0] * len(self.entries)))
 
     def WriteFile(self, file):
         for entry in self.entries:
@@ -239,7 +239,7 @@ def Read_X_RGB_TXT(filename):
             warn(INTERNAL, '%s:%d: wrong number of fields', filename, linenr)
             continue
         try:
-            values = map(int, line[:3])
+            values = list(map(int, line[:3]))
         except:
             warn(INTERNAL, '%s:%d: cannot parse rgb values', filename, linenr)
             continue

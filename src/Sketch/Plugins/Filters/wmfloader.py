@@ -193,7 +193,7 @@ class WMFLoader(GenericLoader):
                 else:
                     text = format
             except:
-                text = ' '.join([format] + map(str, args))
+                text = ' '.join([format] + list(map(str, args)))
             if text[-1] != '\n':
                 text = text + '\n'
             sys.stdout.write(text)
@@ -379,7 +379,7 @@ class WMFLoader(GenericLoader):
         points = self.read_points(self.get_int16())
         if points:
             path = CreatePath()
-            map(path.AppendLine, points)
+            list(map(path.AppendLine, points))
             self.prop_stack.AddStyle(self.curstyle.Duplicate())
             self.prop_stack.SetProperty(fill_pattern = EmptyPattern)
             self.bezier((path,))
@@ -391,7 +391,7 @@ class WMFLoader(GenericLoader):
         points = self.read_points(self.get_int16())
         if points:
             path = CreatePath()
-            map(path.AppendLine, points)
+            list(map(path.AppendLine, points))
             if path.Node(-1) != path.Node(0):
                 #print 'correct polygon'
                 path.AppendLine(path.Node(0))
@@ -412,7 +412,7 @@ class WMFLoader(GenericLoader):
             points = self.read_points(i)
             if points:
                 subpath = CreatePath()
-                map(subpath.AppendLine, points)
+                list(map(subpath.AppendLine, points))
                 if subpath.Node(-1) != subpath.Node(0):
                     subpath.AppendLine(subpath.Node(0))
                 subpath.load_close()

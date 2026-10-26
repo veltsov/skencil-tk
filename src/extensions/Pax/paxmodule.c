@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 /* Starting with Tcl 8.4, many APIs offer const-correctness.
@@ -1005,6 +1006,17 @@ PyInit_pax(void)
 
     m = PyModule_Create(&paxmodule);
     d = PyModule_GetDict(m);
+
+#define PAX_READY(type) \
+    do { if (PyType_Ready(&(type)) < 0) return NULL; } while (0)
+    PAX_READY(TkWinType);
+    PAX_READY(PaxPixmapType);
+    PAX_READY(PaxImageType);
+    PAX_READY(PaxRegionType);
+    PAX_READY(PaxCMapType);
+    PAX_READY(PaxFontType);
+    PAX_READY(PaxGCType);
+    PAX_READY(PaxBorderType);
     
 #define ADD_INT(name) add_int(d, name, #name)
     ADD_INT(TCL_WINDOW_EVENTS);

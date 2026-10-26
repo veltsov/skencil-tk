@@ -91,7 +91,7 @@ class TrafoPlugin(PluginCompound):
             undo.append(self.end_change_children())
         except:
             undo.reverse()
-            map(Undo, undo)
+            list(map(Undo, undo))
             raise
         return CreateListUndo(undo)
 

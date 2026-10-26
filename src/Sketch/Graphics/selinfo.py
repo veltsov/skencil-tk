@@ -134,11 +134,12 @@ def prepend_idx(idx, info):
     return ((idx,), info)
 
 def select_all(objects):
-    return map(None, map(lambda *t: t, range(len(objects))), objects)
+    # standard selection info: ((idx,), obj) for each object
+    return [((idx,), obj) for idx, obj in enumerate(objects)]
 
 def select_range(min, objects):
-    return map(None, map(lambda *t: t, range(min, min + len(objects))),
-               objects)
+    return [((idx,), obj)
+            for idx, obj in zip(range(min, min + len(objects)), objects)]
 
 def get_parent(info):
     path, obj = info
@@ -160,8 +161,7 @@ def list_to_tree(infolist):
             dict[idx].append(info)
         except KeyError:
             dict[idx] = [info]
-    result = dict.items()
-    result.sort()
+    result = sorted(dict.items())
     for idx, info in result:
         info.sort()
     return result
@@ -181,8 +181,7 @@ def list_to_tree2(infolist):
             dict[idx].append(info)
         except KeyError:
             dict[idx] = [info]
-    result = dict.items()
-    result.sort()
+    result = sorted(dict.items())
     for i in range(len(result)):
         idx, info = result[i]
         if len(info) == 1 and not isinstance(info[0], tuple):

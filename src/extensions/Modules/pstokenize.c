@@ -21,6 +21,7 @@
  */
 
 #include <locale.h>
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "skmember.h"
 #include <structmember.h>
@@ -757,7 +758,7 @@ pstokenizer_getattr(PyObject * self, char * name)
 {
     PyObject * result;
 
-    result = Py_FindMethod(pstokenizer_methods, self, name);
+    result = SK_FindMethod(pstokenizer_methods, self, name);
     if (result != NULL)
 	return result;
     PyErr_Clear();
@@ -778,8 +779,7 @@ pstokenizer_setattr(PyObject * self, char * name, PyObject * v)
 
 
 static PyTypeObject PSTokenizerType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"pstokenizer",
 	sizeof(PSTokenizerObject),
 	0,
@@ -856,6 +856,9 @@ PyInit_pstokenize(void)
     m = PyModule_Create(&pstokenizemodule);
     d = PyModule_GetDict(m);
 
+    if (PyType_Ready(&PSTokenizerType) < 0)
+	return NULL;
+
 #define ADD_INT(name) add_int(d, name, #name)
     ADD_INT(NAME);
     ADD_INT(INT);
@@ -872,12 +875,13 @@ PyInit_pstokenize(void)
     {
 	Filter_Type = PyObject_GetAttrString(filter, "FilterType");
 	if (!Filter_Type)
-	    return;
+	    return NULL;
 	r = PyObject_GetAttrString(filter, "Filter_Functions");
 	if (!r)
-	    return;
+	    return NULL;
 	filter_functions = (Filter_Functions*)PyCapsule_GetPointer(r, NULL);
 	Py_DECREF(r);
     }
 
+    return m;
 }

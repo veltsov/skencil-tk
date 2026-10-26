@@ -25,7 +25,7 @@
 
 
 from Sketch.Base.config import preferences
-from sys import maxint
+from sys import maxsize as maxint
 
 from Sketch.Base.warn import warn, INTERNAL, warn_tb
 
@@ -34,7 +34,7 @@ from Sketch import _
 def Undo(info):
     # execute a single undoinfo
     func = info[0]
-    if isinstance(func, unicode):
+    if isinstance(func, str):
         text = func
         func = info[1]
         args = info[2:]
@@ -54,12 +54,12 @@ def Undo(info):
 
 
 def UndoList(infos):
-    undoinfo = map(Undo, infos)
+    undoinfo = list(map(Undo, infos))
     undoinfo.reverse()
     return (UndoList, undoinfo)
 
 def _get_callable(info):
-    if isinstance(info[0], unicode):
+    if isinstance(info[0], str):
         return info[1]
     return info[0]
 
@@ -109,7 +109,7 @@ def check_info(info):
     f = info[0]
     # a text label (K1, unicode -- e.g. a gettext'd transaction name)
     # may precede the callable
-    if isinstance(f, unicode):
+    if isinstance(f, str):
         if len(info) > 1:
             f = info[1]
     if not callable(f):
@@ -204,7 +204,7 @@ class UndoRedo:
         # next, in a format suitable for a menu entry.
         if self.undoinfo:
             undolabel = self.undoinfo[0][0]
-            if isinstance(undolabel, unicode):
+            if isinstance(undolabel, str):
                 return _("Undo %s") % undolabel
         return _("Undo")
 
@@ -213,7 +213,7 @@ class UndoRedo:
         # next, in a format suitable for a menu entry.
         if self.redoinfo:
             redolabel = self.redoinfo[0][0]
-            if isinstance(redolabel, unicode):
+            if isinstance(redolabel, str):
                 return _("Redo %s") % redolabel
         return _("Redo")
 

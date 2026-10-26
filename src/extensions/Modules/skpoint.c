@@ -440,58 +440,53 @@ skpoint_not_implemented(void)
 }
 
 static PyNumberMethods skpoint_as_number = {
-	(binaryfunc)skpoint_add,		/*nb_add*/
-	(binaryfunc)skpoint_sub,		/*nb_subtract*/
-	(binaryfunc)skpoint_multiply,		/*nb_multiply*/
-	(binaryfunc)skpoint_divide,		/*nb_divide*/
-	(binaryfunc)skpoint_not_implemented,	/*nb_remainder*/
-	(binaryfunc)skpoint_not_implemented,	/*nb_divmod*/
-	(ternaryfunc)skpoint_not_implemented,	/*nb_power*/
+	(binaryfunc)skpoint_add,			/*nb_add*/
+	(binaryfunc)skpoint_sub,			/*nb_subtract*/
+	(binaryfunc)skpoint_multiply,			/*nb_multiply*/
+	(binaryfunc)skpoint_not_implemented,			/*nb_remainder*/
+	(binaryfunc)skpoint_not_implemented,			/*nb_divmod*/
+	(ternaryfunc)skpoint_not_implemented,			/*nb_power*/
 	(unaryfunc)skpoint_neg,			/*nb_negative*/
 	(unaryfunc)skpoint_pos,			/*nb_positive*/
 	(unaryfunc)skpoint_abs,			/*nb_absolute*/
-	(inquiry)skpoint_nonzero,		/*nb_nonzero*/
-	(unaryfunc)0,	/*nb_invert*/
-	(binaryfunc)0,	/*nb_lshift*/
-	(binaryfunc)0,	/*nb_rshift*/
-	(binaryfunc)0,	/*nb_and*/
-	(binaryfunc)0,	/*nb_xor*/
-	(binaryfunc)0,	/*nb_or*/
-	skpoint_coerce,	/*nb_coerce*/
-	(unaryfunc)0,	/*nb_int*/
-	(unaryfunc)0,	/*nb_long*/
-	(unaryfunc)0,	/*nb_float*/
-	(unaryfunc)0,	/*nb_oct*/
-	(unaryfunc)0,	/*nb_hex*/
-	0,	/*nb_inplace_add*/
-	0,	/*nb_inplace_subtract*/
-	0,	/*nb_inplace_multiply*/
-	0,	/*nb_inplace_divide*/
-	0,	/*nb_inplace_remainder*/
-	0,	/*nb_inplace_power*/
-	0,	/*nb_inplace_lshift*/
-	0,	/*nb_inplace_rshift*/
-	0,	/*nb_inplace_and*/
-	0,	/*nb_inplace_xor*/
-	0,	/*nb_inplace_or*/
-	0,	/*nb_floor_divide*/
-	/* nb_true_divide: Point / scalar is (and always was on py2) true
-	 * division with double coordinates; without this slot `/` breaks
-	 * under `from __future__ import division` and under py3 */
-	(binaryfunc)skpoint_divide,	/*nb_true_divide*/
+	(inquiry)skpoint_nonzero,			/*nb_bool*/
+	(unaryfunc)0,			/*nb_invert*/
+	(binaryfunc)0,			/*nb_lshift*/
+	(binaryfunc)0,			/*nb_rshift*/
+	(binaryfunc)0,			/*nb_and*/
+	(binaryfunc)0,			/*nb_xor*/
+	(binaryfunc)0,			/*nb_or*/
+	(unaryfunc)0,			/*nb_int*/
+	0,				/*nb_reserved*/
+	(unaryfunc)0,			/*nb_float*/
+	0,				/*nb_index*/
+	0,			/*nb_inplace_add*/
+	0,			/*nb_inplace_subtract*/
+	0,			/*nb_inplace_multiply*/
+	0,			/*nb_inplace_remainder*/
+	0,			/*nb_inplace_power*/
+	0,			/*nb_inplace_lshift*/
+	0,			/*nb_inplace_rshift*/
+	0,			/*nb_inplace_and*/
+	0,			/*nb_inplace_xor*/
+	0,			/*nb_inplace_or*/
+	0,			/*nb_floor_divide*/
+	(binaryfunc)skpoint_divide,			/*nb_true_divide*/
+	0,				/*nb_matrix_multiply*/
+	0,				/*nb_inplace_matrix_multiply*/
 };
 
 static PySequenceMethods skpoint_as_sequence = {
 	skpoint_length,			/*sq_length*/
 	skpoint_concat,			/*sq_concat*/
 	skpoint_repeat,			/*sq_repeat*/
-	(ssizeargfunc)skpoint_item,	/*sq_item*/
-	skpoint_slice,			/*sq_slice*/
-	0,				/*sq_ass_item*/
-	0,				/*sq_ass_slice*/
-	0,                              /*sq_contains*/
-	0,                              /*sq_inplace_concat*/
-	0,                              /*sq_inplace_repeat*/
+	(ssizeargfunc)skpoint_item,			/*sq_item*/
+	0,			/*was_sq_slice*/
+	0,			/*sq_ass_item*/
+	0,			/*was_sq_ass_slice*/
+	0,			/*sq_contains*/
+	0,			/*sq_inplace_concat*/
+	0,			/*sq_inplace_repeat*/
 };
 
 
@@ -503,8 +498,7 @@ skpoint_richcompare(PyObject * v, PyObject * w, int op)
 }
 
 PyTypeObject SKPointType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"skpoint",
 	sizeof(SKPointObject),
 	0,
@@ -523,6 +517,7 @@ PyTypeObject SKPointType = {
 	0,				/*tp_getattro*/
 	0,				/*tp_setattro*/
 	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
 	0,				/*tp_doc*/
 	0,				/*tp_traverse*/
 	0,				/*tp_clear*/

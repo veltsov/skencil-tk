@@ -299,10 +299,10 @@ class BlendGroup(Compound):
     def ForAllUndo(self, func):
         # XXX: should we just change start and end and recompute?
         self.begin_change_children()
-        undo = map(func, self.objects)
+        undo = list(map(func, self.objects))
         self.end_change_children(ignore_child_changes = 1)
         idx = range(0, len(self.objects), 2)
-        undo = map(operator.getitem, [undo] * len(idx), idx)
+        undo = list(map(operator.getitem, [undo] * len(idx), idx))
         return CreateListUndo(undo)
 
     def begin_change_children(self):
@@ -349,7 +349,7 @@ class BlendGroup(Compound):
     def CancelEffect(self):
         self.unset_parent()
         idx = range(0, len(self.objects), 2)
-        return map(operator.getitem, [self.objects] * len(idx), idx)
+        return list(map(operator.getitem, [self.objects] * len(idx), idx))
 
     def SelectControl(self, relative, which):
         idx = self.objects.index(relative)

@@ -251,9 +251,9 @@ class StyleText(ScrolledText):
 
         # relocate indizes
         ret = []
-        bline, bchar = map(int, begin.split("."))
+        bline, bchar = list(map(int, begin.split(".")))
         for style, indexstr in styling:
-            line, char = map(int, indexstr.split("."))
+            line, char = list(map(int, indexstr.split(".")))
             if line == bline:
                 char = char-bchar
             line = line-bline
@@ -265,7 +265,7 @@ class StyleText(ScrolledText):
         if styling is None or len(styling) == 0:
             return
         index = self.index(index)
-        iline, ichar = map(int, index.split("."))
+        iline, ichar = list(map(int, index.split(".")))
         it = self.pool.iterator()
 
         # determine end

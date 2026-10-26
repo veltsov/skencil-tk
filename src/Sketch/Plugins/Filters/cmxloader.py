@@ -372,17 +372,17 @@ class CMXFile:
 
     def append_color(self, colors, model, data):
         if model == 2: # CMYK
-            c, m, y, k = map(ord, data)
+            c, m, y, k = list(map(ord, data))
             self._print(repr((c, m, y, k)))
             colors.append(CreateCMYKColor(c / 100.0, m / 100.0, y / 100.0,
                                           k /100.0))
         elif model == 3: # CMYK 255
-            c, m, y, k = map(ord, data)
+            c, m, y, k = list(map(ord, data))
             self._print(repr((c, m, y, k)))
             colors.append(CreateCMYKColor(c / 255.0, m / 255.0, y / 255.0,
                                           k /255.0))
         elif model == 5: # RGB
-            r, g, b = map(ord, data)
+            r, g, b = list(map(ord, data))
             self._print(repr((r, g, b)))
             colors.append(CreateRGBColor(r / 255.0, g / 255.0, b / 255.0))
         elif model == 9:
@@ -408,7 +408,7 @@ class CMXFile:
                 while tag != 255:
                     tag, data = self.read_tag((1,2))
                     if tag == 1: # color base
-                        model, palette = map(ord, data)
+                        model, palette = list(map(ord, data))
                     elif tag == 2: # color description
                         self.append_color(colors, model, data)
                 # 
@@ -416,7 +416,7 @@ class CMXFile:
         else:
             read = self.file.read
             for i in range(count):
-                model, palette = map(ord, read(2))
+                model, palette = list(map(ord, read(2)))
                 self._print('%3d: %4s %-6s ', i, color_models[model],
                             color_palettes[palette])
                 data = read(color_bytes[model])
@@ -542,7 +542,7 @@ class CMXFile:
         self._print('\n')
 
     def append_linestyle(self, styles, data):
-        spec, capjoin = map(ord, data)
+        spec, capjoin = list(map(ord, data))
         join = (capjoin & 0xf0) >> 4
         cap = capjoin & 0x0f
         styles.append((spec, cap, join))
@@ -1219,7 +1219,7 @@ class CMXInterpreter16(CMXInterpreter):
         append = points.append
         for i in range(0, 2 * count, 2):
             append(trafo(coords[i], coords[i + 1]))
-        nodes = map(ord, self.get_bytes(count))
+        nodes = list(map(ord, self.get_bytes(count)))
         if len(nodes) != len(points):
             self._print('lengths of nodes and points differ\n')
         bbox = self.get_rectangle()
@@ -1698,7 +1698,7 @@ class CMXInterpreter32(CMXInterpreter):
         append = points.append
         for i in range(0, 2 * count, 2):
             append(trafo(coords[i], coords[i + 1]))
-        nodes = map(ord, self.get_bytes(count))
+        nodes = list(map(ord, self.get_bytes(count)))
         if len(nodes) != len(points):
             self._print('lengths of nodes and points differ\n')
 

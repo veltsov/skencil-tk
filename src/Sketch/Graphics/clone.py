@@ -141,14 +141,14 @@ class Clone(Bounded, HierarchyNode):
         if type(handle) == PointType:
             return trafo(handle)
         else:
-            return map(trafo, handle)
+            return list(map(trafo, handle))
 
     # overwrite Bounded methods
     def LayoutPoint(self):
         return self._original.LayoutPoint() + self._offset
 
     def GetSnapPoints(self):
-        return map(Translation(self._offset), self._original.GetSnapPoints())
+        return list(map(Translation(self._offset), self._original.GetSnapPoints()))
 
 
 def _transform(original, matrix):

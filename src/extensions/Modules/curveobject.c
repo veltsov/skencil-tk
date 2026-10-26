@@ -22,6 +22,7 @@
 #include <string.h>
 #include <locale.h>
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "skmember.h"
 #include <structmember.h>
@@ -1516,7 +1517,7 @@ static PyObject *
 curve_append_from_string(SKCurveObject * self, PyObject * args)
 {
     char * string = NULL;
-    int len;
+    Py_ssize_t len;
 
     if (!PyArg_ParseTuple(args, "s#", &string, &len))
 	return NULL;
@@ -2143,7 +2144,7 @@ curve_getattr(PyObject * self, char * name)
 	return result;
     PyErr_Clear();
 
-    return PyMember_Get((char *)self, curve_memberlist, name);
+    return SKMember_Get((char *)self, curve_memberlist, name);
 }
 
 
@@ -2154,8 +2155,7 @@ curve_richcompare(PyObject * v, PyObject * w, int op)
 }
 
 PyTypeObject SKCurveType = {
-    PyObject_HEAD_INIT(&PyType_Type)
-    0,
+    PyVarObject_HEAD_INIT(&PyType_Type, 0)
     "SKCurveObject",
     sizeof(SKCurveObject),
     0,

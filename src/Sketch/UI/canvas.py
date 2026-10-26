@@ -669,7 +669,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
             if items and items[-1] is None:
                 del items[-1]
             if items:
-                context_menu = UpdatedMenu(self, map(MakeCommand, items))
+                context_menu = UpdatedMenu(self, list(map(MakeCommand, items)))
                 context_menu.Popup(x, y)
                 context_menu.clean_up()
 
@@ -1663,7 +1663,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
             elif handle_type == Handle_SmallOpenRectList:
                 p = handle.list
                 if p:
-                    pts = map(self.DocToWin, p)
+                    pts = list(map(self.DocToWin, p))
                     last = pts[-1]
                     for idx in range(len(p) - 2, -1, -1):
                         if pts[idx] == last:

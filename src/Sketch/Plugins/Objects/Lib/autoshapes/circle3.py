@@ -30,7 +30,7 @@ Modifier:
     
     def GetSnapPoints(self):
         c = self.Calc()[0]
-        return map(self.trafo, (self.p1, self.p2, self.p3, c))
+        return list(map(self.trafo, (self.p1, self.p2, self.p3, c)))
     
     def GetHandles(self):
         handles = []      
@@ -74,7 +74,7 @@ Modifier:
             inverse = self.trafo.inverse()
         except SingulareMatrix:
             return
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         delta = pb-pa
 
         p1, p2, p3 = self.p1, self.p2, self.p3

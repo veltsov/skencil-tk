@@ -68,9 +68,9 @@ class ReloadPanel(SketchPanel):
 
     def update_list(self):
         modules = prompt.get_sketch_modules()
-        modules = map(lambda mod: (mod.__name__, mod), modules)
+        modules = [(mod.__name__, mod) for mod in modules]
         modules.sort()
-        names = map(operator.getitem, modules, [0] * len(modules))
+        names = list(map(operator.getitem, modules, [0] * len(modules)))
         self.module_list.SetList(names)
         self.modules = modules
 

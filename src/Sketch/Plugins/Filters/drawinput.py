@@ -51,11 +51,7 @@ version = '0.12 (Wed 29th August 2001)'
 
 import os, string
 
-try:
-    import cStringIO
-    StringIO = cStringIO
-except ImportError:
-    import StringIO
+import io as StringIO
 
 from math import floor
 

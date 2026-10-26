@@ -104,13 +104,13 @@ class PostScriptDevice(CommonDevice):
 
         # search through the document if file is a string with the name
         # of an existing file.
-        if isinstance(file, (str, unicode)) and os.path.exists(file):
+        if isinstance(file, str) and os.path.exists(file):
             self.filename = file
             document.WalkHierarchy(self.handle_writes_to_embedded_eps,
                                    visible = self.draw_visible,
                                    printable = self.draw_printable)
 
-        if isinstance(file, (str, unicode)):
+        if isinstance(file, str):
             file = open(file, 'w')
             self.close_file = 1
         else:
@@ -136,7 +136,7 @@ class PostScriptDevice(CommonDevice):
         write("%%%%Creator: Skencil %s\n" % SketchVersion)
         write("%%Pages: 1\n")	# there is exactly one page
         if bounding_box:
-            [llx, lly, urx, ury] = map(int, bounding_box)
+            [llx, lly, urx, ury] = list(map(int, bounding_box))
             write('%%%%BoundingBox: %d %d %d %d\n'
                   % (llx - 1, lly - 1, urx + 1, ury + 1))
 

@@ -266,7 +266,7 @@ class WMFSaver:
                 lst = self.PathToSeq(path)
                 if path.closed:
                     lst = lst[:-2]
-            self.putpolyrec(function, map(rndtoint , lst))
+            self.putpolyrec(function, list(map(rndtoint , lst)))
         elif fill_pattern is EmptyPattern:
             self.LineStyle(Properties)
             self.FillStyle(Properties)
@@ -277,7 +277,7 @@ class WMFSaver:
                     lst = lst[:-2]
                 else:
                     function = 0x0325 # Polyline
-                self.putpolyrec(function, map(rndtoint , lst))
+                self.putpolyrec(function, list(map(rndtoint , lst)))
         else: # The polygonset case
             self.FillStyle(Properties)
             set = []
@@ -330,10 +330,10 @@ class WMFSaver:
             if ell.start_angle == ell.end_angle:
                 self.packrec('<LHhhhh', 7, 0x0418, bottom, right, top, left)
             else:
-                xe, ye = map(rndtoint,
-                             self.trafo(ell.trafo(Polar(1, ell.start_angle))))
-                xs, ys = map(rndtoint,
-                             self.trafo(ell.trafo(Polar(1, ell.end_angle))))
+                xe, ye = list(map(rndtoint,
+                             self.trafo(ell.trafo(Polar(1, ell.start_angle)))))
+                xs, ys = list(map(rndtoint,
+                             self.trafo(ell.trafo(Polar(1, ell.end_angle)))))
                 if ell.arc_type == const.ArcArc:
                     function = 0x0817
                 elif ell.arc_type == const.ArcPieSlice:
@@ -434,8 +434,8 @@ class WMFSaver:
         self.trafo = Trafo(sc, 0, 0, -sc, - sc * left, sc * top)
         self.Scale = sc
         self.inch = inch
-        self.extend = map(rndtoint, tuple(self.trafo(left,bottom))
-                          + tuple(self.trafo(right,top)))
+        self.extend = list(map(rndtoint, tuple(self.trafo(left,bottom))
+                          + tuple(self.trafo(right,top))))
 
         self.numobj = self.idx = MIN_OBJECT
         self.objects = []

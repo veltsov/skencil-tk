@@ -50,13 +50,13 @@ class LayoutPanel(SketchPanel):
         format_label = Label(format_frame, text = _("Paper format:"))
         format_label.pack(side = LEFT, expand = 1, fill = X)
 
-        format_names = map(lambda t: t[0], PapersizesList)
+        format_names = [t[0] for t in PapersizesList]
         format_names.append(USER_SPECIFIC)
         self.var_format_name = StringVar(top)
         format_menu = MyOptionMenu(format_frame, format_names,
                                    variable = self.var_format_name,
                                    command = self.choose_format)
-        format_menu.configure(width = max(map(len, format_names)))
+        format_menu.configure(width = max(list(map(len, format_names))))
         format_menu.pack(side = RIGHT, expand = 1, fill = X)
 
         orientation_frame = Frame(top)

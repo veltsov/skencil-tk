@@ -26,7 +26,7 @@ import subprocess
 def popen_write(cmd):
     """Run CMD through the shell and return a file object connected to
     its standard input. Replacement for os.popen(cmd, 'w')."""
-    if isinstance(cmd, unicode):
+    if isinstance(cmd, str):
         # py2's os layer encodes process arguments with the default
         # (ascii) codec; the shell command may contain utf-8 file names
         # (K2/K6, devdocs/string-handling.md)
@@ -37,7 +37,7 @@ def popen_write(cmd):
 def popen_read(cmd):
     """Run CMD through the shell and return a file object connected to
     its standard output. Replacement for os.popen(cmd)."""
-    if isinstance(cmd, unicode):
+    if isinstance(cmd, str):
         cmd = cmd.encode('utf-8')
     return subprocess.Popen(cmd, shell=True,
                             stdout=subprocess.PIPE).stdout
@@ -241,9 +241,9 @@ rx_format = re.compile(r'%\((?P<item>[a-zA-Z_0-9]+)\)'
 def as_unicode(s):
     # Byte strings at runtime are utf-8 encoded (see
     # devdocs/unicode-runtime-audit.md).  Convert them for safe mixing
-    # with the unicode templates returned by gettext; other types pass
-    # through unchanged.
-    if isinstance(s, str):
+    # with the gettext templates; other types pass through unchanged.
+    # python3: only bytes need conversion.
+    if isinstance(s, bytes):
         return s.decode('utf-8')
     return s
 
@@ -258,7 +258,9 @@ def decode_sk_string(s):
     # filesystem encoding.  Plugin object parameters are normalized by
     # the plugin objects themselves (they know the kind of their text).
     # See devdocs/string-handling.md.
-    if isinstance(s, str):
+    # python3: str is already unicode; byte strings (from .sk files,
+    # font-encoded text) are utf-8 and are decoded.
+    if isinstance(s, bytes):
         return s.decode('utf-8')
     return s
 
@@ -268,7 +270,7 @@ def as_latin1_text(s):
     # font's encoding).  These bytes are NOT utf-8; map them 1:1 onto
     # U+0000..U+00FF.  latin-1 decoding never fails, so this cannot
     # raise and cannot split a character.
-    if isinstance(s, str):
+    if isinstance(s, bytes):
         return s.decode('latin-1')
     return s
 
@@ -278,7 +280,8 @@ def as_display_name(s):
     # devdocs/string-handling.md); decode leniently -- undecodable
     # bytes (e.g. from a foreign-encoding command line argument) are
     # replaced instead of raising.
-    if isinstance(s, str):
+    # python3: os.environ/argv give str already.
+    if isinstance(s, bytes):
         return s.decode('utf-8', 'replace')
     return s
 
@@ -291,9 +294,14 @@ def skrepr(s):
     # explicitly; otherwise they would be saved as u'...' with \u
     # escapes, which the .sk reader (parse_sk_line2) cannot read and
     # which master never wrote.
-    if isinstance(s, unicode):
+    # python3: encode to utf-8 and use the repr of the bytes object
+    # with the b-prefix stripped (byte-identical to the python2 form).
+    if isinstance(s, str):
         s = s.encode('utf-8')
-    return repr(s)
+    r = repr(s)
+    if r[0] == 'b':
+        r = r[1:]
+    return r
 
 def format(template, converters, dict):
     # Normalize everything to unicode: the templates come from the

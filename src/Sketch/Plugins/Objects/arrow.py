@@ -139,7 +139,7 @@ class Arrow(AutoShape):
     def DragHandle(self, pa, pb, selection):
         try:
             inverse = self.trafo.inverse()
-            pa, pb = map(inverse, (pa, pb))
+            pa, pb = list(map(inverse, (pa, pb)))
             dw, dh = pb-pa            
             
             if selection > 2:

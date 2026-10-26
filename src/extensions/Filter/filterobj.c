@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 /*
  *  Copyright (C) 1998, 1999, 2001, 2006 by Bernhard Herzog.
  *
@@ -593,7 +594,8 @@ Filter_GetLine(PyObject * filter, int n)
     }
 
     n1 = buf - buffer;
-    v = PyBytes_FromStringAndSize(buffer, n1);
+    /* text lines: decode 1:1 (like the python2 byte strings) */
+    v = PyUnicode_DecodeLatin1(buffer, n1, NULL);
     free(buffer);
     return v;
 }
@@ -766,7 +768,7 @@ filter_readlines(PyObject *self, PyObject *args)
 	    }
 	    else {
 		/* Grow the big buffer */
-		if (PyBytes_Resize(big_buffer, buffersize) < 0)
+		if (_PyBytes_Resize(big_buffer, buffersize) < 0)
 		    goto error;
 		buffer = PyBytes_AS_STRING(big_buffer);
 	    }
@@ -827,7 +829,7 @@ static PyObject *
 filter_write(PyObject * self, PyObject * args)
 {
     const char * buffer;
-    int length;
+    Py_ssize_t length;
 
     if (!PyArg_ParseTuple(args, "s#", &buffer, &length))
 	return NULL;
@@ -961,8 +963,7 @@ filter_setattr(PyObject * self, char * name, PyObject * v)
 
 
 PyTypeObject FilterType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"filter",
 	sizeof(FilterObject),
 	0,

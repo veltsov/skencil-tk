@@ -81,7 +81,7 @@ Modifier:
         except SingularMatrix:
             return
         
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         delta = pb-pa
 
         theta1 = self.theta1

@@ -61,7 +61,7 @@ class Cube3D(AutoshapeBase):
         except  SingularMatrix:
             return
         
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         if selection == 1:
             depth = self.depth            
             self.depth = min(size, max(0, depth+(pb-pa)[0]))

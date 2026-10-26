@@ -44,17 +44,30 @@ def build_root():
 
 
 def build_lib():
-    """The lib.*-2.7 directory with the compiled Sketch package."""
-    pattern = os.path.join(build_root(), 'lib.*-2.7')
+    """The lib.*-X.Y directory with the compiled Sketch package.
+
+    Prefers the directory matching the running interpreter's version
+    (python3 builds land in lib.linux-x86_64-3.10); falls back to the
+    python2 tree when only that exists."""
+    import sys
+    version = '%d.%d' % sys.version_info[:2]
+    pattern = os.path.join(build_root(), 'lib.*-' + version)
     candidates = sorted(glob.glob(pattern))
     if not candidates:
+        pattern = os.path.join(build_root(), 'lib.*-2.7')
+        candidates = sorted(glob.glob(pattern))
+    if not candidates:
         raise RuntimeError('no build tree found under %s '
-                           '(run `python2 setup.py build` first)'
+                           '(run `setup.py build` first)'
                            % build_root())
     return candidates[0]
 
 
 def build_scripts():
+    version = '%d.%d' % sys.version_info[:2]
+    path = os.path.join(build_root(), 'scripts-' + version)
+    if os.path.isdir(path):
+        return path
     return os.path.join(build_root(), 'scripts-2.7')
 
 

@@ -21,6 +21,7 @@
  */
 
 #include <math.h>
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "skmember.h"
 #include <structmember.h>
@@ -611,8 +612,7 @@ binfile_setattr(PyObject * self, char * name, PyObject * v)
 
 
 PyTypeObject BinaryInputType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"binaryinput",
 	sizeof(BinaryInputObject),
 	0,

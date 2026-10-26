@@ -151,7 +151,7 @@ CGM_ID = {
 
 cp = copy.deepcopy
 
-fntlst = map(lambda l: l[0], Sketch.Graphics.font.fontlist)
+fntlst = [l[0] for l in Sketch.Graphics.font.fontlist]
 #print fntlst
 
 fntalias = {
@@ -381,7 +381,7 @@ class CGMLoader(GenericLoader):
                 else:
                     text = format
             except:
-                text = ' '.join([format] + map(str, args))
+                text = ' '.join([format] + list(map(str, args)))
             if text[-1] != '\n':
                 text = text + '\n'
             sys.stdout.write(text)
@@ -455,8 +455,8 @@ class CGMLoader(GenericLoader):
     def getcol(self):
         if reff.color.mode == 1:
             cgmcol = self.unpack(reff.color.absstruct)
-            cgmcol = map(operator.sub , cgmcol , reff.color.offset)
-            cgmcol = map(operator.div , cgmcol , reff.color.scale)
+            cgmcol = list(map(operator.sub , cgmcol , reff.color.offset))
+            cgmcol = list(map(operator.div , cgmcol , reff.color.scale))
             return cgmcol
         else:
             cgmcol = self.unpack(reff.color.inxstruct)[0]
@@ -622,8 +622,8 @@ class CGMLoader(GenericLoader):
     def colrvalueext(self, size):
         bottom = self.unpack(reff.color.absstruct)
         top = self.unpack(reff.color.absstruct)
-        reff.color.offset = map(operator.mul , bottom , (1.0, 1.0, 1.0))
-        reff.color.scale = map(operator.sub, top , reff.color.offset)
+        reff.color.offset = list(map(operator.mul , bottom , (1.0, 1.0, 1.0)))
+        reff.color.scale = list(map(operator.sub, top , reff.color.offset))
 
 #   0x1160:
     def mfelemlist(self, size):
@@ -1051,8 +1051,8 @@ class CGMLoader(GenericLoader):
         size = size - struct.calcsize(reff.color.inxstruct)
         while size > struct.calcsize(reff.color.absstruct):
             cgmcol = self.unpack(reff.color.absstruct)
-            cgmcol = map(operator.sub , cgmcol , reff.color.offset)
-            cgmcol = map(operator.div , cgmcol , reff.color.scale)
+            cgmcol = list(map(operator.sub , cgmcol , reff.color.offset))
+            cgmcol = list(map(operator.div , cgmcol , reff.color.scale))
             reff.color.table[i] = cgmcol
             size = size - struct.calcsize(reff.color.absstruct)
             i = i + 1

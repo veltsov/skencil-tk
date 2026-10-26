@@ -20,7 +20,8 @@
 #
 
 from __future__ import division
-import os, re, string
+import os
+import sys, re, string
 from array import array
 
 
@@ -36,7 +37,7 @@ from Sketch.Lib import glyphnames
 from Sketch.Base.warn import warn, INTERNAL, USER, pdebug
 from Sketch.Lib.util import find_in_path, find_files_in_path, as_unicode
 
-minus_tilde = string.maketrans('-', '~')
+minus_tilde = str.maketrans('-', '~')
 
 def xlfd_matrix(trafo):
     mat = '[%f %f %f %f]' % trafo.matrix()
@@ -47,7 +48,7 @@ def _str(val):
     return val.strip()
 
 def _bb(val):
-    return tuple(map(int, map(round, map(float, val.strip().split()))))
+    return tuple(map(int, list(map(round, list(map(float, val.strip().split()))))))
 
 def _number(val):
     return int(round(float(val)))
@@ -116,7 +117,7 @@ def read_char_metrics(afm):
         line = afm.readline()
         if line == 'EndCharMetrics\n':
             break
-        items = filter(None, [s.strip() for s in line.split(';')])
+        items = [_f for _f in [s.strip() for s in line.split(';')] if _f]
         if not items:
             continue
         code = name = width = bbox = None
@@ -129,13 +130,13 @@ def read_char_metrics(afm):
             elif key == 'N':
                 name = value
             elif key == 'B':
-                bbox = tuple(map(int,map(round,map(float,value.split()))))
+                bbox = tuple(map(int,list(map(round,list(map(float,value.split()))))))
         charmetrics[name] = (width,) + bbox
         font_encoding[code] = name
     return charmetrics, font_encoding
 
 def read_afm_file(filename):
-    afm = streamfilter.LineDecode(open(filename, 'r'))
+    afm = streamfilter.LineDecode(open(filename, 'rb'))
 
     attribs = {'ItalicAngle': 0.0}
     charmetrics = None
@@ -216,11 +217,11 @@ def read_metric(ps_name):
         if filename:
             if __debug__:
                 import time
-                start = time.clock()
+                start = time.perf_counter()
             metric = read_afm_file(filename)
             if __debug__:
                 pdebug('timing', 'time to read afm %s: %g', afm,
-                       time.clock() - start)
+                       time.perf_counter() - start)
             return metric
     else:
         if not _warned_about_afm.get(afm):
@@ -306,7 +307,7 @@ def read_font_dirs():
     #print 'read_font_dirs'
     if __debug__:
         import time
-        start = time.clock()
+        start = time.perf_counter()
 
     rx_sfd = re.compile(r'^.*\.sfd$')
     for directory in config.font_path:
@@ -320,7 +321,7 @@ def read_font_dirs():
                          "ignoring it in font_path"),
                  directory, str(exc))
             continue
-        dirfiles = filter(rx_sfd.match, filenames)
+        dirfiles = list(filter(rx_sfd.match, filenames))
         for filename in dirfiles:
             filename = os.path.join(directory, filename)
             #print filename
@@ -332,7 +333,7 @@ def read_font_dirs():
                     line = line.strip()
                     if not line or line[0] == '#':
                         continue
-                    info = map(intern, line.split(','))
+                    info = list(map(sys.intern, line.split(',')))
                     if len(info) == 6:
                         psname = info[0]
                         fontlist.append(tuple(info[:-1]))
@@ -350,7 +351,7 @@ def read_font_dirs():
                              "ignoring it"),
                      filename = filename, message = value.strerror)
     if __debug__:
-        pdebug('timing', 'time to read font dirs: %g', time.clock() - start)
+        pdebug('timing', 'time to read font dirs: %g', time.perf_counter() - start)
 
 def make_family_to_fonts():
     families = {}
@@ -444,7 +445,7 @@ class Font:
             if text.typecode == 'I':
                 return text
             return array('I', text)
-        if isinstance(text, unicode):
+        if isinstance(text, str):
             gids = []
             for char in text:
                 name = glyphnames.unicode_to_glyphname(char)

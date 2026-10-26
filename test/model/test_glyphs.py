@@ -199,7 +199,7 @@ def test_command_menu_names_are_unicode():
                 name = getattr(cmd, 'menu_name', None)
                 if name is None:
                     continue
-                assert isinstance(name, unicode), \
+                assert isinstance(name, str), \
                     '%s.%s: command menu name is not unicode: %r' \
                     % (mod_name, value.__name__, name)
                 count += 1

@@ -124,7 +124,7 @@ class Type1FontFile:
     def TextGids(self, text):
         """Convert TEXT (byte string in the font's encoding or
         unicode) to an array of glyph ids (see devdocs/glyph-text.md)"""
-        if isinstance(text, unicode):
+        if isinstance(text, str):
             gids = []
             for char in text:
                 name = glyphnames.unicode_to_glyphname(char)

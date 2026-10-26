@@ -86,7 +86,7 @@ Modifier:
     def DragHandle(self, pa, pb, selection):
         try:
             inverse = self.trafo.inverse()
-            pa, pb = map(inverse, (pa, pb))
+            pa, pb = list(map(inverse, (pa, pb)))
             delta = pb-pa
                          
             p1, p2, h, n = self.p1, self.p2, self.h, self.n
@@ -112,7 +112,7 @@ Modifier:
             pass
 
     def SetData(self, data, version=None):
-        self.p1, self.p2 = map(Point, data[:2])
+        self.p1, self.p2 = list(map(Point, data[:2]))
         self.h, self.n = data[2:]
 
     def ChangeN(self, delta):

@@ -259,7 +259,7 @@ cap = {'butt': const.CapButt,
        'round': const.CapRound,
        'square': const.CapProjecting}
 
-commatospace = string.maketrans(',', ' ')
+commatospace = str.maketrans(',', ' ')
 
 rx_command = re.compile(r'[a-df-zA-DF-Z]((\s*[-0-9.e]+)*)\s*')
 rx_trafo = re.compile(r'\s*([a-zA-Z]+)\(([^)]*)\)')
@@ -323,7 +323,7 @@ class SVGHandler(saxhandler.ContentHandler):
             if match:
                 function = match.group(1)
                 args = match.group(2).translate(commatospace)
-                args = map(float, args.split())
+                args = list(map(float, args.split()))
                 trafo_string = trafo_string[match.end(0):]
                 if function == 'matrix':
                     trafo = trafo(Trafo(*tuple(args)))
@@ -386,16 +386,16 @@ class SVGHandler(saxhandler.ContentHandler):
         # FIXME: Handle preserveAspectRatio as well
         viewbox = attrs.get("viewBox", "")
         if viewbox:
-            vx, vy, vwidth, vheight = map(float, viewbox.split())
+            vx, vy, vwidth, vheight = list(map(float, viewbox.split()))
             t = Scale(width / vwidth, height / vheight)
             t = t(Translation(-vx, -vy))
             self.trafo = self.trafo(t)
         self._print("basetrafo", self.basetrafo)
 
     def parse_style(self, style):
-        parts = filter(None, map(str.strip, style.split(";")))
+        parts = [_f for _f in map(str.strip, style.split(";")) if _f]
         for part in parts:
-            key, val = map(str.strip, part.split(":", 1))
+            key, val = list(map(str.strip, part.split(":", 1)))
             self._print('style', key, val)
 
             # only try to parse the value if it's not empty
@@ -645,7 +645,7 @@ class SVGHandler(saxhandler.ContentHandler):
                 self.named_objects[id] = ('object', 'polygon', attrs)
             return
         points = as_latin1(attrs['points'])
-        points = string.translate(points, commatospace)
+        points = points.translate(commatospace)
         points = points.split()
         path = CreatePath()
         point = self.point
@@ -663,7 +663,7 @@ class SVGHandler(saxhandler.ContentHandler):
         paths = self.paths
         path = self.path
         trafo = self.trafo
-        str = string.translate(as_latin1(str), commatospace).strip()
+        str = as_latin1(str).translate(commatospace).strip()
         last_quad = None
         last_cmd = cmd = None
         f13 = 1.0 / 3.0; f23 = 2.0 / 3.0
@@ -686,8 +686,8 @@ class SVGHandler(saxhandler.ContentHandler):
                     # FIXME: tokenize_line works but is not the best way
                     # to do it because it accepts input that wouldn't be
                     # valid here.
-                    points = filter(operator.isNumberType,
-                                    skread.tokenize_line(points))
+                    points = list(filter(operator.isNumberType,
+                                    skread.tokenize_line(points)))
                 #print cmd, points
                 if cmd in 'mM':
                     path = CreatePath()

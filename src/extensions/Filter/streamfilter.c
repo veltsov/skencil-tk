@@ -21,6 +21,7 @@
  */
 
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include "filterobj.h"
@@ -93,6 +94,12 @@ PyInit_streamfilter(void)
 
     m = PyModule_Create(&streamfiltermodule);
     d = PyModule_GetDict(m);
+
+    if (PyType_Ready(&FilterType) < 0)
+	return NULL;
+    extern PyTypeObject BinaryInputType;
+    if (PyType_Ready(&BinaryInputType) < 0)
+	return NULL;
 
     PyDict_SetItemString(d, "FilterType", (PyObject*)(&FilterType));
     v = PyCapsule_New(&functions, NULL, NULL);

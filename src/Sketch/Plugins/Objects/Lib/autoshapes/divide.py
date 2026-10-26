@@ -79,7 +79,7 @@ Modifier:
             return
 
         
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         delta = pb-pa
 
         h1, h2, n, p1, p2 = self.h1, self.h2, self.n, self.p1, self.p2

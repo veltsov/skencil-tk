@@ -121,7 +121,7 @@ class SKLoader(GenericLoader):
     functions.append('layout')
     def layout(self, format, orientation):
         format = decode_sk_string(format)
-        if isinstance(format, unicode):
+        if isinstance(format, str):
             if format not in papersizes:
                 # The format is given by name but it's not one of the
                 # standard papersizes. The file may be corrupted.
@@ -310,19 +310,22 @@ class SKLoader(GenericLoader):
 
     def bezier_load(self, line):
         bezier = self.object
+        decode = lambda l: l.decode('utf-8', 'surrogateescape') \
+                  if isinstance(l, bytes) else l
+        line = decode(line)
         while 1:
             try:
                 bezier.paths[-1].append_from_string(line)
-                line = bezier.paths[-1].append_from_file(self.file)
+                line = decode(bezier.paths[-1].append_from_file(self.file))
             except:
                 warn(INTERNAL, _("Error reading line %s"), repr(line))
-                line = self.file.readline()
+                line = decode(self.file.readline())
             if line[:2] == 'bC':
                 bezier.paths[-1].load_close()
-                line = self.file.readline()
+                line = decode(self.file.readline())
             if line[:2] == 'bn':
                 bezier.paths = bezier.paths + (CreatePath(),)
-                line = self.file.readline()
+                line = decode(self.file.readline())
             else:
                 break
             if line[:2] not in ('bs', 'bc'):
@@ -464,8 +467,8 @@ class SKLoader(GenericLoader):
 
     def Load(self):
         file = self.file
-        if isinstance(file, (str, unicode)):
-            file = open(file, 'r')
+        if isinstance(file, str):
+            file = open(file, 'rb')
         dict = self.get_func_dict()
         from Sketch.Modules import skread
         parse = skread.parse_sk_line2
@@ -475,11 +478,14 @@ class SKLoader(GenericLoader):
         line = '#'
         if __debug__:
             import time
-            start_time = time.clock()
+            start_time = time.perf_counter()
         try:
             line = readline()
             while line:
                 num = num + 1
+                if isinstance(line, bytes):
+                    # .sk files are utf-8 text; decode leniently
+                    line = line.decode('utf-8', 'surrogateescape')
                 if line[0] == 'b' and line[1] in 'sc':
                     line = bezier_load(line)
                     continue
@@ -542,7 +548,7 @@ class SKLoader(GenericLoader):
         self.object.meta.native_format = 1
 
         if __debug__:
-            pdebug('timing', 'time:', time.clock() - start_time)
+            pdebug('timing', 'time:', time.perf_counter() - start_time)
         return self.object
 
 

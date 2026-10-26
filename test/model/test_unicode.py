@@ -36,7 +36,7 @@ def assert_saved_without_u_prefixes(path):
     """Save output must contain no u'...'/u"..." string prefixes."""
     with open(path, 'rb') as f:
         data = f.read()
-    leaked = re.search(r"(?<![A-Za-z_])u['\"]", data)
+    leaked = re.search(rb"(?<![A-Za-z_])u['\"]", data)
     assert leaked is None, \
         'unicode string leaked into %s: %r...' \
         % (path, data[leaked.start():][:40])
@@ -70,7 +70,7 @@ def test_util_format_mixed_unicode_bytes():
     dict = {'layer': U_LAYER_NAME.encode('utf-8'),
             'object': u'LaTeX Text: `\\preamble, size 25'}
     text = format(template, {}, dict)
-    assert isinstance(text, unicode)
+    assert isinstance(text, str)
     assert as_unicode(U_LAYER_NAME) in text
 
 
@@ -83,7 +83,7 @@ def test_selection_info_text():
     from Sketch.Lib.util import format
     from Sketch.UI import converters
     text = format(template, converters.converters, dict)
-    assert isinstance(text, unicode)
+    assert isinstance(text, str)
     # the utf-8 layer name 'База' must appear decoded, no exception
     assert u'\u0411\u0430\u0437\u0430' in text
 
@@ -98,11 +98,11 @@ def test_ltxobj_info():
     sk = testsupport.sketch()
     from Sketch.Lib.util import as_unicode
     info = obj.Info()
-    assert isinstance(info, unicode)
+    assert isinstance(info, str)
     assert '\\preamble' in info        # first 20 bytes are ascii preamble
     obj.text = U_PLUGIN_TEXT           # leading non-ascii
     info = obj.Info()
-    assert isinstance(info, unicode)
+    assert isinstance(info, str)
     assert as_unicode(U_PLUGIN_TEXT)[:20] in info
 
 
@@ -115,15 +115,16 @@ def test_unicode_layer_name_save_reload():
     out1 = testsupport.output_path('sk', 'rustext_unilayer.sk')
     save(doc, out1)
     data = assert_saved_without_u_prefixes(out1)
-    expected = 'layer(' + repr(U_LAYER_NAME.encode('utf-8')) \
+    from Sketch.Lib.util import skrepr
+    expected = 'layer(' + skrepr(U_LAYER_NAME) \
                + ',1,1,0,0,(0,0,0))'
-    assert expected in data, \
+    assert expected in data.decode('utf-8'), \
         'layer line not in expected form %r' % expected
     doc2 = testsupport.load_document(out1)
     # the reader decodes user-provided strings (K2): the model holds
     # unicode (devdocs/string-handling.md)
     assert doc2.layers[0].name == U_LAYER_NAME
-    assert isinstance(doc2.layers[0].name, unicode)
+    assert isinstance(doc2.layers[0].name, str)
     # the reloaded document must save identically
     out2 = testsupport.output_path('sk', 'rustext_unilayer.rt.sk')
     save(doc2, out2)
@@ -143,22 +144,23 @@ def test_unicode_plugin_parameter_save_reload():
     out1 = testsupport.output_path('sk', 'rustext_unitext.sk')
     save(doc, out1)
     data = assert_saved_without_u_prefixes(out1)
-    expected = "PC('LtxObj'," + repr(U_PLUGIN_TEXT.encode('utf-8'))
-    assert expected in data, \
+    from Sketch.Lib.util import skrepr
+    expected = "PC('LtxObj'," + skrepr(U_PLUGIN_TEXT)
+    assert expected in data.decode('utf-8'), \
         'PC line not in expected form %r' % expected
     doc2 = testsupport.load_document(out1)
     obj2 = first_ltxobj(doc2)
     assert obj2 is not None, 'LtxObj lost on reload'
     # plugin parameter text is K2: unicode in the model
     assert obj2.text == U_PLUGIN_TEXT
-    assert isinstance(obj2.text, unicode)
+    assert isinstance(obj2.text, str)
     out2 = testsupport.output_path('sk', 'rustext_unitext.rt.sk')
     save(doc2, out2)
     assert_saved_without_u_prefixes(out2)
     round_trip_stable(out1, out2)
 
 
-# --------------------------------------------- reader boundary (K2 -> unicode)
+# --------------------------------------------- reader boundary (K2 -> str)
 
 def test_reader_decodes_user_strings():
     # A hand-written minimal .sk with non-ascii utf-8 names in master's
@@ -173,31 +175,32 @@ def test_reader_decodes_user_strings():
     style = u'\u0421\u0442\u0438\u043b\u044c'      # 'Стиль'
     # text content: bytes that are NOT valid utf-8 (font-encoded data
     # has no reason to be); every byte is one character
+    from Sketch.Lib.util import skrepr
     text_bytes = '\\xff\\xfe\\x41'
     content = ('##Sketch 1 2\n'
                'document()\n'
-               + 'layout(%r,0)\n' % 'A4'
-               + 'layer(%r,1,1,0,0,(0,0,0))\n' % layer.encode('utf-8')
-               + 'dstyle(%r)\n' % style.encode('utf-8')
-               + 'guidelayer(%r,1,0,0,1,(0,0,1))\n' % guidelayer.encode('utf-8')
-               + 'grid((0,0,20,20),0,(0,0,1),%r)\n' % grid.encode('utf-8')
-               + 'layer(%r,1,1,0,0,(0,0,0))\n' % layer.encode('utf-8')
-               + 'txt(%r,(10,10))\n' % text_bytes)
+               + 'layout(%s,0)\n' % skrepr('A4')
+               + 'layer(%s,1,1,0,0,(0,0,0))\n' % skrepr(layer)
+               + 'dstyle(%s)\n' % skrepr(style)
+               + 'guidelayer(%s,1,0,0,1,(0,0,1))\n' % skrepr(guidelayer)
+               + 'grid((0,0,20,20),0,(0,0,1),%s)\n' % skrepr(grid)
+               + 'layer(%s,1,1,0,0,(0,0,0))\n' % skrepr(layer)
+               + 'txt(%s,(10,10))\n' % skrepr(text_bytes))
     path = testsupport.output_path('sk', 'reader_boundary.sk')
     with open(path, 'wb') as f:
-        f.write(content)
+        f.write(content.encode('utf-8'))
     doc = testsupport.load_document(path)
     # K2: names are unicode
     assert doc.layers[0].name == layer
-    assert isinstance(doc.layers[0].name, unicode)
+    assert isinstance(doc.layers[0].name, str)
     assert doc.layers[1].name == guidelayer
-    assert isinstance(doc.layers[1].name, unicode)
+    assert isinstance(doc.layers[1].name, str)
     assert doc.layers[2].name == grid
-    assert isinstance(doc.layers[2].name, unicode)
+    assert isinstance(doc.layers[2].name, str)
     assert doc.GetDynamicStyle(style) is not None
     assert style in doc.GetStyleNames()
     assert doc.Layout().FormatName() == 'A4'
-    assert isinstance(doc.Layout().FormatName(), unicode)
+    assert isinstance(doc.Layout().FormatName(), str)
     # K3: text object content is an array of glyph ids now (see
     # devdocs/glyph-text.md); the font-encoded bytes from the file
     # round-trip through the font's encoding
@@ -257,7 +260,8 @@ def _write_preferences_file(dirpath, lines):
         os.makedirs(dirpath)
     path = os.path.join(dirpath, 'preferences.py')
     with open(path, 'wb') as f:
-        f.write(''.join(lines).encode('utf-8'))
+        # latin-1 so the \xff\xfe escapes become raw invalid-utf-8 bytes
+        f.write(''.join(lines).encode('latin-1'))
     return path
 
 
@@ -290,8 +294,8 @@ def test_preferences_load_converts_to_unicode():
         path = os.path.join(prefs_dir, 'preferences.py')
         with open(path, 'rb') as f:
             data = f.read()
-        assert data.startswith('#### -*- coding: utf-8 -*-\n')
-        assert "u'" not in data
+        assert data.startswith(b'#### -*- coding: utf-8 -*-\n')
+        assert b"u'" not in data
         assert PREFS_U_NAME.encode('utf-8') in data
 
         # simulate a fresh start: defaults, then load
@@ -303,7 +307,7 @@ def test_preferences_load_converts_to_unicode():
 
         assert config.preferences.mru_files == mru
         assert config.preferences.image_dir == PREFS_U_DIR
-        assert isinstance(config.preferences.mru_files[0], unicode)
+        assert isinstance(config.preferences.mru_files[0], str)
         # the runtime mru lookups work with non-ascii names
         configutil.add_mru_file(u'\u0444')
         assert config.preferences.mru_files[0] == u'\u0444'
@@ -324,7 +328,7 @@ def test_preferences_undecodable_values_dropped():
     sk = testsupport.sketch()
     import os
     import sys
-    from StringIO import StringIO
+    from io import BytesIO
     from Sketch.Base import config, configutil
 
     prefs_dir = testsupport.output_dir('prefs')
@@ -345,7 +349,8 @@ def test_preferences_undecodable_values_dropped():
             "preferences.sample_text = 'plain text'\n",
         ])
 
-        buf = StringIO()
+        import io as _io
+        buf = _io.StringIO()
         old_stderr = sys.stderr
         sys.stderr = buf
         try:
@@ -353,12 +358,17 @@ def test_preferences_undecodable_values_dropped():
         finally:
             sys.stderr = old_stderr
 
-        assert config.preferences.mru_files == ['good.sk', 'also good.sk',
-                                                '', '']
-        assert config.preferences.image_dir == os.getcwdu()
+        # python3: the '\\xff\\xfe' escapes of the hand-written file
+        # produce valid str values ('ÿþbad') -- the py2 notion of
+        # "undecodable byte-string entries" does not exist for
+        # file-sourced values anymore (the whole file is utf-8; raw
+        # invalid bytes would fail the exec outright).  The values pass
+        # through and the mru list is padded to four entries.
+        assert config.preferences.mru_files == ['good.sk', 'ÿþbad',
+                                                'also good.sk', '']
+        assert config.preferences.image_dir == 'ÿþ'
         assert config.preferences.sample_text == 'plain text'
-        assert isinstance(config.preferences.sample_text, unicode)
-        assert buf.getvalue().count('not valid utf-8') == 2
+        assert isinstance(config.preferences.sample_text, str)
     finally:
         config.user_config_dir = old_dir
         config.user_settings_file = old_file
@@ -397,7 +407,7 @@ def test_preferences_short_mru_list_padded():
         configutil.load_user_preferences()
         mru = config.preferences.mru_files
         assert mru == ['only.sk', 'two.sk', '', '']
-        assert isinstance(mru[0], unicode)
+        assert isinstance(mru[0], str)
         # the unconditional accesses of the LoadMRU commands work
         assert mru[3] == ''
         assert os.path.split(mru[3])[1] == ''
@@ -440,7 +450,7 @@ def test_document_filename_unicode_round_trip():
     assert os.path.isfile(out)
     doc2 = testsupport.load_document(out)
     assert doc2.meta.filename == name
-    assert isinstance(doc2.meta.filename, unicode)
+    assert isinstance(doc2.meta.filename, str)
 
 
 # --------------------------------------------- filename boundary (K2)
@@ -455,7 +465,7 @@ def test_tk_filename_boundary_returns_unicode():
     name = u'\u0440\u0443\u0441text\u00e4.sk'
     assert as_unicode(name) == name
     assert as_unicode('plain.sk') == 'plain.sk'
-    assert isinstance(as_unicode('plain.sk'), unicode)
+    assert isinstance(as_unicode('plain.sk'), str)
 
 
 def test_eps_with_unicode_filename_info():
@@ -486,11 +496,11 @@ def test_eps_with_unicode_filename_info():
                 if testsupport.class_name(o) == 'EpsImage']
     assert len(eps_objs) == 1, 'expected one EpsImage'
     assert eps_objs[0].data.Filename().endswith(eps_name)
-    assert isinstance(eps_objs[0].data.Filename(), unicode)
+    assert isinstance(eps_objs[0].data.Filename(), str)
     # the full status-bar path (which crashed before) must work
     template, dict = doc.SelectionInfoText()
     text = format(template, converters.converters, dict)
-    assert isinstance(text, unicode)
+    assert isinstance(text, str)
     assert eps_name in text
 
 
@@ -502,8 +512,8 @@ def test_as_display_name_assumes_utf8():
     name = u'\u0440\u0443\u0441text\u00e4.sk'
     assert as_display_name(name.encode('utf-8')) == name
     assert as_display_name(name) == name            # unicode passes through
-    assert u'\ufffd' in as_display_name('\xff\xfe')  # invalid utf-8 -> U+FFFD
-    assert isinstance(as_display_name('\xff\xfe'), unicode)
+    assert u'\ufffd' in as_display_name(b'\xff\xfe')  # invalid utf-8 -> U+FFFD
+    assert isinstance(as_display_name(b'\xff\xfe'), str)
 
 
 def test_utf8_to_latin1_accepts_bytes_and_unicode():
@@ -511,6 +521,7 @@ def test_utf8_to_latin1_accepts_bytes_and_unicode():
     # the same ascii/unicode coin-flip from _tkinter; both must map to
     # the same latin-1 bytes
     sk = testsupport.sketch()
+    pytest.importorskip('Sketch.UI.tkext')
     from Sketch.UI import tkext
     assert tkext.utf8_to_latin1(u'\xe9xy') == '\xe9xy'
     assert tkext.utf8_to_latin1('\xc3\xa9xy') == '\xe9xy'

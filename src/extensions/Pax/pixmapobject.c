@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "skmember.h"
 #include <X11/Xlib.h>
@@ -386,8 +387,7 @@ static void pixmap_dealloc(PaxPixmapObject *self)
 }
 
 PyTypeObject PaxPixmapType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,			/*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)			/*ob_size*/
 	"PaxPixmap",		/*tp_name*/
 	sizeof(PaxPixmapObject),/*tp_size*/
 	0,			/*tp_itemsize*/

@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 #define WHITESPACE 0x0001
 #define NEWLINE 0x0002
 #define DELIMITER 0x0004

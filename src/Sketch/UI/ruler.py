@@ -181,10 +181,10 @@ class Ruler(PyWidget):
             subdivisions = subdivisions[:depth + 1]
 
         positions = range(int(num_ticks * ticks))
-        positions = map(operator.mul, [tick_step] * len(positions), positions)
-        positions = map(operator.add, positions,
+        positions = list(map(operator.mul, [tick_step] * len(positions), positions))
+        positions = list(map(operator.add, positions,
                         [(start_pos - origin) * self.pixel_per_pt]
-                        * len(positions))
+                        * len(positions)))
 
         stride = ticks
         marks = [None] * len(positions)

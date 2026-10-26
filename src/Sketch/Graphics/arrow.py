@@ -77,7 +77,7 @@ class Arrow:
         return self.head
 
     def SaveRepr(self):
-        path = map(lambda t: t[:-1], self.path.get_save())
+        path = [t[:-1] for t in self.path.get_save()]
         return (path, self.path.closed)
 
     def __hash__(self):

@@ -231,7 +231,7 @@ class ExternalGraphics(RectangularObject, GraphicsObject):
     def GetSnapPoints(self):
         width, height = self.data.Size()
         corners = ((0, 0), (width, 0), (width, height), (0, height))
-        return map(self.trafo, corners)
+        return list(map(self.trafo, corners))
 
     def Snap(self, p):
         width, height = self.data.Size()

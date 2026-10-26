@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "skmember.h"
 #include "modsupport.h"
@@ -124,7 +125,7 @@ static PyObject *
 TextWidth(PaxFontObject *self, PyObject *args)
 {
     char *string;
-    int nchars;
+    Py_ssize_t nchars;
     if (!PyArg_ParseTuple(args, "s#", &string, &nchars))
 	return NULL;
     return PyLong_FromLong(XTextWidth(self->font_struct, string, nchars));
@@ -134,7 +135,7 @@ static PyObject *
 TextExtents(PaxFontObject *self, PyObject *args)
 {
     char *string;
-    int nchars;
+    Py_ssize_t nchars;
     int direction, font_ascent, font_descent;
     XCharStruct overall;
     if (!PyArg_ParseTuple(args, "s#", &string, &nchars))
@@ -274,8 +275,7 @@ Dealloc(PaxFontObject *self)
 }
 
 PyTypeObject PaxFontType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,			/*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)			/*ob_size*/
 	"PaxFont",		/*tp_name*/
 	sizeof(PaxFontObject),	/*tp_size*/
 	0,			/*tp_itemsize*/

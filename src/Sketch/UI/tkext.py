@@ -433,8 +433,8 @@ def MakeCommand(label, func = None, args = (), sensitive = None, update =None):
                 text, kwargs = text
             else:
                 kwargs = {}
-            return MenuCascade(*(text, map(MakeCommand, label[1:])), **kwargs)
-        elif not isinstance(label, (str, unicode)):
+            return MenuCascade(*(text, list(map(MakeCommand, label[1:]))), **kwargs)
+        elif not isinstance(label, str):
             if label.__class__ in cmd_classes:
                 if label.is_command:
                     return MenuCommand2(label)
@@ -715,7 +715,7 @@ class PyWidget(Widget, SketchDropTarget):
 
 def utf8_to_latin1(text):
     """Convert a text in utf-8 (bytes) or unicode to latin-1 bytes"""
-    if isinstance(text, unicode):
+    if isinstance(text, str):
         return text.encode('latin-1')
     return text.decode('utf-8').encode('latin-1')
 

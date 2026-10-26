@@ -93,7 +93,7 @@ def intersect_objects(objects):
             if len(partials[-1]) == 1:
                 partial = partials.pop()
                 partials[-1].extend(partial)
-            assert 1 not in map(len, partials)
+            assert 1 not in list(map(len, partials))
             approx_paths.append(partials)
     # find intersections for each pair of approximated paths
     table = IntersectionIndex()
@@ -263,7 +263,7 @@ def on_outline(p0, p1, object_paths):
 
 def contained(path, object):
     approx_path = approximate_path(path)
-    object_paths = map(approximate_path, object.Paths())
+    object_paths = list(map(approximate_path, object.Paths()))
     for i in range(1, len(approx_path)):
         (p0, t), (p1, t) = approx_path[i-1:i+1]
         if not on_outline(p0, p1, object_paths):
@@ -315,7 +315,7 @@ def join(paths):
             paths[i] = None
         new_path.ClosePath()
         buffer.append(new_path)
-        paths = filter(lambda x: x is not None, paths)
+        paths = [x for x in paths if x is not None]
     return buffer
 
 def find_circuit(paths, start, end, rest, circuit):

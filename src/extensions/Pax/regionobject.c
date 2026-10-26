@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "skmember.h"
 #include <X11/Xlib.h>
@@ -184,8 +185,7 @@ region_dealloc(PaxRegionObject  *self)
 
 
 PyTypeObject PaxRegionType  = {
-    PyObject_HEAD_INIT(&PyType_Type)
-	0,			/*ob_size*/
+    PyVarObject_HEAD_INIT(&PyType_Type, 0)			/*ob_size*/
 	"PaxRegion" ,		/*tp_name*/
 	sizeof(PaxRegionObject),	/*tp_size*/
 	0,			/*tp_itemsize*/

@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "skmember.h"
 #include <tk.h>
@@ -227,8 +228,7 @@ paxborder_getattr(PyObject * self, char * name)
 
 PyTypeObject PaxBorderType =
 {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,				/*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)				/*ob_size*/
 	"PaxBorder",			/*tp_name*/
 	sizeof(PaxBorderObject),	/*tp_size*/
 	0,				/*tp_itemsize*/

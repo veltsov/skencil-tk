@@ -130,7 +130,7 @@ class Reencoder:
         dest = self.dest; source = self.source; notdef = self.notdef
         dict = {}
         length = len(dest)
-        map(operator.setitem, [dict] * length, dest, range(length))
+        list(map(operator.setitem, [dict] * length, dest, range(length)))
         dict[notdef] = self.notdef
         mapping = range(256)
         for i in mapping:

@@ -380,7 +380,7 @@ class SimpleText(CommonText, RectangularPrimitive):
             return trafo(NullPoint)
         else:
             pts = self.properties.font.TypesetText(self.text)
-            return map(trafo, pts)
+            return list(map(trafo, pts))
 
 
     def SetAlignment(self, horizontal, vertical):
@@ -638,7 +638,7 @@ def pathtext(path, start_pos, text, font, size, type):
     lengths = path.arc_lengths(start_pos)
     scale = Scale(size); factor = size / 2000.0
     pos = font.TypesetText(text)
-    pos = map(scale, pos)
+    pos = list(map(scale, pos))
     trafos = []
     for idx in range(len(text)):
         width2 = metric.glyph_width(text[idx]) * factor
@@ -697,21 +697,21 @@ class InternalPathText(CommonText, Primitive):
         length = len(self.trafos)
         sizes = [a.font_size] * length
 
-        boxes = map(a.font.TextBoundingBox, self.text[:length], sizes)
-        rects = map(lambda *a:a, map(apply, [Rect] * length, boxes))
-        self.bounding_rect = reduce(UnionRects, map(apply, self.trafos, rects),
+        boxes = list(map(a.font.TextBoundingBox, self.text[:length], sizes))
+        rects = list(map(lambda *a:a, list(map(lambda r, b: r(*b), [Rect] * length, boxes))))
+        self.bounding_rect = reduce(UnionRects, list(map(lambda t, r: t(r), self.trafos, rects)),
                                     EmptyRect)
 
-        boxes = map(a.font.TextCoordBox, self.text[:length], sizes)
-        rects = map(lambda *a:a, map(apply, [Rect] * length, boxes))
-        self.coord_rect = reduce(UnionRects, map(apply, self.trafos, rects),
+        boxes = list(map(a.font.TextCoordBox, self.text[:length], sizes))
+        rects = list(map(lambda *a:a, list(map(lambda r, b: r(*b), [Rect] * length, boxes))))
+        self.coord_rect = reduce(UnionRects, list(map(lambda t, r: t(r), self.trafos, rects)),
                                  EmptyRect)
 
     def update_trafos(self):
-        self.trafos = map(self.trafo, pathtext(self.paths[0], self.start_pos,
+        self.trafos = list(map(self.trafo, pathtext(self.paths[0], self.start_pos,
                                                self.text, self.properties.font,
                                                self.properties.font_size,
-                                               self.model))
+                                               self.model)))
     def update_paths(self):
         paths = self.parent.get_paths()
         try:
@@ -891,8 +891,8 @@ class InternalPathTextEditor(CommonTextEditor):
         text = self.text; trafos = self.trafos
         font = self.properties.font; font_size = self.properties.font_size
         t = self.nearest_start_pos(self.drag_cur)
-        trafos = map(self.trafo, pathtext(self.paths[0], t, text, font,
-                                          font_size, self.model))
+        trafos = list(map(self.trafo, pathtext(self.paths[0], t, text, font,
+                                          font_size, self.model)))
 
         device.BeginComplexText(0, self.cache)
         for idx in range(len(trafos)):

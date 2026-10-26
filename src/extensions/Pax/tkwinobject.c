@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "skmember.h"
 #include <structmember.h>
@@ -864,8 +865,7 @@ tkwin_richcompare(PyObject * self, PyObject * other, int op)
 }
 
 PyTypeObject TkWinType = {
-    PyObject_HEAD_INIT(&PyType_Type)
-    0,
+    PyVarObject_HEAD_INIT(&PyType_Type, 0)
     "tkwin",
     sizeof(TkWinObject),
     0,

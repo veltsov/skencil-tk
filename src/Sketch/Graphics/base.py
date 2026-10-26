@@ -737,7 +737,7 @@ class Primitive(GraphicsObject):
             LineProperty = properties.LineProperty
             FillProperty = properties.FillProperty
             FontProperty = properties.FontProperty
-            types = map(prop_types.get, kw.keys())
+            types = list(map(prop_types.get, kw.keys()))
             if LineProperty in types and not self.properties.HasLine():
                 for key in kw.keys():
                     if prop_types[key] == LineProperty:

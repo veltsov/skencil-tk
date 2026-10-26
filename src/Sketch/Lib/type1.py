@@ -21,7 +21,7 @@
 
 from __future__ import print_function
 import sys
-from cStringIO import StringIO
+from io import StringIO
 
 
 from Sketch.Modules import streamfilter
@@ -189,7 +189,7 @@ class CharStringInterpreter:
 
     def execute(self, cs):
         stack = self.stack
-        cs = map(ord, cs)
+        cs = list(map(ord, cs))
         try:
             while cs:
                 code = cs[0]; del cs[0]
@@ -467,8 +467,7 @@ def test():
     data = read_type1_file(filename)
     data = streamfilter.StringDecode(data, None)
     subrs, char_strings = parse_type1_file(data)
-    items = char_strings.items()
-    items.sort()
+    items = sorted(char_strings.items())
     interpreter = CharStringInterpreter(subrs)
     for name, code in items:
         print(name, repr(code))

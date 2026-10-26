@@ -108,7 +108,7 @@ def fill_colormap(cmap):
         warn(USER,
              _("I can't alloc all needed colors. I'll use a private colormap"))
         warn(INTERNAL, "allocated colors without private colormap: %d",
-             len(filter(lambda i: i is None, color_idx)))
+             len([i for i in color_idx if i is None]))
         if config.preferences.reduce_color_flashing:
             #print 'reduce color flashing'
             cmap = cmap.CopyColormapAndFree()
@@ -118,7 +118,7 @@ def fill_colormap(cmap):
         else:
             #print "don't reduce color flashing"
             cmap = cmap.CopyColormapAndFree()
-            cmap.FreeColors(filter(lambda i: i is not None, color_idx), 0)
+            cmap.FreeColors([i for i in color_idx if i is not None], 0)
             color_idx = []
             for red, green, blue in colors:
                 color_idx.append(cmap.AllocColor(red, green, blue)[0])

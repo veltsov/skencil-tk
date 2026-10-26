@@ -128,7 +128,7 @@ class LCDText(TrafoPlugin):
             if segs is not None:
                 for seg in segs:
                     path = CreatePath()
-                    map(path.AppendLine, segments[seg])
+                    list(map(path.AppendLine, segments[seg]))
                     path.ClosePath()
                     path.Translate(width, 0)
                     path.Transform(trafo)

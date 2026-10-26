@@ -42,7 +42,7 @@ rx_dsccomment = re.compile('^%%([a-zA-Z+]+):?')
 # match the beginning of an EPS file.
 rx_eps_magic = re.compile('^%!.*EPSF')
 
-endcommentchars = string.maketrans('','')[33:127]
+endcommentchars = ''.join(chr(c) for c in range(33, 127))
 ATEND = '(atend)'
 
 
@@ -246,7 +246,7 @@ def parse_eps_file(filename):
     # Extract information from the EPS file FILENAME. Return an instance
     # of EpsInfo with the appropriate parameters. Raise a DSCError, if
     # the file is not an EPS file.
-    file = streamfilter.LineDecode(open(filename, 'r'))
+    file = streamfilter.LineDecode(open(filename, 'rb'))
     line = file.readline()
     info = EpsInfo()
 
@@ -270,7 +270,7 @@ def parse_eps_file(filename):
 
 if __name__ == '__main__':
     import sys
-    file = open(sys.argv[1], 'r')
+    file = open(sys.argv[1], 'rb')
     info = EpsInfo()
 
     parse_header(file, info)

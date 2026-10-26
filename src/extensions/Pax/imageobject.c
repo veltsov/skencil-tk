@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 #include <stdio.h>
 
 #include "Python.h"
@@ -164,8 +165,7 @@ image_dealloc(PaxImageObject *self)
 }
 
 PyTypeObject PaxImageType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,			/*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)			/*ob_size*/
 	"PaxXImage",		/*tp_name*/
 	sizeof(PaxImageObject),	/*tp_size*/
 	0,			/*tp_itemsize*/

@@ -26,7 +26,7 @@ Modifier:
         return self.trafo(self.p1)
     
     def GetSnapPoints(self):
-        return map(self.trafo, (self.p1, self.p2))
+        return list(map(self.trafo, (self.p1, self.p2)))
 
     def GetHandles(self):
         handles = []
@@ -50,7 +50,7 @@ Modifier:
         p1, p2 = self.p1, self.p2
         try:
             inverse = self.trafo.inverse()
-            pa, pb = map(inverse, (pa, pb))
+            pa, pb = list(map(inverse, (pa, pb)))
             delta = pb-pa
 
             if selection == 1 or self.shift_pressed:
@@ -70,11 +70,11 @@ Modifier:
 
     def SetData(self, data, version=None):
         undo = self.SetData, self.GetData()
-        self.p1, self.p2 = map(Point, data)
+        self.p1, self.p2 = list(map(Point, data))
         return undo
 
     def GetData(self):
-        return map(list, (self.p1, self.p2))
+        return list(map(list, (self.p1, self.p2)))
 
 def register():
     return Circle2

@@ -18,6 +18,7 @@
 
 #define __NO_MATH_INLINES
 #include <math.h>
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 

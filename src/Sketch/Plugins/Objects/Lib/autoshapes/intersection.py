@@ -102,7 +102,7 @@ Modifier:
             return
 
         
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         delta = pb-pa
 
         p1, p2, p3, p4 = self.p1, self.p2, self.p3, self.p4
@@ -117,10 +117,10 @@ Modifier:
         self.recompute()
 
     def SetData(self, data, version=None):
-        self.p1, self.p2, self.p3, self.p4 = map(Point, data)
+        self.p1, self.p2, self.p3, self.p4 = list(map(Point, data))
 
     def GetData(self):
-        return map(tuple, (self.p1, self.p2, self.p3, self.p4))
+        return list(map(tuple, (self.p1, self.p2, self.p3, self.p4)))
                         
 def register():
     return Intersection

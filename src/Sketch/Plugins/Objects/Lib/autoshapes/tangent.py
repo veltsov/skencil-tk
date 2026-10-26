@@ -29,7 +29,7 @@ Modifier:
     def GetSnapPoints(self):
         w1, w2, p1, p2 = self.w1, self.w2, self.p1, self.p2
         xvect = (p2-p1).normalized()
-        return map(self.trafo, (self.p1, self.p2, p1-w1*xvect, p2+w2*xvect))
+        return list(map(self.trafo, (self.p1, self.p2, p1-w1*xvect, p2+w2*xvect)))
     
     def GetHandles(self):
         w1, w2, p1, p2 = self.w1, self.w2, self.p1, self.p2
@@ -66,7 +66,7 @@ Modifier:
             return
 
         
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         delta = pb-pa
 
         w1, w2, p1, p2 = self.w1, self.w2, self.p1, self.p2

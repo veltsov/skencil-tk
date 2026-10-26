@@ -303,7 +303,7 @@ class LayerPanel(SketchPanel):
         if self.context_layer.is_GridLayer:
             entries.append(None)
             entries.append(self.main_window.commands.CreateGridDialog)
-        return map(MakeCommand, entries)
+        return list(map(MakeCommand, entries))
 
     def close_dlg(self):
         SketchPanel.close_dlg(self)

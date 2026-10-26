@@ -34,10 +34,10 @@ class ScriptRegistry:
         # origins (the scripts) pass unicode literals.  A byte string
         # is rejected loudly instead of being iterated character by
         # character (see devdocs/unicode-runtime-audit.md, instance 6).
-        if isinstance(menu, unicode):
+        if isinstance(menu, str):
             menu = (menu,)
         for item in menu:
-            if not isinstance(item, unicode):
+            if not isinstance(item, str):
                 raise TypeError('menu path components must be unicode,'
                                 ' got %r' % (item,))
         self.registry[script.name] = script

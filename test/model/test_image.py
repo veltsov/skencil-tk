@@ -65,8 +65,8 @@ def test_image_from_pil_keeps_alpha():
     mode, size, data = mod.image_from_pil(pil)
     assert mode == 'RGBA'
     # the alpha channel must not be discarded
-    assert ord(data[3]) == 40
-    assert ord(data[7]) == 40
+    assert data[3] == 40
+    assert data[7] == 40
 
 
 def test_image_from_pil_converts_other_modes():
@@ -90,7 +90,7 @@ def test_imagedata_from_pil():
     assert data.size == (2, 3)
     assert data.Size() == (2, 3)
     assert len(data.data) == 2 * 3 * 4
-    assert data.data[3] == chr(40)	# alpha preserved (py2 str is bytes)
+    assert data.data[3] == 40
     assert data.info == {}
     # the IO-boundary PIL round trip must reproduce the pixels
     pil2 = data.Image()
@@ -117,9 +117,9 @@ def test_imagedata_convert_and_invert():
     assert inv.mode == 'RGB'
     assert inv.size == (2, 2)
     # inverted pixels: 255 - value (via the PIL round trip)
-    assert ord(inv.data[0]) == 255 - 10
-    assert ord(inv.data[1]) == 255 - 20
-    assert ord(inv.data[2]) == 255 - 30
+    assert inv.data[0] == 255 - 10
+    assert inv.data[1] == 255 - 20
+    assert inv.data[2] == 255 - 30
 
 
 def gradient_args():
@@ -255,15 +255,15 @@ def test_imagedata_embed_save_reload_roundtrip(tmpdir):
     # an embedded image survives an .sk load/save/reload cycle with the
     # same pixels (exercises the PIL PNG codec boundary on both ends)
     import base64
-    import StringIO
+    import io
     sketch()
     mod = rastmodule()
     pil = PIL.Image.new('RGB', (2, 2))
     pil.putpixel((0, 0), (255, 0, 0))
     pil.putpixel((1, 1), (0, 0, 255))
-    png = StringIO.StringIO()
+    png = io.BytesIO()
     pil.save(png, 'PNG')
-    b64 = base64.encodestring(png.getvalue())
+    b64 = base64.encodebytes(png.getvalue()).decode("ascii")
     text = ('##Sketch 1 2\n'
             'document()\n'
             "layout('A4',0)\n"

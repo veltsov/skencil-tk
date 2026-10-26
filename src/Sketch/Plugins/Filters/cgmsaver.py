@@ -154,7 +154,7 @@ class CGMSaver:
         self.file.write(struct.pack(*args))
 
     def putstr(self, Id , str):
-        if isinstance(str, unicode):
+        if isinstancestr:
             # K2 names are unicode; the binary CGM sink needs bytes
             str = str.encode('utf-8')
         lng = len(str)
@@ -265,7 +265,7 @@ class CGMSaver:
                 lst = self.PathToSeq(path)
                 if path.closed:
                     lst = lst[:-2]
-            self.putlongseq(Id , map(rndtoint , lst))
+            self.putlongseq(Id , list(map(rndtoint , lst)))
         elif fill_pattern is EmptyPattern:
             self.LineStyle(Properties)
             self.FillStyle(Properties)
@@ -276,7 +276,7 @@ class CGMSaver:
                     lst = lst[:-2]
                 else:
                     Id = 0x4020 # Polyline
-                self.putlongseq(Id , map(rndtoint , lst))
+                self.putlongseq(Id , list(map(rndtoint , lst)))
         else: # The polygonset case
             self.FillStyle(Properties)
             set = []
@@ -313,8 +313,8 @@ class CGMSaver:
             self.FillStyle(rct.Properties())
             P1 = trf(Point(0,0))
             P2 = trf(Point(1,1))
-            self.putlongseq(0x4160 , map(rndtoint , tuple(self.trafo(P1)) \
-                                         + tuple(self.trafo(P2))))
+            self.putlongseq(0x4160 , list(map(rndtoint , tuple(self.trafo(P1)) \
+                                         + tuple(self.trafo(P2)))))
         else:
             self.PolyBezier(rct.Paths(), rct.Properties())
 
@@ -326,8 +326,8 @@ class CGMSaver:
                 self.FillStyle(ell.Properties())
                 C = trf(Point(0,0))
                 R = sqrt(trf.m11 * trf.m11 + trf.m12 * trf.m12)
-                self.putlongseq(0x4180 , map(rndtoint , tuple(self.trafo(C)) \
-                                             + (R * self.Scale,)))
+                self.putlongseq(0x4180 , list(map(rndtoint , tuple(self.trafo(C)) \
+                                             + (R * self.Scale,))))
             else:
                 C = trf(Point(0,0))
                 S = Point(cos(ell.start_angle) , sin(ell.start_angle))
@@ -342,8 +342,8 @@ class CGMSaver:
                 if ell.arc_type == 0 \
                    and ell.Properties().fill_pattern == EmptyPattern:
                     self.LineStyle(ell.Properties())
-                    self.putlongseq(0x41e0 ,  map(rndtoint , tuple(self.trafo(C)) \
-                                                  + tuple(S) + tuple(E) + (R * self.Scale,)))
+                    self.putlongseq(0x41e0 ,  list(map(rndtoint , tuple(self.trafo(C)) \
+                                                  + tuple(S) + tuple(E) + (R * self.Scale,))))
                 else:
                     #self.PolyBezier(ell.Paths(), ell.Properties())
                     self.FillStyle(ell.Properties())
@@ -351,8 +351,8 @@ class CGMSaver:
                         cp = 1
                     else:
                         cp = 2 - ell.arc_type
-                    Args = ["!H7iH" , 0x4200 + 30] + map(rndtoint , tuple(self.trafo(C)) \
-                                                         + tuple(S) + tuple(E) + (R * self.Scale , cp))
+                    Args = ["!H7iH" , 0x4200 + 30] + list(map(rndtoint , tuple(self.trafo(C)) \
+                                                         + tuple(S) + tuple(E) + (R * self.Scale , cp)))
                     self.pack(*Args)
         else:
             if ell.start_angle == ell.end_angle:
@@ -360,8 +360,8 @@ class CGMSaver:
                 C = trf(Point(0,0))
                 P1 = trf(Point(1,0))
                 P2 = trf(Point(0,1))
-                self.putlongseq(0x4220 , map(rndtoint , tuple(self.trafo(C)) \
-                                             + tuple(self.trafo(P1)) + tuple(self.trafo(P2))))
+                self.putlongseq(0x4220 , list(map(rndtoint , tuple(self.trafo(C)) \
+                                             + tuple(self.trafo(P1)) + tuple(self.trafo(P2)))))
             else: 
                 C = trf(Point(0,0))
                 P1 = trf(Point(1,0))
@@ -372,9 +372,9 @@ class CGMSaver:
                 E = 1000000 * E / abs(E)
                 if ell.arc_type == 0 and ell.Properties().fill_pattern == EmptyPattern:
                     self.LineStyle(ell.Properties())
-                    self.putlongseq(0x4240 ,  map(rndtoint , tuple(self.trafo(C)) \
+                    self.putlongseq(0x4240 ,  list(map(rndtoint , tuple(self.trafo(C)) \
                                                   + tuple(self.trafo(P1)) + tuple(self.trafo(P2)) + tuple(S) \
-                                                  + tuple(E)))
+                                                  + tuple(E))))
                 else:
                     #self.PolyBezier(ell.Paths(), ell.Properties())
                     self.FillStyle(ell.Properties())
@@ -382,9 +382,9 @@ class CGMSaver:
                         cp = 1
                     else:
                         cp = 2 - ell.arc_type
-                    Args = ["!HH10iH" , 0x4260 + 31 , 42] + map(rndtoint , tuple(self.trafo(C)) \
+                    Args = ["!HH10iH" , 0x4260 + 31 , 42] + list(map(rndtoint , tuple(self.trafo(C)) \
                                                                 + tuple(self.trafo(P1)) + tuple(self.trafo(P2)) + tuple(S) \
-                                                                + tuple(E) + (cp,))
+                                                                + tuple(E) + (cp,)))
                     self.pack(*Args)
 
     def Image(self, object):
@@ -488,8 +488,8 @@ class CGMSaver:
         #self.trafo = Translation(-32767,-32767)(Scale(sc)(Translation(-left , -bottom)))
         self.trafo = Scale(sc)(Translation(-left , -bottom))
         self.Scale = sc
-        self.extend = map(rndtoint , \
-                          tuple(self.trafo(left,bottom)) + tuple(self.trafo(right,top)))
+        self.extend = list(map(rndtoint , \
+                          tuple(self.trafo(left,bottom)) + tuple(self.trafo(right,top))))
 
         # Begin Metafile
         filename =  os.path.basename(self.pathname)

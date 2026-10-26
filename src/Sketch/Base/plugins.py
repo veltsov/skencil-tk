@@ -182,6 +182,22 @@ def translate_parameters(params,mygettext):
             parameters.append(parameter[:-1] + (mygettext(parameter[-1]),))
         return tuple(parameters)
 
+class _BinaryWriter:
+    """File wrapper for savers: accepts both str (encoded utf-8 on the
+    way out) and bytes writes, forwards everything else to the file."""
+
+    def __init__(self, file):
+        self.file = file
+
+    def write(self, data):
+        if isinstance(data, str):
+            data = data.encode('utf-8')
+        return self.file.write(data)
+
+    def __getattr__(self, name):
+        return getattr(self.file, name)
+
+
 class ExportInfo(ConfigInfo):
 
     plugin_list = export_plugins
@@ -238,7 +254,9 @@ class ExportInfo(ConfigInfo):
             raise SketchError(_("Cannot load filter %(name)s")
                               % {'name':self.module_name})
         if file is None and self.preopen_output:
-            file = open(filename, 'w')
+            # binary file; the writers get a wrapper that accepts both
+            # str (utf-8 encoded on the way out) and bytes
+            file = _BinaryWriter(open(filename, 'wb'))
             close = 1
         else:
             close = 0
@@ -414,7 +432,7 @@ def _search_dir(dir, recurse, package = 'Sketch.Plugins'):
 def load_plugin_configuration(): #path):
     if __debug__:
         import time
-        start = time.clock()
+        start = time.perf_counter()
     path = config.plugin_path
     for dir in path:
         # XXX unix specific
@@ -427,7 +445,7 @@ def load_plugin_configuration(): #path):
             recurse = 0
         _search_dir(dir, recurse)
     if __debug__:
-        pdebug('timing', 'time to scan cfg files: %g', time.clock()-start)
+        pdebug('timing', 'time to scan cfg files: %g', time.perf_counter()-start)
     # rearrange import plugins to ensure that native format is first
     for loader in import_plugins:
         if loader.format_name == NativeFormat:

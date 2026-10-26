@@ -85,7 +85,7 @@ def init_directories(base_dir):
 
 def check_path(path):
     # remove all non-directory or non existing entries from path
-    path[:] = filter(os.path.isdir, path)
+    path[:] = list(filter(os.path.isdir, path))
 
 #
 #	User Config Settings
@@ -119,13 +119,13 @@ def _decode_item(key, value):
     # on the console -- except that undecodable entries of lists (e.g.
     # the mru_files list) are skipped individually and image_dir is
     # reset to the current directory.
-    if isinstance(value, str):
+    if isinstance(value, bytes):
         try:
             return value.decode('utf-8')
         except UnicodeDecodeError:
             _warn_undecodable(key, value)
             if key == 'image_dir':
-                return os.getcwdu()
+                return os.getcwd()
             return INVALID
     if isinstance(value, list):
         result = []
@@ -265,7 +265,7 @@ def save_repr(obj):
         return 'Point(%g, %g)' % tuple(obj)
     if isinstance(obj, str):
         obj = util.as_display_name(obj)
-    if isinstance(obj, unicode):
+    if isinstance(obj, str):
         return _string_repr(obj)
     if isinstance(obj, list):
         return '[%s]' % ', '.join([save_repr(item) for item in obj])
@@ -301,8 +301,7 @@ def save_user_preferences():
              '# This file was automatically created by Sketch.\n\n']
 
     defaults = config.ProgramDefaults.__dict__
-    items = preferences.__dict__.items()
-    items.sort()
+    items = sorted(preferences.__dict__.items())
     for key, value in items:
         if key in defaults and defaults[key] == value:
             continue

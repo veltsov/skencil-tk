@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "skmember.h"
 #include <X11/Xlib.h>
@@ -350,8 +351,7 @@ paxcm_dealloc(PaxCMapObject *self)
 }
 
 PyTypeObject PaxCMapType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,			/*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)			/*ob_size*/
 	"PaxColormap",		/*tp_name*/
 	sizeof(PaxCMapObject),	/*tp_size*/
 	0,			/*tp_itemsize*/

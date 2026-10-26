@@ -236,13 +236,13 @@ class SelectionRectangle(SelRectBase):
         ey = self.end.y
         x2 = (sx + ex) / 2
         y2 = (sy + ey) / 2
-        return map(handle.MakeOffsetHandle,
+        return list(map(handle.MakeOffsetHandle,
                    [Point(sx, ey),	Point(x2, ey),	Point(ex, ey),
                     Point(sx, y2),			Point(ex, y2),
                     Point(sx, sy),	Point(x2, sy),	Point(ex, sy)],
                    [(-1,  1),		(0,  1),	( 1,  1),
                     (-1,  0),				( 1,  0),
-                    (-1, -1),		(0, -1),	( 1, -1)])
+                    (-1, -1),		(0, -1),	( 1, -1)]))
 
 
 
@@ -340,7 +340,7 @@ class Selection(Bounded):
         return old_len != len(self.objects)
 
     def GetObjects(self):
-        return map(operator.getitem, self.objects, [-1] * len(self.objects))
+        return list(map(operator.getitem, self.objects, [-1] * len(self.objects)))
 
     def GetInfo(self):
         return self.objects
@@ -350,8 +350,8 @@ class Selection(Bounded):
 
     def Depth(self):
         if self.objects:
-            lengths = map(len, map(operator.getitem, self.objects,
-                                   [0] * len(self.objects)))
+            lengths = list(map(len, list(map(operator.getitem, self.objects,
+                                   [0] * len(self.objects)))))
             lmin = min(lengths)
             lmax = max(lengths)
             if lmin == lmax:
@@ -370,7 +370,7 @@ class Selection(Bounded):
         return ()
 
     def for_all(self, func):
-        return map(func, self.GetObjects())
+        return list(map(func, self.GetObjects()))
 
     def ForAllUndo(self, func):
         undoinfo = self.for_all(func)
@@ -382,12 +382,12 @@ class Selection(Bounded):
         return undoinfo
 
     def ForAllUndo2(self, method, *args):
-        t = time.clock()
-        methods = map(getattr, self.GetObjects(), [method] * len(self.objects))
-        #print time.clock() - t,
+        t = time.perf_counter()
+        methods = list(map(getattr, self.GetObjects(), [method] * len(self.objects)))
+        #print time.perf_counter() - t,
         #undoinfo = self.for_all(func)
-        undoinfo = map(apply, methods, [args] * len(methods))
-        #print time.clock() - t
+        undoinfo = list(map(apply, methods, [args] * len(methods)))
+        #print time.perf_counter() - t
         self.del_lazy_attrs()
         if len(undoinfo) == 1:
             undoinfo = undoinfo[0]
@@ -399,16 +399,18 @@ class Selection(Bounded):
         return len(self.objects)
 
     __nonzero__ = __len__
-    __bool__ = __len__
+
+    def __bool__(self):
+        return len(self.objects) != 0
 
     def update_rects(self):
         objects = self.GetObjects()
-        boxes = map(lambda o: o.coord_rect, objects)
+        boxes = [o.coord_rect for o in objects]
         if boxes:
             self.coord_rect = reduce(UnionRects, boxes)
         else:
             self.coord_rect = None
-        boxes = map(lambda o: o.bounding_rect, objects)
+        boxes = [o.bounding_rect for o in objects]
         if boxes:
             self.bounding_rect = reduce(UnionRects, boxes)
         else:
@@ -663,14 +665,14 @@ class SizeSelection(Selection):
         undo_text, trafo = self.rect.ButtonUp(p, button, state)
         if forget_trafo:
             return None, None
-        t = time.clock()
+        t = time.perf_counter()
         if type(trafo) == TrafoType:
             #undo = self.ForAllUndo(lambda o, t = trafo: o.Transform(t))
             undo = self.ForAllUndo2('Transform', trafo)
         else:
             # trafo is point representing a translation
             undo = self.ForAllUndo2('Translate', trafo)
-        #print 'transform/translate', time.clock() - t
+        #print 'transform/translate', time.perf_counter() - t
         self.del_lazy_attrs()
         return undo_text, undo
 
@@ -879,7 +881,7 @@ class TrafoRectangle(SelRectBase):
         ey = self.end.y
         x2 = (sx + ex) / 2
         y2 = (sy + ey) / 2
-        return map(handle.MakePixmapHandle,
+        return list(map(handle.MakePixmapHandle,
                    [Point(sx, ey),	Point(x2, ey),	Point(ex, ey),
                     Point(sx, y2),			Point(ex, y2),
                     Point(sx, sy),	Point(x2, sy),	Point(ex, sy)],
@@ -889,7 +891,7 @@ class TrafoRectangle(SelRectBase):
                    [pixmaps.TurnTL, pixmaps.ShearLR,	pixmaps.TurnTR,
                     pixmaps.ShearUD,			pixmaps.ShearUD,
                     pixmaps.TurnBL, pixmaps.ShearLR,	pixmaps.TurnBR],
-                   [const.CurTurn] * 8) \
+                   [const.CurTurn] * 8)) \
                + [handle.MakePixmapHandle(self.center, (0, 0), pixmaps.Center)]
 
 
@@ -920,11 +922,11 @@ class TrafoSelection(Selection):
         if forget_trafo:
             return None, None
         if trafo is not None:
-            t = time.clock()
+            t = time.perf_counter()
             #undo = self.ForAllUndo(lambda o, t = trafo: o.Transform(t))
             undo = self.ForAllUndo2('Transform', trafo)
             self.del_lazy_attrs()
-            #print 'transform/translate', time.clock() - t
+            #print 'transform/translate', time.perf_counter() - t
             return undo_text, undo
         return '', None
 

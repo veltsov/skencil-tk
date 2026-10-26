@@ -710,7 +710,7 @@ class SketchMainWindow(Publisher):
 
     def make_file_menu(self):
         cmds = self.commands
-        return map(MakeCommand,
+        return list(map(MakeCommand,
                    [cmds.NewDocument,
                     cmds.LoadFromFile,
                     cmds.SaveToFile,
@@ -730,11 +730,11 @@ class SketchMainWindow(Publisher):
                     cmds.LoadMRU2,
                     cmds.LoadMRU3,
                     None,
-                    cmds.Exit])
+                    cmds.Exit]))
 
     def make_edit_menu(self):
         cmds = self.canvas.commands
-        return map(MakeCommand,
+        return list(map(MakeCommand,
                    [self.commands.Undo,
                     self.commands.Redo,
                     self.commands.ResetUndo,
@@ -749,7 +749,7 @@ class SketchMainWindow(Publisher):
                     self.commands.DuplicateSelected,
                     None,
                     cmds.SelectionMode, cmds.EditMode,
-                    ])
+                    ]))
 
     def creation_entries(self):
         cmds = self.canvas.commands
@@ -764,8 +764,7 @@ class SketchMainWindow(Publisher):
                    self.commands.ReloadAllImages,
                    self.commands.ToggleAutoReload,
                    None]
-        items = plugins.object_plugins.items()
-        items.sort()
+        items = sorted(plugins.object_plugins.items())
         place = self.place_plugin_object
         dialog = self.CreatePluginDialog
         group = self.create_plugin_group
@@ -776,7 +775,7 @@ class SketchMainWindow(Publisher):
                 entries.append((plugin.menu_text + '...', dialog, plugin))
             else:
                 entries.append((plugin.menu_text, place, plugin))
-        return map(MakeCommand, entries)
+        return list(map(MakeCommand, entries))
 
     def place_plugin_object(self, info):
         self.canvas.PlaceObject(info())
@@ -788,7 +787,7 @@ class SketchMainWindow(Publisher):
         self.canvas.PlaceObject(object)
 
     def make_effects_menu(self):
-        return map(MakeCommand,
+        return list(map(MakeCommand,
                    [self.commands.FlipHorizontal,
                     self.commands.FlipVertical,
                     self.commands.RotateCW,
@@ -801,12 +800,12 @@ class SketchMainWindow(Publisher):
                     None,
                     self.commands.CreateMaskGroup,
                     self.commands.CreatePathText,
-                    ])
+                    ]))
 
     def make_curve_menu(self):
         canvas = self.canvas
         cmds = self.canvas.commands.PolyBezierEditor
-        return map(MakeCommand,
+        return list(map(MakeCommand,
                    [cmds.ContAngle,
                     cmds.ContSmooth,
                     cmds.ContSymmetrical,
@@ -823,15 +822,15 @@ class SketchMainWindow(Publisher):
                     self.commands.CombineBeziers,
                     self.commands.SplitBeziers,
                     None,
-                    self.commands.ConvertToCurve])
+                    self.commands.ConvertToCurve]))
 
     def make_view_menu(self):
         def MakeEntry(scale, call = self.canvas.SetScale):
             percent = int(100 * scale)
             return (('%3d%%' % percent), call, scale)
         cmds = self.canvas.commands
-        scale = map(MakeEntry, [ 0.125, 0.25, 0.5, 1, 2, 4, 8])
-        return map(MakeCommand,
+        scale = list(map(MakeEntry, [ 0.125, 0.25, 0.5, 1, 2, 4, 8]))
+        return list(map(MakeCommand,
                    [MakeEntry(1),
                     [_("Zoom")] + scale,
                     cmds.ZoomIn,
@@ -851,7 +850,7 @@ class SketchMainWindow(Publisher):
                     cmds.ToggleCrosshairs,
                     None,
                     self.commands.LoadPalette
-                    ])
+                    ]))
 
     def make_arrange_menu(self):
         commands = [self.commands.CreateAlignDialog,
@@ -882,10 +881,10 @@ class SketchMainWindow(Publisher):
         commands = commands + [None,
                                self.commands.CreateLayoutDialog
                                ]
-        return map(MakeCommand, commands)
+        return list(map(MakeCommand, commands))
 
     def make_style_menu(self):
-        return map(MakeCommand,
+        return list(map(MakeCommand,
                    [self.commands.FillNone,
                     self.commands.CreateFillStyleDialog,
                     self.canvas.commands.FillSolid,
@@ -899,11 +898,11 @@ class SketchMainWindow(Publisher):
                     self.commands.UpdateStyle,
                     None,
                     self.commands.CreateFontDialog
-                    ])
+                    ]))
 
     def make_window_menu(self):
         cmds = self.commands
-        return map(MakeCommand,
+        return list(map(MakeCommand,
                    [cmds.HideDialogs,
                     cmds.ShowDialogs,
                     None,
@@ -920,7 +919,7 @@ class SketchMainWindow(Publisher):
                     None,
                     cmds.CreateBlendDialog,
                     cmds.CreateCurveDialog
-                    ])
+                    ]))
 
     def make_special_menu(self):
         cmdlist = [self.commands.python_prompt,
@@ -932,12 +931,12 @@ class SketchMainWindow(Publisher):
                    #self.commands.export_bitmap,
                    ]
         Sketch.Issue(None, Sketch.Base.const.ADD_TO_SPECIAL_MENU, cmdlist)
-        return map(MakeCommand, cmdlist)
+        return list(map(MakeCommand, cmdlist))
 
     def make_script_menu(self):
         tree = Sketch.Scripting.Registry.MenuTree()
         cmdlist = self.convert_menu_tree(tree)
-        return map(MakeCommand, cmdlist)
+        return list(map(MakeCommand, cmdlist))
 
 
     def convert_menu_tree(self, tree):

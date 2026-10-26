@@ -38,7 +38,7 @@ class Smiley(AutoshapeBase):
     def DragHandle(self, pa, pb, selection):
         try:
             inverse = self.trafo.inverse()
-            pa, pb = map(inverse, (pa, pb))
+            pa, pb = list(map(inverse, (pa, pb)))
             h = self.h + (pb-pa)[1]
             h = min(6, h)
             h = max(-6, h)

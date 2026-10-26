@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 /*
  *  Copyright (C) 2000, 2002 by Bernhard Herzog.
  *

@@ -53,8 +53,8 @@ _width = 90
 def draw_dash_bitmap(gc, dashes):
     scale = float(_thickness)
     if dashes:
-        dashes = map(operator.mul, dashes, [scale] * len(dashes))
-        dashes = map(int, map(round, dashes))
+        dashes = list(map(operator.mul, dashes, [scale] * len(dashes)))
+        dashes = list(map(int, list(map(round, dashes))))
         for idx in range(len(dashes)):
             length = dashes[idx]
             if length <= 0:

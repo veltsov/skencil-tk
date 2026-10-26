@@ -39,11 +39,7 @@ import struct
 
 version = '0.13 (Sat 20th October 2001)'
 
-try:
-    import cStringIO
-    StringIO = cStringIO
-except ImportError:
-    import StringIO
+import io as StringIO
 
 class drawfile_error(Exception):
 

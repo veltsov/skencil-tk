@@ -73,7 +73,7 @@ Modifier:
         except SingularMatrix:
             return 
 
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         r1, r2, n = self.r1, self.r2, self.n            
         alpha = 2*pi / n
 

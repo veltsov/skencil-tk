@@ -43,7 +43,7 @@ Modifier:
         for x in self.cols:
             for y in self.rows:
                 points.append(Point(x,y))
-        return map(self.trafo, points)
+        return list(map(self.trafo, points))
 
     def LayoutPoint(self):
         return Point(self.cols[0], self.rows[0])
@@ -135,7 +135,7 @@ Modifier:
         except:
             return
         
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         dw, dh = pb-pa
 
         i_row = (selection-1) % len(self.rows)

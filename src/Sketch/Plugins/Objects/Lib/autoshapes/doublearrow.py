@@ -24,7 +24,7 @@ class DoubleArrow(AutoshapeBase):
     def DragHandle(self, pa, pb, selection):
         try:
             inverse = self.trafo.inverse()
-            pa, pb = map(inverse, (pa, pb))
+            pa, pb = list(map(inverse, (pa, pb)))
             dw, dh = pb-pa            
 
             h1, h2, w1, w2 = self.GetData()

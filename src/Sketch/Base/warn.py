@@ -42,9 +42,9 @@ def flexible_format(format, args, kw):
             text = format
     except TypeError:
         if args:
-            text = ' '.join([format] + map(str, args))
+            text = ' '.join([format] + list(map(str, args)))
         elif kw:
-            text = ' '.join([format] + map(str, kw.items()))
+            text = ' '.join([format] + list(map(str, kw.items())))
         else:
             text = format
 
@@ -80,7 +80,7 @@ def warn_tb(_level, _message = '', *args, **kw):
             result = app.MessageBox(title = _("Warning"), message = _message,
                                     icon = 'warning', buttons = (_("OK"), tb))
             if result == tb:
-                from cStringIO import StringIO
+                from io import StringIO
                 file = StringIO()
                 traceback.print_exc(file = file)
                 _message = file.getvalue()

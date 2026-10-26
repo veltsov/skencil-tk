@@ -26,7 +26,7 @@ Horizontal Connection
         StickyObject.__init__(*(self,)+args, **kw)
 
     def GetSnapPoints(self):
-        return map(self.trafo, (self.p1, self.p2))
+        return list(map(self.trafo, (self.p1, self.p2)))
     
     def GetHandles(self):
         handles = []
@@ -40,7 +40,7 @@ Horizontal Connection
         return handles
 
     def GetStickyPoints(self):
-        return map(self.trafo, (self.p1, self.p2))
+        return list(map(self.trafo, (self.p1, self.p2)))
     
     def bond_changed(self, i, p):
         p = self.trafo.inverse()(p)
@@ -74,7 +74,7 @@ Horizontal Connection
         except SingularMatrix:
             return 
 
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         delta = pb-pa
 
         p1, p2, x = self.p1, self.p2, self.x
@@ -90,7 +90,7 @@ Horizontal Connection
 
     def SetData(self, data, version=None):
         undo = self.SetData, self.GetData()        
-        self.p1, self.p2 = map(Point, data[:2])
+        self.p1, self.p2 = list(map(Point, data[:2]))
         self.x = data[2]
         return undo
 

@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "skmember.h"
 #include <tk.h>
@@ -484,8 +485,7 @@ Dealloc(PaxGCObject *self)
 
 PyTypeObject PaxGCType =
 {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,			/*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)			/*ob_size*/
 	"PaxGC",		/*tp_name*/
 	sizeof(PaxGCObject),	/*tp_size*/
 	0,			/*tp_itemsize*/

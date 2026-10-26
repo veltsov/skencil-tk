@@ -100,7 +100,7 @@ class PolyBezier(Primitive):
                                      ignore_outline_mode = clip)
 
     def do_undo(self, undo_list):
-        undo = map(undo_path, undo_list, self.paths)
+        undo = list(map(undo_path, undo_list, self.paths))
         self._changed()
         return (self.do_undo, undo)
 

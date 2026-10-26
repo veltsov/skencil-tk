@@ -103,7 +103,7 @@ class EpsData(ExternalData):
         write = file.write
 
         try:
-            infile = open(self.filename, 'r')
+            infile = open(self.filename, 'rb')
         except IOError as val:
             raise IOError(filename, val)
         try:

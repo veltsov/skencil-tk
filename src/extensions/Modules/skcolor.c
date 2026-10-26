@@ -205,13 +205,13 @@ static PySequenceMethods skcolor_as_sequence = {
 	skcolor_length,			/*sq_length*/
 	skcolor_concat,			/*sq_concat*/
 	skcolor_repeat,			/*sq_repeat*/
-	(ssizeargfunc)skcolor_item,	/*sq_item*/
-	skcolor_slice,			/*sq_slice*/
-	0,				/*sq_ass_item*/
-	0,				/*sq_ass_slice*/
-	0,                              /*sq_contains*/
-	0,                              /*sq_inplace_concat*/
-	0,                              /*sq_inplace_repeat*/
+	(ssizeargfunc)skcolor_item,			/*sq_item*/
+	0,			/*was_sq_slice*/
+	0,			/*sq_ass_item*/
+	0,			/*was_sq_ass_slice*/
+	0,			/*sq_contains*/
+	0,			/*sq_inplace_concat*/
+	0,			/*sq_inplace_repeat*/
 };
 
 
@@ -273,8 +273,7 @@ skcolor_richcompare(PyObject * v, PyObject * w, int op)
 }
 
 PyTypeObject SKColorType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"skcolor",
 	sizeof(SKColorObject),
 	0,
@@ -746,8 +745,7 @@ skvisual_getattr(PyObject * self, char * name)
 
 
 PyTypeObject SKVisualType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"skvisual",
 	sizeof(SKVisualObject),
 	0,

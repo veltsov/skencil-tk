@@ -69,12 +69,12 @@ from Sketch.Graphics import text, pagelayout
 std_colors = [StandardColors.black, StandardColors.blue, StandardColors.green,
               StandardColors.cyan, StandardColors.red, StandardColors.magenta,
               StandardColors.yellow, StandardColors.white] + \
-           map(XRGBColor, ("#000090", "#0000b0", "#0000d0", "#87ceff",
+           list(map(XRGBColor, ("#000090", "#0000b0", "#0000d0", "#87ceff",
                            "#009000", "#00b000", "#00d000", "#009090",
                            "#00b0b0", "#00d0d0", "#900000", "#b00000",
                            "#d00000", "#900090", "#b000b0", "#d000d0",
                            "#803000", "#a04000", "#c06000", "#ff8080",
-                           "#ffa0a0", "#ffc0c0", "#ffe0e0", "#ffd700"))
+                           "#ffa0a0", "#ffc0c0", "#ffe0e0", "#ffd700")))
 
 BLACK = 0
 WHITE = 7
@@ -116,8 +116,8 @@ def coords_to_points(coords, trafo):
         raise ValueError("coordinate has odd length")
     num = len(coords)
     coords = [coords] * (num // 2)
-    return map(trafo, map(getitem, coords, range(0, num, 2)),
-               map(getitem, coords, range(1, num, 2)))
+    return list(map(trafo, list(map(getitem, coords, range(0, num, 2))),
+               list(map(getitem, coords, range(1, num, 2)))))
 
 class XFigLoader(SimplifiedLoader):
 
@@ -318,7 +318,7 @@ class XFigLoader(SimplifiedLoader):
             raise SketchLoadError('Missing points for polyline')
         if len(pts) > ncoords:
             del pts[ncoords:]
-        map(path.AppendLine, coords_to_points(pts, self.trafo))
+        list(map(path.AppendLine, coords_to_points(pts, self.trafo)))
         if sub_type in (2, 3, 4):
             path.load_close(1)
         self.bezier(paths = path)
@@ -367,10 +367,10 @@ class XFigLoader(SimplifiedLoader):
             path.AppendLine(pts[0])
             ncontrols = 2 * (npoints - 1)
             controls = [controls] * (npoints - 1)
-            map(path.AppendBezier,
-                map(getitem, controls, range(0, ncontrols, 2)),
-                map(getitem, controls, range(1, ncontrols, 2)),
-                pts[1:])
+            list(map(path.AppendBezier,
+                list(map(getitem, controls, range(0, ncontrols, 2))),
+                list(map(getitem, controls, range(1, ncontrols, 2))),
+                pts[1:]))
         elif sub_type in (0, 1):
             # approximated spline
             f13 = 1.0 / 3.0; f23 = 2.0 / 3.0
@@ -400,7 +400,7 @@ class XFigLoader(SimplifiedLoader):
             # read and discard the control info
             self.read_tokens(npoints)
             self.add_message(_("X-Spline treated as PolyLine"))
-            map(path.AppendLine, pts)
+            list(map(path.AppendLine, pts))
             if closed:
                 path.AppendLine(path.Node(0))
         if closed:
@@ -451,10 +451,10 @@ class XFigLoader(SimplifiedLoader):
     def end_composite(self):
         # sort composite_items by their depth
         items = self.composite_items
-        depths = map(self.depths.get, map(id, items), [-10000]*len(items))
-        depths = map(None, depths, range(len(items)), items)
+        depths = list(map(self.depths.get, list(map(id, items)), [-10000]*len(items)))
+        depths = list(zip(depths, range(len(items)), items))
         depths.sort()
-        self.composite_items = map(getitem, depths, [2] * len(items))
+        self.composite_items = list(map(getitem, depths, [2] * len(items)))
         SimplifiedLoader.end_composite(self)
 
     def read_header(self):
@@ -489,7 +489,7 @@ class XFigLoader(SimplifiedLoader):
         line = self.readline().strip()
         if line:
             try:
-                ppi, coord = map(int, line.split())
+                ppi, coord = list(map(int, line.split()))
             except:
                 raise SketchLoadError('Invalid Resolution specification')
             self.trafo = self.trafo(Scale(72.0 / ppi))

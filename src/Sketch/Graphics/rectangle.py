@@ -114,7 +114,7 @@ class Rectangle(RectangularPrimitive):
                                          clip or self.Filled(),
                                          ignore_outline_mode = clip)
     def GetSnapPoints(self):
-        return map(self.trafo, corners + [(0.5, 0.5)])
+        return list(map(self.trafo, corners + [(0.5, 0.5)]))
 
     def Snap(self, p):
         try:
@@ -172,7 +172,7 @@ class Rectangle(RectangularPrimitive):
             return (1e200, p)
 
     def update_rects(self):
-        rect = PointsToRect(map(self.trafo, corners))
+        rect = PointsToRect(list(map(self.trafo, corners)))
         self.coord_rect = rect
         if self.properties.HasLine():
             self.bounding_rect = rect.grown(self.properties.GrowAmount())

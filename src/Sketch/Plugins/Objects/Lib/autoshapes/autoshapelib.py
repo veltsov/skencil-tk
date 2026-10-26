@@ -18,7 +18,7 @@ _debug  = 0
 def note(msg, *args):
     if _debug:
         if len(args):
-            print(msg % map(str, args))
+            print(msg % list(map(str, args)))
         else:
             print(msg)
         

@@ -303,6 +303,11 @@ class SimplifiedLoader(GenericLoader):
 
     def readline(self):
         line = self.file.readline()
+        if isinstance(line, bytes):
+            # the simplified text-format loaders work on str; files are
+            # utf-8 (the .sk format) or latin-1-ish (xfig); decode
+            # leniently
+            line = line.decode('utf-8', 'surrogateescape')
         self.lineno = self.lineno + 1
         return line
 
@@ -326,11 +331,16 @@ def load_drawing_from_file(file, filename = '', doc_class = None):
     line = file.readline()
     # XXX ugly hack for riff-based files, e.g. Corel's CMX. The length
     # might contain newline characters.
-    if line[:4] == 'RIFF' and len(line) < 12:
+    if line[:4] == b'RIFF' and len(line) < 12:
         line = line + file.read(12 - len(line))
-    #print line
+    # The magic patterns are str; files are opened in binary mode, so
+    # decode the header line (latin-1 preserves the bytes 1:1).
+    if isinstance(line, bytes):
+        magic_line = line.decode('latin-1')
+    else:
+        magic_line = line
     for info in plugins.import_plugins:
-        match = info.rx_magic.match(line)
+        match = info.rx_magic.match(magic_line)
         if match:
             loader = info(file, filename, match)
             try:
@@ -358,9 +368,9 @@ def load_drawing_from_file(file, filename = '', doc_class = None):
 
 
 def load_drawing(filename):
-    if isinstance(filename, (str, unicode)):
+    if isinstance(filename, str):
         try:
-            file = open(filename, 'r')
+            file = open(filename, 'rb')
         except IOError as value:
             message = value.strerror
             raise SketchLoadError(_("Cannot open %(filename)s:\n%(message)s")

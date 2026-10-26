@@ -19,6 +19,7 @@
 
 #include <math.h>
 #include <float.h>
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include "skpoint.h"
@@ -141,6 +142,19 @@ PyInit__sketch(void)
 
     m = PyModule_Create(&_sketchmodule);
     d = PyModule_GetDict(m);
+
+#define SK_READY(type) \
+    do { if (PyType_Ready(&(type)) < 0) return NULL; } while (0)
+    extern PyTypeObject SKFontMetricType;   /* defined in skfm.c */
+    extern PyTypeObject SKCacheType;        /* defined in skaux.c */
+    SK_READY(SKRectType);
+    SK_READY(SKPointType);
+    SK_READY(SKTrafoType);
+    SK_READY(SKCurveType);
+    SK_READY(SKColorType);
+    SK_READY(SKVisualType);
+    SK_READY(SKFontMetricType);
+    SK_READY(SKCacheType);
 
    
     /* Rect specific initialization */

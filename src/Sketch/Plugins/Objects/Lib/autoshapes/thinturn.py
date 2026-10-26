@@ -40,7 +40,7 @@ Modifier:
         except SingularMatrix:
             return
 
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         dw, dh = pb-pa            
 
         back, l1, l2, l3, d1, d2, d3 = self.back, self.l1, self.l2, self.l3, \

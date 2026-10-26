@@ -39,6 +39,7 @@
  *
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <string.h>
 #include "skmember.h"
@@ -366,8 +367,7 @@ skfm_getattr(PyObject * self, char * name)
 }
 
 PyTypeObject SKFontMetricType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"skfm",
 	sizeof(SKFontMetric),
 	0,

@@ -297,8 +297,8 @@ class SimpleGC(GCDevice):
                 scale = self.scale
             else:
                 scale = width * self.scale
-            dashes = map(operator.mul, dashes, [scale] * len(dashes))
-            dashes = map(int, map(round, dashes))
+            dashes = list(map(operator.mul, dashes, [scale] * len(dashes)))
+            dashes = list(map(int, list(map(round, dashes))))
             for idx in range(len(dashes)):
                 length = dashes[idx]
                 if length <= 0:
@@ -321,11 +321,11 @@ class SimpleGC(GCDevice):
         self.gc.DrawLine(startx, starty, endx, endy)
 
     def DrawLines(self, pts):
-        pts = map(self.DocToWin, pts)
+        pts = list(map(self.DocToWin, pts))
         self.gc.DrawLines(pts, X.CoordModeOrigin)
 
     def FillPolygon(self, pts):
-        pts = map(self.DocToWin, pts)
+        pts = list(map(self.DocToWin, pts))
         self.gc.FillPolygon(pts, X.Complex, X.CoordModeOrigin)
 
     def DrawRectangle(self, start, end):
@@ -534,7 +534,7 @@ class GraphicsDevice(SimpleGC, CommonDevice):
         width = self.widget.width
         height = self.widget.height
         winrect = self.doc_to_win(self.fill_rect)
-        left, top, right, bottom = map(int, map(round, winrect))
+        left, top, right, bottom = list(map(int, list(map(round, winrect))))
         l = max(left, 0);	r = min(right, width);
         t = max(top, 0);	b = min(bottom, height);
         if type(self.clip_region) == PaxRegionType:
@@ -873,14 +873,14 @@ class GraphicsDevice(SimpleGC, CommonDevice):
                     gc.SetFont(xfont)
 
                     codes = font.GlyphCodes(text)
-                    pos = map(self.DocToWin, pos)
+                    pos = list(map(self.DocToWin, pos))
                     for i in range(len(text)):
                         x, y = pos[i]
                         gc.DrawString(x, y, chr(codes[i]))
             else:
                 # 'greek'. XXX is this really necessary. It avoids
                 # rendering fonts that are too small to read.
-                pos = map(self.DocToWin, pos)
+                pos = list(map(self.DocToWin, pos))
                 ux, uy = up
                 lx = ux / 2; ly = uy / 2
                 uppercase = string.ascii_uppercase
@@ -1371,7 +1371,7 @@ class InvertingDevice(GraphicsDevice):
             self.gc.DrawArc(x, y, 2 * size, 2 * size, 0, 23040)
 
     def DrawSmallRectHandleList(self, pts, filled = 1):
-        pts = map(self.doc_to_win.DocToWin, pts)
+        pts = list(map(self.doc_to_win.DocToWin, pts))
         size = self.small_handle_size
         size2 = 2 * size
         if filled:

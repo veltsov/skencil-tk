@@ -78,7 +78,7 @@ Modifier:
             inverse = self.trafo.inverse()
         except SingulareMatrix:
             return
-        pa, pb = map(inverse, (pa, pb))
+        pa, pb = list(map(inverse, (pa, pb)))
         delta = pb-pa
         
         if selection == 1:

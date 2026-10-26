@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 /* Sketch - A Python-based interactive drawing program
  * Copyright (C) 1998, 1999 by Bernhard Herzog
  *
