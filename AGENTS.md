@@ -24,6 +24,9 @@ from GTK to **Tk** and added many features (see `README.md`).
 | `devdocs/glyph-text.md` | The glyph-index text representation of `SimpleText` (global glyph registry, gid arrays, conversions at all sinks); supersedes the byte-per-character K3 form |
 | `devdocs/text-input.md` | Findings and design for the planned text input rework: unicode keyboard input (Cyrillic etc.), keymap dispatch, afii/uniXXXX glyph-name candidates — **planned, not implemented** |
 | `devdocs/import-restructure.md` | The import machinery findings (implicit relative imports, fake plugin packages, `module.so` suffix trick) and the executed restructuring into a canonical real-package layout with absolute imports |
+| `devdocs/image-transparency.md` | Image alpha transparency: current state (model keeps RGBA; display/PS/PDF drop it), the near-term plan (display blending, PS flatten, PDF via ghostscript `-dALLOWPSTRANSPARENCY` SMask recipe) — **planned, not implemented** |
+| `devdocs/display-backends.md` | Modern display backends (pixman, XRender, cairo, GPU/Tk-native) evaluated against Skencil's device architecture; post-py3 strategy; antialiasing and font-model modernization goals — **analysis only** |
+| `devdocs/divaudit-findings.md` | Integer-division audit results (static + runtime coverage, int-division site list, C-boundary verification) and 7 bugs found by the audit sessions — **all fixed** |
 
 ## Quick facts
 
