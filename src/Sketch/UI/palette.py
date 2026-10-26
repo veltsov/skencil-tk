@@ -275,7 +275,7 @@ class PaletteWidget(PyWidget, Publisher):
 
     def __init__(self, master=None, palette = None, cell_size = 16, **kw):
         if 'height' not in kw:
-	     kw['height'] = cell_size
+            kw['height'] = cell_size
         PyWidget.__init__(*(self, master), **kw)
 
         self.cell_size = cell_size
@@ -299,7 +299,7 @@ class PaletteWidget(PyWidget, Publisher):
         Publisher.Destroy(self)
 
     def compute_num_cells(self):
-	 self.num_cells = self.tkwin.width // self.cell_size + 1
+         self.num_cells = self.tkwin.width // self.cell_size + 1
 
     def MapMethod(self):
         self.compute_num_cells()
@@ -402,8 +402,8 @@ class PaletteWidget(PyWidget, Publisher):
         rgbs = rgbs[self.start_idx:self.start_idx + self.num_cells]
         for rgb in rgbs:
             SetFillColor(create_color(*rgb))
-	    FillRectangle(x, 0, x + height, height)
-	    x = x + height
+            FillRectangle(x, 0, x + height, height)
+            x = x + height
         self.gc.EndDblBuffer()
 
     def ResizedMethod(self, width, height):

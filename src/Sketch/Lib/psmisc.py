@@ -32,7 +32,7 @@ def make_ps_quote_table():
     for i in range(127, 256):
         table[i] = '\\' + oct(i)[1:]
     for i in range(0, 32):
-	table[i] = '\\' + oct(512+i)[2:]
+        table[i] = '\\' + oct(512+i)[2:]
     return table
 
 quote_table = make_ps_quote_table()

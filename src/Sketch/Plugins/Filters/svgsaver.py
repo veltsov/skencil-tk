@@ -156,7 +156,8 @@ class SVGSaver:
 
         return '; '.join(style)
 
-    def write_gradient(self, (pattern, rect), style):
+    def write_gradient(self, pattern_rect, style):
+        pattern, rect = pattern_rect
         write = self.file.write
         gradient_id = self.new_id()
         stops = pattern.Gradient().Colors()

@@ -207,10 +207,10 @@ class TextParameter(Parameter):
             h = 3
         else:
             w,h = self.range
-	txtfield = Text(master, width=w, height=h, background='white', wrap=WORD)
-	self.var = StringVarForText(txtfield)
+            txtfield = Text(master, width=w, height=h, background='white', wrap=WORD)
+            self.var = StringVarForText(txtfield)
         self.var.set(self.value)
-	txtfield.grid(row = row+1, columnspan = 4, sticky = 'news')
+        txtfield.grid(row = row+1, columnspan = 4, sticky = 'news')
         master.grid_rowconfigure(row+1,weight=1)
 
     def var_changed(self, *rest):

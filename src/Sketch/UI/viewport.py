@@ -63,7 +63,8 @@ class Viewport:
     #	Coordinate conversions
     #
 
-    def set_page_size(self, (width, height)):
+    def set_page_size(self, size):
+        width, height = size
         self.page_width = width
         self.page_height = height
 

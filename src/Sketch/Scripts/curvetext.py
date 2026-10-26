@@ -114,7 +114,7 @@ class Type1FontFile:
                    "You can use ghostscript's pf2afm to generate it"
                    " if necessary.") % afm
             raise FontError(msg)
-	self.outlines = None
+        self.outlines = None
         self.code_to_gid = [glyph_registry.index(name)
                             for name in self.encoding]
 
@@ -136,25 +136,25 @@ class Type1FontFile:
         return array('I', [self.code_to_gid[ord(char)] for char in text])
 
     def TypesetText(self, text):
-	return self.metric.typeset_string(self.TextGids(text))
+        return self.metric.typeset_string(self.TextGids(text))
 
     def GetOutline(self, gid):
-	if self.outlines is None:
-	    self.char_strings, self.cs_interp \
+        if self.outlines is None:
+            self.char_strings, self.cs_interp \
 			       = read_outlines(self.font_file)
-	    self.outlines = {}
-	char_name = glyph_registry.name(gid)
-	outline = self.outlines.get(char_name)
-	if outline is None:
-	    self.cs_interp.execute(self.char_strings[char_name])
-	    outline = convert_outline(self.cs_interp.paths)
-	    self.outlines[char_name] = outline
-	    self.cs_interp.reset()
-	copy = []
-	for path in outline:
-	    path = path.Duplicate()
-	    copy.append(path)
-	return tuple(copy)
+            self.outlines = {}
+        char_name = glyph_registry.name(gid)
+        outline = self.outlines.get(char_name)
+        if outline is None:
+            self.cs_interp.execute(self.char_strings[char_name])
+            outline = convert_outline(self.cs_interp.paths)
+            self.outlines[char_name] = outline
+            self.cs_interp.reset()
+        copy = []
+        for path in outline:
+            path = path.Duplicate()
+            copy.append(path)
+        return tuple(copy)
 
 
 def curves_type1(text, font):
@@ -265,21 +265,21 @@ class SmartListbox(Tkinter.Listbox):
     strings and return the selected object"""
 
     def __init__(self, master, command = None, args = (), **kw):
-	Tkinter.Listbox.__init__(*(self, master), **kw)
+        Tkinter.Listbox.__init__(*(self, master), **kw)
         self.list = []
 
     def SetList(self, list):
         self.list = list
-	self.delete(0, END)
-	for text, object in list:
-	    self.insert(END, text)
+        self.delete(0, END)
+        for text, object in list:
+            self.insert(END, text)
 
     def SelectNone(self):
-	self.select_clear(0, END)
+        self.select_clear(0, END)
 
     def Select(self, idx, view = 0):
-	self.select_clear(0, END)
-	self.select_set(idx)
+        self.select_clear(0, END)
+        self.select_set(idx)
         if view:
             self.yview(idx)
 
@@ -302,22 +302,22 @@ class CurveTextDialog(SKModal):
 
     def build_dlg(self):
         row = 0
-	self.var_size = DoubleVar(self.top)
+        self.var_size = DoubleVar(self.top)
         self.var_size.set(16.0)
         label = Label(self.top, text = "Text Size")
         label.grid(column = 0, row = row, sticky = E)
-	entry = Entry(self.top, width = 15, textvariable = self.var_size)
-	entry.grid(column = 1, row = row)
+        entry = Entry(self.top, width = 15, textvariable = self.var_size)
+        entry.grid(column = 1, row = row)
 
         row = row + 1
         label = Label(self.top, text = "Font")
         label.grid(column = 0, row = row, sticky = E)
         row = row + 1
         frame = Frame(self.top)
-	frame.grid(column = 0, row = row, columnspan = 2)
+        frame.grid(column = 0, row = row, columnspan = 2)
         list = self.list = SmartListbox(frame)
         list.SetList(self.build_font_list())
-	list.pack(side = LEFT, expand = 1)
+        list.pack(side = LEFT, expand = 1)
         scrollbar = Scrollbar(frame, command = list.yview)
         scrollbar.pack(side = RIGHT, fill = Y)
         list.config(yscrollcommand = scrollbar.set)
@@ -327,14 +327,14 @@ class CurveTextDialog(SKModal):
         self.var_text.set("Test")
         label = Label(self.top, text = "Text")
         label.grid(column = 0, row = row, sticky = E)
-	entry = Entry(self.top, width = 15, textvariable = self.var_text)
-	entry.grid(column = 1, row = row)
+        entry = Entry(self.top, width = 15, textvariable = self.var_text)
+        entry.grid(column = 1, row = row)
 
         row = row + 1
-	button = Button(self.top, text = "OK", command = self.ok)
-	button.grid(column = 0, row = row, sticky = W)
-	button = Button(self.top, text = "Cancel", command = self.cancel)
-	button.grid(column = 1, row = row, sticky = E)
+        button = Button(self.top, text = "OK", command = self.ok)
+        button.grid(column = 0, row = row, sticky = W)
+        button = Button(self.top, text = "Cancel", command = self.cancel)
+        button.grid(column = 1, row = row, sticky = E)
 
     def ok(self):
         font = self.list.SelectedObject()

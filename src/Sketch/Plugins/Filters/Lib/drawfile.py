@@ -98,19 +98,19 @@ class drawfile_object:
         sign = word1 >> 31
         exponent = ((word1 >> 20) & 0x7ff) - 1023
 
-        fraction = long((word1 & 0x000fffff) | 0x100000) << 32
-        fraction = fraction | long(word2)
+        fraction = int((word1 & 0x000fffff) | 0x100000) << 32
+        fraction = fraction | int(word2)
 
         if exponent > 0:
 
-            value = float(fraction << exponent) / float(1L << 52)
+            value = float(fraction << exponent) / float(1 << 52)
 
         elif exponent == 0:
 
-            value = float(fraction) / float(1L << 52)
+            value = float(fraction) / float(1 << 52)
 
         else:
-            value = float(fraction >> -exponent) / float(1L << 52)
+            value = float(fraction >> -exponent) / float(1 << 52)
 
         if sign == 1:
             return -value
@@ -120,7 +120,7 @@ class drawfile_object:
 
     def encode_double(self, f):
 
-        l = long(f)
+        l = int(f)
 
 
 class font_table(drawfile_object):

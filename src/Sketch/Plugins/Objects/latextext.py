@@ -88,23 +88,23 @@ class LtxObj(TrafoPlugin):
     is_Group            = 1
 
     def __init__(self, text = '0', size = default_size, trafo = None, loading = 0,
-		 duplicate = None):
-	TrafoPlugin.__init__(self, trafo = trafo, duplicate = duplicate)
-	if duplicate is not None:
-	    self.text = duplicate.text
-	    self.size = duplicate.size
+                 duplicate = None):
+        TrafoPlugin.__init__(self, trafo = trafo, duplicate = duplicate)
+        if duplicate is not None:
+            self.text = duplicate.text
+            self.size = duplicate.size
             self.group = duplicate.group
-	    self.ptext = duplicate.ptext
-	    self.psize = duplicate.psize
+            self.ptext = duplicate.ptext
+            self.psize = duplicate.psize
             self.redraw = duplicate.redraw
-	else:
+        else:
 	    # self.text is unicode in the model: the plugin dialog
 	    # provides unicode directly, and byte strings loaded from a
 	    # .sk file are utf-8 encoded parameters (see
 	    # devdocs/string-handling.md)
-	    self.text = as_unicode(text)
-	    self.size = size
-	    self.group = None
+            self.text = as_unicode(text)
+            self.size = size
+            self.group = None
             self.ptext = self.text
             self.psize = size
             self.redraw = 1
@@ -114,7 +114,7 @@ class LtxObj(TrafoPlugin):
         if loading:
             self.redraw = 0
         else:
-	    self.recompute()
+            self.recompute()
 
 
     def load_Done(self):
@@ -130,11 +130,11 @@ class LtxObj(TrafoPlugin):
             #text is new or changed
             self.ptext = self.text
             self.psize = self.size
-	    self.redraw = 1
+            self.redraw = 1
 
-	if self.redraw:
+        if self.redraw:
             self.redraw = 0
-	    self.group = create_tex_sk(self.text,self.size,self.app.main_window.document)
+            self.group = create_tex_sk(self.text,self.size,self.app.main_window.document)
 
         trafo = self.trafo
 
@@ -151,13 +151,13 @@ class LtxObj(TrafoPlugin):
         self.connect_objects()
 
     def Text(self):
-	return self.text
+        return self.text
 
     def Size(self):
-	return self.size
+        return self.size
 
     def SaveToFile(self, file):
-	TrafoPlugin.SaveToFile(self, file, self.text, self.size,
+        TrafoPlugin.SaveToFile(self, file, self.text, self.size,
 			       self.trafo.coeff())
 
     def Info(self):
@@ -166,10 +166,10 @@ class LtxObj(TrafoPlugin):
                % (self.text[:20],self.size)
 
     def AsBezier(self):
-	return self.objects[0].AsBezier()
+        return self.objects[0].AsBezier()
 
     def Paths(self):
-	return self.objects[0].Paths()
+        return self.objects[0].Paths()
 
     def Ungroup(self):
         return self.objects

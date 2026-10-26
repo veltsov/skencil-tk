@@ -18,7 +18,7 @@ class TeXDlg(SKModal):
     title = "TeX insert"
 
     def __init__(self, master, **kw):
-	SKModal.__init__(*(self, master), **kw)
+        SKModal.__init__(*(self, master), **kw)
 
     def build_dlg(self):
         top = self.top
@@ -31,25 +31,25 @@ class TeXDlg(SKModal):
         self.text.insert(END, tex.string)
         self.text.grid(column = 0, row = 1, sticky = 'ew')
         
-	but_frame = Frame(top)
-	but_frame.grid(column = 0, row = 2, columnspan = 2)
+        but_frame = Frame(top)
+        but_frame.grid(column = 0, row = 2, columnspan = 2)
 
-	button = Button(but_frame, text = "OK", command = self.ok)
-	button.pack(side = 'left', expand = 1)
+        button = Button(but_frame, text = "OK", command = self.ok)
+        button.pack(side = 'left', expand = 1)
         if eps_filename(Context()) != '': # lupan
             button = Button(but_frame, text = "Replace", command = self.replace)
             button.pack(side = 'left', expand = 1)
-	button = Button(but_frame, text = "Cancel", command = self.cancel)
-	button.pack(side = 'right', expand = 1)
+        button = Button(but_frame, text = "Cancel", command = self.cancel)
+        button.pack(side = 'right', expand = 1)
 
 
     def ok(self, *args):
         tex_result = self.text.get(1.0, END)
-	self.close_dlg((tex_result, 0)) 
+        self.close_dlg((tex_result, 0)) 
         
     def replace(self, *args):
         tex_result = self.text.get(1.0, END)
-	self.close_dlg((tex_result, 1))
+        self.close_dlg((tex_result, 1))
 
 # This is based on the "create_star" example script.
 # ------------------------------------------------------------------
@@ -59,7 +59,7 @@ class TeXmathDlg(SKModal):
     title = "TeX insert"
 
     def __init__(self, master, **kw):
-	SKModal.__init__(*(self, master), **kw)
+        SKModal.__init__(*(self, master), **kw)
 
     def build_dlg(self):
         top = self.top
@@ -68,7 +68,7 @@ class TeXmathDlg(SKModal):
         label.grid(column = 0, row = 0)
 
         # 'tex.string' is non-empty if a TeX object is selected
-	self.var_text = StringVar(top)
+        self.var_text = StringVar(top)
         self.var_text.set(tex.string)
 
         entry = Entry(top, textvariable = self.var_text, width = 40)
@@ -77,22 +77,22 @@ class TeXmathDlg(SKModal):
         but_frame = Frame(top)
         but_frame.grid(column = 0, row = 1, columnspan = 2)
             
-	button = Button(but_frame, text = "OK", command = self.ok)
-	button.pack(side = 'left', expand = 1)
+        button = Button(but_frame, text = "OK", command = self.ok)
+        button.pack(side = 'left', expand = 1)
         if eps_filename(Context()) != '': 
             button = Button(but_frame, text = "Replace", command = self.replace)
             button.pack(side = 'left', expand = 1)
-	button = Button(but_frame, text = "Cancel", command = self.cancel)
-	button.pack(side = 'right', expand = 1)
+        button = Button(but_frame, text = "Cancel", command = self.cancel)
+        button.pack(side = 'right', expand = 1)
 
 
     def ok(self, *args):
         tex_result = self.var_text.get()
-	self.close_dlg((tex_result, 0))
+        self.close_dlg((tex_result, 0))
 
     def replace(self, *args): 
         tex_result = self.var_text.get()
-	self.close_dlg((tex_result, 1))
+        self.close_dlg((tex_result, 1))
         
 # ------------------------------------------------------------------
 
@@ -101,7 +101,7 @@ class TeX_error_Dlg(SKModal):
     title = "TeX error"
 
     def __init__(self, master, **kw):
-	SKModal.__init__(*(self, master), **kw)
+        SKModal.__init__(*(self, master), **kw)
 
     def build_dlg(self):
         top = self.top

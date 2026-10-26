@@ -173,7 +173,7 @@ def create_directory(dir):
 
     parent, base = os.path.split(dir)
     create_directory(parent)
-    os.mkdir(dir, 0777)
+    os.mkdir(dir, 0o777)
 
 # Make a backup of FILENAME if it exists by renaming it to its
 # backupname (a ~ appended)

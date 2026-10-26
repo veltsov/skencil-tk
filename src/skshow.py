@@ -86,7 +86,7 @@ class ShowView(Sketch.UI.view.SketchView):
 
     def __init__(self, master=None, toplevel = None, double_buffer = 1,
                  show_page_outline = 0, **kw):
-	Sketch.UI.view.SketchView.__init__(*(self, master), **kw)
+        Sketch.UI.view.SketchView.__init__(*(self, master), **kw)
         self.double_buffer = double_buffer
         self.show_page_outline = show_page_outline
 
@@ -120,7 +120,7 @@ class MainWindow:
         root = self.application.root
         self.view = ShowView(root, toplevel = root)
         self.view.pack(fill = BOTH, expand = 1)
-	self.view.focus()
+        self.view.focus()
 
     def bind_events(self):
         self.view.bind("<Configure>", self.view_resized)
@@ -186,7 +186,7 @@ class MainWindow:
 
     def Run(self):
         self.load_file(0)
-	self.application.Mainloop()
+        self.application.Mainloop()
 
     
 
@@ -198,13 +198,13 @@ class SketchShowApplication(Sketch.UI.skapp.TkApplication):
 
     def __init__(self, files, screen_name = None, geometry = None, keep = 0,
                  preload = 0):
-	Sketch.UI.skapp.TkApplication.__init__(self, screen_name = screen_name,
+        Sketch.UI.skapp.TkApplication.__init__(self, screen_name = screen_name,
                                                geometry = geometry)
-	self.files = files
-	self.build_window(keep, preload)
+        self.files = files
+        self.build_window(keep, preload)
 
     def init_tk(self, screen_name = None, geometry = None):
-	Sketch.UI.skapp.TkApplication.init_tk(self, screen_name = screen_name,
+        Sketch.UI.skapp.TkApplication.init_tk(self, screen_name = screen_name,
                                               geometry = geometry)
         Sketch.init_modules_from_widget(self.root)
 
@@ -214,10 +214,10 @@ class SketchShowApplication(Sketch.UI.skapp.TkApplication):
                                       preload = preload)
 
     def Run(self):
-	self.main_window.Run()
+        self.main_window.Run()
 
     def Exit(self):
-	self.root.destroy()
+        self.root.destroy()
 
 
 app = SketchShowApplication(Options.files, screen_name = Options.display,

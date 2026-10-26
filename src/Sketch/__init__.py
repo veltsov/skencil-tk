@@ -70,7 +70,7 @@ def bindtextdomain(domain, dirname=None):
 
 def textdomain(domain=None):
     if domain is not None:
-	_current_domain[0] = domain
+        _current_domain[0] = domain
     return _current_domain[0]
 
 def gettext(text):
