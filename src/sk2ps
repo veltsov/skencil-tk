@@ -29,8 +29,10 @@
 # loaded...
 
 import sys, os
+import platform
 
-sys.path.insert(0,sys.path[0]+'/../lib.linux-x86_64-2.7')
+sys.path.insert(0, sys.path[0] + '/../lib.linux-%s-%d.%d' %
+                (platform.machine(), sys.version_info[0], sys.version_info[1]))
 
 from Sketch import PostScriptDevice
 from Sketch.Base import load

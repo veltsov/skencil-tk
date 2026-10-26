@@ -22,8 +22,10 @@
 #
 
 import sys
+import platform
 
-sys.path.insert(0,sys.path[0]+'/../lib.linux-x86_64-2.7')
+sys.path.insert(0, sys.path[0] + '/../lib.linux-%s-%d.%d' %
+                (platform.machine(), sys.version_info[0], sys.version_info[1]))
 import Sketch
 from Sketch.Base import config, main
 
