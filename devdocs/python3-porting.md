@@ -1,6 +1,6 @@
 # Python 3 Port — Current State and Plan
 
-Date: 2026-10-24.  This document describes the current port-relevant
+Date: 2026-10-26.  This document describes the current port-relevant
 state of the codebase and the porting plan.  Historical findings live
 in the git history and in the sibling documents
 (`import-restructure.md`, `string-handling.md`,
@@ -11,11 +11,27 @@ resolved there is done.
 ## Environment
 
 - Development system: Ubuntu 20.04 (focal); python2.7.18 at
-  `/usr/bin/python2` (the interpreter the app still runs on),
-  python3.10.12 available as `python3`, Tcl/Tk 8.6, Xvfb for the UI
-  tests.
-- The py3 package set for the port: `python3-dev python3-tk
-  python3-pil python3-pil.imagetk tcl-dev tk-dev`.
+  `/usr/bin/python2` (the interpreter the app still runs on).
+- **Python 3 environment (audited 2026-10-26, by import probes — dpkg
+  metadata is unreliable in the bwrap dev root, files owned by
+  `nobody`):** python3.10.12 at `/usr/bin/python3`.  Already present
+  and importable under py3, i.e. **no installation needed**:
+  `tkinter` (Tk 8.6), `PIL` 9.0.1 including `PIL.ImageTk` (used by the
+  autoshape toolbar icons), `numpy` 1.21.5, `setuptools` 59.6.0, the
+  python3.10 C headers (`/usr/include/python3.10`), the Tcl/Tk 8.6 dev
+  headers (`/usr/include/tcl8.6`), gcc/make for the stage-B extension
+  builds, the stdlib `lib2to3` (deprecated since 3.10 but present —
+  fine for the restricted mechanical pass), and the system tools the
+  test suite drives: `Xvfb`, `ghostscript`, LaTeX.
+- **Missing for the port / test suite (re-checked 2026-10-26):**
+  nothing essential.  `python3-pytest` is now installed (pytest 6.2.5,
+  `python3 -m pytest` works); `python3-pip`/`python3-venv` are not
+  installed and are **not wanted** — port policy is to use only the
+  system python3 and system dist-packages (Pillow, numpy are already
+  there).
+- The py2-era set (`python2 python2-dev python-tk python-pil
+  python-pil.imagetk tcl-dev tk-dev`) is still what the running app
+  builds against.
 - The app is run directly from the build tree; `setup.py`, the
   launchers and `devtools/` still carry python2-specific paths (stage
   E below).
@@ -51,7 +67,7 @@ resolved there is done.
   the gate for every porting step; `--record` regenerates baselines
   from master.
 
-## Remaining Python-side work (verified 2026-10-24)
+## Remaining Python-side work (re-verified 2026-10-26)
 
 ### Syntax errors under py3 (12 files, all small)
 
@@ -68,18 +84,18 @@ All mechanical; a restricted `2to3` pass (the safe fixers listed in
 
 | Construct | Sites | Port action |
 |---|---|---|
-| `import Tkinter`/`from Tkinter import`/`Tkconstants` | 39 files | mechanical rename to `tkinter`/`tkinter.constants`; the uppercase constants (`END`, `BOTH`, ...) exist in py3 tkinter — verify per use anyway |
+| `import Tkinter`/`from Tkinter import`/`Tkconstants` | 43 files (73 import lines; recount 2026-10-26; includes the plugin Lib helpers `autoshapelib.py`, `multilinetext/{iterator,styletext,TextEditor}.py` and `autoshapeplugin.py`) | mechanical rename to `tkinter`/`tkinter.constants`; the uppercase constants (`END`, `BOTH`, ...) exist in py3 tkinter — verify per use anyway |
 | `tkFileDialog`/`tkMessageBox`/`tkSimpleDialog` | `Plugins/Objects/Lib/multilinetext/TextEditor.py` | rename to `tkinter.filedialog` etc. |
-| `execfile` | `Base/configutil.py:221` (preferences), `UI/mainwindow.py:610` (--run-script) | `exec(compile(open(..., 'rb').read(), filename, 'exec'), ...)`; for preferences the coding cookie is honored by compile and the `_LoadedPreferences` unicode conversion disappears in py3 (documented in the file) |
+| ~~`execfile`~~ | ~~`Base/configutil.py`, `UI/mainwindow.py`~~ | **done 2026-10-26**: `exec(compile(open(..., 'rb').read(), filename, 'exec'), ...)`; for preferences the coding cookie is honored by compile and the `_LoadedPreferences` unicode conversion disappears in py3 (documented in the file) |
 | `string.maketrans` | `Graphics/font.py:38`, `Lib/dscparser.py:45`, `Plugins/Filters/svgloader.py:259` | *not* drop-in (`str.maketrans` returns a dict; py2 `str.translate` needs the 256-char table) — build the tables with a small helper or switch to `str.replace`/regex |
-| `long(...)` | `Plugins/Filters/Lib/drawfile.py` (3 sites, 64-bit fraction math) | `int()` — py2 ints are 64-bit on the target platforms |
+| ~~`long(...)`~~ | ~~`Plugins/Filters/Lib/drawfile.py`~~ | **done 2026-10-26**: `int()` (py2 ints are 64-bit on the target platforms) |
 | `__nonzero__` | `Graphics/selection.py:398` (`__nonzero__ = __len__`) | add `__bool__ = __len__` alongside (py2+py3 compatible) |
 | `reduce` builtin | `Graphics/{compound,document,selection,text}.py` (7 sites) | `functools.reduce` — py2-compatible, do now |
 | `"__cmp__"` dict key | `Scripting/wrapper.py:59` | attr-name table for the scripting wrapper; review and drop |
-| `cStringIO` / `StringIO` | `Lib/type1.py:24`, `Plugins/Objects/Lib/multilinetext/chunker.py:18` | `io.StringIO`/`io.BytesIO` behind a try-import, or straight rewrite |
+| `cStringIO` / `StringIO` | `Lib/type1.py:24`, `Plugins/Objects/Lib/multilinetext/chunker.py:18` (direct); try-import pairs in `Base/warn.py:83`, `Plugins/Filters/Lib/drawfile.py:43–46`, `Plugins/Filters/drawinput.py:55–58`; py2-only `from StringIO import StringIO` in the tests `test/model/test_unicode.py:327`, `test/model/test_image.py:258` | `io.StringIO`/`io.BytesIO` behind a try-import, or straight rewrite; the two test sites switch to `io.StringIO` when the suite runs under py3 |
 | `import UserDict` | `Scripts/pathutils/base.py` | py3 still ships `UserDict`; small usage review |
-| `xml.sax.saxlib` | `Plugins/Filters/svgloader.py` | broken on py2 already; rewrite to `xml.sax.handler` (roadmap item C1) — do it as port prep, it un-breaks SVG import under py2 too |
-| `from lib.blocktext import` | `Plugins/Objects/Lib/autoshapes/simpleblocktext.py` | pre-existing broken plugin (the module does not exist anywhere); delete with maintainer approval |
+| ~~`xml.sax.saxlib`~~ | ~~`Plugins/Filters/svgloader.py`~~ | **done 2026-10-26**: rewritten to `xml.sax.handler.ContentHandler` + `make_parser().parse()` (and the plugin's broken `skread` import fixed; verified with a smoke SVG load under py2) |
+| `from lib.blocktext import` | ~~`Plugins/Objects/Lib/autoshapes/simpleblocktext.py`~~ | pre-existing broken plugin (the module does not exist anywhere) — **deleted 2026-10-26** as dead code |
 
 
 ### Semantics to audit (no reliable grep; suite + targeted review)
@@ -103,9 +119,17 @@ All mechanical; a restricted `2to3` pass (the safe fixers listed in
 ## C extensions (the bulk of the port)
 
 Sources: `src/extensions/{Modules,Pax,Filter}` (~21k built lines).
-`Pax/paxtkinter.c` and `Pax/intl.c` are dead leftovers (not built) and
-should be deleted before porting; `Pax/gcmethods.c` is not in the build
-either.
+`Pax/paxtkinter.c` and `Pax/intl.c` (dead leftovers, not built and not
+`#include`d anywhere) were deleted 2026-10-26; the broken
+`simpleblocktext.py` plugin went with them.  **Correction
+(2026-10-26):** `Pax/gcmethods.c` is *not* dead — it is unconditionally
+`#include`d by `gcobject.c:342` (which is why it is absent from the
+Extension sources list); deleting it broke a fresh build (the earlier
+"not in the build" claim was wrong; an incremental rebuild masked the
+breakage by reusing the stale `gcobject.o`).  `gcmethods.c` stays, as
+does the `Pax/Generate/` generator that produces it.  Note for
+archaeology: the `devtools/divaudit/ctypes_catalog.py` skip-filters for
+the deleted file names are now inert (kept — harmless).
 
 | Module (built name) | ~Lines | Port notes |
 |---|---|---|
@@ -285,21 +309,19 @@ B), and the final switch is small (stages C–D).  The test suite is the
 gate throughout; baselines are compared against master's
 (`test/run_tests.sh --record` refreshes them when master moves).
 
-- **Stage A — py2-compatible modernization (do now, on the main
-  branch):** the 12 syntax-error files; `reduce` → `functools.reduce`;
-  `__bool__` aliases; drop the `wrapper.py` `__cmp__` entry;
-  `execfile` → `exec(compile(...))` (works on py2); the svgloader
-  rewrite to `xml.sax`; delete the dead C sources (`paxtkinter.c`,
-  `intl.c`, `gcmethods.c`) and the stale `*.patch`/`*.sav` clutter with
-  maintainer approval; the `from __future__ import division` rollout
-  with suite-validated fixes; version-parameterize `setup.py` (build
-  dir names via `sys.version_info`), `src/skencil` (lib dir) and
-  `devtools/`; the image-model rework per the skimage decision
-  (option 4 in the C-extensions section: internal image buffer with
-  RGBA kept, buffer-protocol `_sketch` image functions, PIL as
-  codec-only at the boundaries) — done 2026-10-24, see the
-  implementation notes there.  Gate: build + 111 tests + Xvfb
-  smoke after each batch.
+- **Stage A — py2-compatible modernization — DONE 2026-10-26:**
+  all of it, in suite-validated commits on the `modernize` branch:
+  the 12 syntax-error files; `reduce` → `functools.reduce`;
+  `__bool__` aliases; the `wrapper.py` `__cmp__` entry dropped;
+  `execfile` → `exec(compile(...))`; the svgloader rewrite to
+  `xml.sax` (ContentHandler/make_parser — and it turned out the
+  plugin had been broken all along: it imported `skread` from
+  `Sketch`, which does not re-export it; fixed, verified with a
+  smoke SVG load); dead C sources deleted (see above);
+  version-parameterized launcher build-dir paths
+  (`sys.version_info`).  The stale `*.patch`/`*.sav` clutter is kept
+  (not code; per AGENTS.md it is not touched without an explicit
+  request).  Gate after every batch: build + 111 tests, green.
 - **Stage B — C extensions on a port branch (python3):** in the order
   `_sketch` (geometry) → `streamfilter`/`_type1`/`skread`/
   `pstokenize` → `pax` → `skimage` last (its design decision is made
@@ -312,7 +334,7 @@ gate throughout; baselines are compared against master's
   `_sketch` and `streamfilter` first — order the work accordingly);
   formats/Xvfb once the Tk layer works.
 - **Stage C — Python switch (same branch):** `Tkinter` → `tkinter`
-  renames (39 files), the `TextEditor.py` dialog modules, removal of
+  renames (43 files), the `TextEditor.py` dialog modules, removal of
   the stage-A shims, dict-view cleanups the suite surfaces.  Gate:
   full suite under py3 (model + formats + Xvfb smoke + LaTeX).
 - **Stage D — environment and packaging:** devtools

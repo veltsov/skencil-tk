@@ -114,10 +114,11 @@ appear here only after `build&copy`.
 - `Filter/streamfilter.c` + filters — stream abstraction with
   Base64Decode, SubFileDecode, HexFilter, ASCII85, zlib; imported
   top-level, e.g. `from streamfilter import Base64Decode, SubFileDecode`.
-- `Pax/paxmodule.c` + `paxtkinter.c` — the X11/Tk rendering layer:
-  `paxtkinter` was a private copy of Python 1.5.2's `_tkinter` that
-  used to replace `sys.modules['_tkinter']` at startup; it was **dropped
-  on the `modernize` branch** — pax now runs on the stock `_tkinter`
+- `Pax/paxmodule.c` — the X11/Tk rendering layer core.  The former
+  `paxtkinter` (a private copy of Python 1.5.2's `_tkinter` that used
+  to replace `sys.modules['_tkinter']` at startup) was **dropped on
+  the `modernize` branch** and its source deleted (2026-10-26) — pax
+  now runs on the stock `_tkinter`
   (its Tcl-context callbacks acquire the GIL via `PyGILState_Ensure`;
   threaded Tcl is required and checked at startup).
   `pax` provides off-screen X11 pixmaps, GC
@@ -127,11 +128,14 @@ appear here only after `build&copy`.
   See `devdocs/paxtkinter-analysis.md` and
   `devdocs/modernize-paxtkinter.md` for the full story.
 - `Pax/intl.c` — former gettext bindings (`Sketch.Modules.intl`);
-  **dropped on the `modernize` branch** — localization now uses the
-  standard `gettext` module (shim in `Sketch/__init__.py`); the file
-  is no longer built (it was also listed among the pax sources
-  although pax never calls gettext itself).
-- `Pax/Generate/` — code generator script (`mkgc.py`) for GC methods.
+  **dropped on the `modernize` branch** (source deleted 2026-10-26) —
+  localization now uses the standard `gettext` module (shim in
+  `Sketch/__init__.py`).
+- `Pax/gcmethods.c` — GC method wrappers, pulled in via
+  `#include "gcmethods.c"` from `gcobject.c` (deliberately not in the
+  Extension sources list; deleting it breaks the build).
+- `Pax/Generate/` — the code generator (`mkgc.py`, using
+  `mktools.py`/`typedefs.py`) that produces `gcmethods.c`.
 - Small patches exist: `skcolor.c.patch`, `skpoint.c.patch`,
   `skrect.c.patch` (leftovers; check whether applied before using).
 
