@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "Python.h"
+#include "skmember.h"
 #include "modsupport.h"
 #include "structmember.h"
 
@@ -14,7 +15,7 @@
 #include "pixmapobject.h"
 
 #define OFF(x) offsetof(XImage, x)
-static struct memberlist image_memberlist[] = {
+static SKMemberDef image_memberlist[] = {
     {"width",		T_INT,		OFF(width),		RO},
     {"height",		T_INT,		OFF(height),		RO},
     {"xoffset",		T_INT,		OFF(xoffset),		RO},
@@ -57,7 +58,7 @@ image_GetPixel(PaxImageObject * self, PyObject * args)
     if (!PyArg_ParseTuple(args, "ii", &x, &y))
 	return NULL;
 
-    return PyInt_FromLong(XGetPixel(self->ximage, x, y));
+    return PyLong_FromLong(XGetPixel(self->ximage, x, y));
 }
 
 static PyObject *
@@ -134,13 +135,13 @@ image_getattr(PaxImageObject *self, char *name)
 {
     PyObject * result;
     
-    result = PyMember_Get((char *)(self->ximage), image_memberlist, name);
+    result = SKMember_Get((char *)(self->ximage), image_memberlist, name);
     if (result != NULL)
 	return result;
     /* PyMember_Get failed. reset exceptions */
     PyErr_Clear(); 
 
-    return Py_FindMethod(image_methods, (PyObject *) self, name);
+    return SK_FindMethod(image_methods, (PyObject *) self, name);
 }
 
 static void
@@ -172,12 +173,21 @@ PyTypeObject PaxImageType = {
 	0,			/*tp_print*/
 	(getattrfunc)image_getattr, /*tp_getattr*/
 	0,			/*tp_setattr*/
-	0,			/*tp_compare*/
+	0,				/*tp_as_async*/
 	0,			/*tp_repr*/
 	0,			/*tp_as_number*/
 	0,			/*tp_as_sequence*/
 	0,			/*tp_as_mapping*/
 	0,			/*tp_hash*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	0,			/*tp_richcompare*/
 };
 
 XImage *

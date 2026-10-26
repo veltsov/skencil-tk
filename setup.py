@@ -128,9 +128,9 @@ def get_files_tree(path='.', ext='*'):
  
 #Generates *.mo files Resources/Messages
 def generate_locales():
-    print 'ignoring LOCALES BUILD'
+    print('ignoring LOCALES BUILD')
     return
-    print 'LOCALES BUILD'
+    print('LOCALES BUILD')
     files = get_files('po', 'po')
     if len(files):
         for file in files:
@@ -139,7 +139,7 @@ def generate_locales():
             mo_file = os.path.join('src', 'Resources', 'Messages', lang, 'LC_MESSAGES', 'skencil.mo')
             if not os.path.lexists(os.path.join('src', 'Resources', 'Messages', lang, 'LC_MESSAGES')):
                 os.makedirs(os.path.join('src', 'Resources', 'Messages', lang, 'LC_MESSAGES'))
-            print po_file, '==>', mo_file
+            print(po_file, '==>', mo_file)
             os.system('msgfmt -o ' + mo_file + ' ' + po_file)        
 
 ############################################################
@@ -184,6 +184,7 @@ if __name__ == "__main__":
     filter_module = Extension('Sketch.Modules.streamfilter',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '6')],
+            include_dirs=[src_path + 'extensions/Modules/'],
             sources=[filter_src + 'streamfilter.c', filter_src + 'filterobj.c', filter_src + 'linefilter.c',
                     filter_src + 'subfilefilter.c', filter_src + 'base64filter.c', filter_src + 'nullfilter.c',
                     filter_src + 'stringfilter.c', filter_src + 'binfile.c', filter_src + 'hexfilter.c'])
@@ -240,7 +241,7 @@ if __name__ == "__main__":
     # skimage no longer uses PIL's private C API)
 
     if not tcl_ver:
-        print 'System tcl/tk =>8.5 libraries have not found!'
+        print('System tcl/tk =>8.5 libraries have not found!')
         sys.exit(1)
     
     
@@ -257,14 +258,14 @@ if __name__ == "__main__":
                     pax_src + 'imageobject.c', pax_src + 'paxmodule.c',
                     pax_src + 'paxutil.c', pax_src + 'pixmapobject.c', pax_src + 'regionobject.c',
                     pax_src + 'tkwinobject.c'],
-            include_dirs=tcl_include_dirs,
+            include_dirs=tcl_include_dirs + [src_path + 'extensions/Modules/'],
             libraries=['X11', 'Xext', 'tk' + tcl_ver, 'tcl' + tcl_ver])
     
     skmod_src = src_path + 'extensions/Modules/'    
     skmod_module = Extension('Sketch.Modules._sketch',
             define_macros=[('MAJOR_VERSION', '0'),
                         ('MINOR_VERSION', '6')],
-            include_dirs=[src_path + 'extensions/Pax/'],
+            include_dirs=[src_path + 'extensions/Pax/', src_path + 'extensions/Modules/'],
             sources=[skmod_src + 'curvedraw.c', skmod_src + 'curvefunc.c', skmod_src + 'curvelow.c',
                     skmod_src + 'curvemisc.c', skmod_src + 'curveobject.c', skmod_src + 'skaux.c',
                     skmod_src + 'skcolor.c', skmod_src + 'skdither.c', skmod_src + '_sketchmodule.c',
@@ -373,22 +374,22 @@ if COPY:
     version = sys.version[:3]
     
     shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/pax.so', 'src/Sketch/Modules/')
-    print '\n pax.so has been copied to src/ directory'
+    print('\n pax.so has been copied to src/ directory')
     
     shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/pstokenize.so', 'src/Sketch/Modules/')
-    print '\n pstokenize.so has been copied to src/ directory'
+    print('\n pstokenize.so has been copied to src/ directory')
     
     shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/_sketchmodule.so', 'src/Sketch/Modules/')
-    print '\n _sketchmodule.so has been copied to src/ directory'
+    print('\n _sketchmodule.so has been copied to src/ directory')
     
     shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/skreadmodule.so', 'src/Sketch/Modules/')
-    print '\n skreadmodule.so has been copied to src/ directory'
+    print('\n skreadmodule.so has been copied to src/ directory')
     
     shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/streamfilter.so', 'src/Sketch/Modules/')
-    print '\n streamfilter.so has been copied to src/ directory'
+    print('\n streamfilter.so has been copied to src/ directory')
     
     shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/_type1module.so', 'src/Sketch/Modules/')
-    print '\n _type1module.so has been copied to src/ directory'
+    print('\n _type1module.so has been copied to src/ directory')
     
     os.system('rm -rf build')
     
@@ -398,8 +399,8 @@ if COPY:
 #################################################
 
 if DEBIAN:
-    print '\nDEBIAN PACKAGE BUILD'
-    print '===================='
+    print('\nDEBIAN PACKAGE BUILD')
+    print('====================')
     import platform
     version = sys.version[:3]
     

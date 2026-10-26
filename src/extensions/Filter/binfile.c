@@ -22,6 +22,7 @@
 
 #include <math.h>
 #include <Python.h>
+#include "skmember.h"
 #include <structmember.h>
 #include "filterobj.h"
 #include "binfile.h"
@@ -153,7 +154,7 @@ typedef struct {
 static PyObject *
 nu_char(const char *p)
 {
-	return PyString_FromStringAndSize(p, 1);
+	return PyBytes_FromStringAndSize(p, 1);
 }
 
 static PyObject *
@@ -169,7 +170,7 @@ bu_int(const char *p, int size)
 		x <<= i;
 		x >>= i;
 	}
-	return PyInt_FromLong(x);
+	return PyLong_FromLong(x);
 }
 
 static PyObject *
@@ -183,7 +184,7 @@ bu_uint(const char *p, int size)
 	if (size >= 4)
 		return PyLong_FromUnsignedLong(x);
 	else
-		return PyInt_FromLong((long)x);
+		return PyLong_FromLong((long)x);
 }
 
 static PyObject *
@@ -222,7 +223,7 @@ lu_int(const char *p, int size)
 		x <<= i;
 		x >>= i;
 	}
-	return PyInt_FromLong(x);
+	return PyLong_FromLong(x);
 }
 
 static PyObject *
@@ -236,7 +237,7 @@ lu_uint(const char *p, int size)
 	if (size >= 4)
 		return PyLong_FromUnsignedLong(x);
 	else
-		return PyInt_FromLong((long)x);
+		return PyLong_FromLong((long)x);
 }
 
 static PyObject *
@@ -291,9 +292,9 @@ binfile_repr(FilterObject * self)
 	return NULL;
 
     sprintf(buf, "<BinaryInput reading from %.500s>",
-	    PyString_AsString(streamrepr));
+	    PyUnicode_AsUTF8(streamrepr));
     Py_DECREF(streamrepr);
-    return PyString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 
@@ -343,12 +344,12 @@ static char * read_data(BinaryInputObject * self, int size)
 {
     char * result;
     
-    if (PyString_Check(self->stream))
+    if (PyBytes_Check(self->stream))
     {
-	int length = PyString_Size(self->stream);
+	int length = PyBytes_Size(self->stream);
 	if (self->string_pos + size <= length)
 	{
-	    result = PyString_AsString(self->stream) + self->string_pos;
+	    result = PyBytes_AsString(self->stream) + self->string_pos;
 	    self->string_pos += size;
 	}
 	else
@@ -495,14 +496,14 @@ binfile_subfile(BinaryInputObject * self, PyObject * args)
     if (!PyArg_ParseTuple(args, "i", &length))
 	return NULL;
 
-    left = PyString_Size(self->stream) - self->string_pos;
+    left = PyBytes_Size(self->stream) - self->string_pos;
     if (left < length)
     {
 	PyErr_Format(PyExc_ValueError, "Only %d bytes left, need %d", left,
 		     length);
 	return NULL;
     }
-    string = PyString_FromStringAndSize(PyString_AsString(self->stream)
+    string = PyBytes_FromStringAndSize(PyBytes_AsString(self->stream)
 					+ self->string_pos, length);
     if (!string)
 	return NULL;
@@ -524,14 +525,14 @@ binfile_read(BinaryInputObject * self, PyObject * args)
     if (!PyArg_ParseTuple(args, "i", &length))
 	return NULL;
 
-    left = PyString_Size(self->stream) - self->string_pos;
+    left = PyBytes_Size(self->stream) - self->string_pos;
     if (left < length)
     {
 	PyErr_Format(PyExc_ValueError, "Only %d bytes left, need %d", left,
 		     length);
 	return NULL;
     }
-    string = PyString_FromStringAndSize(PyString_AsString(self->stream)
+    string = PyBytes_FromStringAndSize(PyBytes_AsString(self->stream)
 					+ self->string_pos, length);
     if (string)
 	self->string_pos += length;
@@ -546,7 +547,7 @@ binfile_seek(BinaryInputObject * self, PyObject * args)
     if (!PyArg_ParseTuple(args, "i", &pos))
 	return NULL;
 
-    if (pos >= 0 && pos <= PyString_Size(self->stream))
+    if (pos >= 0 && pos <= PyBytes_Size(self->stream))
     {
 	self->string_pos = pos;
     }
@@ -563,12 +564,12 @@ binfile_seek(BinaryInputObject * self, PyObject * args)
 static PyObject *
 binfile_tell(BinaryInputObject * self, PyObject * args)
 {
-    return PyInt_FromLong(self->string_pos);
+    return PyLong_FromLong(self->string_pos);
 }
 
 
 #define OFF(x) offsetof(BinaryInputObject, x)
-static struct memberlist binfile_memberlist[] = {
+static SKMemberDef binfile_memberlist[] = {
     {"stream",		T_OBJECT,	OFF(stream),	RO},
     {NULL}
 };
@@ -587,12 +588,12 @@ binfile_getattr(PyObject * self, char * name)
 {
     PyObject * result;
 
-    result = Py_FindMethod(binfile_methods, self, name);
+    result = SK_FindMethod(binfile_methods, self, name);
     if (result != NULL)
 	return result;
     PyErr_Clear();
 
-    return PyMember_Get((char *)self, binfile_memberlist, name);
+    return SKMember_Get((char *)self, binfile_memberlist, name);
 }
 
 
@@ -605,7 +606,7 @@ binfile_setattr(PyObject * self, char * name, PyObject * v)
 			"can't delete object attributes");
 	return -1;
     }
-    return PyMember_Set((char *)self, binfile_memberlist, name, v);
+    return SKMember_Set((char *)self, binfile_memberlist, name, v);
 }
 
 
@@ -619,12 +620,18 @@ PyTypeObject BinaryInputType = {
 	(printfunc)0,			/*tp_print*/
 	binfile_getattr,		/*tp_getattr*/
 	binfile_setattr,		/*tp_setattr*/
-	(cmpfunc)0,			/*tp_compare*/
+	0,				/*tp_as_async*/
 	(reprfunc)binfile_repr,		/*tp_repr*/
 	0,				/*tp_as_number*/
 	0,				/*tp_as_sequence*/
 	0,				/*tp_as_mapping*/
 	0,				/*tp_hash*/
+	0,				/*tp_call*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
 };
 
 static PyObject *
@@ -644,7 +651,7 @@ BinFile_FromStream(PyObject * stream, int byte_order, int int_size)
 	return NULL;
     }
 
-    if (!PyString_Check(stream))
+    if (!PyBytes_Check(stream))
     {
 	PyErr_SetString(PyExc_TypeError, "Only strings supported as input");
 	return NULL;

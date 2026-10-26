@@ -44,17 +44,16 @@ static PyObject * decode(PyObject * self, PyObject * args)
     int cipher;
     PyObject * oresult, *tuple;
 
-    /* Use a temporary int vrbl for the optional parameter instead of h
-     * to make it work with Python >= 2.0 too */
-    if (!PyArg_ParseTuple(args, "s#|i", &buffer, &buffer_length, &temp))
+    /* binary data: the eexec/charstring ciphertext */
+    if (!PyArg_ParseTuple(args, "y#|i", &buffer, &buffer_length, &temp))
 	return NULL;
 
     r = temp;
 
-    oresult = PyString_FromStringAndSize(NULL, buffer_length);
+    oresult = PyBytes_FromStringAndSize(NULL, buffer_length);
     if (!oresult)
 	return NULL;
-    result = (unsigned char*)PyString_AsString(oresult);
+    result = (unsigned char*)PyBytes_AsString(oresult);
     
     for (i = 0; i < buffer_length; i++)
     {
@@ -86,9 +85,10 @@ static PyObject * hexdecode(PyObject * self, PyObject * args)
 {
     unsigned char * hex, *result, *buffer;
     PyObject *tuple;
+    char rest[2];
     int length, i, last_digit = -1, c;
 
-    if (!PyArg_ParseTuple(args, "s#", &hex, &length))
+    if (!PyArg_ParseTuple(args, "y#", &hex, &length))
 	return NULL;
 
     buffer = malloc((length + 1) / 2);
@@ -129,10 +129,14 @@ static PyObject * hexdecode(PyObject * self, PyObject * args)
     }
 
     if (last_digit >= 0)
-    	tuple = Py_BuildValue("s#c", buffer, result - buffer,
-			      hex_digits[last_digit]);
+    {
+	char rest[2];
+	rest[0] = hex_digits[last_digit];
+	rest[1] = '\0';
+	tuple = Py_BuildValue("y#y", buffer, result - buffer, rest);
+    }
     else
-	tuple = Py_BuildValue("s#s", buffer, result - buffer, "");
+	tuple = Py_BuildValue("y#y", buffer, result - buffer, "");
     free(buffer);
     return tuple;
 }
@@ -150,8 +154,17 @@ static PyMethodDef type1_methods[] = {
 };
 
 
-void
-init_type1(void)
+static struct PyModuleDef type1module = {
+    PyModuleDef_HEAD_INIT,
+    "_type1",
+    NULL,
+    -1,
+    type1_methods,
+    NULL, NULL, NULL, NULL
+};
+
+PyMODINIT_FUNC
+PyInit__type1(void)
 {
-    Py_InitModule("_type1", type1_methods);
+    return PyModule_Create(&type1module);
 }

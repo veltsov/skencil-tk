@@ -23,6 +23,7 @@
 #include <locale.h>
 
 #include <Python.h>
+#include "skmember.h"
 #include <structmember.h>
 
 #include <assert.h>
@@ -242,7 +243,7 @@ curve_repr(SKCurveObject * self)
     char buf[100];
     sprintf(buf, "<SKCurveObject at %ld with %d nodes>", (long)self,
 	    self->len);
-    return PyString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 
@@ -367,7 +368,7 @@ curve_continuity(SKCurveObject * self, PyObject * args)
 	return NULL;
     }
 
-    return PyInt_FromLong(self->segments[idx].cont);
+    return PyLong_FromLong(self->segments[idx].cont);
 }
 
 
@@ -396,7 +397,7 @@ curve_segment_type(SKCurveObject * self, PyObject * args)
 	return NULL;
     }
 
-    return PyInt_FromLong(self->segments[idx].type);
+    return PyLong_FromLong(self->segments[idx].type);
 }
 
 /*
@@ -543,6 +544,13 @@ SKCurve_AppendBezier(SKCurveObject * self, double x1, double y1,
 
 
 
+/* PyCapsule destructor with the signature the API expects */
+static void
+free_capsule(PyObject * capsule)
+{
+    free(PyCapsule_GetPointer(capsule, NULL));
+}
+
 /* create full undo, i.e. undo info for nodes AND segments */
 static PyObject * set_nodes_and_segments_string = NULL; /* init on import*/
 static PyObject *
@@ -558,7 +566,7 @@ curve_create_full_undo(SKCurveObject * self)
 
     memcpy(segments, self->segments, self->allocated * sizeof(CurveSegment));
 
-    undo_segments = PyCObject_FromVoidPtr(segments, free);
+    undo_segments = PyCapsule_New(segments, NULL, free_capsule);
     if (!undo_segments)
     {
 	free(segments);
@@ -582,7 +590,7 @@ curve__set_nodes_and_segments(SKCurveObject * self, PyObject * args)
     PyObject * result;
     
     if (!PyArg_ParseTuple(args, "O!iii",
-			  &PyCObject_Type, &undo_segments,
+			  &PyCapsule_Type, &undo_segments,
 			  &length, &allocated, &closed))
 	return NULL;
 
@@ -596,7 +604,7 @@ curve__set_nodes_and_segments(SKCurveObject * self, PyObject * args)
 	return NULL;
     }
 
-    memcpy(self->segments, PyCObject_AsVoidPtr(undo_segments),
+    memcpy(self->segments, PyCapsule_GetPointer(undo_segments, NULL),
 	   allocated * sizeof(CurveSegment));
     self->allocated = allocated;
     self->len = length;
@@ -628,7 +636,7 @@ curve_hit_point(SKCurveObject * self, PyObject * args)
 	    result = 1;
     }
     
-    return PyInt_FromLong(result);
+    return PyLong_FromLong(result);
 }
 
 
@@ -1109,49 +1117,43 @@ curve_get_save(SKCurveObject * self, PyObject * args)
 }
 
 
-static int
-write_segment(FILE * file, CurveSegment * segment)
-{
-    int result = 0;
-
-    if (segment->type == CurveBezier)
-    {
-	result = fprintf(file, "bc(%g,%g,%g,%g,%g,%g,%d)\n",
-			 segment->x1, segment->y1, segment->x2, segment->y2,
-			 segment->x, segment->y, segment->cont);
-    }
-    else
-    {
-	result = fprintf(file, "bs(%g,%g,%d)\n",
-			 segment->x, segment->y, segment->cont);
-    }
-
-    if (result < 0)
-    {
-	PyErr_SetFromErrno(PyExc_IOError);
-	return 0;
-    }
-    return 1;
-}
 
 static PyObject *
 curve_write_to_file(SKCurveObject * self, PyObject * args)
 {
     PyObject * pyfile = NULL;
-    FILE * file = NULL;
     CurveSegment * segment;
     int i;
 
-    if (!PyArg_ParseTuple(args, "O!", &PyFile_Type, &pyfile))
+    if (!PyArg_ParseTuple(args, "O", &pyfile))
 	return NULL;
-
-    file = PyFile_AsFile(pyfile);
 
     segment = self->segments;
     for (i = 0; i < self->len; i++, segment++)
     {
-	if (!write_segment(file, segment))
+	char buf[256];
+	int n;
+	PyObject * line, * result;
+	if (segment->type == CurveBezier)
+	    n = snprintf(buf, sizeof(buf), "bc(%g,%g,%g,%g,%g,%g,%d)\n",
+			 segment->x1, segment->y1, segment->x2, segment->y2,
+			 segment->x, segment->y, segment->cont);
+	else
+	    n = snprintf(buf, sizeof(buf), "bs(%g,%g,%d)\n",
+			 segment->x, segment->y, segment->cont);
+	if (n < 0 || n >= (int)sizeof(buf))
+	{
+	    PyErr_SetString(PyExc_IOError, "cannot write the segment");
 	    return NULL;
+	}
+	line = PyUnicode_FromString(buf);
+	if (!line)
+	    return NULL;
+	result = PyObject_CallMethod(pyfile, "write", "O", line);
+	Py_DECREF(line);
+	if (!result)
+	    return NULL;
+	Py_DECREF(result);
     }
     Py_INCREF(Py_None);
     return Py_None;
@@ -1542,9 +1544,33 @@ curve_append_from_file(SKCurveObject * self, PyObject * args)
     if (!PyArg_ParseTuple(args, "O", &pyfile))
 	return NULL;
 
-    while ((line = PyFile_GetLine(pyfile, 0)) && (PyString_Size(line) != 0))
+    while ((line = PyFile_GetLine(pyfile, 0)) && PyObject_Length(line) != 0)
     {
-	buf = PyString_AsString(line);
+	char *buf;
+	Py_ssize_t buflen;
+	if (PyUnicode_Check(line))
+	{
+	    buf = (char*)PyUnicode_AsUTF8AndSize(line, &buflen);
+	    if (!buf)
+	    {
+		Py_DECREF(line);
+		return NULL;
+	    }
+	}
+	else if (PyBytes_Check(line))
+	{
+	    if (PyBytes_AsStringAndSize(line, &buf, &buflen) < 0)
+	    {
+		Py_DECREF(line);
+		return NULL;
+	    }
+	}
+	else
+	{
+	    Py_DECREF(line);
+	    PyErr_SetString(PyExc_TypeError, "expected a line of text");
+	    return NULL;
+	}
 	if (buf[0] != 'b' || (buf[1] != 'c' && buf[1] != 's'))
 	    break;
 	if (!curve_parse_string_append(self, buf))
@@ -1800,7 +1826,7 @@ curve_selection_count(SKCurveObject * self)
 	if (self->segments[i].selected && (!self->closed || i < self->len - 1))
 	    ++count;
     }
-    return PyInt_FromLong(count);
+    return PyLong_FromLong(count);
 }
 
 /*
@@ -1822,7 +1848,7 @@ curve_node_selected(SKCurveObject * self, PyObject * args)
     if (idx < 0)
 	return NULL;
 
-    return PyInt_FromLong(self->segments[idx].selected);
+    return PyLong_FromLong(self->segments[idx].selected);
 }
 
 
@@ -1857,7 +1883,7 @@ curve_select_rect(SKCurveObject * self, PyObject * args)
     
     curve_check_state(self, 1, FUNCTION_NAME);
 
-    return PyInt_FromLong(selected);
+    return PyLong_FromLong(selected);
 }
 
 
@@ -2041,7 +2067,7 @@ curve_draw_unselected(SKCurveObject * self, PyObject * args)
 
 
 #define OFF(x) offsetof(SKCurveObject, x)
-static struct memberlist curve_memberlist[] = {
+static SKMemberDef curve_memberlist[] = {
     {"len",		T_INT,	OFF(len),		RO},
     {"closed",		T_BYTE,	OFF(closed),		RO},
     {NULL} 
@@ -2112,7 +2138,7 @@ curve_getattr(PyObject * self, char * name)
 {
     PyObject * result;
 
-    result = Py_FindMethod(curve_methods, self, name);
+    result = SK_FindMethod(curve_methods, self, name);
     if (result != NULL)
 	return result;
     PyErr_Clear();
@@ -2120,6 +2146,12 @@ curve_getattr(PyObject * self, char * name)
     return PyMember_Get((char *)self, curve_memberlist, name);
 }
 
+
+static PyObject *
+curve_richcompare(PyObject * v, PyObject * w, int op)
+{
+    return SK_RichCompare(curve_compare((SKCurveObject*)v, (SKCurveObject*)w), op);
+}
 
 PyTypeObject SKCurveType = {
     PyObject_HEAD_INIT(&PyType_Type)
@@ -2131,13 +2163,22 @@ PyTypeObject SKCurveType = {
     (printfunc)NULL,		/*tp_print*/
     curve_getattr,		/*tp_getattr*/
     0,				/*tp_setattr*/
-    (cmpfunc)curve_compare,	/*tp_compare*/
+	0,				/*tp_as_async*/
     (reprfunc)curve_repr,	/*tp_repr*/
     0,				/*tp_as_number*/
     0,				/*tp_as_sequence*/
     0,				/*tp_as_mapping*/
     0,				/*tp_hash*/
     (ternaryfunc)0,		/*tp_call*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	curve_richcompare,		/*tp_richcompare*/
 };
 
 
@@ -2145,7 +2186,7 @@ PyTypeObject SKCurveType = {
 PyObject *
 _SKCurve_NumAllocated(PyObject * self, PyObject * args)
 {
-    return PyInt_FromLong(paths_allocated);
+    return PyLong_FromLong(paths_allocated);
 }
 
 
@@ -2153,7 +2194,7 @@ int
 _SKCurve_InitCurveObject(void)
 {
     set_nodes_and_segments_string =
-	PyString_InternFromString("_set_nodes_and_segments");
-    undo_close_string = PyString_InternFromString("_undo_close");
+	PyUnicode_InternFromString("_set_nodes_and_segments");
+    undo_close_string = PyUnicode_InternFromString("_undo_close");
     return 1;
 }

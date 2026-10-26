@@ -19,6 +19,7 @@
 #include <math.h>
 #include <Python.h>
 #include <structmember.h>
+#include "skmember.h"
 
 #include "_sketchmodule.h"
 #include "skcolor.h"
@@ -47,8 +48,8 @@ fill_free_list(void)
 	return (SKColorObject *)PyErr_NoMemory();
     q = p + N_COLOROBJECTS;
     while (--q > p)
-	q->ob_type = (PyTypeObject*)(q-1);
-    q->ob_type = NULL;
+	Py_SET_TYPE(q, (PyTypeObject*)(q-1));
+    Py_SET_TYPE(q, NULL);
     return p + N_COLOROBJECTS - 1;
 }
 
@@ -77,8 +78,8 @@ SKColor_FromRGB(double red, double green, double blue)
 	    return NULL;
     }
     self = free_list;
-    free_list = (SKColorObject *)(free_list->ob_type);
-    self->ob_type = &SKColorType;
+    free_list = (SKColorObject *)(Py_TYPE(free_list));
+    Py_SET_TYPE(self, &SKColorType);
     _Py_NewReference(self);
 #else
     self = PyObject_New(SKColorObject, &SKColorType);
@@ -100,7 +101,7 @@ static void
 skcolor_dealloc(SKColorObject * self)
 {
 #if SKCOLOR_SUBALLOCATE
-    self->ob_type = (PyTypeObject*)free_list;
+    Py_SET_TYPE(self, (PyTypeObject*)free_list);
     free_list = self;
 #else
     PyObject_Del(self);
@@ -143,7 +144,7 @@ skcolor_repr(SKColorObject * self)
 {
     char buf[1000];
     sprintf(buf, "RGBColor(%g,%g,%g)", self->red, self->green, self->blue);
-    return PyString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 
@@ -235,7 +236,7 @@ skcolor_blend(SKColorObject * self, PyObject * args)
 
 
 #define OFF(x) offsetof(SKColorObject, x)
-static struct memberlist skcolor_memberlist[] = {
+static SKMemberDef skcolor_memberlist[] = {
     {"red",		T_FLOAT,	OFF(red),	RO},
     {"green",		T_FLOAT,	OFF(green),	RO},
     {"blue",		T_FLOAT,	OFF(blue),	RO},
@@ -255,15 +256,21 @@ skcolor_getattr(PyObject * self, char * name)
 {
     PyObject * result;
 
-    result = Py_FindMethod(skcolor_methods, self, name);
+    result = SK_FindMethod(skcolor_methods, self, name);
     if (result != NULL)
 	return result;
     PyErr_Clear();
 
-    return PyMember_Get((char *)self, skcolor_memberlist, name);
+    return SKMember_Get((char *)self, skcolor_memberlist, name);
 }
 
 
+
+static PyObject *
+skcolor_richcompare(PyObject * v, PyObject * w, int op)
+{
+    return SK_RichCompare(skcolor_compare((SKColorObject*)v, (SKColorObject*)w), op);
+}
 
 PyTypeObject SKColorType = {
 	PyObject_HEAD_INIT(&PyType_Type)
@@ -275,13 +282,22 @@ PyTypeObject SKColorType = {
 	(printfunc)NULL,		/*tp_print*/
 	skcolor_getattr,		/*tp_getattr*/
 	0,				/*tp_setattr*/
-	(cmpfunc)skcolor_compare,	/*tp_compare*/
+	0,				/*tp_as_async*/
 	(reprfunc)skcolor_repr,		/*tp_repr*/
 	0,				/*tp_as_number*/
 	&skcolor_as_sequence,		/*tp_as_sequence*/
 	0,				/*tp_as_mapping*/
 	(hashfunc)&skcolor_hash,	/*tp_hash*/
 	(ternaryfunc)0,			/*tp_call */
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	skcolor_richcompare,		/*tp_richcompare*/
 };
 
 
@@ -315,7 +331,7 @@ skvisual_truecolor_get_pixel(SKVisualObject * self, SKColorObject * color)
     g = rint(color->green * 255);
     b = rint(color->blue * 255);*/
 
-    return PyInt_FromLong(self->red_bits[r] | self->green_bits[g]
+    return PyLong_FromLong(self->red_bits[r] | self->green_bits[g]
 			  | self->blue_bits[b]);
 }
 
@@ -465,7 +481,7 @@ skvisual_pseudocolor_get_pixel(SKVisualObject * self, SKColorObject * color)
     else if (idx > 255)
 	idx = 255;
 
-    return PyInt_FromLong(self->pseudocolor_table[idx]);
+    return PyLong_FromLong(self->pseudocolor_table[idx]);
 }
 
 static void
@@ -561,8 +577,8 @@ skvisual_init_pseudocolor(SKVisualObject * self, PyObject * args)
     for (i = 0; i < length; i++)
     {
 	PyObject * entry = PyList_GetItem(list, i);
-	if (PyInt_Check(entry))
-	    self->pseudocolor_table[i] = PyInt_AsLong(entry);
+	if (PyLong_Check(entry))
+	    self->pseudocolor_table[i] = PyLong_AsLong(entry);
 	else
 	{
 	    PyErr_SetString(PyExc_TypeError, "list of ints expected");
@@ -640,7 +656,7 @@ skvisual_repr(SKVisualObject * self)
 {
     char buf[100];
     sprintf(buf, "<SKVisual at %ld>", (long)self);
-    return PyString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 
@@ -660,7 +676,7 @@ skvisual_get_pixel(SKVisualObject * self, PyObject * args)
     if (!PyArg_ParseTuple(args, "O", &color))
 	return NULL;
 
-    if (PyInt_Check(color))
+    if (PyLong_Check(color))
     {
 	/* pass ints back unchanged. Special feature to support device
 	dependent colors for highlighting etc.*/
@@ -695,7 +711,7 @@ skvisual_set_gamma(SKVisualObject * self, PyObject * args)
 }
 
 #define OFF(x) offsetof(XVisualInfo, x)
-static struct memberlist skvisual_memberlist[] = {
+static SKMemberDef skvisual_memberlist[] = {
     {"depth",		T_INT,		OFF(depth),		RO},
     {"c_class",		T_INT,		OFF(class),		RO},
     {"red_mask",	T_ULONG,	OFF(red_mask),		RO},
@@ -719,12 +735,12 @@ skvisual_getattr(PyObject * self, char * name)
 {
     PyObject * result;
 
-    result = Py_FindMethod(skvisual_methods, self, name);
+    result = SK_FindMethod(skvisual_methods, self, name);
     if (result != NULL)
 	return result;
     PyErr_Clear();
 
-    return PyMember_Get((char *)(((SKVisualObject*)self)->visualinfo),
+    return SKMember_Get((char *)(((SKVisualObject*)self)->visualinfo),
 			skvisual_memberlist, name);
 }
 
@@ -739,13 +755,22 @@ PyTypeObject SKVisualType = {
 	(printfunc)NULL,		/*tp_print*/
 	skvisual_getattr,		/*tp_getattr*/
 	0,				/*tp_setattr*/
-	(cmpfunc)0,			/*tp_compare*/
+	0,				/*tp_as_async*/
 	(reprfunc)skvisual_repr,	/*tp_repr*/
 	0,				/*tp_as_number*/
 	0,				/*tp_as_sequence*/
 	0,				/*tp_as_mapping*/
 	0,				/*tp_hash*/
 	(ternaryfunc)0,			/*tp_call*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	0,		/*tp_richcompare*/
 };
 
 
@@ -774,9 +799,9 @@ PyObject *
 skcolor_num_allocated(PyObject * self, PyObject * args)
 {
 #if SKCOLOR_COUNT_ALLOC
-    return PyInt_FromLong(skcolor_allocated);
+    return PyLong_FromLong(skcolor_allocated);
 #else
-    return PyInt_FromLong(-1);
+    return PyLong_FromLong(-1);
 #endif
 }
 
@@ -796,13 +821,13 @@ skcolor_xvisual(PyObject * self, PyObject * args)
     XVisualInfo *vinfo;
     int nreturn;
 
-    if (!PyArg_ParseTuple(args, "O!O!|O!", &PyCObject_Type, &ODisplay,
-			  &PyCObject_Type, &OVisual,
+    if (!PyArg_ParseTuple(args, "O!O!|O!", &PyCapsule_Type, &ODisplay,
+			  &PyCapsule_Type, &OVisual,
 			  &PyTuple_Type, &additional_args))
 	return NULL;
 
-    display = (Display *)PyCObject_AsVoidPtr(ODisplay);
-    visual = (Visual *)PyCObject_AsVoidPtr(OVisual);
+    display = (Display *)PyCapsule_GetPointer(ODisplay, NULL);
+    visual = (Visual *)PyCapsule_GetPointer(OVisual, NULL);
 
     vtemplate.visual = visual;
     vtemplate.visualid = XVisualIDFromVisual(visual);

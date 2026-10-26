@@ -29,7 +29,7 @@ typedef struct {
 } SKColorObject;
 
 extern PyTypeObject SKColorType;
-#define SKColor_Check(v)		((v)->ob_type == &SKColorType)
+#define SKColor_Check(v)		(Py_TYPE(v) == &SKColorType)
 
 PyObject * SKColor_FromRGB(double red, double green, double blue);
 
@@ -87,7 +87,7 @@ typedef struct SKVisualObject_s {
 } SKVisualObject;
 
 extern PyTypeObject SKVisualType;
-#define SKVisual_Check(v)		((v)->ob_type == &SKVisualType)
+#define SKVisual_Check(v)		(Py_TYPE(v) == &SKVisualType)
 
 /* in skdither.c */
 void skvisual_init_dither(SKVisualObject * self);

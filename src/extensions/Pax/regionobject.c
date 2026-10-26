@@ -1,4 +1,5 @@
 #include "Python.h"
+#include "skmember.h"
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "regionobject.h"
@@ -32,7 +33,7 @@ region_EmptyRegion(PaxRegionObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, ""))
 	return NULL;
-    return PyInt_FromLong(XEmptyRegion(self->region));
+    return PyLong_FromLong(XEmptyRegion(self->region));
 }
 
 static PyObject *
@@ -41,7 +42,7 @@ region_EqualRegion(PaxRegionObject *self, PyObject *args)
     PaxRegionObject *r;
     if (!PyArg_ParseTuple(args, "O!", &PaxRegionType, &r))
 	return NULL;
-    return PyInt_FromLong(XEqualRegion(self->region, r->region));
+    return PyLong_FromLong(XEqualRegion(self->region, r->region));
 }
 
 static PyObject *
@@ -50,7 +51,7 @@ region_PointInRegion(PaxRegionObject *self, PyObject *args)
     int x, y;
     if (!PyArg_ParseTuple(args, "ii", &x, &y))
 	return NULL;
-    return PyInt_FromLong(XPointInRegion(self->region, x, y));
+    return PyLong_FromLong(XPointInRegion(self->region, x, y));
 }
 
 static PyObject *
@@ -60,7 +61,7 @@ region_RectInRegion(PaxRegionObject *self, PyObject *args)
     unsigned int width, height;
     if (!PyArg_ParseTuple(args, "iiii", &x, &y, &width, &height))
 	return NULL;
-    return PyInt_FromLong(XRectInRegion(self->region, x, y, width, height));
+    return PyLong_FromLong(XRectInRegion(self->region, x, y, width, height));
 }
 
 static PyObject *
@@ -171,7 +172,7 @@ static PyMethodDef region_methods[] = {
 static
 PyObject * region_getattr(PaxRegionObject  *self, char *name)
 {
-    return Py_FindMethod(region_methods, (PyObject *)self, name);
+    return SK_FindMethod(region_methods, (PyObject *)self, name);
 }
 
 static void
@@ -192,12 +193,21 @@ PyTypeObject PaxRegionType  = {
 	0,			/*tp_print*/
 	(getattrfunc)region_getattr , /*tp_getattr*/
 	(setattrfunc)0 ,	/*tp_setattr*/
-	0,			/*tp_compare*/
+	0,				/*tp_as_async*/
 	0,			/*tp_repr*/
 	0,			/*tp_as_number*/
 	0,			/*tp_as_sequence*/
 	0,			/*tp_as_mapping*/
 	0,			/*tp_hash*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	0,			/*tp_richcompare*/
 };
 
 

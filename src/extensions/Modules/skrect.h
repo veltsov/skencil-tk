@@ -28,7 +28,7 @@ typedef struct {
 } SKRectObject;
 
 extern PyTypeObject SKRectType;
-#define SKRect_Check(v)		((v)->ob_type == &SKRectType)
+#define SKRect_Check(v)		(Py_TYPE(v) == &SKRectType)
 
 extern SKRectObject * SKRect_InfinityRect;
 extern SKRectObject * SKRect_EmptyRect;

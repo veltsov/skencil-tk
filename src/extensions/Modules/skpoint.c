@@ -24,6 +24,7 @@
 
 #include <math.h>
 #include <Python.h>
+#include "skmember.h"
 #include <structmember.h>
 
 #include "skpoint.h"
@@ -76,7 +77,7 @@ skpoint_compare(SKPointObject * v, SKPointObject * w)
 
     if (!SKPoint_Check(v) || !SKPoint_Check(w))
     {
-	return strcmp(v->ob_type->tp_name, w->ob_type->tp_name);
+	return strcmp(Py_TYPE(v)->tp_name, Py_TYPE(w)->tp_name);
     }
 
     ret = (v->x < w->x) ?  -1  :  (v->x > w->x) ? +1 : 0;
@@ -92,7 +93,7 @@ skpoint_repr(SKPointObject * self)
 {
     char buf[1000];
     sprintf(buf, "Point(%g, %g)", self->x, self->y);
-    return PyString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 
@@ -426,7 +427,7 @@ skpoint_getattr(PyObject * self, char * name)
     if (name[0] == 'y' && name[1] == '\0')
 	return PyFloat_FromDouble(((SKPointObject*)self)->y);
 
-    return Py_FindMethod(skpoint_methods, self, name);
+    return SK_FindMethod(skpoint_methods, self, name);
 }
 
 
@@ -495,6 +496,12 @@ static PySequenceMethods skpoint_as_sequence = {
 
 
 
+static PyObject *
+skpoint_richcompare(PyObject * v, PyObject * w, int op)
+{
+    return SK_RichCompare(skpoint_compare((SKPointObject*)v, (SKPointObject*)w), op);
+}
+
 PyTypeObject SKPointType = {
 	PyObject_HEAD_INIT(&PyType_Type)
 	0,
@@ -505,7 +512,7 @@ PyTypeObject SKPointType = {
 	(printfunc)NULL,		/*tp_print*/
 	skpoint_getattr,		/*tp_getattr*/
 	0,				/*tp_setattr*/
-	(cmpfunc)skpoint_compare,	/*tp_compare*/
+	0,				/*tp_as_async*/
 	(reprfunc)skpoint_repr,		/*tp_repr*/
 	&skpoint_as_number,		/*tp_as_number*/
 	&skpoint_as_sequence,		/*tp_as_sequence*/
@@ -516,9 +523,10 @@ PyTypeObject SKPointType = {
 	0,				/*tp_getattro*/
 	0,				/*tp_setattro*/
 	0,				/*tp_as_buffer*/
-#ifdef USE_NEWSTYLE_NUMBERS
-	Py_TPFLAGS_CHECKTYPES		/*tp_flags*/
-#endif
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	skpoint_richcompare,		/*tp_richcompare*/
 };
 
 
@@ -594,9 +602,9 @@ PyObject *
 skpoint_allocated(PyObject * self, PyObject * args)
 {
 #if SKPOINT_COUNT_ALLOC
-    return PyInt_FromLong(allocated);
+    return PyLong_FromLong(allocated);
 #else
-    return PyInt_FromLong(-1);
+    return PyLong_FromLong(-1);
 #endif
 }
 

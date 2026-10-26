@@ -111,12 +111,28 @@ Filter_SubFileDecode(PyObject * self, PyObject * args)
     PyObject * target;
     PyObject * delim_object;
     SubFileDecodeState * state;
-    int length;
+    Py_ssize_t length;
 
-    if (!PyArg_ParseTuple(args, "OS", &target, &delim_object))
+    const char * delim;
+    if (!PyArg_ParseTuple(args, "OO", &target, &delim_object))
 	return NULL;
 
-    length = PyString_Size(delim_object);
+    if (PyUnicode_Check(delim_object))
+    {
+	delim = PyUnicode_AsUTF8AndSize(delim_object, &length);
+	if (!delim)
+	    return NULL;
+    }
+    else if (PyBytes_Check(delim_object))
+    {
+	delim = PyBytes_AsString(delim_object);
+	length = PyBytes_Size(delim_object);
+    }
+    else
+    {
+	PyErr_SetString(PyExc_TypeError, "expected a str or bytes delimiter");
+	return NULL;
+    }
     if (length < 1)
 	return PyErr_Format(PyExc_ValueError, "empty delimiter");
     state = PyMem_Malloc(sizeof (SubFileDecodeState) + length * sizeof(int));
@@ -124,7 +140,7 @@ Filter_SubFileDecode(PyObject * self, PyObject * args)
 	return PyErr_NoMemory();
     state->delim_object = delim_object;
     Py_INCREF(state->delim_object);
-    state->delim = PyString_AsString(delim_object);
+    state->delim = (char*)delim;
     state->chars_matched = 0;
     state->length = length;
     init_shift(state);

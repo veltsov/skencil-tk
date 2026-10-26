@@ -87,7 +87,7 @@ Other Options:
 '''
 
 def print_usage():
-    print usage
+    print(usage)
 
 def main():
     import Sketch

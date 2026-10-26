@@ -1,4 +1,5 @@
 #include <Python.h>
+#include "skmember.h"
 #include <structmember.h>
 #include "tkwinobject.h"
 #include <X11/Xutil.h>
@@ -60,7 +61,7 @@ tkwin_compare(TkWinObject * self, TkWinObject * other)
 static PyObject *
 tkwin_repr(TkWinObject * self)
 {
-    return PyString_FromString(Tk_PathName(self->tkwin));
+    return PyUnicode_FromString(Tk_PathName(self->tkwin));
 }
 
 
@@ -68,7 +69,7 @@ tkwin_repr(TkWinObject * self)
 static PyObject * \
 tkwin_##name(TkWinObject * self, PyObject * args)\
 {\
-    return PyCObject_FromVoidPtr(tkfunc(self->tkwin), NULL);\
+    return PyCapsule_New(tkfunc(self->tkwin), NULL, NULL);\
 }
 
 /* these methods are good for passing the display and visual to other
@@ -154,8 +155,8 @@ tkwin_SetBackground(TkWinObject * self, PyObject * args)
     if (!PyArg_ParseTuple(args, "O", &bgobject))
 	return NULL;
 
-    if (PyInt_Check(bgobject))
-	Tk_SetWindowBackground(self->tkwin, PyInt_AsLong(bgobject));
+    if (PyLong_Check(bgobject))
+	Tk_SetWindowBackground(self->tkwin, PyLong_AsLong(bgobject));
     else if (PaxPixmap_Check(bgobject))
 	Tk_SetWindowBackgroundPixmap(self->tkwin,
 				     PaxPixmap_AsPixmap(bgobject));
@@ -480,7 +481,7 @@ tkwin_ShmCreateImage(TkWinObject *self, PyObject *args)
 static PyObject *
 tkwin_ShmQueryExtension(TkWinObject *self, PyObject *args)
 {
-    return PyInt_FromLong(XShmQueryExtension(Tk_Display(self->tkwin)));
+    return PyLong_FromLong(XShmQueryExtension(Tk_Display(self->tkwin)));
 }
 
 static PyObject *
@@ -497,7 +498,7 @@ tkwin_ShmQueryVersion(TkWinObject *self, PyObject *args)
 static PyObject *
 tkwin_ShmCompletionEventType(TkWinObject * self, PyObject *args)
 {
-    return PyInt_FromLong(XShmGetEventBase(Tk_Display(self->tkwin))
+    return PyLong_FromLong(XShmGetEventBase(Tk_Display(self->tkwin))
 			  + ShmCompletion);
 }
 
@@ -739,7 +740,7 @@ tkwin_ListFonts(TkWinObject *self, PyObject *args)
 	int i;
 	for (i = 0; i < count; i++)
 	{
-	    PyObject *item = PyString_FromString(fontnames[i]);
+	    PyObject *item = PyUnicode_FromString(fontnames[i]);
 	    if (item == NULL)
 	    {
 		Py_DECREF(list);
@@ -841,7 +842,7 @@ static PyObject * getintattr(TkWinObject * self, char * name)
     else
 	return NULL;
 
-    return PyInt_FromLong(value);
+    return PyLong_FromLong(value);
 }
 
 static PyObject *
@@ -851,9 +852,16 @@ tkwin_getattr(PyObject * self, char * name)
     result = getintattr((TkWinObject*)self, name);
     if (result)
 	return result;
-    return Py_FindMethod(tkwin_methods, self, name);
+    return SK_FindMethod(tkwin_methods, self, name);
 }
 
+
+static PyObject *
+tkwin_richcompare(PyObject * self, PyObject * other, int op)
+{
+    return SK_RichCompare(tkwin_compare((TkWinObject*)self,
+					       (TkWinObject*)other), op);
+}
 
 PyTypeObject TkWinType = {
     PyObject_HEAD_INIT(&PyType_Type)
@@ -865,11 +873,20 @@ PyTypeObject TkWinType = {
     (printfunc)NULL,		/*tp_print*/
     tkwin_getattr,		/*tp_getattr*/
     0,				/*tp_setattr*/
-    (cmpfunc)tkwin_compare,	/*tp_compare*/
+	0,				/*tp_as_async*/
     (reprfunc)tkwin_repr,	/*tp_repr*/
     0,				/*tp_as_number*/
     0,				/*tp_as_sequence*/
     0,				/*tp_as_mapping*/
     0,				/*tp_hash*/
     (ternaryfunc)0,		/*tp_call*/ 
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	tkwin_richcompare,			/*tp_richcompare*/
 };

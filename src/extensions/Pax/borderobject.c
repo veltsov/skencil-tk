@@ -1,4 +1,5 @@
 #include "Python.h"
+#include "skmember.h"
 #include <tk.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -220,7 +221,7 @@ static struct PyMethodDef paxborder_methods[] = {
 static PyObject *
 paxborder_getattr(PyObject * self, char * name)
 {
-    return Py_FindMethod(paxborder_methods, self, name);
+    return SK_FindMethod(paxborder_methods, self, name);
 }
 
 
@@ -235,10 +236,19 @@ PyTypeObject PaxBorderType =
 	0,				/*tp_print*/
 	(getattrfunc)paxborder_getattr,	/*tp_getattr*/
 	(setattrfunc)0,			/*tp_setattr*/
-	0,				/*tp_compare*/
+	0,				/*tp_as_async*/
 	0,				/*tp_repr*/
 	0,				/*tp_as_number*/
 	0,				/*tp_as_sequence*/
 	0,				/*tp_as_mapping*/
 	0,				/*tp_hash*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	0,			/*tp_richcompare*/
 };

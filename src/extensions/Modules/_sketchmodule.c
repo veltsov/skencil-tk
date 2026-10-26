@@ -125,12 +125,21 @@ add_int(PyObject * dict, int i, char * name)
     }
 }
 
-void
-init_sketch(void)
+static struct PyModuleDef _sketchmodule = {
+    PyModuleDef_HEAD_INIT,
+    "_sketch",
+    NULL,
+    -1,
+    curve_functions,
+    NULL, NULL, NULL, NULL
+};
+
+PyMODINIT_FUNC
+PyInit__sketch(void)
 {
     PyObject * d, *m, *r, *pax;
 
-    m = Py_InitModule("_sketch", curve_functions);
+    m = PyModule_Create(&_sketchmodule);
     d = PyModule_GetDict(m);
 
    
@@ -188,14 +197,20 @@ init_sketch(void)
     {
 	Pax_GCType = PyObject_GetAttrString(pax, "PaxGCType");
 	if (!Pax_GCType)
-	    return;
+	    return NULL;
 	Pax_ImageType = PyObject_GetAttrString(pax, "PaxImageType");
 	if (!Pax_ImageType)
-	    return;
+	    return NULL;
 	r = PyObject_GetAttrString(pax, "Pax_Functions");
 	if (!r)
-	    return;
-	pax_functions = (Pax_Functions*)PyCObject_AsVoidPtr(r);
+	    return NULL;
+	pax_functions = (Pax_Functions*)PyCapsule_GetPointer(r, NULL);
 	Py_DECREF(r);
     }
+    else
+    {
+	/* pax is optional in headless use; swallow the import error */
+	PyErr_Clear();
+    }
+    return m;
 }

@@ -49,6 +49,25 @@ typedef struct {
 #define	FLOAT	260
 #define	STRING	261
 
+/* Decode the first argument (a str or bytes line of a SK file) into a
+ * utf-8 byte buffer. Returns 0 on success, -1 with an exception set. */
+static int
+sk_line_as_utf8(PyObject * arg, char ** string, Py_ssize_t * length)
+{
+    if (PyUnicode_Check(arg))
+    {
+	*string = (char*)PyUnicode_AsUTF8AndSize(arg, length);
+	return *string ? 0 : -1;
+    }
+    if (PyBytes_Check(arg))
+    {
+	return PyBytes_AsStringAndSize(arg, string, length) < 0 ? -1 : 0;
+    }
+    PyErr_SetString(PyExc_TypeError,
+		    "expected a str or bytes line of a SK file");
+    return -1;
+}
+
 
 #define GETC()	(*(buffer->buffer++))
 #define BACK()	(buffer->buffer--)
@@ -76,14 +95,15 @@ sklex(PyObject ** lval, SKLineInfo * buffer)
 	case '\'': case '"':
 	{
 	    int string_delimiter = c;
+	    char * destbuf;
 	    char * dest;
-	    *lval = PyString_FromStringAndSize(NULL, buffer->length);
-	    if (!*lval)
+	    destbuf = malloc(buffer->length + 1);
+	    if (!destbuf)
 	    {
 		buffer->error = "no memory";
 		return 0;
 	    }
-	    dest = PyString_AsString(*lval);
+	    dest = destbuf;
 
 	    for (;;)
 	    {
@@ -93,7 +113,7 @@ sklex(PyObject ** lval, SKLineInfo * buffer)
 		{
 		case '\0': case '\n':
 		    /* end of input in string constant! */
-		    Py_DECREF(*lval);
+		    free(destbuf);
 		    *lval = NULL;
 		    buffer->error = "unexpected end of input";
 		    return 0;
@@ -101,11 +121,13 @@ sklex(PyObject ** lval, SKLineInfo * buffer)
 		case '\'': case '"':
 		    if (c == string_delimiter)
 		    {
-			int size;
-			size = dest - PyString_AsString(*lval);
-			if (_PyString_Resize(lval, size) < 0)
+			/* The .sk format stores text as utf-8 byte
+			 * strings with \x escapes; decode leniently. */
+			*lval = PyUnicode_DecodeUTF8(destbuf, dest - destbuf,
+						     "surrogateescape");
+			free(destbuf);
+			if (!*lval)
 			{
-			    *lval = NULL;
 			    buffer->error = "no memory";
 			    return 0;
 			}
@@ -183,7 +205,7 @@ sklex(PyObject ** lval, SKLineInfo * buffer)
 			    }
 			    else
 			    {
-				Py_DECREF(*lval);
+				free(destbuf);
 				*lval = NULL;
 				buffer->error = "Invalid \\x escape";
 				return 0;
@@ -228,7 +250,7 @@ sklex(PyObject ** lval, SKLineInfo * buffer)
 	    }
 	    else
 	    {
-		*lval = PyInt_FromLong(strtol(buffer->buffer - 1,
+		*lval = PyLong_FromLong(strtol(buffer->buffer - 1,
 					      &(buffer->buffer), 10));
 		return INT;
 	    }
@@ -240,7 +262,7 @@ sklex(PyObject ** lval, SKLineInfo * buffer)
 		char ident[101];
 		sscanf(buffer->buffer - 1, "%100[a-zA-Z0-9_]", ident);
 		buffer->buffer = buffer->buffer + strlen(ident) - 1;
-		*lval = PyString_FromString(ident);
+		*lval = PyUnicode_FromString(ident);
 		return NAME;
 	    }
 	    if (!isspace(c))
@@ -468,11 +490,14 @@ static
 PyObject * parse_sk_line(PyObject * self, PyObject * args)
 {
     char * string;
-    int length;
+    Py_ssize_t length;
+    PyObject * oline;
     SKLineInfo info;
     PyObject * result, * function, *funcdict;
 
-    if (!PyArg_ParseTuple(args, "s#O", &string, &length, &funcdict))
+    if (!PyArg_ParseTuple(args, "OO", &oline, &funcdict))
+	return NULL;
+    if (sk_line_as_utf8(oline, &string, &length) < 0)
 	return NULL;
 
     info.buffer = string;
@@ -499,14 +524,14 @@ PyObject * parse_sk_line(PyObject * self, PyObject * args)
 	function = PyObject_GetItem(funcdict, info.funcname);
 	if (function)
 	{
-	    result = PyEval_CallObjectWithKeywords(function, info.args,
+	    result = PyObject_Call(function, info.args,
 						   info.kwargs);
 	}
 	else
 	{
 	    char buffer[200];
 	    sprintf(buffer, "unknown function %.100s",
-		    PyString_AsString(info.funcname));
+		    PyUnicode_AsUTF8(info.funcname));
 	    PyErr_SetString(PyExc_NameError, buffer);
 	    result = NULL;
 	}
@@ -533,11 +558,14 @@ static
 PyObject * parse_sk_line2(PyObject * self, PyObject * args)
 {
     char * string;
-    int length;
+    Py_ssize_t length;
+    PyObject * oline;
     SKLineInfo info;
     PyObject * result = NULL;
 
-    if (!PyArg_ParseTuple(args, "s#", &string, &length))
+    if (!PyArg_ParseTuple(args, "O", &oline))
+	return NULL;
+    if (sk_line_as_utf8(oline, &string, &length) < 0)
 	return NULL;
 
     info.buffer = string;
@@ -578,11 +606,15 @@ static
 PyObject * tokenize_line(PyObject * self, PyObject * args)
 {
     char * string;
-    int length, max_tokens = -1;
+    Py_ssize_t length;
+    int max_tokens = -1;
+    PyObject * oline;
     SKLineInfo info;
     PyObject * result;
 
-    if (!PyArg_ParseTuple(args, "s#|i", &string, &length, &max_tokens))
+    if (!PyArg_ParseTuple(args, "O|i", &oline, &max_tokens))
+	return NULL;
+    if (sk_line_as_utf8(oline, &string, &length) < 0)
 	return NULL;
 
     info.buffer = string;
@@ -629,7 +661,7 @@ PyObject * tokenize_line(PyObject * self, PyObject * args)
 	/*info.buffer -= 1;*/
 	if (info.buffer - string < length)
 	{
-	    PyObject *rest = PyString_FromString(info.buffer);
+	    PyObject *rest = PyUnicode_FromString(info.buffer);
 	    if (PyList_Append(result, rest) == -1)
 		goto fail;
 	}
@@ -655,8 +687,17 @@ static PyMethodDef sk_methods[] = {
 };
 
 
-void
-initskread(void)
+static struct PyModuleDef skreadmodule = {
+    PyModuleDef_HEAD_INIT,
+    "skread",
+    NULL,
+    -1,
+    sk_methods,
+    NULL, NULL, NULL, NULL
+};
+
+PyMODINIT_FUNC
+PyInit_skread(void)
 {
-    Py_InitModule("skread", sk_methods);
+    return PyModule_Create(&skreadmodule);
 }

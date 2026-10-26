@@ -1,4 +1,5 @@
 #include "Python.h"
+#include "skmember.h"
 #include <tk.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -69,13 +70,13 @@ PaxGC_MakeValues(PyObject *dict, unsigned long *pmask, XGCValues *pvalues)
     while (PyDict_Next(dict, &pos, &key, &value))
     {
 	char *name;
-	if (!PyString_Check(key))
+	if (!PyUnicode_Check(key))
 	{
 	    PyErr_SetString(PyExc_TypeError,
 			    "XGCValues' keys should be strings");
 	    return 0;
 	}
-	name = PyString_AsString(key);
+	name = PyUnicode_AsUTF8(key);
 	for (p = GCattrdefs; ; p++)
 	{
 	    if (p->name == NULL)
@@ -109,17 +110,17 @@ PaxGC_MakeValues(PyObject *dict, unsigned long *pmask, XGCValues *pvalues)
 	    }
 	    else
 	    {
-		if (!PyInt_Check(value))
+		if (!PyLong_Check(value))
 		{
 		    PyErr_SetString(PyExc_TypeError,
 				"XGCValues should map to int, Pixmap or Font");
 		    return 0;
 		}
 		if (p->type[0] == 'c')
-		    *((char*)pvalues + p->offset) = PyInt_AsLong(value);
+		    *((char*)pvalues + p->offset) = PyLong_AsLong(value);
 		else
 		    /* XXX Assume sizeof(int) == sizeof(long)! */
-		    *(long*)((char*)pvalues + p->offset) = PyInt_AsLong(value);
+		    *(long*)((char*)pvalues + p->offset) = PyLong_AsLong(value);
 	    }
 	    break;
 	}
@@ -150,13 +151,13 @@ pax_checkcharlist(PyObject *list, char **parray, int *pnitems)
     for (i = 0; i < n; i++)
     {
 	PyObject *item = PyList_GetItem(list, i);
-	if (!PyInt_Check(item))
+	if (!PyLong_Check(item))
 	{
 	    PyMem_Free(*parray);
 	    PyErr_SetString(PyExc_TypeError, "list of ints expected");
 	    return 0;
 	}
-	(*parray)[i] = PyInt_AsLong(item);
+	(*parray)[i] = PyLong_AsLong(item);
     }
     return 1;
 }
@@ -260,9 +261,9 @@ PaxGC_SetForegroundAndFill(PaxGCObject *self, PyObject *args)
     }
     if (!PyArg_ParseTuple(args, "O", &pixel_or_pixmap))
 	return NULL;
-    if (PyInt_Check(pixel_or_pixmap))
+    if (PyLong_Check(pixel_or_pixmap))
     {
-	XSetForeground(self->display, self->gc, PyInt_AsLong(pixel_or_pixmap));
+	XSetForeground(self->display, self->gc, PyLong_AsLong(pixel_or_pixmap));
 	XSetFillStyle(self->display, self->gc, FillSolid);
     }
     else if (PaxPixmap_Check(pixel_or_pixmap))
@@ -352,7 +353,7 @@ MemberList(void)
     if (v != NULL)
     {
 	for (i = 0; i < n; i++)
-	    PyList_SetItem(v, i, PyString_FromString(GCattrdefs[i].name));
+	    PyList_SetItem(v, i, PyUnicode_FromString(GCattrdefs[i].name));
 	if (PyErr_Occurred())
 	{
 	    Py_DECREF(v);
@@ -376,7 +377,7 @@ GetAttr(PaxGCObject *self, char *name)
     if (name[0] == '_' && strcmp(name, "__members__") == 0)
 	return MemberList();
     
-    result = Py_FindMethod(PaxGC_methods, (PyObject *)self, name);
+    result = SK_FindMethod(PaxGC_methods, (PyObject *)self, name);
     if (result != NULL)
 	return result;
     PyErr_Clear();
@@ -426,7 +427,7 @@ GetAttr(PaxGCObject *self, char *name)
     else
     {
 	/* XXX Assume sizeof(int) == sizeof(long) */
-	return PyInt_FromLong(* (long *)((char *)(&values) + p->offset));
+	return PyLong_FromLong(* (long *)((char *)(&values) + p->offset));
     }
 }
 
@@ -446,7 +447,7 @@ SetAttr(PaxGCObject *self, char *name, PyObject *value)
 	PyErr_SetString(PyExc_TypeError, "can't delete GC attribute");
 	return -1;
     }
-    if (!PyInt_Check(value))
+    if (!PyLong_Check(value))
     {
 	PyErr_SetString(PyExc_TypeError, "GC attribute value must be integer");
 	return -1;
@@ -462,10 +463,10 @@ SetAttr(PaxGCObject *self, char *name, PyObject *value)
 	    break;
     }
     if (p->type[0] == 'c')
-	*((char*)(&values) + p->offset) = PyInt_AsLong(value);
+	*((char*)(&values) + p->offset) = PyLong_AsLong(value);
     else
         /* XXX Assume sizeof(int) == sizeof(long) */
-	*(long*)((char *)(&values) + p->offset) = PyInt_AsLong(value);
+	*(long*)((char *)(&values) + p->offset) = PyLong_AsLong(value);
     XChangeGC(self->display, self->gc, p->mask, &values);
     return 0;
 }
@@ -492,11 +493,20 @@ PyTypeObject PaxGCType =
 	0,			/*tp_print*/
 	(getattrfunc)GetAttr,	/*tp_getattr*/
 	(setattrfunc)SetAttr,	/*tp_setattr*/
-	0,			/*tp_compare*/
+	0,				/*tp_as_async*/
 	0,			/*tp_repr*/
 	0,			/*tp_as_number*/
 	0,			/*tp_as_sequence*/
 	0,			/*tp_as_mapping*/
 	0,			/*tp_hash*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	0,			/*tp_richcompare*/
 };
 

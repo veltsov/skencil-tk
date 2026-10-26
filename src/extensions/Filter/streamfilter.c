@@ -77,16 +77,26 @@ static Filter_Functions functions = {
 };
 
 
-void
-initstreamfilter(void)
+static struct PyModuleDef streamfiltermodule = {
+    PyModuleDef_HEAD_INIT,
+    "streamfilter",
+    NULL,
+    -1,
+    filter_functions,
+    NULL, NULL, NULL, NULL
+};
+
+PyMODINIT_FUNC
+PyInit_streamfilter(void)
 {
     PyObject * d, *m, *v;
 
-    m = Py_InitModule("streamfilter", filter_functions);
+    m = PyModule_Create(&streamfiltermodule);
     d = PyModule_GetDict(m);
 
     PyDict_SetItemString(d, "FilterType", (PyObject*)(&FilterType));
-    v = PyCObject_FromVoidPtr(&functions, NULL);
+    v = PyCapsule_New(&functions, NULL, NULL);
     PyDict_SetItemString(d, "Filter_Functions", v);
     Py_DECREF(v);
+    return m;
 }

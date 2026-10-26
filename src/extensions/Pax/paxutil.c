@@ -33,14 +33,14 @@ pax_checkshortlist(int width, PyObject *list, short **parray, int *pnitems)
 	for (j = 0; j < width; j++)
 	{
 	    PyObject *elem = PyTuple_GetItem(item, j);
-	    if (!PyInt_Check(elem))
+	    if (!PyLong_Check(elem))
 	    {
 		PyMem_Free(*parray);
 		PyErr_SetString(PyExc_TypeError,
 				"list of tuples of ints expected");
 		return 0;
 	    }
-	    (*parray)[i*width+j] = PyInt_AsLong(elem);
+	    (*parray)[i*width+j] = PyLong_AsLong(elem);
 	}
     }
     return 1;

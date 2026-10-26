@@ -88,7 +88,7 @@ SKAux_GetPixel(PyObject * self, PyObject * arg)
 	XDestroyImage(image);
     }
 
-    return PyInt_FromLong(retval);
+    return PyLong_FromLong(retval);
 }
 
     
@@ -196,7 +196,7 @@ SKAux_IdIndex(PyObject * self, PyObject * args)
     }
 
     if (i < length)
-	return PyInt_FromLong(i);
+	return PyLong_FromLong(i);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -225,7 +225,7 @@ xlfd_char_range(PyObject * self, PyObject * args)
 
     if (len == 0)
     {
-	return PyString_FromString("");
+	return PyUnicode_FromString("");
     }
 
     for (idx = 0; idx < 256; idx++)
@@ -262,7 +262,7 @@ xlfd_char_range(PyObject * self, PyObject * args)
 	    idx++;
     }
     
-    result = PyString_FromString(ranges + 1);
+    result = PyUnicode_FromString(ranges + 1);
     free(ranges);
     return result;
 }
@@ -275,7 +275,7 @@ typedef struct {
 
 extern PyTypeObject SKCacheType;
 
-#define SKCache_Check(v) ((v)->ob_type == &SKCacheType)
+#define SKCache_Check(v) (Py_TYPE(v) == &SKCacheType)
 
 static PyObject *
 SKCache_New(void)
@@ -319,7 +319,7 @@ SKCache_subscript(SKCacheObject * self, PyObject *key)
     PyObject * result = PyDict_GetItem(self->dict, key);
     if (result)
     {
-    	result = PyCObject_AsVoidPtr(result);
+    	result = PyCapsule_GetPointer(result, NULL);
 	Py_INCREF(result);
     }
     return result;
@@ -332,7 +332,7 @@ SKCache_ass_sub(SKCacheObject * self, PyObject * v, PyObject * w)
 	return PyDict_DelItem(self->dict, v);
     else
     {
-	PyObject * obj = PyCObject_FromVoidPtr(w, NULL);
+	PyObject * obj = PyCapsule_New(w, NULL, NULL);
 	int result = PyDict_SetItem(self->dict, v, obj);
 	Py_DECREF(obj);
 	return result;
@@ -376,7 +376,7 @@ PyTypeObject SKCacheType = {
 	(printfunc)0,			/*tp_print*/
 	(getattrfunc)SKCache_getattr,	/*tp_getattr*/
 	0,				/*tp_setattr*/
-	0,				/*tp_compare*/
+	0,				/*tp_as_async*/
 	0,				/*tp_repr*/
 	0,				/*tp_as_number*/
 	&SKCache_as_sequence,		/*tp_as_sequence*/
@@ -387,7 +387,11 @@ PyTypeObject SKCacheType = {
 	0,				/* tp_getattro */
 	0,				/* tp_setattro */
 	0,				/* tp_as_buffer */
-	Py_TPFLAGS_HAVE_SEQUENCE_IN,	/* tp_flags */
+	Py_TPFLAGS_DEFAULT,	/* tp_flags */
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	0,		/*tp_richcompare*/
 };
 
 

@@ -70,7 +70,7 @@ typedef struct {
 
 extern PyTypeObject SKCurveType;
 
-#define SKCurve_Check(v)		((v)->ob_type == &SKCurveType)
+#define SKCurve_Check(v)		(Py_TYPE(v) == &SKCurveType)
 
 
 PyObject * SKCurve_New(int len);

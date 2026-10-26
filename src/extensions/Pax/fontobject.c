@@ -1,4 +1,5 @@
 #include "Python.h"
+#include "skmember.h"
 #include "modsupport.h"
 
 #include <X11/X.h>
@@ -105,7 +106,7 @@ MemberList(void)
     if (v != NULL)
     {
 	for (i = 0; i < n; i++)
-	    PyList_SetItem(v, i, PyString_FromString(Fontattrdefs[i].name));
+	    PyList_SetItem(v, i, PyUnicode_FromString(Fontattrdefs[i].name));
 	if (PyErr_Occurred())
 	{
 	    Py_DECREF(v);
@@ -126,7 +127,7 @@ TextWidth(PaxFontObject *self, PyObject *args)
     int nchars;
     if (!PyArg_ParseTuple(args, "s#", &string, &nchars))
 	return NULL;
-    return PyInt_FromLong(XTextWidth(self->font_struct, string, nchars));
+    return PyLong_FromLong(XTextWidth(self->font_struct, string, nchars));
 }
 
 static PyObject *
@@ -169,7 +170,7 @@ GetPropertyDict(PaxFontObject *self, PyObject *args)
     for (idx = 0; idx < nprop; idx++)
     {
 	name = XGetAtomName(self->display, fs->properties[idx].name);
-	val = PyInt_FromLong(fs->properties[idx].card32);
+	val = PyLong_FromLong(fs->properties[idx].card32);
 	if (!val)
 	{
 	    Py_DECREF(dict);
@@ -239,7 +240,7 @@ GetAttr(PaxFontObject *self, char *name)
     PyObject *result;
     if (name[0] == '_' && strcmp(name, "__members__") == 0)
 	return MemberList();
-    result = Py_FindMethod(FontMethods, (PyObject *)self, name);
+    result = SK_FindMethod(FontMethods, (PyObject *)self, name);
     if (result != NULL)
 	return result;
     PyErr_Clear();
@@ -259,7 +260,7 @@ GetAttr(PaxFontObject *self, char *name)
 			"non-int attr not yet supported");
 	return NULL;
     }
-    return PyInt_FromLong(*(int *)((char *)(self->font_struct) + p->offset));
+    return PyLong_FromLong(*(int *)((char *)(self->font_struct) + p->offset));
 }
 
 static void
@@ -278,15 +279,24 @@ PyTypeObject PaxFontType = {
 	"PaxFont",		/*tp_name*/
 	sizeof(PaxFontObject),	/*tp_size*/
 	0,			/*tp_itemsize*/
-	(void (*) Py_PROTO((PyObject *)))
+	(void (*) (PyObject *))
 	(destructor)Dealloc,	/*tp_dealloc*/
 	0,			/*tp_print*/
 	(getattrfunc)GetAttr,	/*tp_getattr*/
 	0,			/*tp_setattr*/
-	0,			/*tp_compare*/
+	0,				/*tp_as_async*/
 	0,			/*tp_repr*/
 	0,			/*tp_as_number*/
 	0,			/*tp_as_sequence*/
 	0,			/*tp_as_mapping*/
 	0,			/*tp_hash*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	0,			/*tp_richcompare*/
 };

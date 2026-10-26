@@ -41,6 +41,7 @@
 
 #include <Python.h>
 #include <string.h>
+#include "skmember.h"
 #include <structmember.h>
 
 #include "skpoint.h"
@@ -66,8 +67,8 @@ struct SKFontMetric_s {
 };
 typedef struct SKFontMetric_s SKFontMetric;
 
-extern DL_IMPORT(PyTypeObject) SKFontMetricType;
-#define SKFontMetric_Check(obj) ((v)->ob_type == &SKFontMetricType)
+extern PyTypeObject SKFontMetricType;
+#define SKFontMetric_Check(obj) (Py_TYPE(obj) == &SKFontMetricType)
 
 
 /*
@@ -108,9 +109,9 @@ skfm_get_gids(PyObject * object, unsigned int ** gids, int * length)
     const void * buffer;
     Py_ssize_t size;
 
-    if (PyInt_Check(object))
+    if (PyLong_Check(object))
     {
-	long gid = PyInt_AS_LONG(object);
+	long gid = PyLong_AsLong(object);
 	if (gid < 0)
 	{
 	    PyErr_SetString(PyExc_ValueError,
@@ -250,7 +251,7 @@ skfm_glyph_width(SKFontMetric * self, PyObject * args)
 	return NULL;
 
     if (0 <= gid && gid < self->n_metrics)
-	return PyInt_FromLong(self->char_metric[gid].width);
+	return PyLong_FromLong(self->char_metric[gid].width);
 
     PyErr_SetString(PyExc_ValueError,
 		    "argument must be a glyph id of this font");
@@ -331,7 +332,7 @@ skfm_typeset_string(SKFontMetric * self, PyObject * args)
 }
 
 #define OFF(x) offsetof(SKFontMetric, x)
-static struct memberlist skfm_memberlist[] = {
+static SKMemberDef skfm_memberlist[] = {
     {"ascender",	T_INT,		OFF(ascender),		RO},
     {"descender",	T_INT,		OFF(descender),		RO},
     {"llx",		T_INT,		OFF(llx),		RO},
@@ -356,12 +357,12 @@ skfm_getattr(PyObject * self, char * name)
 {
     PyObject * result;
 
-    result = Py_FindMethod(skfm_methods, self, name);
+    result = SK_FindMethod(skfm_methods, self, name);
     if (result != NULL)
 	return result;
     PyErr_Clear();
 
-    return PyMember_Get((char *)self, skfm_memberlist, name);
+    return SKMember_Get((char *)self, skfm_memberlist, name);
 }
 
 PyTypeObject SKFontMetricType = {
@@ -374,12 +375,21 @@ PyTypeObject SKFontMetricType = {
 	(printfunc)NULL,		/*tp_print*/
 	skfm_getattr,			/*tp_getattr*/
 	0,				/*tp_setattr*/
-	0,				/*tp_compare*/
+	0,				/*tp_as_async*/
 	0,				/*tp_repr*/
 	0,				/*tp_as_number*/
 	0,				/*tp_as_sequence*/
 	0,				/*tp_as_mapping*/
 	0,				/*tp_hash*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	0,		/*tp_richcompare*/
 };
 
 

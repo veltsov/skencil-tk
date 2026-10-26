@@ -103,7 +103,7 @@ paxWidget_CallMethodArgs(PyObject * obj, int method_idx, PyObject * args)
     {
 	/* do nothing if the object doesn't have the method */
 	fprintf(stderr, "No Method %s\n",
-		PyString_AsString(method_names_obj[method_idx]));
+		PyUnicode_AsUTF8(method_names_obj[method_idx]));
 	PyErr_Clear();
 	PyGILState_Release(gilstate);
 	return 0;
@@ -699,9 +699,9 @@ name_to_window(PyObject * self, PyObject * args)
     if (!PyArg_ParseTuple(args, "sO", &name, &app_or_interpaddr))
 	return NULL;
 
-    if (PyInt_Check(app_or_interpaddr))
+    if (PyLong_Check(app_or_interpaddr))
     {
-	interp = (Tcl_Interp*)PyInt_AsLong(app_or_interpaddr);
+	interp = (Tcl_Interp*)PyLong_AsLong(app_or_interpaddr);
     }
     else
     {
@@ -723,7 +723,7 @@ key_for_object(PyObject *obj)
 {
     char id[20];
     sprintf(id, "%ld", (long)obj);
-    return PyString_FromString(id);
+    return PyUnicode_FromString(id);
 }
 
 static PyObject *
@@ -804,8 +804,8 @@ pax_call_py_method(PyObject * self, PyObject * args)
 			"call_py_method requires key and method name");
 	return NULL;
     }
-    key = PyString_AsString(PyTuple_GET_ITEM(args, 0));
-    name = PyString_AsString(PyTuple_GET_ITEM(args, 1));
+    key = PyUnicode_AsUTF8(PyTuple_GET_ITEM(args, 0));
+    name = PyUnicode_AsUTF8(PyTuple_GET_ITEM(args, 1));
     if (!key || !name)
 	return NULL;
 
@@ -831,7 +831,7 @@ pax_call_py_method(PyObject * self, PyObject * args)
     call_args = NULL;
     if (strcmp(name, "RedrawMethod") == 0 && argc == 3)
     {
-	char * ptr = PyString_AsString(PyTuple_GET_ITEM(args, 2));
+	char * ptr = PyUnicode_AsUTF8(PyTuple_GET_ITEM(args, 2));
 	if (!ptr)
 	{
 	    Py_DECREF(method);
@@ -843,11 +843,11 @@ pax_call_py_method(PyObject * self, PyObject * args)
     else if (strcmp(name, "ResizedMethod") == 0 && argc == 4)
 	call_args = Py_BuildValue(
 	    "(ii)",
-	    atoi(PyString_AsString(PyTuple_GET_ITEM(args, 2))),
-	    atoi(PyString_AsString(PyTuple_GET_ITEM(args, 3))));
+	    atoi(PyUnicode_AsUTF8(PyTuple_GET_ITEM(args, 2))),
+	    atoi(PyUnicode_AsUTF8(PyTuple_GET_ITEM(args, 3))));
     else if (strcmp(name, "ExtensionEvent") == 0 && argc == 3)
 	call_args = Py_BuildValue(
-	    "(i)", atoi(PyString_AsString(PyTuple_GET_ITEM(args, 2))));
+	    "(i)", atoi(PyUnicode_AsUTF8(PyTuple_GET_ITEM(args, 2))));
     else if (argc > 2)
     {
 	call_args = PyTuple_New(argc - 2);
@@ -905,7 +905,7 @@ create_tcl_commands(PyObject * self, PyObject * args)
        'call_py_method' is registered via its createcommand method so
        that _tkinter dispatches it with proper GIL and tcl_tstate
        handling (see the comment on pax_call_py_method) */
-    if (PyInt_Check(app))
+    if (PyLong_Check(app))
     {
 	PyErr_SetString(PyExc_TypeError,
 			"create_tcl_commands requires the tkapp object, "
@@ -988,13 +988,22 @@ static Pax_Functions pax_functions = {
     
 
 
-void
-initpax(void)
+static struct PyModuleDef paxmodule = {
+    PyModuleDef_HEAD_INIT,
+    "pax",
+    NULL,
+    -1,
+    pax_methods,
+    NULL, NULL, NULL, NULL
+};
+
+PyMODINIT_FUNC
+PyInit_pax(void)
 {
     int i;
     PyObject * d, *m, *v;
 
-    m = Py_InitModule("pax", pax_methods);
+    m = PyModule_Create(&paxmodule);
     d = PyModule_GetDict(m);
     
 #define ADD_INT(name) add_int(d, name, #name)
@@ -1018,7 +1027,7 @@ initpax(void)
     for (i = 0; i < NUM_METHOD_NAMES; i++)
     {
 	/* Python 1.5! */
-	PyObject * string = PyString_InternFromString(method_names[i]);
+	PyObject * string = PyUnicode_InternFromString(method_names[i]);
 	if (!string)
 	{
 	   Py_FatalError("pax: Cannot create string objects");
@@ -1029,7 +1038,7 @@ initpax(void)
     object_registry = PyDict_New();
     PyDict_SetItemString(d, "object_registry", object_registry);
 
-    v = PyCObject_FromVoidPtr(&pax_functions, NULL);
+    v = PyCapsule_New(&pax_functions, NULL, NULL);
     PyDict_SetItemString(d, "Pax_Functions", v);
 
 #define ADD_TYPE(type) PyDict_SetItemString(d, #type, (PyObject*)(&type))
@@ -1042,4 +1051,5 @@ initpax(void)
     ADD_TYPE(PaxFontType);
     ADD_TYPE(PaxGCType);
     ADD_TYPE(PaxBorderType);
+    return m;
 }

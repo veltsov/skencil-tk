@@ -18,9 +18,9 @@ typedef struct PaxGCObject_
 extern PyTypeObject PaxGCType;
 #define PaxGC_Check(x)	((x)->ob_type == &PaxGCType)
 
-int PaxGC_MakeValues Py_PROTO((PyObject *, unsigned long *, XGCValues *));
-PyObject *PaxGC_FromGC Py_PROTO((Display *, Drawable, GC, int, PyObject*));
-GC PaxGC_AsGC Py_PROTO((PyObject *));
+int PaxGC_MakeValues (PyObject *, unsigned long *, XGCValues *);
+PyObject *PaxGC_FromGC (Display *, Drawable, GC, int, PyObject*);
+GC PaxGC_AsGC (PyObject *);
 
 int paxtk_checkshortlist(int width, PyObject *list,
 			 short **parray, int *pnitems);

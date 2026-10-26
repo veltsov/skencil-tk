@@ -86,7 +86,7 @@ typedef struct {
     void * client_data;
 } FilterObject;
 
-extern DL_IMPORT(PyTypeObject) FilterType;
+extern PyTypeObject FilterType;
 
 #define Filter_Check(op) ((op)->ob_type == &FilterType)
 

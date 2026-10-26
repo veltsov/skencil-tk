@@ -22,6 +22,7 @@
 
 
 #include "filterobj.h"
+#include "skmember.h"
 #include <structmember.h>
 
 /*
@@ -94,17 +95,17 @@ setexc(FilterObject * self)
     if (self->flags & FILTER_BAD)
     {
 	PyErr_Format(PyExc_IOError, "filter %s in bad state",
-		     PyString_AsString(self->filtername));
+		     PyUnicode_AsUTF8(self->filtername));
     }
     else if (self->flags & FILTER_CLOSED)
     {
 	PyErr_Format(PyExc_IOError, "filter %s already closed",
-		     PyString_AsString(self->filtername));
+		     PyUnicode_AsUTF8(self->filtername));
     }
     else if (self->flags & FILTER_EOF)
     {
 	PyErr_Format(PyExc_EOFError, "filter %s reached EOF",
-		     PyString_AsString(self->filtername));
+		     PyUnicode_AsUTF8(self->filtername));
     }
     return 0;
 }
@@ -133,7 +134,7 @@ new_filter(PyObject * stream, const char * name, int flags,
 	return NULL;
     }
 
-    self->filtername = PyString_FromString(name);
+    self->filtername = PyUnicode_FromString(name);
     if (!self->filtername)
     {
 	PyMem_Free(self->buffer);
@@ -166,7 +167,7 @@ Filter_NewEncoder(PyObject * target, const char * name, int flags,
 {
     FilterObject * self;
 
-    if (!PyFile_Check(target) && !Filter_Check(target))
+    if (!Filter_Check(target) && !PyObject_HasAttrString(target, "write"))
     {
 	PyErr_SetString(PyExc_TypeError, "target must be file or filter");
 	return NULL;
@@ -230,11 +231,11 @@ filter_repr(FilterObject * self)
 	return NULL;
 
     sprintf(buf, "<filter %.100s %s %.500s>",
-	    PyString_AsString(self->filtername),
+	    PyUnicode_AsUTF8(self->filtername),
 	    Filter_IsEncoder(self) ? "writing to" : "reading from",
-	    PyString_AsString(streamrepr));
+	    PyUnicode_AsUTF8(streamrepr));
     Py_DECREF(streamrepr);
-    return PyString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 
@@ -336,12 +337,12 @@ Filter_Flush(PyObject * filter, int flush_target)
 	/* XXX flush target even if error occurred? */
 	if (flush_target)
 	{
-	    if (PyFile_Check(self->stream))
+	    if (!Filter_Check(self->stream))
 	    {
 		int fflush_result;
-		Py_BEGIN_ALLOW_THREADS
-		fflush_result = fflush(PyFile_AsFile(self->stream));
-		Py_END_ALLOW_THREADS
+		PyObject * res = PyObject_CallMethod(self->stream, "flush", NULL);
+		fflush_result = res ? 0 : EOF;
+		Py_XDECREF(res);
 		if (result < 0)
 		{
 		    PyErr_SetFromErrno(PyExc_IOError);
@@ -397,25 +398,40 @@ Filter_Read(PyObject * filter, char * buffer, size_t length)
     if (length <= 0)
 	return 0;
 
-    if (PyFile_Check(filter))
+    if (!Filter_Check(filter))
     {
-	FILE * file = PyFile_AsFile(filter);
-	size_t result;
-	
-	Py_BEGIN_ALLOW_THREADS
-	result = fread(buffer, 1, length, file);
-	Py_END_ALLOW_THREADS
-	if (result == 0)
-	{
-	    if (ferror(file))
-	    {
-		PyErr_SetFromErrno(PyExc_IOError);
-	    }
+	/* a python file-like object: use its read() method */
+	PyObject * data = PyObject_CallMethod(filter, "read", "n",
+					     (Py_ssize_t)length);
+	Py_ssize_t size;
+	if (!data)
 	    return 0;
+	if (PyBytes_Check(data))
+	{
+	    size = PyBytes_GET_SIZE(data);
+	    if (size > (Py_ssize_t)length)
+		size = length;
+	    memcpy(buffer, PyBytes_AS_STRING(data), size);
 	}
-	return result;
+	else if (PyByteArray_Check(data))
+	{
+	    size = PyByteArray_GET_SIZE(data);
+	    if (size > (Py_ssize_t)length)
+		size = length;
+	    memcpy(buffer, PyByteArray_AS_STRING(data), size);
+	}
+	else
+	{
+	    PyErr_SetString(PyExc_TypeError,
+			    "file-like read() must return bytes");
+	    size = 0;
+	}
+	Py_DECREF(data);
+	if (size == 0 && PyErr_Occurred())
+	    return 0;
+	return size;
     }
-    else if (Filter_Check(filter))
+    else
     {
 	size_t to_do = length;
 	size_t count;
@@ -476,29 +492,30 @@ Filter_ReadToChar(PyObject * filter, char * buffer, size_t length,
 	    return 0;
 	return dest - buffer;
     }
-    else if (PyFile_Check(filter))
+    else
     {
-	FILE* file = PyFile_AsFile(filter);
+	/* a python file-like object: read one byte at a time */
 	int c;
 	char * dest = buffer, *end = buffer + length;
 
-	Py_BEGIN_ALLOW_THREADS
 	for (;;)
 	{
-	    c = getc(file);
-	    if (c == EOF)
+	    PyObject * data = PyObject_CallMethod(filter, "read", "n", (Py_ssize_t)1);
+	    if (!data)
+		return 0;
+	    if (data == Py_None || PyObject_Length(data) == 0)
+	    {
+		Py_DECREF(data);
 		break;
-	    *dest++ = c;
+	    }
+	    *dest++ = *PyBytes_AS_STRING(data);
+	    Py_DECREF(data);
+	    c = dest[-1];
 	    if (c == endchar || dest == end)
 		break;
 	}
-	Py_END_ALLOW_THREADS
-	if (c == EOF && dest == buffer)
-	{
-	    if (ferror(file))
-		PyErr_SetFromErrno(PyExc_IOError);
+	if (dest == buffer)
 	    return 0;
-	}
 	return dest - buffer;
     }
 
@@ -508,14 +525,13 @@ Filter_ReadToChar(PyObject * filter, char * buffer, size_t length,
 }
 
 
-#define BUF(v) PyString_AS_STRING((PyStringObject *)v)
 
 PyObject *
 Filter_GetLine(PyObject * filter, int n)
 {
     int n1, n2;
     size_t charsread;
-    char * buf, *end;
+    char * buf, *end, *buffer;
     PyObject *v;
 
     if (!Filter_Check(filter))
@@ -525,11 +541,11 @@ Filter_GetLine(PyObject * filter, int n)
     }
 
     n2 = n > 0 ? n : 100;
-    v = PyString_FromStringAndSize((char *)NULL, n2);
-    if (v == NULL)
-	return NULL;
-    buf = BUF(v);
-    end = buf + n2;
+    buffer = malloc(n2);
+    if (buffer == NULL)
+	return PyErr_NoMemory();
+    buf = buffer;
+    end = buffer + n2;
 
     for (;;)
     {
@@ -539,11 +555,11 @@ Filter_GetLine(PyObject * filter, int n)
 	{
 	    if (PyErr_CheckSignals())
 	    {
-		Py_DECREF(v);
+		free(buffer);
 		return NULL;
 	    }
-	    if (n < 0 && buf == BUF(v)) {
-		Py_DECREF(v);
+	    if (n < 0 && buf == buffer) {
+		free(buffer);
 		PyErr_SetString(PyExc_EOFError, "EOF when reading a line");
 		return NULL;
 	    }
@@ -562,16 +578,23 @@ Filter_GetLine(PyObject * filter, int n)
 		break;
 	    n1 = n2;
 	    n2 += 1000;
-	    if (_PyString_Resize(&v, n2) < 0)
-		return NULL;
-	    buf = BUF(v) + n1;
-	    end = BUF(v) + n2;
+	    {
+		char * newbuf = realloc(buffer, n2);
+		if (!newbuf)
+		{
+		    free(buffer);
+		    return PyErr_NoMemory();
+		}
+		buffer = newbuf;
+	    }
+	    buf = buffer + n1;
+	    end = buffer + n2;
 	}
     }
 
-    n1 = buf - BUF(v);
-    if (n1 != n2)
-	_PyString_Resize(&v, n1);
+    n1 = buf - buffer;
+    v = PyBytes_FromStringAndSize(buffer, n1);
+    free(buffer);
     return v;
 }
 
@@ -601,23 +624,15 @@ Filter_Write(PyObject * filter, const char * buffer, size_t length)
     if (length <= 0)
 	return 0;
 
-    if (PyFile_Check(filter))
+    if (!Filter_Check(filter))
     {
-	FILE * file = PyFile_AsFile(filter);
-	int result;
-
-	Py_BEGIN_ALLOW_THREADS
-	result = fwrite(buffer, 1, length, file);
-	Py_END_ALLOW_THREADS
-	if (result < length)
-	{
-	    if (ferror(file))
-	    {
-		PyErr_SetFromErrno(PyExc_IOError);
-		return EOF;
-	    }
-	}
-	return result;
+	/* a python file-like object: use its write() method */
+	PyObject * result = PyObject_CallMethod(filter, "write", "y#",
+						buffer, (Py_ssize_t)length);
+	if (!result)
+	    return EOF;
+	Py_DECREF(result);
+	return length;
     }
     else if (Filter_Check(filter))
     {
@@ -664,24 +679,21 @@ filter_read(PyObject * self, PyObject * args)
     if (!PyArg_ParseTuple(args, "i", &length))
 	return NULL;
 
-    string = PyString_FromStringAndSize((const char*)NULL, length);
-    if (!string)
-	return NULL;
+    char * buffer = malloc(length);
+    if (!buffer)
+	return PyErr_NoMemory();
 
-    read = Filter_Read(self, PyString_AsString(string), length);
+    read = Filter_Read(self, buffer, length);
     if (read == 0)
     {
-	Py_DECREF(string);
+	free(buffer);
 	if (PyErr_Occurred())
 	    return NULL;
-	return PyString_FromString("");
+	return PyBytes_FromString("");
     }
-	    
-    if (read < length)
-    {
-	if (_PyString_Resize(&string, read) < 0)
-	    return NULL;
-    }
+
+    string = PyBytes_FromStringAndSize(buffer, read);
+    free(buffer);
     return string;
 }
 
@@ -695,7 +707,7 @@ filter_readline(PyObject * self, PyObject * args)
 	return NULL;
 
     if (length == 0)
-	return PyString_FromString("");
+	return PyBytes_FromString("");
     if (length < 0)
 	length = 0;
     return Filter_GetLine(self, length);
@@ -746,17 +758,17 @@ filter_readlines(PyObject *self, PyObject *args)
 	    buffersize *= 2;
 	    if (big_buffer == NULL) {
 		/* Create the big buffer */
-		big_buffer = PyString_FromStringAndSize(NULL, buffersize);
+		big_buffer = PyBytes_FromStringAndSize(NULL, buffersize);
 		if (big_buffer == NULL)
 		    goto error;
-		buffer = PyString_AS_STRING(big_buffer);
+		buffer = PyBytes_AS_STRING(big_buffer);
 		memcpy(buffer, small_buffer, nfilled);
 	    }
 	    else {
 		/* Grow the big buffer */
-		if (_PyString_Resize(&big_buffer, buffersize) < 0)
+		if (PyBytes_Resize(big_buffer, buffersize) < 0)
 		    goto error;
-		buffer = PyString_AS_STRING(big_buffer);
+		buffer = PyBytes_AS_STRING(big_buffer);
 	    }
 	    continue;
 	}
@@ -765,7 +777,7 @@ filter_readlines(PyObject *self, PyObject *args)
 	do {
 	    /* Process complete lines */
 	    p++;
-	    line = PyString_FromStringAndSize(q, p-q);
+	    line = PyBytes_FromStringAndSize(q, p-q);
 	    if (line == NULL)
 		goto error;
 	    err = PyList_Append(list, line);
@@ -784,7 +796,7 @@ filter_readlines(PyObject *self, PyObject *args)
     }
     if (nfilled != 0) {
 	/* Partial last line */
-	line = PyString_FromStringAndSize(buffer, nfilled);
+	line = PyBytes_FromStringAndSize(buffer, nfilled);
 	if (line == NULL)
 	    goto error;
 	if (sizehint > 0) {
@@ -794,7 +806,7 @@ filter_readlines(PyObject *self, PyObject *args)
 		Py_DECREF(line);
 		goto error;
 	    }
-	    PyString_Concat(&line, rest);
+	    PyBytes_Concat(&line, rest);
 	    Py_DECREF(rest);
 	    if (line == NULL)
 		goto error;
@@ -898,11 +910,11 @@ filter_tell(FilterObject * self, PyObject * args)
 	return NULL;
 
     cur_pos = self->streampos - (self->end - self->current);
-    return PyInt_FromLong(cur_pos);
+    return PyLong_FromLong(cur_pos);
 }
 
 #define OFF(x) offsetof(FilterObject, x)
-static struct memberlist filter_memberlist[] = {
+static SKMemberDef filter_memberlist[] = {
     {"stream",		T_OBJECT,	OFF(stream),	RO},
     {"source",		T_OBJECT,	OFF(stream),	RO},
     {"target",		T_OBJECT,	OFF(stream),	RO},
@@ -926,12 +938,12 @@ filter_getattr(PyObject * self, char * name)
 {
     PyObject * result;
 
-    result = Py_FindMethod(filter_methods, self, name);
+    result = SK_FindMethod(filter_methods, self, name);
     if (result != NULL)
 	return result;
     PyErr_Clear();
 
-    return PyMember_Get((char *)self, filter_memberlist, name);
+    return SKMember_Get((char *)self, filter_memberlist, name);
 }
 
 
@@ -944,7 +956,7 @@ filter_setattr(PyObject * self, char * name, PyObject * v)
 			"can't delete object attributes");
 	return -1;
     }
-    return PyMember_Set((char *)self, filter_memberlist, name, v);
+    return SKMember_Set((char *)self, filter_memberlist, name, v);
 }
 
 
@@ -958,12 +970,18 @@ PyTypeObject FilterType = {
 	(printfunc)0,			/*tp_print*/
 	filter_getattr,			/*tp_getattr*/
 	filter_setattr,			/*tp_setattr*/
-	(cmpfunc)0,			/*tp_compare*/
+	0,				/*tp_as_async*/
 	(reprfunc)filter_repr,		/*tp_repr*/
 	0,				/*tp_as_number*/
 	0,				/*tp_as_sequence*/
 	0,				/*tp_as_mapping*/
 	0,				/*tp_hash*/
+	0,				/*tp_call*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
 };
 
 

@@ -29,7 +29,7 @@ typedef struct {
 
 extern PyTypeObject SKTrafoType;
 
-#define SKTrafo_Check(v)		((v)->ob_type == &SKTrafoType)
+#define SKTrafo_Check(v)		(Py_TYPE(v) == &SKTrafoType)
 
 PyObject * SKTrafo_FromDouble(double m11, double m21, double m12, double m22,
 			      double v1, double v2);

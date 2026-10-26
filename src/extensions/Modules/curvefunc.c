@@ -97,9 +97,9 @@ SKCurve_PyTestTransformed(PyObject * self, PyObject * args)
     }
 
     if (cross_count >= 0 && filled)
-	return PyInt_FromLong(cross_count & 1);
+	return PyLong_FromLong(cross_count & 1);
 
-    return PyInt_FromLong(cross_count >= 0 ? 0 : -1);
+    return PyLong_FromLong(cross_count >= 0 ? 0 : -1);
 }
 
 

@@ -15,7 +15,7 @@ extern PyTypeObject PaxRegionType;
 
 #define PaxRegion_Check(x) 	((x)->ob_type == &PaxRegionType)
 
-extern Region PaxRegion_AsRegion Py_PROTO((PyObject *));
+extern Region PaxRegion_AsRegion (PyObject *);
 
 extern PyObject * PaxRegion_FromRegion(Region);
 

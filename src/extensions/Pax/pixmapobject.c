@@ -1,4 +1,5 @@
 #include "Python.h"
+#include "skmember.h"
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "tkwinobject.h"
@@ -209,7 +210,7 @@ pixmap_GetXbmStrings(PaxPixmapObject * self, PyObject * args)
 	    if (byte % BYTES_PER_OUTPUT_LINE == 0)
 	    {
 		strcat(line, ",");
-		string = PyString_FromString(line);
+		string = PyUnicode_FromString(line);
 		if (!string)
 		    goto fail;
 		if (PyList_Append(result, string) == -1)
@@ -228,7 +229,7 @@ pixmap_GetXbmStrings(PaxPixmapObject * self, PyObject * args)
 
     if (line[0])
     {
-	string = PyString_FromString(line);
+	string = PyUnicode_FromString(line);
 	if (!string)
 	    goto fail;
 	if (PyList_Append(result, string) == -1)
@@ -374,7 +375,7 @@ static PyMethodDef pixmap_methods[] = {
 static PyObject *
 pixmap_getattr(PyObject *self, char *name)
 {
-    return Py_FindMethod(pixmap_methods, self, name);
+    return SK_FindMethod(pixmap_methods, self, name);
 }
 
 static void pixmap_dealloc(PaxPixmapObject *self)
@@ -394,12 +395,21 @@ PyTypeObject PaxPixmapType = {
 	0,			/*tp_print*/
 	(getattrfunc)pixmap_getattr, /*tp_getattr*/
 	0,			/*tp_setattr*/
-	0,			/*tp_compare*/
+	0,				/*tp_as_async*/
 	0,			/*tp_repr*/
 	0,			/*tp_as_number*/
 	0,			/*tp_as_sequence*/
 	0,			/*tp_as_mapping*/
 	0,			/*tp_hash*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	0,			/*tp_richcompare*/
 };
 
 PyObject *

@@ -55,21 +55,16 @@ PaxGC_DrawImageString(PaxGCObject * self, PyObject *args)
 {
 	int arg1;
 	int arg2;
-	PyObject *arg3; int nchars;
-	if (!PyArg_ParseTuple(args, "iiS",
+	const char *arg3; Py_ssize_t nchars;
+	if (!PyArg_ParseTuple(args, "iis#",
 			&arg1,
 			&arg2,
-			&arg3))
+			&arg3, &nchars))
 		return NULL;
-	if (!(nchars = PyString_Size(arg3), 1)) {
-		if (!PyErr_Occurred())
-			PyErr_SetString(PyExc_TypeError, "arg3 should be char[]");
-		return NULL;
-	}
 XDrawImageString(self->display, self->drawable, self->gc,
 			arg1,
 			arg2,
-			PyString_AsString(arg3), nchars);
+			arg3, nchars);
 	Py_INCREF(Py_None);
 	return Py_None;
 }
@@ -221,21 +216,16 @@ PaxGC_DrawString(PaxGCObject * self, PyObject *args)
 {
 	int arg1;
 	int arg2;
-	PyObject *arg3; int nchars;
-	if (!PyArg_ParseTuple(args, "iiS",
+	const char *arg3; Py_ssize_t nchars;
+	if (!PyArg_ParseTuple(args, "iis#",
 			&arg1,
 			&arg2,
-			&arg3))
+			&arg3, &nchars))
 		return NULL;
-	if (!(nchars = PyString_Size(arg3), 1)) {
-		if (!PyErr_Occurred())
-			PyErr_SetString(PyExc_TypeError, "arg3 should be char[]");
-		return NULL;
-	}
 XDrawString(self->display, self->drawable, self->gc,
 			arg1,
 			arg2,
-			PyString_AsString(arg3), nchars);
+			arg3, nchars);
 	Py_INCREF(Py_None);
 	return Py_None;
 }

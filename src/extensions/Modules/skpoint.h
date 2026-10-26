@@ -33,7 +33,7 @@ typedef struct {
 
 extern PyTypeObject SKPointType;
 
-#define SKPoint_Check(v)		((v)->ob_type == &SKPointType)
+#define SKPoint_Check(v)		(Py_TYPE(v) == &SKPointType)
 
 PyObject * SKPoint_FromXY(SKCoord x, SKCoord y);
 

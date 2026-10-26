@@ -20,6 +20,7 @@
 #include <math.h>
 #include <Python.h>
 #include <structmember.h>
+#include "skmember.h"
 
 #include "skpoint.h"
 #include "skrect.h"
@@ -107,7 +108,7 @@ sktrafo_repr(SKTrafoObject * self)
     char buf[1000];
     sprintf(buf, "Trafo(%.10g, %.10g, %.10g, %.10g, %.10g, %.10g)",
 	    self->m11, self->m21, self->m12, self->m22, self->v1, self->v2);
-    return PyString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 /*
@@ -190,7 +191,7 @@ sktrafo_call(SKTrafoObject * self, PyObject * args, PyObject * kw)
 
 
 #define OFF(x) offsetof(SKTrafoObject, x)
-static struct memberlist sktrafo_memberlist[] = {
+static SKMemberDef sktrafo_memberlist[] = {
     {"m11",		T_DOUBLE,	OFF(m11),	RO},
     {"m12",		T_DOUBLE,	OFF(m12),	RO},
     {"m21",		T_DOUBLE,	OFF(m21),	RO},
@@ -340,14 +341,20 @@ sktrafo_getattr(PyObject * self, char * name)
     PyObject * result;
 
 
-    result = Py_FindMethod(sktrafo_methods, self, name);
+    result = SK_FindMethod(sktrafo_methods, self, name);
     if (result != NULL)
 	return result;
     PyErr_Clear();
 
-    return PyMember_Get((char *)self, sktrafo_memberlist, name);
+    return SKMember_Get((char *)self, sktrafo_memberlist, name);
 }
 
+
+static PyObject *
+sktrafo_richcompare(PyObject * v, PyObject * w, int op)
+{
+    return SK_RichCompare(sktrafo_compare((SKTrafoObject*)v, (SKTrafoObject*)w), op);
+}
 
 PyTypeObject SKTrafoType = {
 	PyObject_HEAD_INIT(&PyType_Type)
@@ -359,13 +366,22 @@ PyTypeObject SKTrafoType = {
 	(printfunc)NULL,		/*tp_print*/
 	sktrafo_getattr,		/*tp_getattr*/
 	0,				/*tp_setattr*/
-	(cmpfunc)sktrafo_compare,	/*tp_compare*/
+	0,				/*tp_as_async*/
 	(reprfunc)sktrafo_repr,		/*tp_repr*/
 	0,				/*tp_as_number*/
 	0,				/*tp_as_sequence*/
 	0,				/*tp_as_mapping*/
 	0,				/*tp_hash*/
 	(ternaryfunc)sktrafo_call,	/* tp_call */
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	sktrafo_richcompare,		/*tp_richcompare*/
 };
 
 
@@ -377,9 +393,9 @@ PyObject *
 sktrafo_allocated(PyObject * self, PyObject * args)
 {
 #if SKTRAFO_COUNT_ALLOC
-    return PyInt_FromLong(allocated);
+    return PyLong_FromLong(allocated);
 #else
-    return PyInt_FromLong(-1);
+    return PyLong_FromLong(-1);
 #endif
 }
 

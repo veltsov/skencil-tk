@@ -37,6 +37,7 @@
 #include <math.h>
 #include <Python.h>
 #include <structmember.h>
+#include "skmember.h"
 
 #include "skpoint.h"
 #include "skrect.h"
@@ -66,8 +67,8 @@ fill_free_list(void)
 	return (SKRectObject *)PyErr_NoMemory();
     q = p + N_RECTOBJECTS;
     while (--q > p)
-	q->ob_type = (PyTypeObject*)(q-1);
-    q->ob_type = NULL;
+	Py_SET_TYPE(q, (PyTypeObject*)(q-1));
+    Py_SET_TYPE(q, NULL);
     return p + N_RECTOBJECTS - 1;
 }
 
@@ -85,8 +86,8 @@ SKRect_FromDouble(double left, double bottom, double right, double top)
 	    return NULL;
     }
     self = free_list;
-    free_list = (SKRectObject *)(free_list->ob_type);
-    self->ob_type = &SKRectType;
+    free_list = (SKRectObject *)(Py_TYPE(free_list));
+    Py_SET_TYPE(self, &SKRectType);
     _Py_NewReference(self);
 #else
     self = PyObject_New(SKRectObject, &SKRectType);
@@ -111,7 +112,7 @@ static void
 skrect_dealloc(SKRectObject * self)
 {
 #if SKRECT_SUBALLOCATE
-    self->ob_type = (PyTypeObject*)free_list;
+    Py_SET_TYPE(self, (PyTypeObject*)free_list);
     free_list = self;
 #else
     PyObject_Del(self);
@@ -155,15 +156,15 @@ static PyObject *
 skrect_repr(SKRectObject * self)
 {
     if (self == SKRect_EmptyRect)
-	return PyString_FromString("EmptyRect");
+	return PyUnicode_FromString("EmptyRect");
     else if (self == SKRect_InfinityRect)
-	return PyString_FromString("InfinityRect");
+	return PyUnicode_FromString("InfinityRect");
     else
     {	
 	char buf[1000];
 	sprintf(buf, "Rect(%.10g, %.10g, %.10g, %.10g)",
 		self->left, self->bottom, self->right, self->top);
-	return PyString_FromString(buf);
+	return PyUnicode_FromString(buf);
     }
 }
 
@@ -339,7 +340,7 @@ skrect_contains_point(SKRectObject * self, PyObject * args)
 
     if (skpoint_extract_xy(arg, &x, &y))
     {
-	return PyInt_FromLong(SKRect_ContainsXY(self, x, y));
+	return PyLong_FromLong(SKRect_ContainsXY(self, x, y));
     }
     
     PyErr_SetString(PyExc_TypeError, "arguments must be either two numbers "
@@ -370,12 +371,12 @@ skrect_contains_rect(SKRectObject * self, PyObject * args)
      *		r |	1	0	?
      */ 
     if (self == SKRect_InfinityRect || r == SKRect_EmptyRect)
-	return PyInt_FromLong(1);
+	return PyLong_FromLong(1);
     
     if (self == SKRect_EmptyRect || r == SKRect_InfinityRect)
-	return PyInt_FromLong(0);
+	return PyLong_FromLong(0);
     
-    return PyInt_FromLong(   r->left >= self->left && r->right <= self->right
+    return PyLong_FromLong(   r->left >= self->left && r->right <= self->right
 			  && r->top <= self->top && r->bottom >= self->bottom);
 }
 
@@ -395,9 +396,9 @@ skrect_overlaps(SKRectObject * self, PyObject * args)
 
     if (self == SKRect_InfinityRect || self == SKRect_EmptyRect
 	|| r == SKRect_InfinityRect || r == SKRect_EmptyRect)
-	return PyInt_FromLong(1);
+	return PyLong_FromLong(1);
     
-    return PyInt_FromLong(   r->left <= self->right && r->right >= self->left
+    return PyLong_FromLong(   r->left <= self->right && r->right >= self->left
 			  && r->top >= self->bottom && r->bottom <= self->top);
 }
 
@@ -431,7 +432,7 @@ skrect_center(SKRectObject * self, PyObject * args)
 
 
 #define OFF(x) offsetof(SKRectObject, x)
-static struct memberlist skrect_memberlist[] = {
+static SKMemberDef skrect_memberlist[] = {
     {"left",		T_SKCOORD,	OFF(left),	RO},
     {"bottom",		T_SKCOORD,	OFF(bottom),	RO},
     {"right",		T_SKCOORD,	OFF(right),	RO},
@@ -456,14 +457,20 @@ skrect_getattr(PyObject * self, char * name)
 {
     PyObject * result;
 
-    result = Py_FindMethod(skrect_methods, self, name);
+    result = SK_FindMethod(skrect_methods, self, name);
     if (result != NULL)
 	return result;
     PyErr_Clear();
 
-    return PyMember_Get((char *)self, skrect_memberlist, name);
+    return SKMember_Get((char *)self, skrect_memberlist, name);
 }
 
+
+static PyObject *
+skrect_richcompare(PyObject * v, PyObject * w, int op)
+{
+    return SK_RichCompare(skrect_compare((SKRectObject*)v, (SKRectObject*)w), op);
+}
 
 PyTypeObject SKRectType = {
 	PyObject_HEAD_INIT(&PyType_Type)
@@ -475,13 +482,22 @@ PyTypeObject SKRectType = {
 	(printfunc)NULL,		/*tp_print*/
 	skrect_getattr,			/*tp_getattr*/
 	0,				/*tp_setattr*/
-	(cmpfunc)skrect_compare,	/*tp_compare*/
+	0,				/*tp_as_async*/
 	(reprfunc)skrect_repr,		/*tp_repr*/
 	0,				/*tp_as_number*/
 	&skrect_as_sequence,		/*tp_as_sequence*/
 	0,				/*tp_as_mapping*/
 	0,				/*tp_hash*/
 	(ternaryfunc)0,			/*tp_call */
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	skrect_richcompare,		/*tp_richcompare*/
 };
 
 
@@ -671,9 +687,9 @@ PyObject *
 skrect_allocated(PyObject * self, PyObject * args)
 {
 #if SKRECT_COUNT_ALLOC
-    return PyInt_FromLong(allocated);
+    return PyLong_FromLong(allocated);
 #else
-    return PyInt_FromLong(-1);
+    return PyLong_FromLong(-1);
 #endif
 }
 

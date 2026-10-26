@@ -11,10 +11,10 @@ typedef struct {
 extern PyTypeObject PaxFontType;
 #define PaxFont_Check(xp)	((xp)->ob_type == &PaxFontType)
 
-extern PyObject *PaxFont_FromName Py_PROTO((Display *, char *));
-extern PyObject *PaxFont_FromFont Py_PROTO((Display *, Font));
-extern Font PaxFont_AsFont Py_PROTO((PyObject *));
-extern XFontStruct * PaxFont_AsFontStruct Py_PROTO((PyObject *));
+extern PyObject *PaxFont_FromName (Display *, char *);
+extern PyObject *PaxFont_FromFont (Display *, Font);
+extern Font PaxFont_AsFont (PyObject *);
+extern XFontStruct * PaxFont_AsFontStruct (PyObject *);
 
 
 #endif /* FONTOBJECT_h */

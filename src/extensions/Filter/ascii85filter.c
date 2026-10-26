@@ -268,7 +268,7 @@ Filter_ASCII85Decode(PyObject * self, PyObject * args)
 
     if (!delimiter_string_object)
     {
-	delimiter_string_object = PyString_FromString("~>");
+	delimiter_string_object = PyBytes_FromString("~>");
 	if (!delimiter_string_object)
 	    return NULL;
     }

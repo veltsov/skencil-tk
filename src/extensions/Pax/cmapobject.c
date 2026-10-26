@@ -1,4 +1,5 @@
 #include "Python.h"
+#include "skmember.h"
 #include <X11/Xlib.h>
 #include "cmapobject.h"
 
@@ -46,10 +47,10 @@ paxcm_AllocColorCells(PaxCMapObject *self, PyObject *args)
 
     res1 = PyList_New(nplanes);
     for (i = 0; i < nplanes; i++)
-	PyList_SetItem(res1, i, PyInt_FromLong(plane_masks[i]));
+	PyList_SetItem(res1, i, PyLong_FromLong(plane_masks[i]));
     res2 = PyList_New(npixels);
     for (i = 0; i < npixels; i++)
-	PyList_SetItem(res2, i, PyInt_FromLong(pixels[i]));
+	PyList_SetItem(res2, i, PyLong_FromLong(pixels[i]));
     PyMem_Free(plane_masks);
     PyMem_Free(pixels);
     if (PyErr_Occurred())
@@ -196,12 +197,12 @@ paxcm_QueryColors(PaxCMapObject *self, PyObject *args)
     for (i = 0; i < npixels; i++)
     {
 	item = PyList_GetItem(pixels, i);
-	if (!PyInt_Check(item))
+	if (!PyLong_Check(item))
 	{
 	    PyErr_BadArgument();
 	    goto done;
 	}
-	defs[i].pixel = PyInt_AsLong(item);
+	defs[i].pixel = PyLong_AsLong(item);
     }
 
     XQueryColors(self->display, self->colormap, defs, npixels);
@@ -283,13 +284,13 @@ paxcm_FreeColors(PaxCMapObject *self, PyObject *args)
     for (i = 0; i < npixels; i++)
     {
 	item = PyList_GetItem(pixellist, i);
-	if (!PyInt_Check(item))
+	if (!PyLong_Check(item))
 	{
 	    PyMem_Free(pixels);
 	    PyErr_BadArgument();
 	    return NULL;
 	}
-	pixels[i] = PyInt_AsLong(item);
+	pixels[i] = PyLong_AsLong(item);
     }
 
     XFreeColors(self->display, self->colormap, pixels, npixels, planes);
@@ -336,7 +337,7 @@ static PyMethodDef paxcm_methods[] = {
 static PyObject *
 paxcm_getattr(PaxCMapObject *self, char *name)
 {
-    return Py_FindMethod(paxcm_methods, (PyObject *) self, name);
+    return SK_FindMethod(paxcm_methods, (PyObject *) self, name);
 }
 
 void
@@ -358,12 +359,21 @@ PyTypeObject PaxCMapType = {
 	0,			/*tp_print*/
 	(getattrfunc)paxcm_getattr, /*tp_getattr*/
 	0,			/*tp_setattr*/
-	0,			/*tp_compare*/
+	0,				/*tp_as_async*/
 	0,			/*tp_repr*/
 	0,			/*tp_as_number*/
 	0,			/*tp_as_sequence*/
 	0,			/*tp_as_mapping*/
 	0,			/*tp_hash*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
+	0,				/*tp_doc*/
+	0,				/*tp_traverse*/
+	0,				/*tp_clear*/
+	0,			/*tp_richcompare*/
 };
 
 PyObject *

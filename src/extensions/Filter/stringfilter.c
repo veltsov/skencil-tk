@@ -73,7 +73,7 @@ Filter_StringDecode(PyObject * self, PyObject * args)
     PyObject * string;
     StringDecodeState * state;
 
-    if (!PyArg_ParseTuple(args, "SO", &string, &source))
+    if (!PyArg_ParseTuple(args, "OO", &string, &source))
 	return NULL;
 
     state = malloc(sizeof (StringDecodeState));
@@ -81,8 +81,24 @@ Filter_StringDecode(PyObject * self, PyObject * args)
 	return PyErr_NoMemory();
     state->string = string;
     Py_INCREF(state->string);
-    state->pos = PyString_AsString(string);
-    state->left = PyString_Size(string);
+    if (PyUnicode_Check(string))
+    {
+	Py_ssize_t size;
+	state->pos = (char*)PyUnicode_AsUTF8AndSize(string, &size);
+	state->left = size;
+    }
+    else if (PyBytes_Check(string))
+    {
+	state->pos = PyBytes_AsString(string);
+	state->left = PyBytes_Size(string);
+    }
+    else
+    {
+	free(state);
+	PyErr_SetString(PyExc_TypeError,
+			"expected a str or bytes string");
+	return NULL;
+    }
 
     return Filter_NewDecoder(source, "StringDecode", 0, read_string, NULL,
 			     string_state_dealloc, state);

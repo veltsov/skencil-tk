@@ -1846,75 +1846,77 @@ fill_conical_gradient(PyObject * self, PyObject * args)
 
 static char * hexdigit = "0123456789ABCDEF";
 
-static void
-write_ps_hex_rgb(FILE * out, int width, int height, char ** data,
-		 int line_length, char * prefix)
+/* Write the image rows as PS hex data via the python file object's
+ * write() method (python3 has no PyFile_AsFile).  WIDTH is the number
+ * of bytes per row (the row stride).  With PIXELSIZE 4 every fourth
+ * byte (the alpha channel) is skipped.  Returns 0 with an exception
+ * set on error. */
+static int
+write_ps_hex_data(PyObject * pyfile, int width, int height, char ** data,
+		  int pixelsize, int line_length, const char * prefix)
 {
     int x, y;
-    char * line;
     int written = 0;
+    int chunksize = 65536;
+    int nchunk = 0;
+    char * chunk = malloc(chunksize);
+    PyObject * result;
+
+    if (!chunk)
+    {
+	PyErr_NoMemory();
+	return 0;
+    }
+
+#define FLUSH() do { \
+    if (nchunk) { \
+	result = PyObject_CallMethod(pyfile, "write", "s#", chunk, \
+				     (Py_ssize_t)nchunk); \
+	if (!result) { free(chunk); return 0; } \
+	Py_DECREF(result); \
+	nchunk = 0; \
+    } \
+} while (0)
+
+#define PUTC(c) do { \
+    if (nchunk == chunksize) FLUSH(); \
+    chunk[nchunk++] = (c); \
+} while (0)
 
     for (y = 0; y < height; y++)
     {
-	line = data[y];
+	char * line = data[y];
 
 	for (x = 0; x < width; x++)
 	{
-	    if (x % 4 == 3)
+	    if (pixelsize == 4 && x % 4 == 3)
 		continue;
 
 	    if (written == 0 && prefix)
 	    {
-		fputs(prefix, out);
+		const char * p;
+		for (p = prefix; *p; p++)
+		    PUTC(*p);
 	    }
-	    putc(hexdigit[(int)(line[x] >> 4) & 0x0F], out);
-	    putc(hexdigit[(int)(line[x] & 0x0F)], out);
+	    PUTC(hexdigit[(int)(line[x] >> 4) & 0x0F]);
+	    PUTC(hexdigit[(int)(line[x] & 0x0F)]);
 	    written += 2;
 
 	    if (written > line_length)
 	    {
-		putc('\n', out);
+		PUTC('\n');
 		written = 0;
 	    }
 	}
     }
 
     if (written)
-	putc('\n', out);
-}
-
-static void
-write_ps_hex_gray(FILE * out, int width, int height, char ** data,
-		  int line_length, char * prefix)
-{
-    int x, y;
-    char * line;
-    int written = 0;
-
-    for (y = 0; y < height; y++)
-    {
-	line = data[y];
-
-	for (x = 0; x < width; x++)
-	{
-	    if (written == 0 && prefix)
-	    {
-		fputs(prefix, out);
-	    }
-	    putc(hexdigit[(int)(line[x] >> 4) & 0x0F], out);
-	    putc(hexdigit[(int)(line[x] & 0x0F)], out);
-	    written += 2;
-
-	    if (written > line_length)
-	    {
-		putc('\n', out);
-		written = 0;
-	    }
-	}
-    }
-
-    if (written)
-	putc('\n', out);
+	PUTC('\n');
+    FLUSH();
+    free(chunk);
+    return 1;
+#undef FLUSH
+#undef PUTC
 }
 
 
@@ -1922,16 +1924,17 @@ PyObject *
 skimage_write_ps_hex(PyObject * self, PyObject * args)
 {
     PyObject * pyfile, * imobj;
-    char * mode;
+    const char * mode;
     int im_width, im_height;
     SKImageData imagebuf, *image = &imagebuf;
     Py_buffer view;
     int line_length = 80;
-    char * prefix = NULL;
+    const char * prefix = NULL;
+    int ok = 1;
 
-    if (!PyArg_ParseTuple(args, "OsiiO!|is", &imobj, &mode,
+    if (!PyArg_ParseTuple(args, "OsiiO|is", &imobj, &mode,
 			  &im_width, &im_height,
-			  &PyFile_Type, &pyfile,
+			  &pyfile,
 			  &line_length, &prefix))
 	return NULL;
 
@@ -1943,15 +1946,15 @@ skimage_write_ps_hex(PyObject * self, PyObject * args)
     if (line_length < 0)
 	line_length = 0;
     if (image->pixelsize == 4)
-	write_ps_hex_rgb(PyFile_AsFile(pyfile), image->linesize,
-			 image->ysize, image->image,
-			 line_length, prefix);
+	ok = write_ps_hex_data(pyfile, image->linesize, image->ysize,
+			       image->image, 4, line_length, prefix);
     else if (image->pixelsize == 1)
-	write_ps_hex_gray(PyFile_AsFile(pyfile), image->linesize,
-			  image->ysize, image->image,
-			  line_length, prefix);
+	ok = write_ps_hex_data(pyfile, image->linesize, image->ysize,
+			       image->image, 1, line_length, prefix);
 
     skimage_free(image, &view);
+    if (!ok)
+	return NULL;
     Py_INCREF(Py_None);
     return Py_None;
 }

@@ -22,6 +22,7 @@
 
 #include <locale.h>
 #include <Python.h>
+#include "skmember.h"
 #include <structmember.h>
 #include <filterobj.h>
 
@@ -39,7 +40,7 @@ typedef struct {
     char ai_dsc;
 } PSTokenizerObject;
 
-staticforward PyTypeObject PSTokenizerType;
+static PyTypeObject PSTokenizerType;
 
 
 #define	NAME		258
@@ -84,13 +85,14 @@ read_dsc_comment(PSTokenizerObject * self)
     int size;
     int maxsize = 256;
     PyObject * value;
+    char * buffer;
     char * buf, * end;
 
-    value = PyString_FromStringAndSize((char*)NULL, maxsize);
-    if (!value)
-	return NULL;
-    buf = PyString_AsString(value);
-    end = buf + maxsize;
+    buffer = malloc(maxsize);
+    if (!buffer)
+	return PyErr_NoMemory();
+    buf = buffer;
+    end = buffer + maxsize;
 
     for (;;)
     {
@@ -109,22 +111,21 @@ read_dsc_comment(PSTokenizerObject * self)
 
 	if (buf == end)
 	{
-	    size = maxsize;
+	    int offset = buf - buffer;
+	    char * newbuf;
 	    maxsize = maxsize + 1000;
-	    if (_PyString_Resize(&value, maxsize) < 0)
-		return NULL;
-	    buf = PyString_AsString(value) + size;
-	    end = PyString_AsString(value) + maxsize;
+	    newbuf = realloc(buffer, maxsize);
+	    if (!newbuf)
+		return PyErr_NoMemory();
+	    buffer = newbuf;
+	    buf = newbuf + offset;
+	    end = newbuf + maxsize;
 	}
     }
 
-    if (buf < end)
-    {
-	size = buf - PyString_AsString(value);
-	if (_PyString_Resize(&value, size) < 0)
-	    return NULL;
-    }
-    
+    size = buf - buffer;
+    value = PyUnicode_DecodeLatin1(buffer, size, NULL);
+    free(buffer);
     return value;
 }
 
@@ -204,13 +205,14 @@ read_string(PSTokenizerObject * self)
     int size;
     int maxsize = 256;
     PyObject * value;
+    char * buffer;
     char * buf, * end;
 
-    value = PyString_FromStringAndSize((char*)NULL, maxsize);
-    if (!value)
-	return NULL;
-    buf = PyString_AsString(value);
-    end = buf + maxsize;
+    buffer = malloc(maxsize);
+    if (!buffer)
+	return PyErr_NoMemory();
+    buf = buffer;
+    end = buffer + maxsize;
     
     for (;;)
     {
@@ -219,7 +221,7 @@ read_string(PSTokenizerObject * self)
 	{
 	case EOF:
 	    /* end of input in string constant! */
-	    Py_DECREF(value);
+	    free(buffer);
 	    PyErr_SetString(PyExc_EOFError, "unexpected end of input");
 	    return NULL;
 	    
@@ -231,8 +233,10 @@ read_string(PSTokenizerObject * self)
 	    depth -= 1;
 	    if (depth < 0)
 	    {
-		size = buf - PyString_AsString(value);
-		if (_PyString_Resize(&value, size) < 0)
+		size = buf - buffer;
+		value = PyUnicode_DecodeLatin1(buffer, size, NULL);
+		free(buffer);
+		if (!value)
 		{
 		    return NULL;
 		}
@@ -299,12 +303,15 @@ read_string(PSTokenizerObject * self)
 
 	if (buf == end)
 	{
-	    size = maxsize;
+	    int offset = buf - buffer;
+	    char * newbuf;
 	    maxsize = maxsize + 1000;
-	    if (_PyString_Resize(&value, maxsize) < 0)
-		return NULL;
-	    buf = PyString_AsString(value) + size;
-	    end = PyString_AsString(value) + maxsize;
+	    newbuf = realloc(buffer, maxsize);
+	    if (!newbuf)
+		return PyErr_NoMemory();
+	    buffer = newbuf;
+	    buf = newbuf + offset;
+	    end = newbuf + maxsize;
 	}
     }  /* for (;;) */
 
@@ -325,13 +332,14 @@ read_hex_string(PSTokenizerObject * self)
     int maxsize = 256;
     int last_digit = -1, digit;
     PyObject * value;
+    char * buffer;
     char * buf, * end;
 
-    value = PyString_FromStringAndSize((char*)NULL, maxsize);
-    if (!value)
-	return NULL;
-    buf = PyString_AsString(value);
-    end = buf + maxsize;
+    buffer = malloc(maxsize);
+    if (!buffer)
+	return PyErr_NoMemory();
+    buf = buffer;
+    end = buffer + maxsize;
     
     for (;;)
     {
@@ -341,13 +349,15 @@ read_hex_string(PSTokenizerObject * self)
 	{
 	case EOF:
 	    /* end of input in string constant! */
-	    Py_DECREF(value);
+	    free(buffer);
 	    PyErr_SetString(PyExc_EOFError, "unexpected end of input");
 	    return NULL;
 	    
 	case '>':
-	    size = buf - PyString_AsString(value);
-	    if (_PyString_Resize(&value, size) < 0)
+	    size = buf - buffer;
+	    value = PyUnicode_DecodeLatin1(buffer, size, NULL);
+	    free(buffer);
+	    if (!value)
 	    {
 		return NULL;
 	    }
@@ -369,7 +379,7 @@ read_hex_string(PSTokenizerObject * self)
 	default:
 	    if (!(char_types[c] & WHITESPACE))
 	    {
-		Py_DECREF(value);
+		free(buffer);
 		PyErr_SetString(PyExc_SyntaxError,
 				"invalid character in hex string");
 		return NULL;
@@ -390,12 +400,15 @@ read_hex_string(PSTokenizerObject * self)
 
 	    if (buf == end)
 	    {
-		size = maxsize;
+		int offset = buf - buffer;
+		char * newbuf;
 		maxsize = maxsize + 1000;
-		if (_PyString_Resize(&value, maxsize) < 0)
-		    return NULL;
-		buf = PyString_AsString(value) + size;
-		end = PyString_AsString(value) + maxsize;
+		newbuf = realloc(buffer, maxsize);
+		if (!newbuf)
+		    return PyErr_NoMemory();
+		buffer = newbuf;
+		buf = newbuf + offset;
+		end = newbuf + maxsize;
 	    }
 	}
 		
@@ -416,15 +429,16 @@ read_name_or_number(PSTokenizerObject * self, int * token, int isname)
     int size;
     int maxsize = 256;
     PyObject * value;
+    char * buffer;
     char * buf, * end;
 
     *token = 0;
 
-    value = PyString_FromStringAndSize((char*)NULL, maxsize);
-    if (!value)
-	return NULL;
-    buf = PyString_AsString(value);
-    end = buf + maxsize;
+    buffer = malloc(maxsize);
+    if (!buffer)
+	return PyErr_NoMemory();
+    buf = buffer;
+    end = buffer + maxsize;
     
     for (;;)
     {
@@ -442,12 +456,15 @@ read_name_or_number(PSTokenizerObject * self, int * token, int isname)
 
 	if (buf == end)
 	{
-	    size = maxsize;
+	    int offset = buf - buffer;
+	    char * newbuf;
 	    maxsize = maxsize + 1000;
-	    if (_PyString_Resize(&value, maxsize) < 0)
-		return NULL;
-	    buf = PyString_AsString(value) + size;
-	    end = PyString_AsString(value) + maxsize;
+	    newbuf = realloc(buffer, maxsize);
+	    if (!newbuf)
+		return PyErr_NoMemory();
+	    buffer = newbuf;
+	    buf = newbuf + offset;
+	    end = newbuf + maxsize;
 	}
     }
 
@@ -455,7 +472,7 @@ read_name_or_number(PSTokenizerObject * self, int * token, int isname)
 
     if (!isname)
     {
-	char * start = PyString_AsString(value);
+	char * start = buffer;
 	char * p = start;
 	char * numend;
 	while(char_types[(int)*p] & INTCHAR)
@@ -487,17 +504,16 @@ read_name_or_number(PSTokenizerObject * self, int * token, int isname)
 	    {
 		Py_DECREF(value);
 		*token = INT;
-		return PyInt_FromLong(result);
+		return PyLong_FromLong(result);
 	    }
 	}
     }
 
-    if (buf < end)
-    {
-	size = buf - PyString_AsString(value);
-	if (_PyString_Resize(&value, size) < 0)
-	    return NULL;
-    }
+    size = buf - buffer;
+    value = PyUnicode_DecodeLatin1(buffer, size, NULL);
+    free(buffer);
+    if (!value)
+	return NULL;
 
     *token = OPERATOR;
     return value;
@@ -536,7 +552,7 @@ pslex(PSTokenizerObject * self)
 	{
 	    char buf[2] = "\000\000";
 	    buf[0] = c;
-	    value = PyString_FromString(buf);
+	    value = PyUnicode_FromString(buf);
 	    token = OPERATOR;
 	}
 	break;
@@ -641,7 +657,7 @@ pstokenizer_next_dsc(PSTokenizerObject * self, PyObject * args)
 
     if (!result)
     {
-	result = PyString_FromString("");
+	result = PyUnicode_FromString("");
     }
     return result;
 }
@@ -654,25 +670,25 @@ static PyObject *
 pstokenizer_read(PSTokenizerObject * self, PyObject * args)
 {
     PyObject * result = NULL;
+    char * buffer;
     long length, read;
 
     if (!PyArg_ParseTuple(args, "l", &length))
 	return NULL;
 
-    result = PyString_FromStringAndSize(NULL, length);
-    if (!result)
-	return NULL;
+    buffer = malloc(length);
+    if (!buffer)
+	return PyErr_NoMemory();
 
     read = filter_functions->Filter_Read((PyObject*)(self->source),
-					 PyString_AsString(result), length);
+					 buffer, length);
     if (read == 0 && PyErr_Occurred())
     {
-	Py_DECREF(result);
+	free(buffer);
 	return NULL;
     }
-    if (_PyString_Resize(&result, read) < 0)
-	return NULL;
-    
+    result = PyBytes_FromStringAndSize(buffer, read);
+    free(buffer);
     return result;
 }
 
@@ -716,13 +732,13 @@ pstokenizer_repr(PSTokenizerObject * self)
 	return NULL;
 
     sprintf(buf, "<pstokenizer reading from %.500s>",
-	    PyString_AsString(streamrepr));
+	    PyUnicode_AsUTF8(streamrepr));
     Py_DECREF(streamrepr);
-    return PyString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 #define OFF(x) offsetof(PSTokenizerObject, x)
-static struct memberlist pstokenizer_memberlist[] = {
+static SKMemberDef pstokenizer_memberlist[] = {
     {"source",		   T_OBJECT,	OFF(source),			RO},
     {"ai_pseudo_comments", T_BYTE,	OFF(ai_pseudo_comments)},
     {"ai_dsc",		   T_BYTE,	OFF(ai_dsc)},
@@ -746,7 +762,7 @@ pstokenizer_getattr(PyObject * self, char * name)
 	return result;
     PyErr_Clear();
 
-    return PyMember_Get((char *)self, pstokenizer_memberlist, name);
+    return SKMember_Get((char *)self, pstokenizer_memberlist, name);
 }
 
 static int
@@ -757,7 +773,7 @@ pstokenizer_setattr(PyObject * self, char * name, PyObject * v)
 			"can't delete object attributes");
 	return -1;
     }
-    return PyMember_Set((char *)self, pstokenizer_memberlist, name, v);
+    return SKMember_Set((char *)self, pstokenizer_memberlist, name, v);
 }
 
 
@@ -771,12 +787,18 @@ static PyTypeObject PSTokenizerType = {
 	(printfunc)0,			/*tp_print*/
 	pstokenizer_getattr,		/*tp_getattr*/
 	pstokenizer_setattr,		/*tp_setattr*/
-	(cmpfunc)0,			/*tp_compare*/
+	0,				/*tp_as_async*/
 	(reprfunc)pstokenizer_repr,	/*tp_repr*/
 	0,				/*tp_as_number*/
 	0,				/*tp_as_sequence*/
 	0,				/*tp_as_mapping*/
 	0,				/*tp_hash*/
+	0,				/*tp_call*/
+	0,				/*tp_str*/
+	0,				/*tp_getattro*/
+	0,				/*tp_setattro*/
+	0,				/*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,		/*tp_flags*/
 };
 
 
@@ -817,12 +839,21 @@ add_int(PyObject * dict, int i, char * name)
 	PyErr_Clear();
 }
 
-void
-initpstokenize(void)
+static struct PyModuleDef pstokenizemodule = {
+    PyModuleDef_HEAD_INIT,
+    "pstokenize",
+    NULL,
+    -1,
+    pstokenize_functions,
+    NULL, NULL, NULL, NULL
+};
+
+PyMODINIT_FUNC
+PyInit_pstokenize(void)
 {
     PyObject * d, *m, *r, *filter;
 
-    m = Py_InitModule("pstokenize", pstokenize_functions);
+    m = PyModule_Create(&pstokenizemodule);
     d = PyModule_GetDict(m);
 
 #define ADD_INT(name) add_int(d, name, #name)
@@ -845,7 +876,7 @@ initpstokenize(void)
 	r = PyObject_GetAttrString(filter, "Filter_Functions");
 	if (!r)
 	    return;
-	filter_functions = (Filter_Functions*)PyCObject_AsVoidPtr(r);
+	filter_functions = (Filter_Functions*)PyCapsule_GetPointer(r, NULL);
 	Py_DECREF(r);
     }
 
