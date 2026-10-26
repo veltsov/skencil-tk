@@ -1055,9 +1055,9 @@ class GraphicsDevice(SimpleGC, CommonDevice):
         if depth > 16:
             bpl = 4 * width
         elif depth > 8:
-            bpl = ((2 * width + 3) / 4) * 4
+            bpl = ((2 * width + 3) / 4) * 4  # divaudit: unverified (not exercised by the audit)
         elif depth == 8:
-            bpl = ((width + 3) / 4) * 4
+            bpl = ((width + 3) / 4) * 4  # divaudit: unverified (not exercised by the audit)
         else:
             raise SketchError('unsupported depth for images')
         return w.CreateImage(w.depth, X.ZPixmap, 0, None, width, height,
@@ -1174,7 +1174,7 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             self.PopTrafo()
         else:
             resolution = config.preferences.eps_preview_resolution
-            self.DrawImage(data.image, trafo(Scale(72.0 / resolution)))
+            self.DrawImage(data.image, trafo(Scale(72.0 / resolution)))  # divaudit: unverified (not exercised by the audit)
 
     #
     #
@@ -1209,16 +1209,16 @@ class GraphicsDevice(SimpleGC, CommonDevice):
         # make the minimum distance between drawn points at least 5
         # pixels XXX: should be configurable
         if xwinwidth < 5:
-            xwinwidth = (int(5.0 / xwinwidth) + 1) * xwinwidth
+            xwinwidth = (int(5.0 / xwinwidth) + 1) * xwinwidth  # divaudit: unverified (not exercised by the audit)
             xwidth = self.LengthToDoc(xwinwidth)
         if ywinwidth < 5:
-            ywinwidth = (int(5.0 / ywinwidth) + 1) * ywinwidth
+            ywinwidth = (int(5.0 / ywinwidth) + 1) * ywinwidth  # divaudit: unverified (not exercised by the audit)
             ywidth = self.LengthToDoc(ywinwidth)
-        startx = int((rect.left - orig_x) / xwidth) * xwidth + orig_x
-        starty = int((rect.top - orig_y) / ywidth) * ywidth + orig_y
+        startx = int((rect.left - orig_x) / xwidth) * xwidth + orig_x  # divaudit: unverified (not exercised by the audit)
+        starty = int((rect.top - orig_y) / ywidth) * ywidth + orig_y  # divaudit: unverified (not exercised by the audit)
         winx, winy = self.DocToWinPoint((startx, starty))
-        nx = int((rect.right - rect.left) / xwidth) + 2
-        ny = int((rect.top - rect.bottom) / ywidth) + 2
+        nx = int((rect.right - rect.left) / xwidth) + 2  # divaudit: unverified (not exercised by the audit)
+        ny = int((rect.top - rect.bottom) / ywidth) + 2  # divaudit: unverified (not exercised by the audit)
         if self.line:
             self.properties.ExecuteLine(self)
         _sketch.DrawGrid(self.gc, winx, winy, xwinwidth, ywinwidth, nx, ny)
@@ -1403,8 +1403,8 @@ class InvertingDevice(GraphicsDevice):
     def DrawPixmapHandle(self, p, pixmap):
         x, y = self.DocToWin(p)
         width, height = pixmap.GetGeometry()[3:5]
-        x = x - width / 2
-        y = y - height / 2
+        x = x - width // 2
+        y = y - height // 2
         pixmap.CopyPlane(self.widget, self.gc, 0, 0, width, height, x, y, 1)
 
     def DrawCaretHandle(self, p, up):
@@ -1477,7 +1477,7 @@ class HitTestDevice(GraphicsDevice):
     def LineHit(self, start, end, p, line_width = 0):
         radius = self.hit_radius / self.scale
         if line_width:
-            w = line_width / 2
+            w = line_width // 2 if isinstance(line_width, int) else line_width / 2
             if radius < w:
                 radius = w
         # check bounding box
@@ -1552,7 +1552,8 @@ class HitTestDevice(GraphicsDevice):
                     line_width = properties.line_width
                 else:
                     line_width = 0
-                d = max(line_width / 2, self.HitRadiusDoc())
+                d = max(line_width // 2 if isinstance(line_width, int) else line_width / 2,
+                     self.HitRadiusDoc())
                 d = abs(inverse.DTransform(Point(d, 0)))
                 border_hit = abs(1.0 - dist) < d
             else:

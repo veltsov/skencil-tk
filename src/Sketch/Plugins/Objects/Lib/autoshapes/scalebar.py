@@ -1,4 +1,5 @@
 
+from __future__ import division
 import Sketch
 from Sketch import _, Point, SingularMatrix
 from Sketch.Graphics import handle
@@ -57,7 +58,7 @@ Modifier:
         y1 = f1 *h*uy
         y2 = f2 *h*uy
         y3 = h*uy
-        x = (p2-p1)/ float(n) 
+        x = (p2-p1)/ float(n)   # divaudit: unverified (not exercised by the audit)
         
         new.AppendLine(p1)
         new.AppendLine(p2)

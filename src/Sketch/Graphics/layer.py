@@ -19,6 +19,7 @@
 #       The layer classes. 
 #
 
+from __future__ import division
 from Sketch.Base.const import LAYER_STATE, LAYER_COLOR
 
 from Sketch import _, NullUndo, EmptyRect, InfinityRect, Point, _sketch
@@ -358,8 +359,8 @@ class GridLayer(SpecialLayer):
 
     def Snap(self, p):
         xorg, yorg, xwidth, ywidth = self.geometry
-        sx = round((p.x - xorg) / xwidth) * xwidth + xorg
-        sy = round((p.y - yorg) / ywidth) * ywidth + yorg
+        sx = round((p.x - xorg) / xwidth) * xwidth + xorg  # divaudit: unverified (not exercised by the audit)
+        sy = round((p.y - yorg) / ywidth) * ywidth + yorg  # divaudit: unverified (not exercised by the audit)
         result = Point(sx, sy)
         return (abs(result - p), result)
 

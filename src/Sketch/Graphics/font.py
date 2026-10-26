@@ -19,6 +19,7 @@
 #	Font management...
 #
 
+from __future__ import division
 import os, re, string
 from array import array
 

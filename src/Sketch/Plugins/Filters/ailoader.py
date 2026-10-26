@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+from __future__ import division
 ###Sketch Config
 #type = Import
 #class_name = 'AILoader'
@@ -148,7 +149,7 @@ def fix_gradient(array, factor, offset):
                 pos, color = array[0]
                 del array[0]
             if array[0][0] > 0:
-                frac = -pos / (array[0][0] - pos)
+                frac = -pos / (array[0][0] - pos)  # divaudit: unverified (not exercised by the audit)
                 array.insert(0, (0.0, color.Blend(array[0][1], 1-frac, frac)))
         else:
             color = array[-1][1]
@@ -161,7 +162,7 @@ def fix_gradient(array, factor, offset):
                 pos, color = array[-1]
                 del array[-1]
             if array[-1][0] < 1:
-                frac = (pos - 1) / (pos - array[-1][0])
+                frac = (pos - 1) / (pos - array[-1][0])  # divaudit: unverified (not exercised by the audit)
                 array.append((1.0, color.Blend(array[-1][1], 1-frac, frac)))
         else:
             color = array[0][1]
@@ -558,7 +559,7 @@ class AILoader(GenericLoader):
             self.pop_multi(n)
             color = StandardColors.black # XXX
         #color = apply(CreateRGBColor, color)
-        self.stack.append((ramp_point / 100.0, color))
+        self.stack.append((ramp_point / 100.0, color))  # divaudit: unverified (not exercised by the audit)
 
     def dummy_gradient_stop(self, color_style, mid_point, ramp_point):
         # same as gradient_stop but ignore all arguments. Illustrator 8
@@ -616,7 +617,7 @@ class AILoader(GenericLoader):
         trafo = Trafo(a, b, c, d, tx, ty)
         trafo = artboard_trafo_inv(trafo(artboard_trafo))
         start = Point(xorig, yorig)
-        end = start + Polar(length, (pi * angle) / 180.0)
+        end = start + Polar(length, (pi * angle) / 180.0)  # divaudit: unverified (not exercised by the audit)
         self.gradient_geo = (name, trafo, start, end)
 
     def make_gradient_pattern(self):
@@ -643,7 +644,7 @@ class AILoader(GenericLoader):
             trafo2 = trafo2.inverse()
             left, bottom, right, top = trafo2(self.current_bounding_rect())
             if right > left:
-                factor = 1 / (right - left)
+                factor = 1 / (right - left)  # divaudit: unverified (not exercised by the audit)
                 offset = -left * factor
             else:
                 factor = 1
@@ -660,14 +661,14 @@ class AILoader(GenericLoader):
                 # an empty coord_rect????
                 center = Point(0, 0)
             else:
-                center = Point((start.x - left) / (right - left),
-                               (start.y - bottom) / (top - bottom))
+                center = Point((start.x - left) / (right - left),  # divaudit: unverified (not exercised by the audit)
+                               (start.y - bottom) / (top - bottom))  # divaudit: unverified (not exercised by the audit)
             radius = max(hypot(left - start.x,  top - start.y),
                          hypot(right - start.x, top - start.y),
                          hypot(right - start.x, bottom - start.y),
                          hypot(left - start.x,  bottom - start.y))
             if radius:
-                factor = -abs(start - end) / radius
+                factor = -abs(start - end) / radius  # divaudit: unverified (not exercised by the audit)
                 array = fix_gradient(array, factor, 1)
             pattern = RadialGradient(MultiGradient(array), center)
         else:
@@ -821,7 +822,7 @@ class AILoader(GenericLoader):
         else:
             visible, preview, enabled, printing, dimmed, has_mlm, \
                    color, red, green, blue = self.pop_multi(10)
-        color = CreateRGBColor(red / 255.0, green / 255.0, blue / 255.0)
+        color = CreateRGBColor(red / 255.0, green / 255.0, blue / 255.0)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
         self.layer_kw_args = {'printable': printing,
                               'visible': visible,
                               'locked': not enabled,

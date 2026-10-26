@@ -1,3 +1,4 @@
+from __future__ import division
 import Sketch.Scripting
 
 from Sketch import Trafo, Scripting, Translation, Rotation,\

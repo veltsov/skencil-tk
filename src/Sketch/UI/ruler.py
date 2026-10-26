@@ -16,6 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
+from __future__ import division
 from math import floor, ceil, hypot
 import operator
 
@@ -188,7 +189,7 @@ class Ruler(PyWidget):
         stride = ticks
         marks = [None] * len(positions)
         for depth in range(len(subdivisions)):
-            stride = stride / subdivisions[depth]
+            stride = stride // subdivisions[depth]
             if depth >= len(tick_lengths):
                 height = tick_lengths[-1]
             else:
@@ -211,7 +212,7 @@ class Ruler(PyWidget):
                 step = step / div
                 if step < min_text_step:
                     break
-                stride = stride / div
+                stride = stride // div
                 if step < max_text_step:
                     break
 

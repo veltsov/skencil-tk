@@ -1,4 +1,5 @@
 
+from __future__ import division
 import Sketch
 from Sketch import _, Point, Polar, SingularMatrix, NullUndo
 from Sketch.Base import const, config
@@ -60,7 +61,7 @@ Modifier:
             new = Sketch.CreatePath()
             newpaths.append(new)
 
-            p = p1+(p2-p1)/float(n)*i
+            p = p1+(p2-p1)/float(n)*i  # divaudit: unverified (not exercised by the audit)
             new.AppendLine(p-yvect*h1)
             new.AppendLine(p+yvect*h2)        
             new.Transform(self.trafo)

@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+from __future__ import division
 from Sketch import Trafo, RectType, EmptyRect, InfinityRect
 from Sketch.Base.config import preferences
 from Sketch.Graphics.papersize import Papersize
@@ -90,7 +91,7 @@ class Viewport:
         return self.win_to_doc(*args)
 
     def LengthToDoc(self, len):
-        return len / self.scale
+        return len / self.scale  # divaudit: unverified (not exercised by the audit)
 
     #
     #	Redraw Parts of the window.
@@ -216,8 +217,8 @@ class Viewport:
         if at_point:
             wx, wy = at_point
         else:
-            wx = self.tkwin.width / 2
-            wy = self.tkwin.height / 2
+            wx = self.tkwin.width // 2
+            wy = self.tkwin.height // 2
             
         cx, cy = self.DocToWin(center)
         self.set_origin(self.virtual_x + cx - wx,
@@ -241,8 +242,8 @@ class Viewport:
             if isinstance(do_center, tuple):
                 cx,cy = do_center
             else:
-                cx = self.tkwin.width / 2
-                cy = self.tkwin.height / 2
+                cx = self.tkwin.width // 2
+                cy = self.tkwin.height // 2
             center = self.WinToDoc(cx, cy)
             at_point = (cx,cy)
 
@@ -398,5 +399,5 @@ class Viewport:
         if self.viewport_ring:
             scale, vx, vy = self.viewport_ring[0]
             del self.viewport_ring[0]
-            self.SetScale(scale / self.pixel_per_point, do_center = 0)
+            self.SetScale(scale / self.pixel_per_point, do_center = 0)  # divaudit: unverified (not exercised by the audit)
             self.set_origin(vx, vy, move_contents = 0)

@@ -32,6 +32,7 @@
 #
 # Tidied up some formatting errors caused by mixing tabs and spaces.
 
+from __future__ import division
 from Sketch.Plugins.Filters.Lib import spritefile
 import os, string
 import struct
@@ -53,7 +54,7 @@ units_per_point = 640
 
 # Compatibility with future versions of Python with different division
 # semantics:
-points_per_inch = int(units_per_inch/units_per_point)
+points_per_inch = int(units_per_inch/units_per_point)  # divaudit: unverified (not exercised by the audit)
 
 class drawfile_object:
 
@@ -102,14 +103,14 @@ class drawfile_object:
 
         if exponent > 0:
 
-            value = float(fraction << exponent) / float(1L << 52)
+            value = float(fraction << exponent) / float(1L << 52)  # divaudit: unverified (not exercised by the audit)
 
         elif exponent == 0:
 
-            value = float(fraction) / float(1L << 52)
+            value = float(fraction) / float(1L << 52)  # divaudit: unverified (not exercised by the audit)
 
         else:
-            value = float(fraction >> -exponent) / float(1L << 52)
+            value = float(fraction >> -exponent) / float(1L << 52)  # divaudit: unverified (not exercised by the audit)
 
         if sign == 1:
             return -value

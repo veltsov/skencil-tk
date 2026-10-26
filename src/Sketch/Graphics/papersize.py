@@ -36,6 +36,7 @@
 # All sizes are given in units of PostScript points (1/72 inch)
 #
 
+from __future__ import division
 from Sketch.Lib.units import m_to_pt, in_to_pt
 
 
@@ -55,7 +56,7 @@ def _european_sizes():
     height = 2.0**0.25
     for i in range(8):
         sizes.append(('A' + repr(i), width * m_to_pt, height * m_to_pt))
-        width, height = height / 2, width
+        width, height = height / 2, width  # divaudit: unverified (not exercised by the audit)
     return sizes[3:]
 
 # The more accurate way to specify the european sizes, contributed by

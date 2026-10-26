@@ -1,3 +1,4 @@
+from __future__ import division
 ###Sketch Config
 #type = PluginCompound
 #class_name = 'Blocktext'

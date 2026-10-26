@@ -1,3 +1,4 @@
+from __future__ import division
 import Sketch
 from Sketch import _, Point, SingularMatrix, Scale, Translation
 from Sketch.Graphics import handle
@@ -54,7 +55,7 @@ Modifier:
             self.l2 = max(0, l2+dw)
         elif selection == 3:
             self.l3 = l3-dw
-            self.d3 = max(0, d3-dh/2.)
+            self.d3 = max(0, d3-dh/2.)  # divaudit: unverified (not exercised by the audit)
         self.recompute()
         
     def recompute(self):

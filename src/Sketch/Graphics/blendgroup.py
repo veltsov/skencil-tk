@@ -21,6 +21,7 @@
 #
 
 
+from __future__ import division
 import operator
 
 from Sketch.UI import command
@@ -343,7 +344,7 @@ class BlendGroup(Compound):
 
     def Info(self):
         return _("BlendGroup with %d control objects") \
-               % (len(self.objects) / 2 + 1)
+               % (len(self.objects) // 2 + 1)
 
     def CancelEffect(self):
         self.unset_parent()

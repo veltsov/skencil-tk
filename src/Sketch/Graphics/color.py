@@ -20,6 +20,7 @@
 #
 
 
+from __future__ import division
 from Sketch.Base.warn import warn, INTERNAL, USER
 from Sketch.Modules._sketch import RGBColor, XVisual
 from Sketch import _
@@ -71,7 +72,7 @@ class StandardColors:
 #
 
 def float_to_x(float):
-    return int(int(float * 63) / 63.0 * 65535)
+    return int(int(float * 63) / 63.0 * 65535)  # divaudit: unverified (not exercised by the audit)
 
 def fill_colormap(cmap):
     max = 65535
@@ -85,14 +86,14 @@ def fill_colormap(cmap):
     max_b = shades_b - 1
 
     for red in range(shades_r):
-        red = float_to_x(red / float(max_r))
+        red = float_to_x(red / float(max_r))  # divaudit: unverified (not exercised by the audit)
         for green in range(shades_g):
-            green = float_to_x(green / float(max_g))
+            green = float_to_x(green / float(max_g))  # divaudit: unverified (not exercised by the audit)
             for blue in range(shades_b):
-                blue = float_to_x(blue / float(max_b))
+                blue = float_to_x(blue / float(max_b))  # divaudit: unverified (not exercised by the audit)
                 colors.append((red, green, blue))
     for i in range(shades_gray):
-        value = int((i / float(shades_gray - 1)) * max)
+        value = int((i / float(shades_gray - 1)) * max)  # divaudit: unverified (not exercised by the audit)
         colors.append((value, value, value))
 
     for red, green, blue in colors:

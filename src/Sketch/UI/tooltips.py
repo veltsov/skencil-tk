@@ -105,7 +105,7 @@ class Tooltips:
         text = self.GetDescription(widget_name)
         if text:
             widget = self.root.nametowidget(widget_name)
-            x = widget.winfo_rootx() + widget.winfo_width() / 2
+            x = widget.winfo_rootx() + widget.winfo_width() // 2
             y = widget.winfo_rooty() + widget.winfo_height()
             
             if self.after_id:

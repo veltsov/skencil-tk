@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+from __future__ import division
 ###Sketch Config
 #type = Import
 #class_name = 'XFigLoader'
@@ -114,7 +115,7 @@ def coords_to_points(coords, trafo):
     if len(coords) % 2 != 0:
         raise ValueError("coordinate has odd length")
     num = len(coords)
-    coords = [coords] * (num / 2)
+    coords = [coords] * (num // 2)
     return map(trafo, map(getitem, coords, range(0, num, 2)),
                map(getitem, coords, range(1, num, 2)))
 
@@ -171,9 +172,9 @@ class XFigLoader(SimplifiedLoader):
                     rgb = self.colors[WHITE]
             else:
                 if style >= 0 and style < 20:
-                    rgb = Blend(self.colors[BLACK], rgb, (20 - style) / 20.0)
+                    rgb = Blend(self.colors[BLACK], rgb, (20 - style) / 20.0)  # divaudit: unverified (not exercised by the audit)
                 elif style > 20 and style <= 40:
-                    rgb = Blend(self.colors[WHITE], rgb, (style - 20) / 20.0)
+                    rgb = Blend(self.colors[WHITE], rgb, (style - 20) / 20.0)  # divaudit: unverified (not exercised by the audit)
         return SolidPattern(rgb)
 
     def line(self, color, width, join, cap, style = 0, style_val = 0):
@@ -187,19 +188,19 @@ class XFigLoader(SimplifiedLoader):
                 dashes = (val, val)
             elif style == 2:
                 # dotted
-                dashes = (1 / width, val)
+                dashes = (1 / width, val)  # divaudit: unverified (not exercised by the audit)
             elif style == 3:
                 # dash-dot
-                dashes = (val, 0.5 * val, 1 / width, 0.5 * val)
+                dashes = (val, 0.5 * val, 1 / width, 0.5 * val)  # divaudit: unverified (not exercised by the audit)
             elif style == 4:
                 # dash-dot-dot
-                dashes = (val, 0.45 * val, 1 / width, 0.333 * val,
-                          1 / width, 0.45 * val)
+                dashes = (val, 0.45 * val, 1 / width, 0.333 * val,  # divaudit: unverified (not exercised by the audit)
+                          1 / width, 0.45 * val)  # divaudit: unverified (not exercised by the audit)
             elif style == 5:
                 # dash-dot-dot-dot
                 dashes = (val, 0.4 * val,
-                          1 / width, 0.333 * val, 1 / width, 0.333 * val,
-                          1 / width, 0.4 * val)
+                          1 / width, 0.333 * val, 1 / width, 0.333 * val,  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
+                          1 / width, 0.4 * val)  # divaudit: unverified (not exercised by the audit)
             try:
                 self.set_properties(line_pattern = pattern,
                                     line_width = width,
@@ -372,12 +373,12 @@ class XFigLoader(SimplifiedLoader):
                 pts[1:])
         elif sub_type in (0, 1):
             # approximated spline
-            f13 = 1.0 / 3.0; f23 = 2.0 / 3.0
+            f13 = 1.0 / 3.0; f23 = 2.0 / 3.0  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
             curve = path.AppendBezier
             straight = path.AppendLine
             last = pts[0]
             cur = pts[1]
-            start = node = (last + cur) / 2
+            start = node = (last + cur) / 2  # divaudit: unverified (not exercised by the audit)
             if closed:
                 straight(node)
             else:
@@ -386,7 +387,7 @@ class XFigLoader(SimplifiedLoader):
             last = cur
             for cur in pts[2:]:
                 c1 = f13 * node + f23 * last
-                node = (last + cur) / 2
+                node = (last + cur) / 2  # divaudit: unverified (not exercised by the audit)
                 c2 = f13 * node + f23 * last
                 curve(c1, c2, node)
                 last = cur

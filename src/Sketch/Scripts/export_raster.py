@@ -35,6 +35,7 @@
 # some other format that can handle an alpha channel.
 #
 
+from __future__ import division
 import sys
 import os, tempfile
 
@@ -187,8 +188,8 @@ def export_alpha(context, filename, resolution, use_bbox = 0):
 
     ps = make_ps(context.document)
 
-    width = round(width * resolution / 72.0)
-    height = round(height * resolution / 72.0)
+    width = round(width * resolution / 72.0)  # divaudit: unverified (not exercised by the audit)
+    height = round(height * resolution / 72.0)  # divaudit: unverified (not exercised by the audit)
     rgb = render_ps(ps, resolution, width, height,
                     orig_x = x, orig_y = y, antialias = 2)
     alpha = render_ps(ps, resolution, width, height,

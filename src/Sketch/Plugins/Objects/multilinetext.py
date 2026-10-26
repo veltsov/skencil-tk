@@ -13,6 +13,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
+from __future__ import division
 ###Sketch Config
 #type = PluginCompound
 #class_name = 'MultilineText'
@@ -152,7 +153,7 @@ class MultilineText(TrafoPlugin):
                 x = x+width+size
                 #
                 # XXX this is very provisional
-                x = ceil(x/50.)*50.
+                x = ceil(x/50.)*50.  # divaudit: unverified (not exercised by the audit)
             else:
                 x = x+width
 

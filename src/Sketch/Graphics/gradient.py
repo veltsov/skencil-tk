@@ -19,6 +19,7 @@
 #	color gradient classes
 #
 
+from __future__ import division
 from Sketch.Graphics.blend import Blend, MismatchError
 
 class Gradient:
@@ -72,7 +73,7 @@ class MultiGradient(Gradient):
         else:
             return start_color
         return Blend(end_color, start_color,
-                     (pos - start_pos) / float(end_pos - start_pos))
+                     (pos - start_pos) / float(end_pos - start_pos))  # divaudit: unverified (not exercised by the audit)
 
     def Sample(self, num):
         colors = self.colors

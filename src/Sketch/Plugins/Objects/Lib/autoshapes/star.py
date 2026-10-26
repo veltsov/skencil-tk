@@ -1,3 +1,4 @@
+from __future__ import division
 import Sketch
 from Sketch import _, Point, SingularMatrix, RegisterCommands, NullUndo, \
      Rotation
@@ -86,7 +87,7 @@ Modifier:
             else:
                 self.r1 = min(r2, r1+rb-ra)
         else:
-            n = n+int(2* gamma / alpha)    
+            n = n+int(2* gamma / alpha)      # divaudit: unverified (not exercised by the audit)
             if n >= 1:
                 self.n = n  
 

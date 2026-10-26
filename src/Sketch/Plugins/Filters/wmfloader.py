@@ -16,6 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 from __future__ import print_function
+from __future__ import division
 ###Sketch Config
 #type = Import
 #class_name = 'WMFLoader'
@@ -484,8 +485,8 @@ class WMFLoader(GenericLoader):
         self._print('->', left, top, right, bottom, ellw, ellh)
         self.prop_stack.AddStyle(self.curstyle.Duplicate())
         self.rectangle(right - left, 0, 0, bottom - top, left, top,
-                       radius1 = abs(ellw / (right - left)),
-                       radius2 = abs(ellh / (bottom - top)))
+                       radius1 = abs(ellw / (right - left)),  # divaudit: unverified (not exercised by the audit)
+                       radius2 = abs(ellh / (bottom - top)))  # divaudit: unverified (not exercised by the audit)
 
 
     def Escape(self):

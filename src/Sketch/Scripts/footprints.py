@@ -27,6 +27,7 @@ The script will place copies of the foot print along the path as if
 someone had walked along the path.
 """
 
+from __future__ import division
 import Sketch.Scripting
 from Sketch.Graphics.text import coord_sys_at, PATHTEXT_ROTATE
 from Sketch import Group, Translation, Scale
@@ -52,7 +53,7 @@ def foot_prints_along_path(context):
         # was important to copy it.
         r = foot_print.coord_rect
         foot_length = r.right - r.left
-        foot_print.Transform(Translation(-r.right + foot_length/2,
+        foot_print.Transform(Translation(-r.right + foot_length/2,  # divaudit: unverified (not exercised by the audit)
                                          -r.bottom))
 
         # Now the path. The Paths() method of an object returns a tuple

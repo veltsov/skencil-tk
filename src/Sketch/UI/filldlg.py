@@ -19,6 +19,7 @@
 #	A dialog for specifying the fill style
 #
 
+from __future__ import division
 import os
 from math import atan2, sin, cos, pi
 
@@ -191,8 +192,8 @@ class InteractiveSample(PatternSample, Publisher):
     def constrain_center(self, x, y):
         width = self.tkwin.width
         height = self.tkwin.height
-        x = float(x) / width
-        y = float(y) / height
+        x = float(x) / width  # divaudit: unverified (not exercised by the audit)
+        y = float(y) / height  # divaudit: unverified (not exercised by the audit)
         if   x < 0.25:	x = 0
         elif x < 0.75:	x = 0.5
         else:		x = 1.0
@@ -215,8 +216,8 @@ class InteractiveSample(PatternSample, Publisher):
 
             angle = atan2(y - cy, x - cx) + 2 * pi
             if constraint:
-                pi12 = pi / 12
-                angle = pi12 * int(angle / pi12 + 0.5)
+                pi12 = pi / 12  # divaudit: unverified (not exercised by the audit)
+                angle = pi12 * int(angle / pi12 + 0.5)  # divaudit: unverified (not exercised by the audit)
 
             x = cx + cos(angle) * 1000.0
             y = cy + sin(angle) * 1000.0
@@ -236,8 +237,8 @@ class InteractiveSample(PatternSample, Publisher):
 
             angle = atan2(y - cy, x - cx) + 2 * pi
             if constraint:
-                pi12 = pi / 12
-                angle = pi12 * int(angle / pi12 + 0.5)
+                pi12 = pi / 12  # divaudit: unverified (not exercised by the audit)
+                angle = pi12 * int(angle / pi12 + 0.5)  # divaudit: unverified (not exercised by the audit)
 
             self.issue(DIRECTION, (cos(angle), -sin(angle)) )
 
@@ -371,7 +372,7 @@ class GradientPatternFrame(PatternFrame):
         self.issue(CHANGED)
 
     def set_border(self, *rest):
-        border = self.var_border.get() / 100.0
+        border = self.var_border.get() / 100.0  # divaudit: unverified (not exercised by the audit)
         if hasattr(self.pattern, 'SetBorder'):
             self.pattern = self.pattern.Duplicate()
             self.pattern.SetBorder(border)

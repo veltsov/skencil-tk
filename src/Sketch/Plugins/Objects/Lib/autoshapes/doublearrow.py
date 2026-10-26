@@ -1,4 +1,5 @@
 
+from __future__ import division
 import Sketch
 from Sketch import _, SingularMatrix
 from Sketch.Graphics import handle
@@ -15,7 +16,7 @@ class DoubleArrow(AutoshapeBase):
         
         for p in ((-w1, 0),
                   (0,-h2-h1),
-                  (w2/2.,-self.h1),
+                  (w2/2.,-self.h1),  # divaudit: unverified (not exercised by the audit)
                   (w2,0)):
             handles.append(handle.MakeNodeHandle(self.trafo(p)))
         return handles

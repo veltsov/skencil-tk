@@ -88,6 +88,10 @@ All mechanical; a restricted `2to3` pass (the safe fixers listed in
   controlled way: add `from __future__ import division` per file and
   fix the fallout under py2 (suite-validated) — this converts the
   riskiest un-greppable change into verified fixes before the switch.
+  **Done 2026-10-26** (see `divaudit-findings.md`): 46 runtime-verified
+  sites fixed, 257 unverified sites flagged `# divaudit: unverified`,
+  rollout in 86 files (draw-input pair excluded until reviewed);
+  `skpoint.c` gained `nb_true_divide` (keep it in stage B).
 - `dict.keys()` indexing and mutation during iteration; `sort(cmp=...)`
   callbacks (none found in Graphics; audit the Plugins).
 - Old-style classes: everything currently derives from nothing (py2

@@ -20,6 +20,7 @@
 #
 # $Id: wmfsaver.py 732 2010-09-22 21:54:38Z igor_n $
 
+from __future__ import division
 ###Sketch Config
 #type = Export
 #tk_file_type = ("Windows Metafile", '.wmf')
@@ -81,12 +82,12 @@ def cr(P1, P2):
 
 def FlattenPath(P0, P1, P2, P3):
 
-    P4 = (P0 + P1) / 2
-    P5 = (P1 + P2) / 2
-    P6 = (P2 + P3) / 2
-    P7 = (P4 + P5) / 2
-    P8 = (P5 + P6) / 2
-    P9 = (P7 + P8) / 2
+    P4 = (P0 + P1) / 2  # divaudit: unverified (not exercised by the audit)
+    P5 = (P1 + P2) / 2  # divaudit: unverified (not exercised by the audit)
+    P6 = (P2 + P3) / 2  # divaudit: unverified (not exercised by the audit)
+    P7 = (P4 + P5) / 2  # divaudit: unverified (not exercised by the audit)
+    P8 = (P5 + P6) / 2  # divaudit: unverified (not exercised by the audit)
+    P9 = (P7 + P8) / 2  # divaudit: unverified (not exercised by the audit)
 
     B = P3 - P0
     S = P9 - P0
@@ -102,7 +103,7 @@ def FlattenPath(P0, P1, P2, P3):
         return FlattenPath(P0, P4, P7, P9) + FlattenPath(P9, P8, P6, P3)
 
     # otherwise if the base is smaller than half the fault tolerance stop.
-    elif abs(B) < EPS / 2:
+    elif abs(B) < EPS // 2:
         return (P9, P3)
     else:
 
@@ -137,14 +138,14 @@ class WMFSaver:
     def packrec(self, *args):
         if args[1] is None:
             # compute size of the record
-            args = (args[0], struct.calcsize(args[0]) / 2) + args[2:]
+            args = (args[0], struct.calcsize(args[0]) / 2) + args[2:]  # divaudit: unverified (not exercised by the audit)
         self.maxrecord = max(args[1], self.maxrecord)
         self.pack(*args)
 
     def putpolyrec(self, function, seq):
         fmt = '<LHh%dh' % len(seq)
-        size = struct.calcsize(fmt) / 2
-        args = (fmt, size, function, len(seq) / 2) + tuple(seq)
+        size = struct.calcsize(fmt) // 2
+        args = (fmt, size, function, len(seq) // 2) + tuple(seq)
         self.maxrecord = max(size, self.maxrecord)
         self.pack(*args)
 
@@ -181,7 +182,7 @@ class WMFSaver:
                 self.idx = idx
                 self.DeleteObject(idx)
             self.file.write(s)
-            self.maxrecord = max(self.maxrecord, len(s) / 2)
+            self.maxrecord = max(self.maxrecord, len(s) // 2)
         self.SelectObject(idx)
 
     def CreateSelectBrush(self, color):
@@ -288,7 +289,7 @@ class WMFSaver:
                     lst = lst[:-2]
                 set.append(lst)
                 size = size + len(lst)
-                lens.append(len(lst) / 2)
+                lens.append(len(lst) // 2)
             self.packrec('<LHh', size, 0x0538, len(set))
             lens.insert(0, '<%dh' % len(set))
             self.pack(*lens)
@@ -399,7 +400,7 @@ class WMFSaver:
 
     def write_headers(self):
         self.file.seek(0, 2)
-        filesize = max(0, (self.file.tell()
+        filesize = max(0, (self.file.tell()  # divaudit: unverified (not exercised by the audit)
                            - struct.calcsize(struct_placeable_header)) / 2)
         self.file.seek(0)
 
@@ -411,7 +412,7 @@ class WMFSaver:
 
         self.pack(struct_wmf_header,
                   1,                    # on disk
-                  struct.calcsize(struct_wmf_header) / 2,
+                  struct.calcsize(struct_wmf_header) // 2,
                   0x300,
                   filesize,
                   self.numobj,
@@ -428,7 +429,7 @@ class WMFSaver:
         inch = 1440
         x = max(width, height)
         if x * (inch / 72.) > 32767:
-            inch = 32767 / x
+            inch = 32767 / x  # divaudit: unverified (not exercised by the audit)
         sc = inch / 72.
         self.trafo = Trafo(sc, 0, 0, -sc, - sc * left, sc * top)
         self.Scale = sc

@@ -20,6 +20,7 @@
 # This file contains the root of the Sketch graphics class hierarchy.
 #
 
+from __future__ import division
 from traceback import print_stack
 
 from Sketch.Base.warn import warn, INTERNAL
@@ -869,7 +870,7 @@ class RectangularCreator(Creator):
             w, h = p - self.drag_start
             if w == 0:
                 w = 0.00001
-            a = h / w
+            a = h / w  # divaudit: unverified (not exercised by the audit)
             if a > 0:
                 sign = 1
             else:

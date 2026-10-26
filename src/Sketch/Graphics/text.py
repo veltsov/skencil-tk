@@ -75,6 +75,7 @@
 #
 #
 
+from __future__ import division
 from math import sin, cos, atan2, hypot, pi, fmod, floor
 
 from Sketch import _, Rect, UnionRects, EmptyRect, NullPoint, Polar, \
@@ -437,14 +438,14 @@ class SimpleText(CommonText, RectangularPrimitive):
         if hj == ALIGN_RIGHT:
             xoff = llx - urx
         elif hj == ALIGN_CENTER:
-            xoff = (llx - urx) / 2
+            xoff = (llx - urx) / 2  # divaudit: unverified (not exercised by the audit)
         else:
             xoff = 0
         vj = self.valign
         if vj == ALIGN_TOP:
             yoff = -ury
         elif vj == ALIGN_CENTER:
-            yoff = (lly - ury) / 2 - lly
+            yoff = (lly - ury) / 2 - lly  # divaudit: unverified (not exercised by the audit)
         elif vj == ALIGN_BOTTOM:
             yoff = -lly
         else:
@@ -552,8 +553,8 @@ class SimpleTextCreator(Creator):
     def apply_constraint(self, p, state):
         if state & const.ConstraintMask:
             r, phi = (p - self.start).polar()
-            pi12 = pi / 12
-            phi = pi12 * floor(phi / pi12 + 0.5)
+            pi12 = pi / 12  # divaudit: unverified (not exercised by the audit)
+            phi = pi12 * floor(phi / pi12 + 0.5)  # divaudit: unverified (not exercised by the audit)
             p = self.start + Polar(r, phi)
         return p
 
@@ -621,7 +622,7 @@ def coord_sys_at(lengths, pos, type):
                 break
     else:
         return None
-    t = (pos - d1) / (d2 - d1)
+    t = (pos - d1) / (d2 - d1)  # divaudit: unverified (not exercised by the audit)
     p = (1 - t) * p1 + t * p2
     diff = (p2 - p1).normalized()
     del lengths[:idx - 1]
@@ -634,7 +635,7 @@ def coord_sys_at(lengths, pos, type):
 def pathtext(path, start_pos, text, font, size, type):
     metric = font.metric
     lengths = path.arc_lengths(start_pos)
-    scale = Scale(size); factor = size / 2000.0
+    scale = Scale(size); factor = size / 2000.0  # divaudit: unverified (not exercised by the audit)
     pos = font.TypesetText(text)
     pos = map(scale, pos)
     trafos = []
@@ -866,7 +867,7 @@ class InternalPathTextEditor(CommonTextEditor):
                 dists.append((abs(p - self.trafos[i].offset()), i))
 
             gid = self.text[len(self.trafos) - 1]
-            width = self.properties.font.metric.glyph_width(gid) / 1000.0
+            width = self.properties.font.metric.glyph_width(gid) / 1000.0  # divaudit: unverified (not exercised by the audit)
             pos = self.trafos[-1](width * self.properties.font_size, 0)
             dists.append((abs(p - pos), len(self.trafos)))
             caret = min(dists)[-1]

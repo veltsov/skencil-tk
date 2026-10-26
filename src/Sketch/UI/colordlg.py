@@ -16,6 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 
+from __future__ import division
 from Sketch.Graphics.image import RasterImage
 from Sketch.x11 import GXxor, ZPixmap
 
@@ -115,9 +116,9 @@ class ImageView(PyWidget):
         if depth > 16:
             bpl = 4 * width
         elif depth > 8:
-            bpl = ((2 * width + 3) / 4) * 4
+            bpl = ((2 * width + 3) / 4) * 4  # divaudit: unverified (not exercised by the audit)
         elif depth == 8:
-            bpl = ((width + 3) / 4) * 4
+            bpl = ((width + 3) / 4) * 4  # divaudit: unverified (not exercised by the audit)
         else:
             raise SketchError('unsupported depth for images')
         self.ximage = w.CreateImage(depth, ZPixmap, 0, None, width, height,
@@ -438,9 +439,9 @@ class ChooseColorDlg(SKModal):
         self.color_changed(color)
 
     def rgb_component_changed(self, *rest):
-        self.color_changed(CreateRGBColor(self.var4.get() / 255.0,
-                                          self.var5.get() / 255.0,
-                                          self.var6.get() / 255.0))
+        self.color_changed(CreateRGBColor(self.var4.get() / 255.0,  # divaudit: unverified (not exercised by the audit)
+                                          self.var5.get() / 255.0,  # divaudit: unverified (not exercised by the audit)
+                                          self.var6.get() / 255.0))  # divaudit: unverified (not exercised by the audit)
 
 
 

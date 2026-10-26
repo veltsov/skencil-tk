@@ -23,6 +23,7 @@
 # bitmapped images or encapsulated PostScript files.
 
 
+from __future__ import division
 from Sketch import Rect, Trafo, IdentityMatrix, NullUndo, SKCache
 from Sketch.Base import main
 
@@ -204,7 +205,7 @@ class ExternalGraphics(RectangularObject, GraphicsObject):
             center = self.coord_rect.center()
             width, height = self.data.Size()
             trafo = Trafo(1, 0, 0, 1,
-                          center.x - width / 2, center.y - height / 2)
+                          center.x - width / 2, center.y - height / 2)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
             return self.set_transformation(trafo)
         return NullUndo
 
@@ -238,8 +239,8 @@ class ExternalGraphics(RectangularObject, GraphicsObject):
             x, y = self.trafo.inverse()(p)
             if 0 <= x <= width:
                 if 0 <= y <= height:
-                    x = round(x / width) * width
-                    y = round(y / height) * height
+                    x = round(x / width) * width  # divaudit: unverified (not exercised by the audit)
+                    y = round(y / height) * height  # divaudit: unverified (not exercised by the audit)
                 else:
                     y = min(max(y, 0), height)
             else:

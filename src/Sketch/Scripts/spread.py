@@ -18,6 +18,7 @@
 #
 # these are based on abut_*.py
 
+from __future__ import division
 from Sketch import _, Point
 import Sketch.Scripting
 

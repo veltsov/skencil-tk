@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
+from __future__ import division
 from math import sin, cos, atan2, hypot, pi, fmod, floor
 
 from Sketch.Base.const import ArcArc, ArcChord, ArcPieSlice, ConstraintMask, \
@@ -50,7 +51,7 @@ def snap_to_line(start, end, p):
         result = [(abs(start - p), start), (abs(end - p), end)]
         v = end - start
         length = abs(v)
-        r = (v * (p - start)) / (length ** 2)
+        r = (v * (p - start)) / (length ** 2)  # divaudit: unverified (not exercised by the audit)
         if 0 <= r <= 1.0:
             p2 = start + r * v
             result.append((abs(p2 - p), p2))
@@ -240,7 +241,8 @@ class Ellipse(RectangularPrimitive):
         self.coord_rect = r = Rect(start + p, start - p)
         if self.properties.HasLine():
             width = self.properties.line_width
-            r = r.grown(width / 2 + 1)
+            r = r.grown(width // 2 + 1 if isinstance(width, int)
+                          else width / 2 + 1)
             # add the bounding boxes of arrows
             if self.arc_type == ArcArc:
                 pi2 = pi / 2
@@ -303,7 +305,7 @@ class EllipseCreator(RectangularCreator):
             # the ellipse is inscribed into the rectangle with start and
             # end as opposite corners. 
             end = self.apply_constraint(self.drag_cur, state)
-            d = (end - start) / 2
+            d = (end - start) / 2  # divaudit: unverified (not exercised by the audit)
             self.trafo = Trafo(d.x, 0, 0, d.y, start.x + d.x, start.y + d.y)
 
     def MouseMove(self, p, state):
@@ -355,8 +357,8 @@ class EllipseEditor(Editor):
                 inverse = self.trafo.inverse()
                 p2 = inverse(p)
                 r, phi = p2.polar()
-                pi12 = pi / 12
-                angle = pi12 * floor(phi / pi12 + 0.5)
+                pi12 = pi / 12  # divaudit: unverified (not exercised by the audit)
+                angle = pi12 * floor(phi / pi12 + 0.5)  # divaudit: unverified (not exercised by the audit)
                 pi2 = 2 * pi
                 d1 = fmod(abs(phi - angle), pi2)
                 if self.selection == 1:

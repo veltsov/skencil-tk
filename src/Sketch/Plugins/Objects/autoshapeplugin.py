@@ -1,3 +1,4 @@
+from __future__ import division
 ###Sketch Config
 #type = PluginCompound
 #class_name = 'Autoshape'
@@ -185,12 +186,12 @@ class AutoshapeDlg(SketchPanel):
             
     def insert(self, name, angle=0):
         object = Autoshape(name)
-        object.Transform(Rotation(angle*pi/180.))
+        object.Transform(Rotation(angle*pi/180.))  # divaudit: unverified (not exercised by the audit)
         self.main_window.PlaceObject(object)
 
     def insert_toggle_dir(self, name, angle=0):
         object = Autoshape(name)
-        object.Transform(Rotation(angle*pi/180.))
+        object.Transform(Rotation(angle*pi/180.))  # divaudit: unverified (not exercised by the audit)
         object.ToggleDir()
         self.main_window.PlaceObject(object)
 
@@ -206,14 +207,14 @@ class AutoshapeDlg(SketchPanel):
 
     def insert_home(self):
         object = Autoshape('star')
-        object.Transform(Rotation(-90*pi/180.))
+        object.Transform(Rotation(-90*pi/180.))  # divaudit: unverified (not exercised by the audit)
         object.SetData((10, 10, 10, 30))
         self.main_window.PlaceObject(object)
 
     def insert_triangle(self):
         object = Autoshape('star')
         object.SetData((10, 20, 3))
-        object.Transform(Rotation(-pi/2))
+        object.Transform(Rotation(-pi/2))  # divaudit: unverified (not exercised by the audit)
         self.main_window.PlaceObject(object)
 
     def insert_star(self, *data):

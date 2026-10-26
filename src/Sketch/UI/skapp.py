@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
+from __future__ import division
 import sys
 
 from Sketch.Base.warn import pdebug
@@ -239,8 +240,8 @@ class SketchApplication(TkApplication, Publisher):
             height = self.root.winfo_reqheight()
             if width < 800 : width = 800
             if height < 600 : height = 600
-            posx = (self.root.winfo_screenwidth() - width)/2
-            posy = (self.root.winfo_screenheight() - height)/2
+            posx = (self.root.winfo_screenwidth() - width)/2  # divaudit: unverified (not exercised by the audit)
+            posy = (self.root.winfo_screenheight() - height)/2  # divaudit: unverified (not exercised by the audit)
             self.root.geometry('%dx%d%+d%+d' % (width, height, posx, posy))
         self.main_window.Run()
 

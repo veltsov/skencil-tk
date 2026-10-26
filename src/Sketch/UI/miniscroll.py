@@ -16,6 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 
+from __future__ import division
 from Sketch.Modules import pax
 
 from Tkinter import IntVar, X, Y, LEFT, RIGHT, E
@@ -48,10 +49,10 @@ class MiniScroller(PyWidget, Publisher):
 
     def ResizedMethod(self, width, height):
         button_height = 4
-        rect_y = (height - button_height) / 2
-        self.top_poly = [(-1, rect_y), (width / 2, -1), (width, rect_y)]
+        rect_y = (height - button_height) // 2
+        self.top_poly = [(-1, rect_y), (width // 2, -1), (width, rect_y)]
         y = button_height + rect_y
-        self.bot_poly = [(-1, y), (width, y), (width / 2, height)]
+        self.bot_poly = [(-1, y), (width, y), (width // 2, height)]
         self.rect_y = rect_y
 
     def SetRange(self, min, max, step = 1):

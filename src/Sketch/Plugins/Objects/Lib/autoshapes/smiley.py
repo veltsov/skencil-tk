@@ -1,4 +1,5 @@
 
+from __future__ import division
 import Sketch
 from Sketch import Point, SingularMatrix, Scale, Translation
 from Sketch.Graphics import handle
@@ -20,7 +21,7 @@ class Smiley(AutoshapeBase):
         h = self.h
         path.AppendLine((5,5))
         path.AppendBezier((7, 5+h/2.), (12, 5+h), (15,5+h))
-        path.AppendBezier((18,5+h), (22, 5+h/2), (25, 5))
+        path.AppendBezier((18,5+h), (22, 5+int(h/2)), (25, 5))
         path.Transform(self.trafo)
         if self.objects:
             self.objects[1].SetPaths(tuple(newpaths))            

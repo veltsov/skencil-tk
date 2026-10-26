@@ -50,6 +50,49 @@ synthetics), and rare UI paths.  Residual-risk handling: the per-file
 wrapper as the pytest gate, plus a final `python2 -Qnew` run of the
 whole suite.
 
+## Division rollout (executed 2026-10-26)
+
+The rollout documented above has been carried out:
+
+- **46 runtime-verified int-division sites fixed** to preserve exact
+  py2 semantics: `//` where operands are guaranteed non-negative ints
+  (ruler strides, canvas binary search, widget geometry, saver length
+  math, ...); `int(a / b)` where negatives are possible
+  (`raster.py` selection indexing, `smiley.py h = -5`); an explicit
+  `isinstance` int/float split where **both** occur at runtime
+  (`graphics.py` LineHit, `ellipse.py` coord-rect growth --
+  `properties.line_width` is float-typed, e.g. 0.9 from the XFig
+  72.0/80.0 scaling).
+- **257 unverified-division markers** (`# divaudit: unverified`) on
+  53 files -- every division site not exercised by the audit, except
+  the draw-import pair (`drawinput.py`/`spritefile.py` are excluded
+  from flagging *and* from the rollout; they keep py2 semantics until
+  reviewed with real `.draw` samples).
+- **`from __future__ import division` in 86 files** (every file with a
+  division site except the draw-import pair).
+
+Plugin caveat: plugin files carry `###Sketch Config ... ###End` blocks
+that `plugins.extract_cfg` execs with `#` stripped; the future import
+must therefore sit **before the first `###Sketch Config`** (some config
+blocks contain uncommented statements, e.g. `format_name = 'XFig'`, and
+`exec` rejects later future imports).  All 28 plugin files follow this
+rule now.
+
+Latent C issue found and fixed during the rollout (finding #8):
+`skpoint.c` did not implement `nb_true_divide`, so *every*
+`Point / scalar` raised TypeError under future division (the
+`-Qwarnall` audit was blind to this -- C types don't emit
+classic-division warnings).  `nb_true_divide` now aliases
+`skpoint_divide` (Point division was always true division); stage B
+must keep that slot for py3.
+
+Gate results: 111 tests pass (byte-identical EPS for all fixtures
+except the Creator version line, which `normalize_text` handles);
+the error-gate wrapper run over the suite shows **zero classic
+*int* division warnings** -- the only remaining ones are classic
+*float* divisions (safe int/float mixes in tests, PIL, and the
+isinstance-split else-branches).
+
 ## Bugs found during the audit (with proposed fixes)
 
 All reproducible independently of the audit tooling (plain python2).

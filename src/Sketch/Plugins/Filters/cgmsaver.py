@@ -19,6 +19,7 @@
 #
 # $Id: cgmsaver.py 732 2010-09-22 21:54:38Z igor_n $
 
+from __future__ import division
 ###Sketch Config
 #type = Export
 #tk_file_type = ("Computer Graphics Metafile (CGM)", '.cgm')
@@ -54,12 +55,12 @@ def cr(P1, P2):
 
 def FlattenPath(P0, P1, P2, P3):
 
-    P4 = (P0 + P1) / 2
-    P5 = (P1 + P2) / 2
-    P6 = (P2 + P3) / 2
-    P7 = (P4 + P5) / 2
-    P8 = (P5 + P6) / 2
-    P9 = (P7 + P8) / 2
+    P4 = (P0 + P1) / 2  # divaudit: unverified (not exercised by the audit)
+    P5 = (P1 + P2) / 2  # divaudit: unverified (not exercised by the audit)
+    P6 = (P2 + P3) / 2  # divaudit: unverified (not exercised by the audit)
+    P7 = (P4 + P5) / 2  # divaudit: unverified (not exercised by the audit)
+    P8 = (P5 + P6) / 2  # divaudit: unverified (not exercised by the audit)
+    P9 = (P7 + P8) / 2  # divaudit: unverified (not exercised by the audit)
 
     B = P3 - P0
     S = P9 - P0
@@ -75,7 +76,7 @@ def FlattenPath(P0, P1, P2, P3):
         return FlattenPath(P0, P4, P7, P9) + FlattenPath(P9, P8, P6, P3)
 
     # otherwise if the base is smaller than half the fault tolerance stop.
-    elif abs(B) < EPS / 2:
+    elif abs(B) < EPS // 2:
         return (P9, P3)
     else:
 
@@ -336,8 +337,8 @@ class CGMSaver:
                     S,E = trf.DTransform(S) , trf.DTransform(E)
                 else:
                     S,E = trf.DTransform(E) , trf.DTransform(S)
-                S = 1000000 * S / abs(S)
-                E = 1000000 * E / abs(E)
+                S = 1000000 * S / abs(S)  # divaudit: unverified (not exercised by the audit)
+                E = 1000000 * E / abs(E)  # divaudit: unverified (not exercised by the audit)
                 if ell.arc_type == 0 \
                    and ell.Properties().fill_pattern == EmptyPattern:
                     self.LineStyle(ell.Properties())
@@ -367,8 +368,8 @@ class CGMSaver:
                 P2 = trf(Point(0,1))
                 S = trf.DTransform(Point(cos(ell.start_angle) , sin(ell.start_angle)))
                 E = trf.DTransform(Point(cos(ell.end_angle) , sin(ell.end_angle)))
-                S = 1000000 * S / abs(S)
-                E = 1000000 * E / abs(E)
+                S = 1000000 * S / abs(S)  # divaudit: unverified (not exercised by the audit)
+                E = 1000000 * E / abs(E)  # divaudit: unverified (not exercised by the audit)
                 if ell.arc_type == 0 and ell.Properties().fill_pattern == EmptyPattern:
                     self.LineStyle(ell.Properties())
                     self.putlongseq(0x4240 ,  map(rndtoint , tuple(self.trafo(C)) \

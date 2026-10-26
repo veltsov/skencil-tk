@@ -1,4 +1,5 @@
 
+from __future__ import division
 import Sketch
 from Sketch import _, SingularMatrix
 from Sketch.Graphics import handle
@@ -11,7 +12,7 @@ class Arrow(AutoshapeBase):
     w2 = 60
     def GetHandles(self):
         handles = []
-        w = (self.w2+self.w1)/2.
+        w = (self.w2+self.w1)/2.  # divaudit: unverified (not exercised by the audit)
         for p in ((self.w1,-self.h2),
                   (w,-self.h1),
                   (w,self.h1),
@@ -32,7 +33,7 @@ class Arrow(AutoshapeBase):
             if selection == 1:
                 self.w1 = self.w1+dw
                 if self.h2 > 0:
-                    f = 1.-dh / self.h2
+                    f = 1.-dh / self.h2  # divaudit: unverified (not exercised by the audit)
                     self.h1 = f*self.h1
                     self.h2 = f * self.h2
                 else:

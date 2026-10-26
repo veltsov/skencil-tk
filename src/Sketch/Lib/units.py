@@ -19,6 +19,7 @@
 # some factors to convert between different length units and the base
 # unit of sketch, PostScript points
 
+from __future__ import division
 in_to_pt = 72.0
 cm_to_pt = in_to_pt / 2.54
 mm_to_pt = cm_to_pt / 10

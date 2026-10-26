@@ -17,6 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from __future__ import print_function
+from __future__ import division
 ###Sketch Config
 #type = Import
 #class_name = 'SVGLoader'
@@ -72,25 +73,25 @@ def as_latin1(s):
 # Conversion factors to convert standard CSS/SVG units to userspace
 # units.
 factors = {'pt': 1.0, 'px': 1.0, 'in': 72.0,
-           'cm': 72.0 / 2.54, 'mm': 7.20 / 2.54}
+           'cm': 72.0 / 2.54, 'mm': 7.20 / 2.54}  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
 
-degrees = pi / 180.0
+degrees = pi / 180.0  # divaudit: unverified (not exercised by the audit)
 
 
 def csscolor(str):
     str = str.strip()
     if str[0] == '#':
         if len(str) == 7:
-            r = int(str[1:3], 16) / 255.0
-            g = int(str[3:5], 16) / 255.0
-            b = int(str[5:7], 16) / 255.0
+            r = int(str[1:3], 16) / 255.0  # divaudit: unverified (not exercised by the audit)
+            g = int(str[3:5], 16) / 255.0  # divaudit: unverified (not exercised by the audit)
+            b = int(str[5:7], 16) / 255.0  # divaudit: unverified (not exercised by the audit)
         elif len(str) == 4:
             # According to the CSS rules a single HEX digit is to be
             # treated as a repetition of the digit, so that for a digit
             # d the value is (16 * d + d) / 255.0 which is equal to d / 15.0
-            r = int(str[1], 16) / 15.0
-            g = int(str[2], 16) / 15.0
-            b = int(str[3], 16) / 15.0
+            r = int(str[1], 16) / 15.0  # divaudit: unverified (not exercised by the audit)
+            g = int(str[2], 16) / 15.0  # divaudit: unverified (not exercised by the audit)
+            b = int(str[3], 16) / 15.0  # divaudit: unverified (not exercised by the audit)
         color = CreateRGBColor(r, g, b)
     elif str in namedcolors:
         color = namedcolors[str]
@@ -384,7 +385,7 @@ class SVGHandler(saxlib.HandlerBase):
         viewbox = attrs.get("viewBox", "")
         if viewbox:
             vx, vy, vwidth, vheight = map(float, viewbox.split())
-            t = Scale(width / vwidth, height / vheight)
+            t = Scale(width / vwidth, height / vheight)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
             t = t(Translation(-vx, -vy))
             self.trafo = self.trafo(t)
         self._print("basetrafo", self.basetrafo)
@@ -663,7 +664,7 @@ class SVGHandler(saxlib.HandlerBase):
         str = string.translate(as_latin1(str), commatospace).strip()
         last_quad = None
         last_cmd = cmd = None
-        f13 = 1.0 / 3.0; f23 = 2.0 / 3.0
+        f13 = 1.0 / 3.0; f23 = 2.0 / 3.0  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
         #print '*', str
         while 1:
             match = rx_command.match(str)
@@ -878,10 +879,10 @@ class SVGHandler(saxlib.HandlerBase):
         x, y = self.user_point(x, y)
 
         width = self.user_length(attrs['width'])
-        scalex =  width / image.size[0]
+        scalex =  width / image.size[0]  # divaudit: unverified (not exercised by the audit)
 
         height = self.user_length(attrs['height']) 
-        scaley = -height / image.size[1]
+        scaley = -height / image.size[1]  # divaudit: unverified (not exercised by the audit)
 
         style = attrs.get('style', '')
         if style:

@@ -31,6 +31,7 @@
 # historical reasons...
 #
 
+from __future__ import division
 import math
 import sys
 
@@ -1574,14 +1575,14 @@ class EditDocument(SketchDocument, QueueingPublisher):
                         elif x == 3:
                             xoff = br.right - r.right
                         elif x == 2:
-                            xoff = (br.left + br.right - r.left - r.right) / 2
+                            xoff = (br.left + br.right - r.left - r.right) / 2  # divaudit: unverified (not exercised by the audit)
 
                         if y == 1:
                             yoff = br.top - r.top
                         elif y == 3:
                             yoff = br.bottom - r.bottom
                         elif y == 2:
-                            yoff = (br.top + br.bottom - r.top - r.bottom) / 2
+                            yoff = (br.top + br.bottom - r.top - r.bottom) / 2  # divaudit: unverified (not exercised by the audit)
 
                         add_undo(obj.Translate(Point(xoff, yoff)))
 

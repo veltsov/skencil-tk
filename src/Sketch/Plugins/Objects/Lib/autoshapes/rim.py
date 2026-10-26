@@ -1,4 +1,5 @@
 
+from __future__ import division
 import Sketch
 from Sketch import _, Polar, SingularMatrix, Scale, Rotation, RegisterCommands
 from Sketch.Graphics import handle
@@ -133,7 +134,7 @@ Modifier:
             p4 = p4 + delta
             self.r2, angle = p4.polar()
             if not self.shift_pressed:                
-                self.theta2 = angle*180/pi
+                self.theta2 = angle*180/pi  # divaudit: unverified (not exercised by the audit)
         elif selection == 5:
             p5 = p5 + delta
             angle = p5.polar()[1]            
@@ -141,13 +142,13 @@ Modifier:
         elif selection == 6:
             p6 = p6 + delta
             angle = p6.polar()[1]
-            self.theta2 = angle*180/pi
+            self.theta2 = angle*180/pi  # divaudit: unverified (not exercised by the audit)
 
         if self.control_pressed:
             if selection in (1,2,5):
-                self.theta1 = int(0.5+self.theta1/5.)*5
+                self.theta1 = int(0.5+self.theta1/5.)*5  # divaudit: unverified (not exercised by the audit)
             elif selection in (3,4,6):
-                self.theta2 = int(0.5+self.theta2/5.)*5
+                self.theta2 = int(0.5+self.theta2/5.)*5  # divaudit: unverified (not exercised by the audit)
 
 
         self.recompute()

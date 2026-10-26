@@ -462,6 +462,22 @@ static PyNumberMethods skpoint_as_number = {
 	(unaryfunc)0,	/*nb_float*/
 	(unaryfunc)0,	/*nb_oct*/
 	(unaryfunc)0,	/*nb_hex*/
+	0,	/*nb_inplace_add*/
+	0,	/*nb_inplace_subtract*/
+	0,	/*nb_inplace_multiply*/
+	0,	/*nb_inplace_divide*/
+	0,	/*nb_inplace_remainder*/
+	0,	/*nb_inplace_power*/
+	0,	/*nb_inplace_lshift*/
+	0,	/*nb_inplace_rshift*/
+	0,	/*nb_inplace_and*/
+	0,	/*nb_inplace_xor*/
+	0,	/*nb_inplace_or*/
+	0,	/*nb_floor_divide*/
+	/* nb_true_divide: Point / scalar is (and always was on py2) true
+	 * division with double coordinates; without this slot `/` breaks
+	 * under `from __future__ import division` and under py3 */
+	(binaryfunc)skpoint_divide,	/*nb_true_divide*/
 };
 
 static PySequenceMethods skpoint_as_sequence = {

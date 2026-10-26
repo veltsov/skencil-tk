@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
+from __future__ import division
 import math
 from math import atan2, hypot, pi, sin, cos
 
@@ -206,19 +207,19 @@ class LinearGradient(GradientPattern):
 
         device.PushTrafo()
         vx, vy = self.direction
-        angle = atan2(vy, vx) - pi / 2
+        angle = atan2(vy, vx) - pi / 2  # divaudit: unverified (not exercised by the audit)
         center = rect.center()
         rot = Rotation(angle, center)
         left, bottom, right, top = rot(rect)
         device.Concat(rot)
         device.Translate(center)
         height = top - bottom
-        miny = -height / 2
+        miny = -height / 2  # divaudit: unverified (not exercised by the audit)
         height = height * (1.0 - self.border)
         width = right - left
-        dy = height / steps
-        y = height / 2
-        x = width / 2
+        dy = height / steps  # divaudit: unverified (not exercised by the audit)
+        y = height / 2  # divaudit: unverified (not exercised by the audit)
+        x = width / 2  # divaudit: unverified (not exercised by the audit)
         for i in range(steps):
             SetFillColor(colors[i])
             FillRectangle(-x, y, +x, miny)
@@ -301,12 +302,12 @@ class RadialGradient(GradientPattern):
             left, bottom, right, top = r2
             len = right - left
             if len:
-                cx = (cx - left) / len
+                cx = (cx - left) / len  # divaudit: unverified (not exercised by the audit)
             else:
                 cx = 0
             len = top - bottom
             if len:
-                cy = (cy - bottom) / len
+                cy = (cy - bottom) / len  # divaudit: unverified (not exercised by the audit)
             else:
                 cy = 0
             center = Point(cx, cy)
@@ -333,12 +334,12 @@ class RadialGradient(GradientPattern):
         SetFillColor(color(0))
         device.FillRectangle(*tuple(rect))
         radius = radius * (1.0 - self.border)
-        dr = radius / steps
+        dr = radius / steps  # divaudit: unverified (not exercised by the audit)
         device.PushTrafo()
         device.Translate(cx, cy)
         center = NullPoint
         for i in range(steps):
-            SetFillColor(color(float(i) / (steps - 1)))
+            SetFillColor(color(float(i) / (steps - 1)))  # divaudit: unverified (not exercised by the audit)
             FillCircle(center, radius)
             radius = radius - dr
         device.PopTrafo()
@@ -411,12 +412,12 @@ class ConicalGradient(GradientPattern):
             left, bottom, right, top = r2
             len = right - left
             if len:
-                cx = (cx - left) / len
+                cx = (cx - left) / len  # divaudit: unverified (not exercised by the audit)
             else:
                 cx = 0
             len = top - bottom
             if len:
-                cy = (cy - bottom) / len
+                cy = (cy - bottom) / len  # divaudit: unverified (not exercised by the audit)
             else:
                 cy = 0
             center = Point(cx, cy)
@@ -464,7 +465,7 @@ class ConicalGradient(GradientPattern):
         colors = self.gradient.Sample(steps)
         SetFillColor = device.SetFillColor
         FillPolygon = device.FillPolygon
-        da = pi / steps
+        da = pi / steps  # divaudit: unverified (not exercised by the audit)
         points = [(1, 0)]
         for i in range(steps):
             a = da * (i + 1)

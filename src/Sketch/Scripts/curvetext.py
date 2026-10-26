@@ -57,6 +57,7 @@ in userhooks.py
 
 """
 
+from __future__ import division
 __version__ = "1.0"
 
 # The code quality is not as good as it could be, but it does the job :)
@@ -210,7 +211,7 @@ def create_ttf_group(text, face):
                     path.AppendLine(point)
                     last_point = point
                 else:
-                    c1 = last_point + (point - last_point) * 2.0 / 3.0
+                    c1 = last_point + (point - last_point) * 2.0 / 3.0  # divaudit: unverified (not exercised by the audit)
                     if j == npoints:
                         x, y, onpoint = contour[0]
                     else:
@@ -223,12 +224,12 @@ def create_ttf_group(text, face):
                         y = point.y + (y - point.y) * 0.5
                         cont = ContSmooth
                     last_point = Point(x, y)
-                    c2 = last_point + (point - last_point) * 2.0 / 3.0
+                    c2 = last_point + (point - last_point) * 2.0 / 3.0  # divaudit: unverified (not exercised by the audit)
                     path.AppendBezier(c1, c2, last_point, cont)
             path.ClosePath()
             paths.append(path)
         obj = Sketch.PolyBezier(paths = tuple(paths))
-        trafo = Sketch.Scale(1/1024.0)(Sketch.Translation(offset, 0))
+        trafo = Sketch.Scale(1/1024.0)(Sketch.Translation(offset, 0))  # divaudit: unverified (not exercised by the audit)
         obj.Transform(trafo)
         objects.append(obj)
         offset = offset + glyph.advance

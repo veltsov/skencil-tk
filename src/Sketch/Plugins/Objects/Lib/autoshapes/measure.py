@@ -1,4 +1,5 @@
 
+from __future__ import division
 import Sketch
 from Sketch import _, Point, Polar, SingularMatrix, NullUndo
 from Sketch.Base import const, config
@@ -112,10 +113,10 @@ Modifier:
             p1 = p1 + delta
             if self.shift_pressed:
                 s, angle = (p1-p2).polar()
-                p1 = (p1-p2)*l/s+p2
+                p1 = (p1-p2)*l/s+p2  # divaudit: unverified (not exercised by the audit)
             if self.control_pressed:
                 s, angle = (p1-p2).polar()
-                theta = int(theta*180/pi/15+0.5)*pi/180*15.
+                theta = int(theta*180/pi/15+0.5)*pi/180*15.  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
                 p1 = p2+s*Polar(1,angle)                
             self.p1 = p1
         elif selection == 2:
@@ -123,10 +124,10 @@ Modifier:
             p2 = p2 + delta
             if self.shift_pressed:
                 s, angle = (p2-p1).polar()
-                p2 = (p2-p1)*l/s+p1
+                p2 = (p2-p1)*l/s+p1  # divaudit: unverified (not exercised by the audit)
             if self.control_pressed:
                 s, angle = (p2-p1).polar()
-                theta = int(theta*180/15/pi+0.5)*pi/180*15.
+                theta = int(theta*180/15/pi+0.5)*pi/180*15.  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)  # divaudit: unverified (not exercised by the audit)
                 p2 = p1+s*Polar(1,theta)                                
             self.p2 = p2
         elif selection == 3:
@@ -144,7 +145,7 @@ Modifier:
             g = p1+h1*yvect*0.5
             p = g+delta
             angle = (p-p1).polar()[1]-(p2-p1).polar()[1]
-            self.theta = 180*angle/pi
+            self.theta = 180*angle/pi  # divaudit: unverified (not exercised by the audit)
         elif selection == 7:
             g = p2+h2*yvect*0.5
             p = g+delta
@@ -174,7 +175,7 @@ Modifier:
         p1, p2 = self.p1, self.p2
         
         l = (p1-p2).polar()[0]+delta
-        l = int(l/float(step)+0.5)*step
+        l = int(l/float(step)+0.5)*step  # divaudit: unverified (not exercised by the audit)
         if l <= 0:
             return NullUndo
         xvect = (p2-p1).normalized()

@@ -1,4 +1,5 @@
 
+from __future__ import division
 import Sketch
 from Sketch import _, Point, Polar, SingularMatrix, NullUndo
 from Sketch.Base import const, config

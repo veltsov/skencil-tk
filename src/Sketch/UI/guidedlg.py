@@ -20,6 +20,7 @@
 #
 
 
+from __future__ import division
 from Tkinter import Frame, Label, DoubleVar, StringVar, Scrollbar
 from Tkinter import BOTTOM, BOTH, LEFT, RIGHT, TOP, X, Y, E, W
 

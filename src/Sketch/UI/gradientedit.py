@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
+from __future__ import division
 from Sketch import x11 as X
 from Sketch.Modules import pax
 from Sketch.Graphics.image import RasterImage
@@ -46,7 +47,7 @@ class GradientView(PyWidget, Publisher):
 
     def __init__(self, master, width, height, gradient, **kw):
         image = RasterImage('RGB', (width, height), writable = 1)
-        self.orig_x = handle_height / 2
+        self.orig_x = handle_height // 2
         if 'width' not in kw:
             kw["width"] = width + handle_height
         if 'height' not in kw:
@@ -91,9 +92,9 @@ class GradientView(PyWidget, Publisher):
         if depth > 16:
             bpl = 4 * width
         elif depth > 8:
-            bpl = ((2 * width + 3) / 4) * 4
+            bpl = ((2 * width + 3) / 4) * 4  # divaudit: unverified (not exercised by the audit)
         elif depth == 8:
-            bpl = ((width + 3) / 4) * 4
+            bpl = ((width + 3) / 4) * 4  # divaudit: unverified (not exercised by the audit)
         else:
             raise SketchError('unsupported depth for images')
         self.ximage = w.CreateImage(depth, X.ZPixmap, 0, None, width, height,
@@ -127,7 +128,7 @@ class GradientView(PyWidget, Publisher):
 
     def x_to_idx(self, x):
         width = self.ximage.width
-        w2 = handle_height / 2
+        w2 = handle_height // 2
         orig_x = self.orig_x
         for i in range(len(self.gradient)):
             if abs(x - orig_x - self.gradient[i][0] * width) < w2:
@@ -253,7 +254,7 @@ class GradientView(PyWidget, Publisher):
         pixmap = self.tkwin.CreatePixmap()
         width = self.ximage.width
         height = self.ximage.height
-        startx = handle_height / 2
+        startx = handle_height // 2
         self.gc.SetDrawable(pixmap)
         self.tkborder.Fill3DRectangle(pixmap, 0, 0,
                                       self.tkwin.width, self.tkwin.height,
@@ -262,7 +263,7 @@ class GradientView(PyWidget, Publisher):
 
         border = self.tkborder
         win = self.tkwin
-        w2 = handle_height / 2
+        w2 = handle_height // 2
         bot = handle_height + height
         for pos in self.gradient:
             pos = pos[0]

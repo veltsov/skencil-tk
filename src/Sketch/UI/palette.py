@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
+from __future__ import division
 import operator, os
 
 from Sketch import x11 as X
@@ -245,7 +246,7 @@ def Read_X_RGB_TXT(filename):
 
         rgb = []
         for value in values:
-            value = round(value / 255.0, 3)
+            value = round(value / 255.0, 3)  # divaudit: unverified (not exercised by the audit)
             if value < 0:
                 value = 0.0
             elif value > 1.0:
@@ -298,7 +299,7 @@ class PaletteWidget(PyWidget, Publisher):
         Publisher.Destroy(self)
 
     def compute_num_cells(self):
-	 self.num_cells = self.tkwin.width / self.cell_size + 1
+	 self.num_cells = self.tkwin.width // self.cell_size + 1
 
     def MapMethod(self):
         self.compute_num_cells()
@@ -312,7 +313,7 @@ class PaletteWidget(PyWidget, Publisher):
 
     def get_color(self, x, y):
         if 0 <= x < self.tkwin.width and 0 <= y < self.tkwin.height:
-            i = self.start_idx + x / self.cell_size
+            i = self.start_idx + x // self.cell_size
             if i < len(self.palette):
                 return CreateRGBColor(*self.palette.GetRGB(i))
 
@@ -427,7 +428,7 @@ class PaletteWidget(PyWidget, Publisher):
         return len(self.palette) - self.start_idx > self.num_cells
 
     def ScrollXPages(self, count):
-        length = self.tkwin.width / self.cell_size
+        length = self.tkwin.width // self.cell_size
         start = self.start_idx
         self.start_idx = self.start_idx + count * length
         self.normalize_start()

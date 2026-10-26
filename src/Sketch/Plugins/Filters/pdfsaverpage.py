@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+from __future__ import division
 ###Sketch Config
 #type = Export
 #tk_file_type = ("Portable Document Format (PDF) - full page", '.pdf')
@@ -42,8 +43,8 @@ def save(document, file, filename, options = {}):
     llx, lly, urx, ury = bbox
     resolution = config.preferences.pdf_export_resolution
     compat = config.preferences.pdf_compatibility_level
-    width = (urx-llx)*resolution/72
-    height = (ury-lly)*resolution/72
+    width = (urx-llx)*resolution/72  # divaudit: unverified (not exercised by the audit)
+    height = (ury-lly)*resolution/72  # divaudit: unverified (not exercised by the audit)
 
     filename = util.sh_quote(filename)
     file = util.popen_write(gs_command % locals())

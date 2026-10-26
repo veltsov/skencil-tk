@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
+from __future__ import division
 from Sketch.Base import const
 CHANGED = const.CHANGED
 from Sketch.Base.connector import Publisher
@@ -322,7 +323,7 @@ class PropertyStack:
             x0,y0 = trafo(0,0)
             x1,y1 = trafo(0,lw)
             x2,y2 = trafo(lw,0)
-            lwn = (sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)) +
+            lwn = (sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)) +  # divaudit: unverified (not exercised by the audit)
                    sqrt((x2-x0)*(x2-x0)+(y2-y0)*(y2-y0)))/2
             undo = undo + (self.set_property('line_width',lwn),)
         if len(undo) > 0:

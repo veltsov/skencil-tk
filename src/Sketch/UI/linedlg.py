@@ -19,6 +19,7 @@
 #       A dialog for specifying line properties
 #
 
+from __future__ import division
 import operator
 
 from Sketch.x11 import LineDoubleDash
@@ -63,7 +64,7 @@ def draw_dash_bitmap(gc, dashes):
     else:
         dashes = [_width + 10, 1]
     gc.SetDashes(dashes)
-    gc.DrawLine(0, _thickness / 2, _width, _thickness / 2)
+    gc.DrawLine(0, _thickness // 2, _width, _thickness // 2)
 
 def create_dash_images(tk, tkwin, dashes):
     bitmap = tkwin.CreatePixmap(_width, _thickness, 1)
@@ -88,7 +89,7 @@ def draw_arrow_bitmap(gc, arrow, which = 2):
     gc.gc.foreground = 0
     gc.gc.FillRectangle(0, 0, _arrow_width + 1, _arrow_height + 1)
     gc.gc.foreground = 1
-    y = _arrow_height / 2
+    y = _arrow_height // 2
     if which == 1:
         gc.PushTrafo()
         gc.Concat(_mirror)
@@ -109,7 +110,7 @@ def create_arrow_images(tk, tkwin, arrows):
     bitmap = tkwin.CreatePixmap(_arrow_width, _arrow_height, 1)
     gc = SimpleGC()
     gc.init_gc(bitmap, foreground = 1, background = 0)
-    gc.Translate(_arrow_width / 2, _arrow_height / 2)
+    gc.Translate(_arrow_width // 2, _arrow_height // 2)
     gc.Scale(2)
     images1 = []
     for arrow in arrows:

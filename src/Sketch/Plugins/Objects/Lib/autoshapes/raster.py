@@ -1,4 +1,5 @@
 
+from __future__ import division
 import Sketch
 from Sketch import _, Point, Scale, SingularMatrix, NullUndo
 from Sketch.Graphics import handle
@@ -138,7 +139,7 @@ Modifier:
         dw, dh = pb-pa
 
         i_row = (selection-1) % len(self.rows)
-        i_col = (selection-1) / len(self.rows)
+        i_col = int((selection-1) / len(self.rows))
 
         self.rows[i_row] = self.rows[i_row] + dh
         self.cols[i_col] = self.cols[i_col] + dw
@@ -167,11 +168,11 @@ Modifier:
         if col is not None:
             cols.append(col)
         else:
-            cols.append(x0+(x1-x0)*float(n_cols)/(n_cols-1))
+            cols.append(x0+(x1-x0)*float(n_cols)/(n_cols-1))  # divaudit: unverified (not exercised by the audit)
         if row is not None:
             rows.append(row)
         else:
-            rows.append(y0+(y1-y0)*float(n_cols)/(n_cols-1))
+            rows.append(y0+(y1-y0)*float(n_cols)/(n_cols-1))  # divaudit: unverified (not exercised by the audit)
         self.recompute()
         return self.RemoveCells,
 
@@ -198,7 +199,7 @@ Modifier:
         if row is not None:
             rows.append(row)
         else:
-            rows.append(y0+(y1-y0)*float(n_rows)/(n_rows-1))
+            rows.append(y0+(y1-y0)*float(n_rows)/(n_rows-1))  # divaudit: unverified (not exercised by the audit)
         self.recompute()
         return self.RemoveRow,
     
@@ -219,7 +220,7 @@ Modifier:
         if col is not None:
             cols.append(col)
         else:
-            cols.append(x0+(x1-x0)*float(n_cols)/(n_cols-1))
+            cols.append(x0+(x1-x0)*float(n_cols)/(n_cols-1))  # divaudit: unverified (not exercised by the audit)
         self.recompute()
         return self.RemoveCol,
     

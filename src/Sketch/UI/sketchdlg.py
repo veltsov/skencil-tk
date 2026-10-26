@@ -56,6 +56,7 @@
 #
 
 
+from __future__ import division
 from Sketch.Base.warn import pdebug, warn_tb, INTERNAL
 from Sketch import _, Publisher
 from Sketch.Base.const import SELECTION, DOCUMENT, EDITED, CLOSED
@@ -176,8 +177,10 @@ class SketchPanel(Publisher):
         top = self.top
         width = float(master.winfo_width())
         height = float(master.winfo_height())
+    # divaudit: unverified (not exercised by the audit)
         posx = (top.winfo_rootx() + self.x_correction - master.winfo_rootx())\
              / width
+    # divaudit: unverified (not exercised by the audit)
         posy = (top.winfo_rooty() + self.y_correction - master.winfo_rooty())\
              / height
         setattr(config.preferences, self.pref_pos_name, (posx, posy))
@@ -328,14 +331,14 @@ class SKModal:
 
         self.top = top
         self.build_dlg()
-        mcx = master.winfo_rootx() + master.winfo_width()/ 2
-        mcy = master.winfo_rooty() + master.winfo_height() / 2
+        mcx = master.winfo_rootx() + master.winfo_width()// 2
+        mcy = master.winfo_rooty() + master.winfo_height() // 2
         top.withdraw()
         top.update()
         width = top.winfo_reqwidth()
         height = top.winfo_reqheight()
-        posx = max(min(top.winfo_screenwidth() - width, mcx - width / 2), 0)
-        posy = max(min(top.winfo_screenheight() - height, mcy - height / 2), 0)
+        posx = max(min(top.winfo_screenwidth() - width, mcx - width // 2), 0)
+        posy = max(min(top.winfo_screenheight() - height, mcy - height // 2), 0)
         top.geometry('%+d%+d' % (posx, posy))
         top.deiconify()
 
