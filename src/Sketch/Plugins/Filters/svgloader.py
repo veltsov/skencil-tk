@@ -41,7 +41,8 @@ from Sketch import Document, Layer, CreatePath, ContSmooth, \
      Translation, Rotation, Scale, Point, \
      Polar, StandardColors, GetFont, PathText, \
      SimpleText, UnionRects, Bezier, Line, \
-     load_image, skread
+     load_image
+from Sketch.Modules import skread
 from Sketch.Base import const
 
 from Sketch.Base.warn import INTERNAL, USER, warn_tb
@@ -51,7 +52,8 @@ from Sketch.Base.load import GenericLoader, EmptyCompositeError
 from Sketch.Graphics import text, properties
 
 try:
-    from xml.sax import saxlib, saxexts
+    from xml.sax import make_parser
+    from xml.sax import handler as saxhandler
 except ImportError:
     warn_tb(USER, "The Python xml package has to be installed for the svg "
             "import filter.\n"
@@ -263,7 +265,7 @@ rx_command = re.compile(r'[a-df-zA-DF-Z]((\s*[-0-9.e]+)*)\s*')
 rx_trafo = re.compile(r'\s*([a-zA-Z]+)\(([^)]*)\)')
 
 
-class SVGHandler(saxlib.HandlerBase):
+class SVGHandler(saxhandler.ContentHandler):
 
     dispatch_start = {'svg': 'initsvg',
                       'g': 'begin_group',
@@ -362,7 +364,7 @@ class SVGHandler(saxlib.HandlerBase):
             getattr(self, method)()
         self.pop_state()
 
-    def characters(self, ch, start, length):
+    def characters(self, ch):
         self.current_text = self.current_text + as_latin1(ch)
 
     def error(self, exception):
@@ -981,14 +983,14 @@ class SVGLoader(GenericLoader):
             self.document()
             self.layer()
 
-            parser = saxexts.make_parser()
-            parser.setDocumentHandler(SVGHandler(self))
+            parser = make_parser()
+            parser.setContentHandler(SVGHandler(self))
             try:
                 self.file.seek(0)
                 file = self.file
             except:
                 file = streamfilter.StringDecode(self.match.string, self.file)
-            parser.parseFile(file)
+            parser.parse(file)
 
             self.end_all()
             self.object.load_Completed()
