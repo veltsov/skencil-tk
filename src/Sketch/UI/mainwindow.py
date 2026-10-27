@@ -1086,7 +1086,7 @@ class SketchMainWindow(Publisher):
         abouttext = _("Skencil (%(version)s)\n"
                       "(c) 1996-2007 by Bernhard Herzog\n"
                       "(c) 2009-2010 by Igor E. Novikov\n"
-                      "(c) 2018 by Vladimir Eltsov\n\n"
+                      "(c) 2018-2026 by Vladimir Eltsov\n\n"
                       "Versions:\n"
                       "Python:\t%(py)s\tTcl:\t%(tcl)s\n"
                       "Tkinter:\t%(tkinter)s\tTk:\t%(tk)s") \

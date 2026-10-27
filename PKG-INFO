@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: skencil
-Version: 1.1
+Version: 1.2
 Summary: Interactive vector drawing program
 Home-page: http://www.skencil.org
 Author: Vladimir Eltsov
@@ -13,7 +13,7 @@ Description:
         with the rest written in C for speed.
         Copyright (C) 1996-2007 by Bernhard Herzog
         Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
-        Copyright (C) 2018 by Vladimir Eltsov
+        Copyright (C) 2018-2026 by Vladimir Eltsov
                     
 Platform: UNKNOWN
 Classifier: Development Status :: 5 - Stable

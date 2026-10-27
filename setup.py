@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Setup script for Skencil
 #
@@ -36,10 +36,17 @@
 
 import os, sys
 
+if sys.version_info[0] < 3:
+    sys.stderr.write(
+        "setup.py requires Python 3. The Python 2 build lives on the"
+        " 'modernize' branch; building it from this checkout would pollute"
+        " the Python 2 build tree.\n")
+    sys.exit(1)
+
 
 COPY = False
 DEBIAN = False
-VERSION = '1.1'
+VERSION = '1.2'
 
 ############################################################
 #

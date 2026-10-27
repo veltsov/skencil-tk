@@ -3,19 +3,13 @@ Skencil drawing application
 
 Continuation of the Skencil project: http://www.skencil.org
 
-To compile, run `python2 setup.py build` and then start directly
+To compile, run `python3 setup.py build` and then start directly
 from the `build/` directory.
 
-Packages needed for Ubuntu 20.04:
+Packages needed:
 ```
-apt install python2 python2-dev python-tk python-pil python-pil.imagetk \
-        tcl-dev tk-dev python-gi
-```
-
-To get proper color scheme also:
-```
-wget http://archive.ubuntu.com/ubuntu/pool/universe/p/pygtk/python-gtk2_2.24.0-5.1ubuntu2_amd64.deb
-sudo apt-get install ./python-gtk2_2.24.0-5.1ubuntu2_amd64.deb
+apt install python3 python3-dev python3-tk python3-pil python3-pil.imagetk \
+        tcl-dev tk-dev
 ```
 
 This work is heavily based on skencil-1.0alpha by Igor E. Novikov.
