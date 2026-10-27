@@ -341,14 +341,14 @@ Remaining py3 issues, verified by the suite (in rough priority order):
    tests).
 2. **`sys.exc_traceback` remnants** in `UI/prompt.py` and
    `Plugins/Filters/xfigloader.py` (use `sys.exc_info()[2]`).
-3. **`reader_decodes_style_names_for_use_style`** (the
-   `reader_decodes_user_strings` half passes again since the txt/pt
-   fix above): `dict_keys.sort()` style leftovers — `GetStyleNames`
-   is fixed; check the remaining `.sort()` on view objects
-   (`document.py:2334` was one; verify all).
-4. **`test_menu_tree_byte_string_path_rejected`**: ScriptRegistry's
-   byte-string rejection is py2-only; the check needs a py3 form
-   (reject `bytes` paths).
+3. ~~`reader_decodes_style_names_for_use_style`~~ and
+   ~~`test_menu_tree_byte_string_path_rejected`~~ — FIXED 2026-10-27:
+   both failures were py2 remnants in the *tests*, not the model.  The
+   registry already rejects non-str menu components under py3 (the
+   test used the py2-era plain literal 'TeX', now b'TeX'); the style
+   name and EPS filename tests built their .sk fixtures with py2
+   %r-of-bytes and bytes filenames — ported to skrepr() and unicode
+   names.  The headless suite is 101/101 (ui tests still excluded).
 5. **UI layer (stage C/D):** the Xvfb smoke tests are not run yet
    (`--ignore=test/ui`); `Sketch/UI/*` imports tkinter now, but the
    pax Tk integration (`call_py_method`, `wantobjects(0)` behaviour)
@@ -378,6 +378,13 @@ gate throughout; baselines are compared against master's
   (`sys.version_info`).  The stale `*.patch`/`*.sav` clutter is kept
   (not code; per AGENTS.md it is not touched without an explicit
   request).  Gate after every batch: build + 111 tests, green.
+   Post-mortem note (2026-10-27): the tab/space normalization carried
+   a semantic risk; one instance was found and fixed in the GUI work --
+   UI/plugindlg.py TextParameter.build_widgets had the Text widget and
+   the set/get adapter nested into the else branch (master had them
+   tab-indented outside it), crashing every plugin dialog with a text
+   parameter (Create -> LaTeX text).  When reviewing the other former
+   syntax-error files, watch for the same pattern.
 - **Stage B — C extensions on a port branch (python3):** in the order
   `_sketch` (geometry) → `streamfilter`/`_type1`/`skread`/
   `pstokenize` → `pax` → `skimage` last (its design decision is made

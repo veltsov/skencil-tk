@@ -207,8 +207,11 @@ class TextParameter(Parameter):
             h = 3
         else:
             w,h = self.range
-            txtfield = Text(master, width=w, height=h, background='white', wrap=WORD)
-            self.var = StringVarForText(txtfield)
+        # the widget and the set/get adapter are needed in both cases
+        # (master had these lines tab-indented outside the else; the
+        # stage-A tab/space normalization had nested them into it)
+        txtfield = Text(master, width=w, height=h, background='white', wrap=WORD)
+        self.var = StringVarForText(txtfield)
         self.var.set(self.value)
         txtfield.grid(row = row+1, columnspan = 4, sticky = 'news')
         master.grid_rowconfigure(row+1,weight=1)
