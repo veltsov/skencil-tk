@@ -259,6 +259,47 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
             keymap.AddCommand(cmd)
         return cmds, keymap
 
+    def register_command_class(self, aclass):
+        # register the commands of a command class (a core class or a
+        # plugin class) for this canvas: instantiate its commands, map
+        # its key bindings and add its context menu entries
+        name = aclass.__name__
+        if name in self.class_maps:
+            return
+        if aclass.is_Editor:
+            #name = aclass.EditedClass.__name__
+            commands = aclass.commands + aclass.EditedClass.commands
+        else:
+            commands = aclass.commands
+        ocmds, keymap = self.create_obj_cmds(commands)
+        setattr(self.commands, name, ocmds)
+        self.class_maps[name] = keymap
+
+        if self.context_menu_items[-1] != None:
+            # insert a separator if necessary
+            self.context_menu_items.append(None)
+        self.context_menu_items = self.context_menu_items \
+            + list(aclass.context_commands)
+
+    def register_late_command_classes(self):
+        # Plugin classes register their commands late: the plugin
+        # modules are imported lazily on first use (Base/plugins.py),
+        # possibly long after create_commands() built the class maps at
+        # startup.  Register the classes that have appeared since then,
+        # so that their key bindings and context menu entries work
+        # (e.g. the autoshapes' +/- and arrow keys,
+        # AutoshapeEditor.AnyKey -> KeyHandler).
+        #
+        # The registry is append-only (Sketch.RegisterCommands is its
+        # only mutation), so its length tells whether anything new was
+        # registered since the last scan; skip the scan otherwise.
+        count = len(Sketch.command_classes)
+        if count == self.registered_command_classes:
+            return
+        for aclass in Sketch.command_classes:
+            self.register_command_class(aclass)
+        self.registered_command_classes = count
+
     def create_commands(self):
         cmds = command.Commands()
         keymap = command.Keymap()
@@ -268,28 +309,12 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
             keymap.AddCommand(cmd)
         self.keymap = keymap
 
-        class_maps = {}
-        classes = Sketch.command_classes
-        for aclass in classes:
-            name = aclass.__name__
-            if aclass.is_Editor:
-                #name = aclass.EditedClass.__name__
-                commands = aclass.commands + aclass.EditedClass.commands
-            else:
-                commands = aclass.commands
-            ocmds, keymap = self.create_obj_cmds(commands)
-            setattr(cmds, name, ocmds)
-            class_maps[name] = keymap
-
-            if self.context_menu_items[-1] != None:
-                # insert a separator if necessary
-                self.context_menu_items.append(None)
-            self.context_menu_items = self.context_menu_items \
-                + list(aclass.context_commands)
-
         self.commands = cmds
+        self.class_maps = {}
+        for aclass in Sketch.command_classes:
+            self.register_command_class(aclass)
+        self.registered_command_classes = len(Sketch.command_classes)
         self.object_keymap = None
-        self.class_maps = class_maps
 
     def find_map(self, classes):
         maps = self.class_maps
@@ -314,6 +339,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
                 cls = self.document.selection.editor.editor.__class__
             else:
                 cls = obj.__class__
+            self.register_late_command_classes()
             self.object_keymap = self.find_map((cls,))
 
     def UpdateCommands(self):
@@ -642,6 +668,7 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
     #
 
     def build_context_commands(self):
+        self.register_late_command_classes()
         items = []
         for entry in self.context_menu_items:
             if entry:

@@ -39,7 +39,7 @@ def colorize(img, fg, fr, fb):
         red, green, blue = data[i:i+3]
         data[i:i+3] = [byte(fr*red), byte(fg*green), byte(fb*blue)]
 
-    q_image.im.putpalette('RGB',''.join(map(chr, data)))
+    q_image.im.putpalette('RGB', bytes(data))
     return q_image
         
 def highlight(img):

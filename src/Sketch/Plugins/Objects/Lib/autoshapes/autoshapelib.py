@@ -1,3 +1,5 @@
+import importlib
+
 import Sketch
 from Sketch import _, Trafo, Translation, TrafoPlugin, \
      Rotation, RegisterCommands, NullUndo, PolyBezier
@@ -30,7 +32,8 @@ def report_error(title, message):
 def Loader(name):
     note("loading %s ", name)
     try:
-        module = __import__(name, globals(), locals(), [])
+        module = importlib.import_module(
+            'Sketch.Plugins.Objects.Lib.autoshapes.' + name)
     except Exception as e:
         report_error(_('Warning'), _('Failed to load autoshape \'%s\': %s') %
                      (name, e))

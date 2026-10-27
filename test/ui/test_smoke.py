@@ -44,6 +44,13 @@ def test_open_layer_dialog():
     run_ui('smoke_dialog.py', args=[testsupport.data_path('tarr.sk')])
 
 
+def test_open_plugin_dialog():
+    """Opening the Autoshapes plugin dialog must not crash (py3
+    regression guard: the icon palettes go through PIL putpalette,
+    which requires bytes under Pillow 9)."""
+    run_ui('smoke_plugin_dialog.py')
+
+
 # ------------------------------------------------------- screenshot tests
 
 SHOT_FIXTURE = 'tarr.sk'
