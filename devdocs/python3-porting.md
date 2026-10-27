@@ -369,9 +369,14 @@ Remaining py3 issues, verified by the suite (in rough priority order):
    instead of blocking on modals; the ui screenshot baselines are
    recorded from the py3 build now (master py2 cannot run the py3
    test suite any more).  The user's own latextext2.py plugin
-   (~/.config/skencil/Plugins) is py2-only (TabError) and is skipped
-   by the isolation; documents referencing it load with UnknownPlugin
-   placeholders plus a load message.
+   (~/.config/skencil/Plugins, shared with the py2 master) was
+   converted to a py2/py3 polyglot (spaces, print_function,
+   raise/except-as syntax, dead posix/string imports dropped); it
+   compiles and runs under both interpreters, so documents referencing
+   its LtxObj2 objects load and recompute under py3 as well (verified
+   by loading avortsel.sk and recomputing an LtxObj2).  With the ui
+   test isolation the user plugins are not scanned, so those tests are
+   independent of it.
 6. **Stage D:** devtools (`build-skencil`, `collect-app-dir`,
    AppImage), README, `.vscode`, `skconvert`/`skshow` launchers
    (already version-parameterized), user plugin in
