@@ -521,14 +521,16 @@ class XFigLoader(SimplifiedLoader):
 
         except SketchLoadError as value:
             warn_tb(INTERNAL)
-            raise SketchLoadError('%d:%s' % (self.lineno, str(value))).with_traceback(sys.exc_traceback)
+            raise SketchLoadError('%d:%s' % (self.lineno, str(value))\
+                                  ).with_traceback(sys.exc_info()[2])
         except:
             if load._dont_handle_exceptions:
                 warn(INTERNAL, 'XFigLoader: error reading line %d:%s',
                      self.lineno, repr(line))
                 raise
             raise SketchLoadError(_("error in line %d:\n%s")
-                                  % (self.lineno, repr(line))).with_traceback(sys.exc_traceback)
+                                  % (self.lineno, repr(line))\
+                                  ).with_traceback(sys.exc_info()[2])
         self.end_all()
         self.object.load_Completed()
         return self.object

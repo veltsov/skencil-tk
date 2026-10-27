@@ -78,7 +78,7 @@ class MultilineText(TrafoPlugin):
             self.recompute()
 
     def recompute(self):
-        chunker = Chunker(self.text.rstrip(), self.styling, '\t')
+        chunker = Chunker(self.text.rstrip(), self.styling, b'\t')
 
         objects = []
         options = {}
@@ -139,7 +139,7 @@ class MultilineText(TrafoPlugin):
                 width = 0
 
             reason = chunker.reason()
-            if reason == '\n' or chunker.eof():
+            if reason == b'\n' or chunker.eof():
                 if width > 0:
                     y = y-maxy
                 else:
@@ -149,7 +149,7 @@ class MultilineText(TrafoPlugin):
                 for obj in line:
                     obj.Transform(self.trafo(Translation(0, y)))
                 line = []
-            elif reason == '\t':
+            elif reason == b'\t':
                 x = x+width+size
                 #
                 # XXX this is very provisional
@@ -247,6 +247,10 @@ class MultilineTextDlg(SketchPanel):
 
     def set_text(self, text):
         self.text_field.delete('1.0', 'end')
+        if isinstance(text, bytes):
+            # the text is latin-1 (font-encoded) bytes; display it via
+            # latin-1 so get_text re-encodes it losslessly
+            text = text.decode('latin-1')
         self.text_field.insert('end', text)
 
     def set_styling(self, styling):

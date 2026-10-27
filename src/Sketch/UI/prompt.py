@@ -101,6 +101,6 @@ def PythonPrompt(prompt = '>>>', prompt2 = '...'):
             print('----- returning to Sketch')
             return
         except:
+            # sys.exc_type/exc_value/exc_traceback are gone in python3
             import traceback
-            traceback.print_tb(sys.exc_traceback)
-            print('Exception %s: %s' % (sys.exc_type, sys.exc_value))
+            traceback.print_exc()

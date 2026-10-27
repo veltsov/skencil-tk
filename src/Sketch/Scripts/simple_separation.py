@@ -182,8 +182,11 @@ class SimpleSeparationDialog(SKModal):
 
 def hexcolor(color):
     """Return the color in hexadecimal form"""
+    # int: the color components are floats; py2's %x accepted
+    # floats (truncating), py3 requires integers
     return "%02x%02x%02x" \
-           % (255 * color.red, 255 * color.green, 255 * color.blue)
+           % (int(255 * color.red), int(255 * color.green),
+              int(255 * color.blue))
 
 def draw_alignment_marks(psdevice, bbox, length, distance):
     """Draw alignment marks onto the postscript device"""

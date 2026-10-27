@@ -18,8 +18,8 @@ from __future__ import print_function
 from io import StringIO
 from re import compile, search
 
-EOF = 'eof'
-STYLECHANGE = 'stylechange'
+EOF = b'eof'
+STYLECHANGE = b'stylechange'
 
 class Chunker:
 
@@ -36,11 +36,16 @@ class Chunker:
         self.next_pos = -1
         self.len = len(text)
 
-        sepstr = ''
-        sep = ('\n',)+tuple(sep)
+        sepstr = b''
+        sep = (b'\n',)+tuple(sep)
         for s in sep:
+            # a byte separator may come in as an int (iterating bytes)
+            if isinstance(s, int):
+                s = bytes([s])
             sepstr = sepstr+s
-        self.sep_r = compile('[%s]' % sepstr)
+        # a bytes pattern: the text is a byte string (the plugin's
+        # K3 text, devdocs/string-handling.md)
+        self.sep_r = compile(b'[%s]' % sepstr)
 
     def eof(self):
         return self.pos >= self.len
@@ -55,19 +60,19 @@ class Chunker:
         if self.pos >= self.len:
             return EOF
         elif self.pos == self.next_pos+1:
-            return self.text[self.next_pos]
+            return self.text[self.next_pos:self.next_pos+1]
         else:
             return STYLECHANGE
 
     def get(self):
-        ret = ''
+        ret = b''
         opos = self.pos
         while self.pos == opos:
             style, line, col = self.styling[self.i]
 
             # need to find the next sep ?
             if self.pos >= self.next_pos:
-                if self.text[self.next_pos] == '\n':
+                if self.text[self.next_pos] == 10:  # ord('\n')
                     self.line = self.line+1
                     self.col = 0
                 match = self.sep_r.search(self.text, self.next_pos+1)

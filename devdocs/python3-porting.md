@@ -339,8 +339,16 @@ Remaining py3 issues, verified by the suite (in rough priority order):
    X11 core-font drawing path).  The save/reload-stable,
    fixture-baseline and sk2ps tests pass again (93 of 97 headless
    tests).
-2. **`sys.exc_traceback` remnants** in `UI/prompt.py` and
-   `Plugins/Filters/xfigloader.py` (use `sys.exc_info()[2]`).
+2. **~~`sys.exc_traceback` remnants~~ — FIXED 2026-10-27:**
+   `UI/prompt.py` reports via `traceback.print_exc()`; `xfigloader.py`
+   re-raises with `sys.exc_info()[2]`.  Same session: the
+   `%02x`-with-floats color helpers (`simple_separation.hexcolor`,
+   `svgsaver.csscolor` — int truncation, py2 semantics) and the
+   multilinetext plugin's byte pipeline (chunker/iterator py3 dict
+   and bytes fixes, latin-1 editor round trip; the plugin's text
+   stays font-encoded bytes, its format contract).  New
+   `test/model/test_multilinetext.py` pins the pipeline; svg save
+   verified headlessly.  Headless 103/103, ui 117/117.
 3. ~~`reader_decodes_style_names_for_use_style`~~ and
    ~~`test_menu_tree_byte_string_path_rejected`~~ — FIXED 2026-10-27:
    both failures were py2 remnants in the *tests*, not the model.  The

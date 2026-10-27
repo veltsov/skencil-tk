@@ -17,8 +17,7 @@ from __future__ import print_function
 from Sketch.Plugins.Objects.Lib.multilinetext.styletext import StyleText, Style
 import tkinter
 from tkinter.constants import *
-from tkinter.filedialog import asksaveasfilename, asksaveasfilename, \
-     askopenfilename
+from tkinter.filedialog import askopenfilename, asksaveasfilename
 from Sketch.Graphics import font
 from Sketch import _
 from Sketch.Lib.util import as_display_name

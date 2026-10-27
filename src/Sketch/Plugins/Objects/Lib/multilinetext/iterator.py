@@ -26,8 +26,8 @@ class Style:
             raise StyletextError(
                 "Style should be called with exactly one parameter "
                 "eg. Style(size=3): %s" % kw)
-        self.sort = kw.keys()[0]
-        self.options = kw.values()[0]
+        self.sort = list(kw.keys())[0]
+        self.options = list(kw.values())[0]
         self._signature_ = str(kw)
 
     def _check_other(self, other):
