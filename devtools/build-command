@@ -1,1 +1,9 @@
-enter-devroot
+#!/bin/bash
+# The python3 build environment is the host system itself (no devroot
+# bwrap container is used anymore).  This script changes to the skencil
+# development directory -- the parent of the directory containing this
+# script -- and execs its arguments there.
+
+dd=$(dirname $(dirname $(readlink -f "$BASH_SOURCE[0]")))
+cd "$dd" || exit 1
+exec "$@"

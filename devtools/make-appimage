@@ -4,4 +4,6 @@ if [ ! -x ./appimagetool-x86_64.AppImage ] ; then
     wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
     chmod +x appimagetool-x86_64.AppImage
 fi
-./appimagetool-x86_64.AppImage ../AppDir ../build/Skencil-x86_64.AppImage
+# --appimage-extract-and-run: appimagetool is an AppImage itself; this
+# mode works also on systems without FUSE (/dev/fuse unavailable).
+./appimagetool-x86_64.AppImage --appimage-extract-and-run ../AppDir ../build/Skencil-x86_64.AppImage

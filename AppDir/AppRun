@@ -28,8 +28,14 @@ case $MAIN in
 	;;
 esac
 
-if [ ! -e "${HERE}/build/scripts-2.7/$MAIN" ] ; then
+# The launcher (src/skencil) expects build/scripts-<X.Y>/<tool> next to
+# build/lib.linux-<arch>-<X.Y>/; derive <X.Y> from the bundled
+# interpreter so this follows the build tree layout.
+PYTHON="${HERE}"/usr/bin/python3.10
+PYVER=$("$PYTHON" -c 'import sys; print("%d.%d" % sys.version_info[:2])')
+
+if [ ! -e "${HERE}/build/scripts-${PYVER}/$MAIN" ] ; then
     MAIN=skencil
 fi
 
-exec "${HERE}"/usr/bin/python2.7 "${HERE}/build/scripts-2.7/$MAIN" "$@"
+exec "$PYTHON" "${HERE}/build/scripts-${PYVER}/$MAIN" "$@"

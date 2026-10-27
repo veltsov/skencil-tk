@@ -313,6 +313,14 @@ Work is on the branch `py3` (py3-only sources; the `modernize` branch
 remains the py2 reference).  Builds: `python3 setup.py build` →
 `build/lib.linux-x86_64-3.10`; suite: `PYTHON=python3 test/run_tests.sh`.
 
+**Warning (2026-10-27 incident):** never run `python2 setup.py build`
+while the `py3` branch is checked out (nor `python3 setup.py build` on
+a py2 branch).  `build_py` copies all py3-only `.py` files into
+`build/lib.linux-x86_64-2.7/` before `build_ext` fails on the py3-only
+C sources, silently corrupting the py2 build tree — the py2 app then
+crashes at startup.  Build each branch from its own worktree; details,
+diagnosis and recovery are in `devdocs/build-and-environment.md`.
+
 Remaining py3 issues, verified by the suite (in rough priority order):
 
 1. **Glyph-encoding round-trip -- FIXED 2026-10-27 (the .sk
@@ -445,6 +453,18 @@ gate throughout; baselines are compared against master's
   `collect-app-dir` → python3 payload), `README.md`, `.vscode`
   settings, AppImage rebuild.  Gate: the app runs from the build tree
   and from the AppDir.
+  Status 2026-10-27: `build-command` now runs on the host (cd to the
+  dev tree, no bwrap), `build-skencil` uses `python3`,
+  `collect-app-dir` collects the python3.10 payload (stdlib, PIL — the
+  only third-party import — into the bundled prefix's *dist-packages*,
+  tcl/tk and the PIL-9 library set) and the AppImage builds and passes
+  the smoke tests (sk2ps byte-identical modulo the timestamp, GUI
+  screenshot pixel-identical to the baseline) in the FUSE-less sandbox
+  via `--appimage-extract`; see `devdocs/build-and-environment.md`.
+  Also fixed along the way: the PIL-missing error path in
+  `Sketch/__init__.py` crashed with `NameError: warn` instead of the
+  intended warning + exit (warn is now imported locally in the except
+  branch).
 
 ## Known risks
 

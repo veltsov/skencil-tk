@@ -101,6 +101,19 @@ from GTK to **Tk** and added many features (see `README.md`).
   the build tree. The app imports from `build/lib.linux-x86_64-2.7/`,
   not from `src/`, so editing a `.py` file in `src/` has no effect on
   the running application until the build copies it over.
+- **Never run `python2 setup.py build` while the `py3` branch is
+  checked out** (and vice versa: `python3 setup.py build` on a py2
+  branch).  distutils `build_py` copies *all* `.py` sources into
+  `build/lib.linux-x86_64-2.7/` before `build_ext` fails on the
+  py3-only C code, leaving py3-only Python files in the py2 build
+  tree; the py2 app then crashes at startup (e.g.
+  `AttributeError: type object 'str' has no attribute 'maketrans'`
+  from `Sketch/Graphics/font.py`).  This happened on 2026-10-27.
+  Build each branch from its own git worktree and copy only the
+  matching `build/lib.linux-x86_64-2.7`, `build/scripts-2.7` and
+  `build/temp.linux-x86_64-2.7` over (see
+  `devdocs/build-and-environment.md` for the full incident record and
+  recovery procedure).
 - Localization: user-visible strings should go through `_()` from `Sketch`
   (standard `gettext` module; per-domain caching shim in
   `Sketch/__init__.py` — the former `intl` C extension was dropped).

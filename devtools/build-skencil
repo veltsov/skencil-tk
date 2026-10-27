@@ -1,2 +1,2 @@
 #!/bin/sh
-./build-command python2 setup.py build
+./build-command python3 setup.py build

@@ -1,32 +1,63 @@
 #!/bin/bash
+# Collect the python3 build tree and its runtime dependencies into
+# AppDir/.  Run from the repository root (devtools/build-command does
+# the cd).
+set -e
+
+libdir=lib.linux-x86_64-3.10
+scriptsdir=scripts-3.10
+
 b=AppDir/build
+# rsync --delete does not remove top-level extraneous entries, so wipe
+# the payload dirs to get rid of any stale (py2) content.
+rm -rf $b AppDir/usr/bin AppDir/usr/lib
 mkdir -p $b
-rsync -av --delete build/lib*  build/scripts* $b
+rsync -av --no-owner --no-group --delete build/$libdir build/$scriptsdir $b
 
 bin=AppDir/usr/bin
 mkdir -p $bin
-rsync -av /usr/bin/python2.7 $bin
+rsync -av --no-owner --no-group /usr/bin/python3.10 $bin
 
 lib=AppDir/usr/lib
 mkdir -p $lib
-rsync -av --delete /usr/lib/python2.7 /usr/lib/tcl8.6 /usr/lib/tk8.6 \
+# The python3.10 stdlib (includes lib-dynload); stale python2.7 and
+# old tcl/tk copies are removed by --delete.
+rsync -av --no-owner --no-group --delete /usr/lib/python3.10 /usr/lib/tcl8.6 /usr/lib/tk8.6 \
       /usr/lib/libBLT.2.5.so.8.6 \
       $lib
 
+# PIL is the only third-party package the application imports (verified
+# by the import sweep of src/; numpy etc. are NOT needed).  On focal it
+# is not part of the stdlib tree but lives in the shared
+# /usr/lib/python3/dist-packages, so copy just the PIL package into
+# dist-packages of the bundled prefix; site.py picks it up
+# automatically.
+sp=$lib/python3.10/dist-packages
+mkdir -p $sp
+rsync -av --no-owner --no-group --delete /usr/lib/python3/dist-packages/PIL $sp
+
 mkdir -p $lib/x86_64-linux-gnu
-rsync -av --delete /usr/lib/x86_64-linux-gnu/libXss.so.1* \
+rsync -av --no-owner --no-group --delete /usr/lib/x86_64-linux-gnu/libXss.so.1* \
+  /usr/lib/x86_64-linux-gnu/libdeflate.so.0* \
+  /usr/lib/x86_64-linux-gnu/libfribidi.so.0* \
+  /usr/lib/x86_64-linux-gnu/libharfbuzz.so.0* \
   /usr/lib/x86_64-linux-gnu/libimagequant.so.0 \
   /usr/lib/x86_64-linux-gnu/libjpeg.so.8* \
   /usr/lib/x86_64-linux-gnu/libjbig* \
-  /usr/lib/x86_64-linux-gnu/libpython2.7.so.1* \
+  /usr/lib/x86_64-linux-gnu/liblcms2.so.2* \
+  /usr/lib/x86_64-linux-gnu/libopenjp2.so.7* \
+  /usr/lib/x86_64-linux-gnu/libpython3.10.so.1* \
+  /usr/lib/x86_64-linux-gnu/libraqm.so.0* \
   /usr/lib/x86_64-linux-gnu/libtcl8.6.so* \
   /usr/lib/x86_64-linux-gnu/libtiff.so.5* \
   /usr/lib/x86_64-linux-gnu/libtk8.6.so* \
-  /usr/lib/x86_64-linux-gnu/libwebp.so.6* \
+  /usr/lib/x86_64-linux-gnu/libwebp.so.7* \
+  /usr/lib/x86_64-linux-gnu/libwebpdemux.so.2* \
+  /usr/lib/x86_64-linux-gnu/libwebpmux.so.3* \
   $lib/x86_64-linux-gnu
 
 share=AppDir/usr/share
 mkdir -p $share
-rsync -av --delete /usr/share/tcltk $share
+rsync -av --no-owner --no-group --delete /usr/share/tcltk $share
 
-rsync -av --exclude '*.pfm' /usr/share/fonts/type1/gsfonts/ build/lib.linux-x86_64-2.7/Resources/Fontmetrics/
+rsync -av --no-owner --no-group --exclude '*.pfm' /usr/share/fonts/type1/gsfonts/ build/$libdir/Resources/Fontmetrics/

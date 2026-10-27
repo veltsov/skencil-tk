@@ -124,7 +124,9 @@ try:
     import PIL.Image
     import PIL.ImageChops
 except ImportError:
-    warn.warn(warn.USER, "Can't import the Python Imaging Library")
+    # imported locally: Sketch/__init__ is still being executed here
+    from Sketch.Base.warn import warn, USER
+    warn(USER, "Can't import the Python Imaging Library")
     sys.exit(1)
 
 
