@@ -327,7 +327,7 @@ def format(template, converters, dict):
             result.append(template[pos:] % udict)
             pos = len(template)
 
-    return u''.join(result)
+    return ''.join(result)
 
 # convert a bitmap to a string containing an xbm file. The linedlg uses
 # this for instance to convert bitmap objects to Tk bitmap images.

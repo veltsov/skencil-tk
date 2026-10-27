@@ -31,7 +31,6 @@
 # historical reasons...
 #
 
-from __future__ import division
 import math
 import sys
 

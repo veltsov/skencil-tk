@@ -3,7 +3,6 @@
 # --run-script payload (test/ui/scripts/).  Screenshot tests compare
 # against baselines recorded from the master build.
 
-from __future__ import print_function
 
 import os
 

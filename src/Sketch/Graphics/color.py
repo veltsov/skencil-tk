@@ -20,7 +20,6 @@
 #
 
 
-from __future__ import division
 from Sketch.Base.warn import warn, INTERNAL, USER
 from Sketch.Modules._sketch import RGBColor, XVisual
 from Sketch import _

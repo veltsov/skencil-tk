@@ -34,7 +34,6 @@
 #
 
 
-from __future__ import division
 ###Sketch Config
 #type = PluginCompound
 #class_name = 'LtxObj'
@@ -45,7 +44,6 @@ from __future__ import division
 #standard_messages = 1
 ###End
 
-from __future__ import print_function
 (''"LaTeX Text")
 (''"Text")
 (''"Size")

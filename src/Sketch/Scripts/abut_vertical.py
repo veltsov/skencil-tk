@@ -71,6 +71,6 @@ def abut_vertical(context):
 
 # register script import Sketch.Scripting
 import Sketch.Scripting
-Sketch.Scripting.AddFunction('abut_vertical', u'Abut Vertical',
-                             abut_vertical, menu = u'Arrange',
+Sketch.Scripting.AddFunction('abut_vertical', 'Abut Vertical',
+                             abut_vertical, menu = 'Arrange',
                              script_type = Sketch.Scripting.AdvancedScript)

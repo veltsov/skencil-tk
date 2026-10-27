@@ -1,6 +1,5 @@
 # Tamito KAJIYAMA <21 June 2002>
 
-from __future__ import print_function
 import math
 try:
     from collections import UserDict

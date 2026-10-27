@@ -19,7 +19,6 @@
 #	A dialog for specifying the fill style
 #
 
-from __future__ import division
 import os
 from math import atan2, sin, cos, pi
 

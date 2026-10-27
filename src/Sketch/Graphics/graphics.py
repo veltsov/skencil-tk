@@ -24,7 +24,6 @@
 # need not know whether output goes to a window or a printer, etc.
 #
 
-from __future__ import print_function
 import sys
 import operator, string
 from math import pi

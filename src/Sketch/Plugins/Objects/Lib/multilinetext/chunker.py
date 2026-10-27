@@ -14,8 +14,6 @@
 
 
 
-from __future__ import print_function
-from io import StringIO
 from re import compile, search
 
 EOF = b'eof'

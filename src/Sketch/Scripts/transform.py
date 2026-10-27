@@ -1,4 +1,3 @@
-from __future__ import division
 import Sketch.Scripting
 
 from Sketch import Trafo, Scripting, Translation, Rotation,\
@@ -170,7 +169,7 @@ class TransformDlg(SKModal):
             
             duplicate = self.var_duplicate.get()
 
-            doc.BeginTransaction(u"Transforming Objects")
+            doc.BeginTransaction("Transforming Objects")
             try:
                 try:
                     sel = []
@@ -201,6 +200,6 @@ def Transform(context):
     dlg = TransformDlg(context.application.root, context)
 
 
-Sketch.Scripting.AddFunction('Transform', u'Transform',
+Sketch.Scripting.AddFunction('Transform', 'Transform',
                              Transform,
                              script_type = Sketch.Scripting.AdvancedScript)

@@ -218,11 +218,11 @@ def load_user_preferences():
             Sketch.Scripts.__path__.append(user_scripts_dir)
     filename = os.path.join(config.user_config_dir, config.user_settings_file)
     if os.path.isfile(filename):
-        # Execute the file into an intermediate object and convert the
-        # values before they reach the live preferences object (see
-        # _LoadedPreferences).  The str/unicode conversion happens
-        # right at the input boundary; under python3 all strings are
-        # unicode and it disappears.
+        # Execute the file into an intermediate object and normalize
+        # the values before they reach the live preferences object
+        # (_decode_item).  The file is compiled as utf-8 source, so the
+        # values are strings already; the bytes normalization in
+        # _decode_item only triggers for hand-written b'...' literals.
         loaded = _LoadedPreferences()
         try:
             exec(compile(open(filename, 'rb').read(), filename, 'exec'),

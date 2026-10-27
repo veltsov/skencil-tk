@@ -19,7 +19,6 @@
 #
 # $Id: cgmsaver.py 732 2010-09-22 21:54:38Z igor_n $
 
-from __future__ import division
 ###Sketch Config
 #type = Export
 #tk_file_type = ("Computer Graphics Metafile (CGM)", '.cgm')

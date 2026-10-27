@@ -18,7 +18,6 @@
 
 # Convert a Sketch-file into a PPM file
 
-from __future__ import print_function
 """usage: sk2ppm [Options] infile [outfile]
 
 Convert the Skencil/Sketch SK-file infile into a PPM file. Output is

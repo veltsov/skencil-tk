@@ -11,7 +11,6 @@
 #        prints one referenced filename per line (relative to the .sk
 #        file's directory), or with --copy DEST copies them.
 
-from __future__ import print_function
 
 import os
 import re

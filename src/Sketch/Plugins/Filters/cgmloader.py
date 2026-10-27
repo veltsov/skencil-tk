@@ -20,7 +20,6 @@
 ################################################################################
 
 
-from __future__ import division
 ###Sketch Config
 #type = Import
 #class_name = 'CGMLoader'

@@ -15,7 +15,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
-from __future__ import division
 from math import pi, floor, atan2, ceil, sqrt
 
 from traceback import print_stack

@@ -56,7 +56,6 @@
 #
 
 
-from __future__ import division
 from Sketch.Base.warn import pdebug, warn_tb, INTERNAL
 from Sketch import _, Publisher
 from Sketch.Base.const import SELECTION, DOCUMENT, EDITED, CLOSED

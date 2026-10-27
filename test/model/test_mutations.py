@@ -2,7 +2,6 @@
 # attributes, transform objects and bezier curve points, and verify the
 # results including undo/redo.  (no display required)
 
-from __future__ import print_function
 
 import math
 
@@ -162,7 +161,7 @@ def _edit_first_bezier_path(doc, edit_path):
     new = edit_path(obj.Paths()[0])
     paths = list(obj.Paths())
     paths[0] = new
-    doc.begin_transaction(u'test edit')
+    doc.begin_transaction('test edit')
     try:
         doc.AddUndo(obj.SetPaths(paths))
     except:

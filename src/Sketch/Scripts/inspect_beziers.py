@@ -75,5 +75,5 @@ class Viewer(Toplevel):
         return type + controls + point + cont
 
 import Sketch.Scripting
-Sketch.Scripting.AddFunction('inspect_beziers', u'Inspect Beziers', Viewer,
+Sketch.Scripting.AddFunction('inspect_beziers', 'Inspect Beziers', Viewer,
                              script_type=Sketch.Scripting.AdvancedScript)

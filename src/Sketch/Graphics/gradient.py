@@ -19,7 +19,6 @@
 #	color gradient classes
 #
 
-from __future__ import division
 from Sketch.Graphics.blend import Blend, MismatchError
 
 class Gradient:

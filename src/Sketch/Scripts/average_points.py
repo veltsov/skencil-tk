@@ -17,7 +17,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from __future__ import division
 from Sketch import CreatePath, Point, _
 from Sketch.UI.sketchdlg import SKModal
 
@@ -139,5 +138,5 @@ def run(context):
         document.AddUndo(undo)
 
 import Sketch.Scripting
-Sketch.Scripting.AddFunction('average_points', u'Average Points', run,
+Sketch.Scripting.AddFunction('average_points', 'Average Points', run,
                              script_type = Sketch.Scripting.AdvancedScript)

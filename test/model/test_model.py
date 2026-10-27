@@ -1,7 +1,6 @@
 # Layer 1: headless model tests -- loading and save/reload stability
 # (no display required).
 
-from __future__ import print_function
 
 import os
 

@@ -35,7 +35,6 @@
 # some other format that can handle an alpha channel.
 #
 
-from __future__ import division
 import sys
 import os, tempfile
 

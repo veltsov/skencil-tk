@@ -1,5 +1,4 @@
 
-from __future__ import division
 import Sketch
 from Sketch import _, Point, SingularMatrix
 from Sketch.Graphics import handle

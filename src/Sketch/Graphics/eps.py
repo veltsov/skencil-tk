@@ -19,7 +19,6 @@
 #	A GraphicsObject for Encapsulated Postscript Pictures
 #
 
-from __future__ import division
 import os, math
 
 import PIL.Image

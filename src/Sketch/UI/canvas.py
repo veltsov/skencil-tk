@@ -22,7 +22,6 @@
 # of mouse and keyboard events.
 #
 
-from __future__ import division
 import string
 
 from Sketch.Lib.util import Empty, format
@@ -1792,19 +1791,19 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
 
 
     # add commands for inherited methods
-    AddCmd('ScrollYPages', u'Page Up', args = -1, key_stroke = 'Prior',
+    AddCmd('ScrollYPages', 'Page Up', args = -1, key_stroke = 'Prior',
            subscribe_to = None)
-    AddCmd('ScrollYPages', u'Page Down', args = +1, key_stroke = 'Next',
+    AddCmd('ScrollYPages', 'Page Down', args = +1, key_stroke = 'Next',
            subscribe_to = None)
 
     # scrolling with the cursor keys
-    AddCmd('ScrollYPages', u'', args = -1, key_stroke = 'C-Up',
+    AddCmd('ScrollYPages', '', args = -1, key_stroke = 'C-Up',
            subscribe_to = None)
-    AddCmd('ScrollYPages', u'', args = +1, key_stroke = 'C-Down',
+    AddCmd('ScrollYPages', '', args = +1, key_stroke = 'C-Down',
            subscribe_to = None)
-    AddCmd('ScrollXPages', u'', args = -1, key_stroke = 'C-Left',
+    AddCmd('ScrollXPages', '', args = -1, key_stroke = 'C-Left',
            subscribe_to = None)
-    AddCmd('ScrollXPages', u'', args = +1, key_stroke = 'C-Right',
+    AddCmd('ScrollXPages', '', args = +1, key_stroke = 'C-Right',
            subscribe_to = None)
 
     #	other view related methods

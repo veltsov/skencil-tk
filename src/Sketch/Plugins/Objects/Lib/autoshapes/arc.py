@@ -1,4 +1,3 @@
-from __future__ import division
 import Sketch
 from Sketch import _, Point, Polar, Scale, Ellipse, SingularMatrix
 from Sketch.Graphics import handle

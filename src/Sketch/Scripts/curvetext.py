@@ -57,7 +57,6 @@ in userhooks.py
 
 """
 
-from __future__ import division
 __version__ = "1.0"
 
 # The code quality is not as good as it could be, but it does the job :)

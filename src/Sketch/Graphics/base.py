@@ -20,7 +20,6 @@
 # This file contains the root of the Sketch graphics class hierarchy.
 #
 
-from __future__ import division
 from traceback import print_stack
 
 from Sketch.Base.warn import warn, INTERNAL

@@ -20,7 +20,6 @@
 #       Converters
 #
 
-from __future__ import division
 import math
 from Sketch.Base import config
 from Sketch.Lib.units import unit_dict, unit_names
@@ -50,7 +49,7 @@ factor_format = '%.1f%%'
 def conv_factor(factor):
     return factor_format % (100 * factor)
 
-angle_format = u'%.1f\xb0'
+angle_format = '%.1f\xb0'
 def conv_angle(angle):
     angle = angle * 180 / math.pi
     while angle > 180:

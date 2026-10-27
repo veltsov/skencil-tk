@@ -21,7 +21,6 @@
 #
 
 
-from __future__ import division
 import operator
 
 from Sketch.UI import command

@@ -15,7 +15,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from __future__ import division
 ###Sketch Config
 #type = Import
 #class_name = 'SKLoader'
@@ -66,8 +65,8 @@ for key in dir(properties.factory_defaults):
                 getattr(properties.factory_defaults, key))
 
 papersizes = [#    'A0', 'A1', 'A2',
-              u'A3', u'A4', u'A5', u'A6', u'A7',
-              u'letter', u'legal', u'executive',
+              'A3', 'A4', 'A5', 'A6', 'A7',
+              'letter', 'legal', 'executive',
               ]
 
 
@@ -127,7 +126,7 @@ class SKLoader(GenericLoader):
                 # standard papersizes. The file may be corrupted.
                 self.add_message(_("Unknown paper format '%s', "
                                    "using A4 instead") % format)
-                format = u"A4"
+                format = "A4"
             layout = pagelayout.PageLayout(format, orientation=orientation)
         else:
             w, h = format

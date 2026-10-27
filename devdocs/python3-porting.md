@@ -417,6 +417,14 @@ gate throughout; baselines are compared against master's
    tab-indented outside it), crashing every plugin dialog with a text
    parameter (Create -> LaTeX text).  When reviewing the other former
    syntax-error files, watch for the same pattern.
+   Py2-compat remnants removed 2026-10-27 (post stage C): all
+   `from __future__` imports (109 lines), all u'...` literal prefixes
+   (149), the redundant selection.__nonzero__ alias, a dead StringIO
+   import.  The sweep also found a live py3 bug: drawfile.py used
+   string.split (removed in py3), crashing the Draw-format loader on
+   documents with text.  Kept: as_unicode/as_display_name/skrepr (real
+   boundary helpers), _decode_item's bytes branch in configutil
+   (defense against hand-written b'...' literals in preferences.py).
 - **Stage B — C extensions on a port branch (python3):** in the order
   `_sketch` (geometry) → `streamfilter`/`_type1`/`skread`/
   `pstokenize` → `pax` → `skimage` last (its design decision is made

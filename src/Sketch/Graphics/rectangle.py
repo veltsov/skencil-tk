@@ -24,7 +24,6 @@
 # (nonrectangular) Parallelogram.
 #
 
-from __future__ import division
 from math import hypot
 
 from Sketch.Base.const import corners, AlternateMask

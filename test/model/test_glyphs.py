@@ -5,7 +5,6 @@
 # registry (see devdocs/glyph-text.md).  These tests pin the registry,
 # the coercion of the accepted input forms and the conversion sinks.
 
-from __future__ import print_function
 
 from array import array
 
@@ -52,7 +51,7 @@ def test_text_coercion_forms():
     # gid array input passes through unchanged
     assert text._coerce_text(text.text) is text.text
     # unicode input maps via glyph names
-    u = make_text(u'AB')
+    u = make_text('AB')
     assert u.text == text.text
     # SetText accepts all forms and keeps the array form
     text.SetText('CD')
@@ -62,7 +61,7 @@ def test_text_coercion_forms():
 
 def test_text_as_unicode():
     text = make_text('A\xe9')      # 'A' + latin-1 eacute
-    assert text.TextAsUnicode() == u'A\xe9'
+    assert text.TextAsUnicode() == 'A\xe9'
     assert text.Info() is not None
 
 
@@ -135,7 +134,7 @@ def test_duplicate_keeps_text():
     text = make_text('AB')
     dup = text.Duplicate()
     assert dup.text == text.text
-    assert dup.TextAsUnicode() == u'AB'
+    assert dup.TextAsUnicode() == 'AB'
 
 
 def test_typing_via_call_object_method():
@@ -156,19 +155,19 @@ def test_typing_via_call_object_method():
     doc.SelectObject(obj)
     doc.SetMode(EditMode)
     for ch in 'bc':
-        doc.CallObjectMethod(textmod.CommonText, u'', 'InsertCharacter', ch)
-    assert obj.TextAsUnicode() == u'bcA'
+        doc.CallObjectMethod(textmod.CommonText, '', 'InsertCharacter', ch)
+    assert obj.TextAsUnicode() == 'bcA'
     doc.Undo()
-    assert obj.TextAsUnicode() == u'bA'
+    assert obj.TextAsUnicode() == 'bA'
     doc.Redo()
-    assert obj.TextAsUnicode() == u'bcA'
+    assert obj.TextAsUnicode() == 'bcA'
     # a unicode-labelled transaction keeps working as well
-    doc.BeginTransaction(u'label test')
+    doc.BeginTransaction('label test')
     doc.add_undo(obj.SetText('X'))
     doc.EndTransaction()
-    assert obj.TextAsUnicode() == u'X'
+    assert obj.TextAsUnicode() == 'X'
     doc.Undo()
-    assert obj.TextAsUnicode() == u'bcA'
+    assert obj.TextAsUnicode() == 'bcA'
 
 
 def test_command_menu_names_are_unicode():
@@ -310,8 +309,8 @@ def test_insert_hyphen_vs_minus():
     doc.SelectObject(obj)
     doc.SetMode(EditMode)
     font = obj.properties.font
-    doc.CallObjectMethod(textmod.CommonText, u'', 'InsertCharacter', '-')
-    doc.CallObjectMethod(textmod.CommonText, u'', 'InsertHyphen')
+    doc.CallObjectMethod(textmod.CommonText, '', 'InsertCharacter', '-')
+    doc.CallObjectMethod(textmod.CommonText, '', 'InsertHyphen')
     gids = obj.text
     assert len(gids) == 3
     minus_gid, hyphen_gid = gids[0], gids[1]

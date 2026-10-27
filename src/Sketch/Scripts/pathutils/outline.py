@@ -43,6 +43,6 @@ def set_properties(object):
 
 import Sketch.Scripting
 
-Sketch.Scripting.AddFunction("Outline", u"8. Outline", run_script,
-                             menu=u"PathUtils",
+Sketch.Scripting.AddFunction("Outline", "8. Outline", run_script,
+                             menu="PathUtils",
                              script_type=Sketch.Scripting.AdvancedScript)

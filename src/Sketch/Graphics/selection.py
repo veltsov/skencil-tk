@@ -23,7 +23,6 @@
 # rotate, scale, shear) the selected objects.
 
 
-from __future__ import division
 import operator, math
 import time
 
@@ -397,8 +396,6 @@ class Selection(Bounded):
 
     def __len__(self):
         return len(self.objects)
-
-    __nonzero__ = __len__
 
     def __bool__(self):
         return len(self.objects) != 0

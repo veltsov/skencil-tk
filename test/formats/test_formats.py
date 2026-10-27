@@ -3,7 +3,6 @@
 # (the SVG loader is broken on modern Pythons; fixing it is a separate
 # project).
 
-from __future__ import print_function
 
 import pytest
 

@@ -23,7 +23,6 @@
 # bitmapped images or encapsulated PostScript files.
 
 
-from __future__ import division
 from Sketch import Rect, Trafo, IdentityMatrix, NullUndo, SKCache
 from Sketch.Base import main
 

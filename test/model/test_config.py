@@ -1,7 +1,6 @@
 # Layer 1: user configuration directory determination and the
 # --configdir option (no display required).
 
-from __future__ import print_function
 
 import getopt
 

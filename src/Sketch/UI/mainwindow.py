@@ -170,16 +170,16 @@ class SketchMainWindow(Publisher):
 
     AddCmd('LoadFromFile', _("Open..."), bitmap = pixmaps.Open,
            key_stroke = ('Ctrl+O','C-o'))
-    AddCmd('LoadMRU0', u'', 'LoadFromFile', args = 0, key_stroke = ('Alt+1','M-1'),
+    AddCmd('LoadMRU0', '', 'LoadFromFile', args = 0, key_stroke = ('Alt+1','M-1'),
            name_cb = lambda: util.as_display_name(
                os.path.split(config.preferences.mru_files[0])[1]))
-    AddCmd('LoadMRU1', u'', 'LoadFromFile', args = 1, key_stroke = ('Alt+2','M-2'),
+    AddCmd('LoadMRU1', '', 'LoadFromFile', args = 1, key_stroke = ('Alt+2','M-2'),
            name_cb = lambda: util.as_display_name(
                os.path.split(config.preferences.mru_files[1])[1]))
-    AddCmd('LoadMRU2', u'', 'LoadFromFile', args = 2, key_stroke = ('Alt+3','M-3'),
+    AddCmd('LoadMRU2', '', 'LoadFromFile', args = 2, key_stroke = ('Alt+3','M-3'),
            name_cb = lambda: util.as_display_name(
                os.path.split(config.preferences.mru_files[2])[1]))
-    AddCmd('LoadMRU3', u'', 'LoadFromFile', args = 3, key_stroke = ('Alt+4','M-4'),
+    AddCmd('LoadMRU3', '', 'LoadFromFile', args = 3, key_stroke = ('Alt+4','M-4'),
            name_cb = lambda: util.as_display_name(
                os.path.split(config.preferences.mru_files[3])[1]))
     def LoadFromFile(self, filename = None, directory = None):
@@ -348,7 +348,7 @@ class SketchMainWindow(Publisher):
 
         self.set_window_title()
 
-    AddCmd('ExportAgain', u'', key_stroke = ('Ctrl+E','C-e'),
+    AddCmd('ExportAgain', '', key_stroke = ('Ctrl+E','C-e'),
            sensitive_cb = 'CanExportAgain',
            name_cb = 'export_again_name')
     def ExportAgain(self):
@@ -1104,7 +1104,7 @@ class SketchMainWindow(Publisher):
     #
     #	Special methods. Mainly interesting for debugging
     #
-    AddCmd('DocumentInfo', u"Document Info...")
+    AddCmd('DocumentInfo', "Document Info...")
     def DocumentInfo(self):
         text = self.document.DocumentInfo()
 
@@ -1124,7 +1124,7 @@ class SketchMainWindow(Publisher):
         self.application.MessageBox(title = 'Document Info', message = text,
                                     icon = 'info')
 
-    AddCmd('DumpXImage', u'Dump XImage')
+    AddCmd('DumpXImage', 'Dump XImage')
     def DumpXImage(self):
         gc = self.canvas.gc
         if gc.ximage:
@@ -1136,7 +1136,7 @@ class SketchMainWindow(Publisher):
 #	import export
 #	export.export_bitmap(self.document)
 
-    AddCmd('python_prompt', u'Python Prompt')
+    AddCmd('python_prompt', 'Python Prompt')
     def python_prompt(self):
         if config.preferences.show_special_menu:
             from Sketch.UI import prompt

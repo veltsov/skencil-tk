@@ -104,6 +104,6 @@ def read_gimp_path(context, filename = ''):
     context.document.Insert(object)
 
 
-Sketch.Scripting.AddFunction('read_gimp_path', u'Read Gimp Path',
+Sketch.Scripting.AddFunction('read_gimp_path', 'Read Gimp Path',
                              read_gimp_path,
                              script_type = Sketch.Scripting.AdvancedScript)

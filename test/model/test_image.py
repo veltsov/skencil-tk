@@ -2,7 +2,6 @@
 # (RasterImage/ImageData) and the buffer-protocol image functions of
 # the _sketch C module (skimage.c).  No display required.
 
-from __future__ import print_function
 
 import os
 import tempfile

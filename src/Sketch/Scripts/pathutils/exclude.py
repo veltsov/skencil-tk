@@ -29,6 +29,6 @@ def exclude(objects):
 
 import Sketch.Scripting
 
-Sketch.Scripting.AddFunction("Exclude", u"3. Exclude", run_script,
-                             menu=u"PathUtils",
+Sketch.Scripting.AddFunction("Exclude", "3. Exclude", run_script,
+                             menu="PathUtils",
                              script_type=Sketch.Scripting.AdvancedScript)

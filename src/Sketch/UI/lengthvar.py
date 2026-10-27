@@ -26,7 +26,6 @@
 # XXX: This needs a cleaner reimplementation
 
 
-from __future__ import division
 from Sketch.Base import config
 from Sketch.Lib.units import unit_dict, unit_names
 

@@ -55,7 +55,6 @@
 #
 #       check   ignored         Checkbutton (on = 1, off = 0)
 
-from __future__ import print_function
 
 from Sketch.Base.warn import warn, USER
 from Sketch.Base.const import SELECTION
@@ -354,7 +353,7 @@ class PluginPanel(PropertyPanel,PluginDlg):
             for var in self.vars:
                 dict[var.name] = var()
             obj = self.info.Constructor()(*(), **dict)
-            text = u'Create ' + self.info.menu_text # NLS
+            text = 'Create ' + self.info.menu_text # NLS
             self.main_window.canvas.PlaceObject(obj, text)
 
 

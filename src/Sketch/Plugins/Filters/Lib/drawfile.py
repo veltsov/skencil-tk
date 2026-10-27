@@ -32,7 +32,6 @@
 #
 # Tidied up some formatting errors caused by mixing tabs and spaces.
 
-from __future__ import division
 from Sketch.Plugins.Filters.Lib import spritefile
 import os, string
 import struct
@@ -738,7 +737,7 @@ class text_area(drawfile_object):
 
                     # Substitute spaces for tabs
                     line = lines[-1].expandtabs(1)
-                    words = string.split(line, ' ')
+                    words = line.split(' ')
 
                     # Examine all but the last word
                     for word in words[:-1]:

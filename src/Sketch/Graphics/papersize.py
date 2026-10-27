@@ -36,7 +36,6 @@
 # All sizes are given in units of PostScript points (1/72 inch)
 #
 
-from __future__ import division
 from Sketch.Lib.units import m_to_pt, in_to_pt
 
 

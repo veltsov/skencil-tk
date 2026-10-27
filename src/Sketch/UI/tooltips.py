@@ -19,7 +19,6 @@
 # A very primitive balloon help mechanism for Python/Tk
 #
 
-from __future__ import print_function
 
 import sys
 

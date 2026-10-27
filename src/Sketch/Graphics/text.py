@@ -75,7 +75,6 @@
 #
 #
 
-from __future__ import division
 from math import sin, cos, atan2, hypot, pi, fmod, floor
 from functools import reduce
 
@@ -268,7 +267,7 @@ class CommonTextEditor(Editor):
             if font.IsPrintableGlyph(gid):
                 return self._insert_gid(gid)
         return NullUndo
-    AddCmd(commands, InsertCharacter, u'', key_stroke = tuple(printable),
+    AddCmd(commands, InsertCharacter, '', key_stroke = tuple(printable),
            invoke_with_keystroke = 1)
 
     def InsertHyphen(self):
@@ -287,7 +286,7 @@ class CommonTextEditor(Editor):
         if font.IsPrintableGlyph(gid):
             return self._insert_gid(gid)
         return NullUndo
-    AddCmd(commands, InsertHyphen, u'', key_stroke = 'C-h')
+    AddCmd(commands, InsertHyphen, '', key_stroke = 'C-h')
 
     def DeleteCharBackward(self):
         if self.text and self.caret > 0:
@@ -295,7 +294,7 @@ class CommonTextEditor(Editor):
             text = text[:caret - 1] + text[caret:]
             return self.SetText(text, caret - 1)
         return NullUndo
-    AddCmd(commands, DeleteCharBackward, u'', key_stroke = 'BackSpace')
+    AddCmd(commands, DeleteCharBackward, '', key_stroke = 'BackSpace')
 
     def DeleteCharForward(self):
         if self.text and self.caret < len(self.text):
@@ -303,33 +302,33 @@ class CommonTextEditor(Editor):
             text = text[:caret] + text[caret + 1:]
             return self.SetText(text, caret)
         return NullUndo
-    AddCmd(commands, DeleteCharForward, u'', key_stroke = ('Delete', 'C-d'))
+    AddCmd(commands, DeleteCharForward, '', key_stroke = ('Delete', 'C-d'))
 
     def MoveForwardChar(self):
         if self.caret < len(self.text):
             self.SetCaret(self.caret + 1)
             self.update_selection()
         return NullUndo
-    AddCmd(commands, MoveForwardChar, u'', key_stroke = ('Right', 'C-f'))
+    AddCmd(commands, MoveForwardChar, '', key_stroke = ('Right', 'C-f'))
 
     def MoveBackwardChar(self):
         if self.caret > 0:
             self.SetCaret(self.caret - 1)
             self.update_selection()
         return NullUndo
-    AddCmd(commands, MoveBackwardChar, u'', key_stroke = ('Left', 'C-b'))
+    AddCmd(commands, MoveBackwardChar, '', key_stroke = ('Left', 'C-b'))
 
     def MoveToBeginningOfLine(self):
         self.SetCaret(0)
         self.update_selection()
         return NullUndo
-    AddCmd(commands, MoveToBeginningOfLine, u'', key_stroke = ('Home', 'C-a'))
+    AddCmd(commands, MoveToBeginningOfLine, '', key_stroke = ('Home', 'C-a'))
 
     def MoveToEndOfLine(self):
         self.SetCaret(len(self.text))
         self.update_selection()
         return NullUndo
-    AddCmd(commands, MoveToEndOfLine, u'', key_stroke = ('End', 'C-e'))
+    AddCmd(commands, MoveToEndOfLine, '', key_stroke = ('End', 'C-e'))
 
 
 RegisterCommands(CommonTextEditor)

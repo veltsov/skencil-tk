@@ -288,16 +288,16 @@ def matex_insert(context):
     anytex_insert(context)
 
 # Add the "(La)TeX" functions to the Script-menue
-Sketch.Scripting.AddFunction('tex_insert', u'Plain TeX',
+Sketch.Scripting.AddFunction('tex_insert', 'Plain TeX',
                              tex_insert,
-                             menu = u"TeX",
+                             menu = "TeX",
                              script_type = Sketch.Scripting.AdvancedScript)
-Sketch.Scripting.AddFunction('latex_insert', u'LaTeX',
+Sketch.Scripting.AddFunction('latex_insert', 'LaTeX',
                              latex_insert,
-                             menu = u"TeX",
+                             menu = "TeX",
                              script_type = Sketch.Scripting.AdvancedScript)
-Sketch.Scripting.AddFunction('matex_insert', u'LaTeX math',
+Sketch.Scripting.AddFunction('matex_insert', 'LaTeX math',
                              matex_insert,
-                             menu = u"TeX",
+                             menu = "TeX",
                              script_type = Sketch.Scripting.AdvancedScript)
 

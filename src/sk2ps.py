@@ -28,7 +28,6 @@
 # This means that a lot of more or less unnecessary modules are
 # loaded...
 
-from __future__ import print_function
 import sys, os
 
 from Sketch import PostScriptDevice

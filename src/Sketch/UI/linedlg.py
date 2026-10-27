@@ -19,7 +19,6 @@
 #       A dialog for specifying line properties
 #
 
-from __future__ import division
 import operator
 
 from Sketch.x11 import LineDoubleDash

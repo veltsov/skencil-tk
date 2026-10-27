@@ -389,4 +389,4 @@ def glyphnames_to_unicode(names, unknown='?'):
     for name in names:
         char = glyphname_to_unicode(name)
         chars.append(char if char is not None else unknown)
-    return u''.join(chars)
+    return ''.join(chars)

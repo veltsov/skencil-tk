@@ -14,7 +14,6 @@
 # Recording must be enabled with --record; without it this script just
 # compares against the existing baselines.
 
-from __future__ import print_function
 
 import glob
 import os

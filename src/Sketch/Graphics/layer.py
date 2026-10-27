@@ -19,7 +19,6 @@
 #       The layer classes. 
 #
 
-from __future__ import division
 from Sketch.Base.const import LAYER_STATE, LAYER_COLOR
 
 from Sketch import _, NullUndo, EmptyRect, InfinityRect, Point, _sketch

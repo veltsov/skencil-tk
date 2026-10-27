@@ -5,7 +5,6 @@
 # SimpleText objects with correct font-encoded glyphs and the tab
 # advance.
 
-from __future__ import print_function
 
 import testsupport
 

@@ -1,4 +1,3 @@
-from __future__ import division
 ###Sketch Config
 #type = PluginCompound
 #class_name = 'Autoshape'
@@ -7,7 +6,6 @@ from __future__ import division
 #custom_dialog = 'AutoshapeDlg'
 ###End
 
-from __future__ import print_function
 (''"Autoshapes")
 
 _verbose = 0

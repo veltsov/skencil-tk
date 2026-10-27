@@ -15,7 +15,6 @@
 #   SKENCIL_TEST_RECORD  if set to `1', golden artifacts are (re)written
 #                        instead of compared.
 
-from __future__ import print_function
 
 import glob
 import os

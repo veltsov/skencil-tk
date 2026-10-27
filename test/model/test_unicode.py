@@ -7,7 +7,6 @@
 # they must be written as utf-8 \x-escaped byte strings, byte-compatible
 # with master.  See devdocs/unicode-runtime-audit.md.
 
-from __future__ import print_function
 
 import re
 
@@ -18,9 +17,9 @@ import testsupport
 FIXTURE = 'rustext.sk'   # Russian layer name + LtxObj text parameter
 
 # 'Слой 1' ("Layer 1" in the ru locale, as _() would produce it)
-U_LAYER_NAME = u'\u0421\u043b\u043e\u0439 1'
+U_LAYER_NAME = '\u0421\u043b\u043e\u0439 1'
 # 'Текст' ("Text"), injected as the LtxObj plugin parameter
-U_PLUGIN_TEXT = u'\\sf \u0422\u0435\u043a\u0441\u0442'
+U_PLUGIN_TEXT = '\\sf \u0422\u0435\u043a\u0441\u0442'
 
 
 def load(name=FIXTURE):
@@ -68,9 +67,9 @@ def test_util_format_mixed_unicode_bytes():
     # LtxObj.Info().  util.format must normalize and return unicode.
     sk = testsupport.sketch()
     from Sketch.Lib.util import format, as_unicode
-    template = u"%(object)s on `%(layer)s'"
+    template = "%(object)s on `%(layer)s'"
     dict = {'layer': U_LAYER_NAME.encode('utf-8'),
-            'object': u'LaTeX Text: `\\preamble, size 25'}
+            'object': 'LaTeX Text: `\\preamble, size 25'}
     text = format(template, {}, dict)
     assert isinstance(text, str)
     assert as_unicode(U_LAYER_NAME) in text
@@ -87,7 +86,7 @@ def test_selection_info_text():
     text = format(template, converters.converters, dict)
     assert isinstance(text, str)
     # the utf-8 layer name 'База' must appear decoded, no exception
-    assert u'\u0411\u0430\u0437\u0430' in text
+    assert '\u0411\u0430\u0437\u0430' in text
 
 
 def test_ltxobj_info():
@@ -171,10 +170,10 @@ def test_reader_decodes_user_strings():
     # paper-format names) and must NOT touch text-object content
     # (font-encoded bytes).
     sk = testsupport.sketch()
-    layer = u'\u0421\u043b\u043e\u0439'            # 'Слой'
-    guidelayer = u'\u041d\u0430\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0449\u0438\u0435'
-    grid = u'\u0421\u0435\u0442\u043a\u0430'       # 'Сетка'
-    style = u'\u0421\u0442\u0438\u043b\u044c'      # 'Стиль'
+    layer = '\u0421\u043b\u043e\u0439'            # 'Слой'
+    guidelayer = '\u041d\u0430\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0449\u0438\u0435'
+    grid = '\u0421\u0435\u0442\u043a\u0430'       # 'Сетка'
+    style = '\u0421\u0442\u0438\u043b\u044c'      # 'Стиль'
     # text content: bytes that are NOT valid utf-8 (font-encoded data
     # has no reason to be); every byte is one character
     from Sketch.Lib.util import skrepr
@@ -230,8 +229,8 @@ def test_reader_decodes_user_strings():
 # --------------------------------------------- preferences file format
 
 # '/изо' and '/рус/Слой.sk' -- non-ascii preference values
-PREFS_U_DIR = u'\u0438\u0437\u043e'
-PREFS_U_NAME = u'/\u0440\u0443\u0441/\u0421\u043b\u043e\u0439.sk'
+PREFS_U_DIR = '\u0438\u0437\u043e'
+PREFS_U_NAME = '/\u0440\u0443\u0441/\u0421\u043b\u043e\u0439.sk'
 
 
 def test_preferences_save_repr_plain_utf8_literals():
@@ -312,8 +311,8 @@ def test_preferences_load_converts_to_unicode():
         assert config.preferences.image_dir == PREFS_U_DIR
         assert isinstance(config.preferences.mru_files[0], str)
         # the runtime mru lookups work with non-ascii names
-        configutil.add_mru_file(u'\u0444')
-        assert config.preferences.mru_files[0] == u'\u0444'
+        configutil.add_mru_file('\u0444')
+        assert config.preferences.mru_files[0] == '\u0444'
     finally:
         config.user_config_dir = old_dir
         config.user_settings_file = old_file
@@ -427,8 +426,8 @@ def test_reader_decodes_style_names_for_use_style():
     # the styledlg; both file and dialog side are unicode now
     sk = testsupport.sketch()
     from Sketch.Lib.util import skrepr
-    style = u'\u0421\u0442\u0438\u043b\u044c 2'    # 'Стиль 2'
-    layer = u'\u0421\u043b\u043e\u0439'
+    style = '\u0421\u0442\u0438\u043b\u044c 2'    # 'Стиль 2'
+    layer = '\u0421\u043b\u043e\u0439'
     # the .sk strings are written with skrepr (the \x-escaped form of
     # the py2 master); the reader decodes them to unicode
     content = ('##Sketch 1 2\n'
@@ -451,7 +450,7 @@ def test_document_filename_unicode_round_trip():
     # devdocs/string-handling.md); meta.filename must stay unicode
     import os
     doc = load()
-    name = u'\u0440\u0443\u0441doc.sk'
+    name = '\u0440\u0443\u0441doc.sk'
     out = os.path.join(testsupport.output_dir('sk'), name)
     save(doc, out)
     assert os.path.isfile(out)
@@ -469,7 +468,7 @@ def test_tk_filename_boundary_returns_unicode():
     # names are unicode in the model (devdocs/string-handling.md)
     sk = testsupport.sketch()
     from Sketch.Lib.util import as_unicode
-    name = u'\u0440\u0443\u0441text\u00e4.sk'
+    name = '\u0440\u0443\u0441text\u00e4.sk'
     assert as_unicode(name) == name
     assert as_unicode('plain.sk') == 'plain.sk'
     assert isinstance(as_unicode('plain.sk'), str)
@@ -485,8 +484,8 @@ def test_eps_with_unicode_filename_info():
     import shutil
     from Sketch.Lib.util import format, skrepr
     from Sketch.UI import converters
-    eps_name = u'oms\u0448\u0442\u0443\u043a\u0430.eps'
-    layer = u'\u0421\u043b\u043e\u0439'
+    eps_name = 'oms\u0448\u0442\u0443\u043a\u0430.eps'
+    layer = '\u0421\u043b\u043e\u0439'
     outdir = testsupport.output_dir('sk')
     # file names are unicode in the model (and in the filesystem api)
     shutil.copy(testsupport.data_path('oms.eps'),
@@ -517,10 +516,10 @@ def test_as_display_name_assumes_utf8():
     # utf-8 decodes exactly, invalid bytes are replaced, never raised
     sk = testsupport.sketch()
     from Sketch.Lib.util import as_display_name
-    name = u'\u0440\u0443\u0441text\u00e4.sk'
+    name = '\u0440\u0443\u0441text\u00e4.sk'
     assert as_display_name(name.encode('utf-8')) == name
     assert as_display_name(name) == name            # unicode passes through
-    assert u'\ufffd' in as_display_name(b'\xff\xfe')  # invalid utf-8 -> U+FFFD
+    assert '\ufffd' in as_display_name(b'\xff\xfe')  # invalid utf-8 -> U+FFFD
     assert isinstance(as_display_name(b'\xff\xfe'), str)
 
 

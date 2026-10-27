@@ -5,7 +5,6 @@
 # toolchain (pdflatex/latex + pstoedit + gs) and the save path.
 # Skipped when the external tools are not installed.
 
-from __future__ import print_function
 
 import os
 import re
@@ -32,11 +31,11 @@ def _kpsewhich(filename):
         return False
 
 if _kpsewhich('pscyr.sty'):
-    LTX_TEXT = (u'\\preamble|\\usepackage{pscyr}\\usepackage[T2A]{fontenc}|\n'
-                u'\\sf \u0422\u0435\u043a\u0441\u0442 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430')
+    LTX_TEXT = ('\\preamble|\\usepackage{pscyr}\\usepackage[T2A]{fontenc}|\n'
+                '\\sf \u0422\u0435\u043a\u0441\u0442 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430')
 else:
-    LTX_TEXT = (u'\\preamble|\\usepackage[T2A]{fontenc}|\n'
-                u'\\sf \u0422\u0435\u043a\u0441\u0442 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430')
+    LTX_TEXT = ('\\preamble|\\usepackage[T2A]{fontenc}|\n'
+                '\\sf \u0422\u0435\u043a\u0441\u0442 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430')
 
 
 def latex_available():

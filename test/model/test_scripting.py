@@ -6,7 +6,6 @@
 # produce single-letter nested submenus in the Script menu; see
 # devdocs/unicode-runtime-audit.md, instance 6).
 
-from __future__ import print_function
 
 import pytest
 
@@ -34,18 +33,18 @@ def _tree_keys(tree):
 
 def test_menu_tree_unicode_path_single_level():
     reg = _registry()
-    reg.Add(_FakeScript(u'script1'), u'TeX')
+    reg.Add(_FakeScript('script1'), 'TeX')
     tree = reg.MenuTree()
-    assert _tree_keys(tree) == [u'TeX']
-    assert _tree_keys(tree[0][1]) == [u'script1']
+    assert _tree_keys(tree) == ['TeX']
+    assert _tree_keys(tree[0][1]) == ['script1']
 
 
 def test_menu_tree_unicode_path_tuple_nested():
     reg = _registry()
-    reg.Add(_FakeScript(u'script1'), (u'Arrange', u'Horizontally'))
+    reg.Add(_FakeScript('script1'), ('Arrange', 'Horizontally'))
     tree = reg.MenuTree()
-    assert _tree_keys(tree) == [u'Arrange']
-    assert _tree_keys(tree[0][1]) == [u'Horizontally']
+    assert _tree_keys(tree) == ['Arrange']
+    assert _tree_keys(tree[0][1]) == ['Horizontally']
 
 
 def test_menu_tree_byte_string_path_rejected():
@@ -55,10 +54,10 @@ def test_menu_tree_byte_string_path_rejected():
     # literal was a byte string already)
     reg = _registry()
     with pytest.raises(TypeError):
-        reg.Add(_FakeScript(u'script1'), b'TeX')
+        reg.Add(_FakeScript('script1'), b'TeX')
 
 
 def test_menu_tree_byte_component_in_sequence_rejected():
     reg = _registry()
     with pytest.raises(TypeError):
-        reg.Add(_FakeScript(u'script1'), (u'Arrange', b'x'))
+        reg.Add(_FakeScript('script1'), ('Arrange', b'x'))

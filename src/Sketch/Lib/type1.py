@@ -19,7 +19,6 @@
 #       Extract character outlines from Type1 font files...
 #
 
-from __future__ import print_function
 import sys
 from io import BytesIO
 

@@ -16,7 +16,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 
-from __future__ import division
 from Sketch.Base import config
 from Sketch.Base.const import CHANGED
 from Sketch.Lib.units import unit_dict, unit_names

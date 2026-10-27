@@ -1,4 +1,3 @@
-from __future__ import print_function
 from Sketch.Base import const
 
 class Sticky:

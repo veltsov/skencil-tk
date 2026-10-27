@@ -15,7 +15,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from __future__ import division
 from Sketch import Trafo, RectType, EmptyRect, InfinityRect
 from Sketch.Base.config import preferences
 from Sketch.Graphics.papersize import Papersize

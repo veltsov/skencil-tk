@@ -27,7 +27,6 @@ The script will place copies of the foot print along the path as if
 someone had walked along the path.
 """
 
-from __future__ import division
 import Sketch.Scripting
 from Sketch.Graphics.text import coord_sys_at, PATHTEXT_ROTATE
 from Sketch import Group, Translation, Scale
@@ -116,6 +115,6 @@ def foot_prints_along_path(context):
             doc.Insert(Group(foot_prints))
 
 
-Sketch.Scripting.AddFunction('foot_prints_along_path', u'Foot Prints',
+Sketch.Scripting.AddFunction('foot_prints_along_path', 'Foot Prints',
                              foot_prints_along_path,
                              script_type = Sketch.Scripting.AdvancedScript)

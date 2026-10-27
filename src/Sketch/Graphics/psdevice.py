@@ -22,7 +22,6 @@
 # file can be an EPS file.
 #
 
-from __future__ import division
 import os
 from math import pi, sqrt
 

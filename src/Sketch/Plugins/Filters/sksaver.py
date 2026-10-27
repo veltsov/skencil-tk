@@ -15,7 +15,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from __future__ import division
 ###Sketch Config
 #type = Export
 #tk_file_type = (_("Skencil/Sketch Document"), '.sk')
@@ -266,14 +265,14 @@ papersizes = {
 #    'A0': (0.841 * m_to_pt, 1.189 * m_to_pt),
 #    'A1': (0.594 * m_to_pt, 0.841 * m_to_pt),
 #    'A2': (0.420 * m_to_pt, 0.594 * m_to_pt),
-u'A3': (0.297 * m_to_pt, 0.420 * m_to_pt),
-u'A4': (0.210 * m_to_pt, 0.297 * m_to_pt),
-u'A5': (0.148 * m_to_pt, 0.210 * m_to_pt),
-u'A6': (0.105 * m_to_pt, 0.148 * m_to_pt),
-u'A7': (0.074 * m_to_pt, 0.105 * m_to_pt),
-u'letter': (8.5  * in_to_pt, 11   * in_to_pt),
-u'legal': (8.5  * in_to_pt, 14   * in_to_pt),
-u'executive': (7.25 * in_to_pt, 10.5 * in_to_pt)
+'A3': (0.297 * m_to_pt, 0.420 * m_to_pt),
+'A4': (0.210 * m_to_pt, 0.297 * m_to_pt),
+'A5': (0.148 * m_to_pt, 0.210 * m_to_pt),
+'A6': (0.105 * m_to_pt, 0.148 * m_to_pt),
+'A7': (0.074 * m_to_pt, 0.105 * m_to_pt),
+'letter': (8.5  * in_to_pt, 11   * in_to_pt),
+'legal': (8.5  * in_to_pt, 14   * in_to_pt),
+'executive': (7.25 * in_to_pt, 10.5 * in_to_pt)
 }
 
 
