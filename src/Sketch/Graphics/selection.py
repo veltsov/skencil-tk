@@ -385,7 +385,9 @@ class Selection(Bounded):
         methods = list(map(getattr, self.GetObjects(), [method] * len(self.objects)))
         #print time.perf_counter() - t,
         #undoinfo = self.for_all(func)
-        undoinfo = list(map(apply, methods, [args] * len(methods)))
+        # py3: apply was removed; it used to be passed to map as a
+        # callback here, which the 2to3 apply fixer did not catch
+        undoinfo = [method(*args) for method in methods]
         #print time.perf_counter() - t
         self.del_lazy_attrs()
         if len(undoinfo) == 1:

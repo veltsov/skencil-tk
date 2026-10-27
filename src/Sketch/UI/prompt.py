@@ -80,7 +80,7 @@ def PythonPrompt(prompt = '>>>', prompt2 = '...'):
         skcompleter.install(globals, locals)
     while 1:
         try:
-            cmd = raw_input(prompt)
+            cmd = input(prompt)
             #cmd = string.strip(cmd)
             if cmd:
                 if cmd[-1] == ':':
@@ -88,7 +88,7 @@ def PythonPrompt(prompt = '>>>', prompt2 = '...'):
                     lines = []
                     while cmd.strip():
                         lines.append(cmd)
-                        cmd = raw_input(prompt2)
+                        cmd = input(prompt2)
                     cmd = '\n'.join(lines + [''])
                     kind = 'exec'
                 else:

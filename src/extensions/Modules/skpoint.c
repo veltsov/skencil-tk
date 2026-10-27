@@ -459,7 +459,6 @@ static PyNumberMethods skpoint_as_number = {
 	(unaryfunc)0,			/*nb_int*/
 	0,				/*nb_reserved*/
 	(unaryfunc)0,			/*nb_float*/
-	0,				/*nb_index*/
 	0,			/*nb_inplace_add*/
 	0,			/*nb_inplace_subtract*/
 	0,			/*nb_inplace_multiply*/

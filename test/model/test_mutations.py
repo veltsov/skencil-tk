@@ -48,6 +48,37 @@ def test_translate_selected():
            (r1.left, r1.top, r1.right, r1.bottom)
 
 
+def test_for_all_undo2_translate():
+    # Regression: ForAllUndo2 passed the py2-only apply() builtin to
+    # map as a callback; py3 removed apply and interactive resize hit
+    # the NameError from SelectionRectangle.ButtonUp.
+    doc = load()
+    doc.SelectAll()
+    sk = testsupport.sketch()
+    from Sketch import Point
+    r0 = doc.selection.bounding_rect
+    # mirror document.apply_to_selected: add_undo requires an open
+    # transaction
+    doc.begin_transaction()
+    try:
+        try:
+            undo = doc.selection.ForAllUndo2('Translate', Point(5, 0))
+            doc.add_undo(undo)
+            doc.queue_selection()
+        except:
+            doc.abort_transaction()
+    finally:
+        doc.end_transaction()
+    r1 = doc.selection.bounding_rect
+    assert r1.left == approx(r0.left + 5)
+    assert r1.right == approx(r0.right + 5)
+    assert r1.top == approx(r0.top)
+    doc.Undo()
+    r2 = doc.selection.bounding_rect
+    assert r2.left == approx(r0.left)
+    assert r2.right == approx(r0.right)
+
+
 def test_scale_selected():
     doc = load()
     doc.SelectAll()

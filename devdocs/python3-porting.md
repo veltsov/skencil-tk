@@ -108,6 +108,19 @@ All mechanical; a restricted `2to3` pass (the safe fixers listed in
   sites fixed, 257 unverified sites flagged `# divaudit: unverified`,
   rollout in 86 files (draw-input pair excluded until reviewed);
   `skpoint.c` gained `nb_true_divide` (keep it in stage B).
+  **Fixed 2026-10-27:** the stage-B slot-layout rework (commit
+  `cb3be74`) added a stray `nb_index` entry in the *middle* of
+  `skpoint_as_number` (right after `nb_float`; py3 has it near the end
+  of `PyNumberMethods`), shifting every later slot by one:
+  `skpoint_divide` landed on `nb_inplace_floor_divide` and
+  `nb_true_divide` stayed NULL, so `Point / scalar` raised TypeError
+  under py3 (interactive resize: `SelectionRectangle.ButtonDown`'s
+  `(self.start + self.end) / 2`).  The stray entry is removed; a
+  regression test guards the number slots (`test/model/test_geometry.py`).
+  Note for stage-B work: verify C slot tables by ELF inspection of the
+  built object (relocation offsets vs. `offsetof` in the header), since
+  positional initializers land silently on wrong slots when the
+  initializer count mismatches the struct.
 - `dict.keys()` indexing and mutation during iteration; `sort(cmp=...)`
   callbacks (none found in Graphics; audit the Plugins).
 - Old-style classes: everything currently derives from nothing (py2
@@ -448,6 +461,14 @@ gate throughout; baselines are compared against master's
   renames (43 files), the `TextEditor.py` dialog modules, removal of
   the stage-A shims, dict-view cleanups the suite surfaces.  Gate:
   full suite under py3 (model + formats + Xvfb smoke + LaTeX).
+  **Fixed 2026-10-27:** three removed-builtin stragglers that the
+  2to3 fixers had missed because they occur as *references*, not
+  calls: `map(apply, methods, ...)` in `selection.py:ForAllUndo2`
+  (crash on interactive resize ButtonUp; the 2to3 `apply` fixer only
+  rewrites direct `apply(f, args)` calls), `raw_input` in
+  `UI/prompt.py:PythonPrompt` and bare `reload` in
+  `UI/reloaddlg.py:do_reload`.  Regression test:
+  `test/model/test_mutations.py::test_for_all_undo2_translate`.
 - **Stage D — environment and packaging:** devtools
   (`install-dev-packages`, `build-skencil`, `build-devroot`,
   `collect-app-dir` → python3 payload), `README.md`, `.vscode`

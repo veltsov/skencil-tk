@@ -16,6 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 
+import importlib
 import operator, string
 
 from Sketch.Base.warn import pdebug, warn_tb, INTERNAL
@@ -80,6 +81,6 @@ class ReloadPanel(SketchPanel):
 
         pdebug(None, 'reloading', self.modules[index])
         try:
-            reload(self.modules[index][1])
+            importlib.reload(self.modules[index][1])
         except:
             warn_tb(INTERNAL)
