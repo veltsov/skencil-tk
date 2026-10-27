@@ -299,12 +299,28 @@ def run_app(args, script=None, script_env=None, timeout=120):
     import time
 
     launcher = os.path.join(build_scripts(), 'skencil')
+    # isolate the app from the user configuration directory: user
+    # plugins and preferences must not leak into the tests (a broken
+    # user plugin would abort the load of a document that references
+    # it, and the user's preferences change what the screenshots
+    # compare against)
+    config_dir = tempfile.mkdtemp(prefix='skencil-test-config-')
     cmd = ['xvfb-run', '-a', '-s', '-screen 0 1024x768x24',
-           sys.executable, launcher, '--geometry=900x650+0+0']
+           sys.executable, launcher, '--geometry=900x650+0+0',
+           '--configdir', config_dir]
     if script:
         cmd += ['--run-script', script]
     cmd += list(args)
     env = dict(os.environ)
+    # the fonts of the fixtures that are not part of the repository
+    # Fontmetrics (the TeX pscyr fonts) come from the AppDir payload;
+    # SKETCH_FONTPATH is the official way to add font directories
+    # (devdocs/string-handling.md) -- independent of the user config
+    appdir_fonts = os.path.join(REPO_ROOT, 'AppDir', 'fonts')
+    if os.path.isdir(appdir_fonts):
+        env_fontpath = os.environ.get('SKETCH_FONTPATH')
+        env['SKETCH_FONTPATH'] = (appdir_fonts + ':' + env_fontpath
+                                  if env_fontpath else appdir_fonts)
     if script_env:
         env.update(script_env)
     out_file = tempfile.TemporaryFile()
@@ -326,13 +342,14 @@ def run_app(args, script=None, script_env=None, timeout=120):
         err_file.close()
         raise AssertionError('application timed out after %ss: %s'
                              % (timeout, ' '.join(cmd)))
+    rc = proc.returncode
     out_file.seek(0)
     err_file.seek(0)
     out = out_file.read()
     err = err_file.read()
     out_file.close()
     err_file.close()
-    return proc.returncode, out, err
+    return rc, out, err
 
 
 def assert_clean_exit(args, script=None, script_env=None, timeout=120):

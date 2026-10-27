@@ -54,7 +54,7 @@ def test_latex_recompile_unicode():
     out = testsupport.output_path('sk', 'rustext_latex.sk')
     script = os.path.join(SCRIPTS, 'latex_recompile.py')
     env = {'SKENCIL_TEST_HEADLESS': '1',
-           'SKENCIL_LTX_TEXT': LTX_TEXT.encode('utf-8'),
+           'SKENCIL_LTX_TEXT': LTX_TEXT,
            'SKENCIL_LTX_OUT': out}
     rc, app_out, app_err = testsupport.run_app(
         [testsupport.data_path('rustext.sk')],
@@ -69,12 +69,12 @@ def test_latex_recompile_unicode():
     assert os.path.exists(out), 'document was not saved'
     with open(out, 'rb') as f:
         data = f.read()
-    leaked = re.search(r"(?<![A-Za-z_])u['\"]", data)
+    leaked = re.search(rb"(?<![A-Za-z_])u['\"]", data)
     assert leaked is None, \
         'unicode string leaked into %s: %r...' \
         % (out, data[leaked.start():][:40])
     # the unicode parameter must be saved in master's utf-8 \x-escape form
-    expected = repr(LTX_TEXT.encode('utf-8'))[1:-1]
+    expected = repr(LTX_TEXT.encode('utf-8'))[1:-1].encode('ascii')
     assert expected in data, 'utf-8 text not saved in \\x-escaped form'
 
     # rendering: pstoedit 3.78's Sketch driver is broken (returns an
@@ -89,7 +89,7 @@ def test_latex_recompile_unicode():
         # the plugin parameter text is K2: unicode in the model after
         # the reader boundary decode (devdocs/string-handling.md)
         assert texts == [LTX_TEXT], repr(texts)
-        assert isinstance(texts[0], unicode), repr(texts)
+        assert isinstance(texts[0], str), repr(texts)
         for obj in testsupport.iter_objects(doc2):
             if obj.__class__.__name__ == 'LtxObj':
                 assert len(obj.objects) > 0, 'recompiled object is empty'

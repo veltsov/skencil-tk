@@ -30,7 +30,8 @@ win = app.main_window
 doc = win.document
 assert doc is not None, 'no document open'
 
-LTX_TEXT = os.environ['SKENCIL_LTX_TEXT'].decode('utf-8')
+# os.environ is unicode under python3 (py2 needed the utf-8 decode)
+LTX_TEXT = os.environ['SKENCIL_LTX_TEXT']
 OUT = os.environ['SKENCIL_LTX_OUT']
 
 

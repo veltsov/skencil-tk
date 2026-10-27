@@ -39,7 +39,8 @@
 static PyObject * decode(PyObject * self, PyObject * args)
 {
     unsigned char * buffer, *result;
-    int buffer_length, i;
+    Py_ssize_t buffer_length;
+    int i;
     unsigned short r = 4330, c1 = 52845, c2 = 22719;
     int temp = 4330;
     int cipher;
@@ -87,7 +88,8 @@ static PyObject * hexdecode(PyObject * self, PyObject * args)
     unsigned char * hex, *result, *buffer;
     PyObject *tuple;
     char rest[2];
-    int length, i, last_digit = -1, c;
+    Py_ssize_t length;
+    int i, last_digit = -1, c;
 
     if (!PyArg_ParseTuple(args, "y#", &hex, &length))
 	return NULL;

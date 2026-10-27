@@ -16,6 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 from __future__ import division
+import os
 import sys
 
 from Sketch.Base.warn import pdebug
@@ -167,6 +168,13 @@ class TkApplication:
         self.root.mainloop()
 
     def MessageBox(self, *args, **kw):
+        if os.getenv('SKENCIL_TEST_HEADLESS'):
+            # unattended test runs must not block on modal message
+            # boxes: print the message and answer Cancel (the abort
+            # button) without showing anything
+            sys.stdout.write('MessageBox: %r %r\n' % (args, kw))
+            sys.stdout.flush()
+            return tkext.Cancel
         return tkext.MessageDialog(*(self.root,) + args, **kw)
 
     def GetOpenFilename(self, **kwargs):

@@ -71,17 +71,11 @@ def init_directories(base_dir):
         # empty unless already overridden (--configdir, applied between
         # option parsing and init_ui in Base/main.py)
         config.user_config_dir = user_config_directory(config.user_home_dir)
-    # User content lives below the configuration directory: Plugins/ is
-    # scanned like the built-in plugin tree, Scripts/ becomes importable
-    # as Sketch.Scripts.<name> (devdocs/import-restructure.md).
-    user_plugin_dir = os.path.join(config.user_config_dir, 'Plugins')
-    if os.path.isdir(user_plugin_dir):
-        config.plugin_path.append(user_plugin_dir)
-    user_scripts_dir = os.path.join(config.user_config_dir, 'Scripts')
-    if os.path.isdir(user_scripts_dir):
-        import Sketch.Scripts
-        if user_scripts_dir not in Sketch.Scripts.__path__:
-            Sketch.Scripts.__path__.append(user_scripts_dir)
+    # User content (Plugins/, Scripts/, userhooks.py, preferences.py)
+    # lives below the configuration directory; it is registered in
+    # load_user_preferences, not here: --configdir is applied after
+    # this function has run (at `import Sketch` time), and the plugin
+    # path must reflect the overridden directory
 
 def check_path(path):
     # remove all non-directory or non existing entries from path
@@ -209,6 +203,19 @@ def _load_userhooks():
 
 def load_user_preferences():
     # Load the user specific configuration.
+    # User content lives below the configuration directory: Plugins/ is
+    # scanned like the built-in plugin tree, Scripts/ becomes importable
+    # as Sketch.Scripts.<name> (devdocs/import-restructure.md).  This
+    # happens here (not in init_directories), so that --configdir is
+    # honored.
+    user_plugin_dir = os.path.join(config.user_config_dir, 'Plugins')
+    if os.path.isdir(user_plugin_dir):
+        config.plugin_path.append(user_plugin_dir)
+    user_scripts_dir = os.path.join(config.user_config_dir, 'Scripts')
+    if os.path.isdir(user_scripts_dir):
+        import Sketch.Scripts
+        if user_scripts_dir not in Sketch.Scripts.__path__:
+            Sketch.Scripts.__path__.append(user_scripts_dir)
     filename = os.path.join(config.user_config_dir, config.user_settings_file)
     if os.path.isfile(filename):
         # Execute the file into an intermediate object and convert the

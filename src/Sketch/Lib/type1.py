@@ -263,9 +263,12 @@ class CharStringInterpreter:
     commands[13] = hsbw
 
     def seac(self):
-        # standard encoding accented character
-        asb, adx, ady, bchar, achar = self.pop_all()
-    commands[32 + 6] = seac
+        # standard encoding accented character; an optional leading
+        # width argument may precede the five operands (Type 1 spec,
+        # section 8.1) -- the width is not needed here
+        args = self.pop_all()
+        if isinstance(args, list) and len(args) > 5:
+            args = args[-5:]
 
     def sbw(self):
         # sidebearing and width
@@ -297,7 +300,15 @@ class CharStringInterpreter:
     commands[7] = vlineto
 
     def rmoveto(self):
-        dx, dy = self.pop_all()
+        args = self.pop_all()
+        if not isinstance(args, list):
+            args = [args]
+        if len(args) > 2:
+            # the first stack-clearing move operator may carry the
+            # optional width argument before the deltas (Type 1 spec,
+            # section 8.1); the width is not needed here
+            args = args[-2:]
+        dx, dy = args
         self.cur = self.cur + Point(dx, dy)
         if self.in_flex:
             self.flex.append(self.cur)
@@ -308,6 +319,9 @@ class CharStringInterpreter:
 
     def hmoveto(self):
         dx = self.pop_all()
+        if isinstance(dx, list):
+            # optional leading width argument (Type 1 spec, 8.1)
+            dx = dx[-1]
         self.cur = self.cur + Point(dx, 0)
         self.new_path()
         self.path.append(tuple(self.cur))
@@ -315,6 +329,9 @@ class CharStringInterpreter:
 
     def vmoveto(self):
         dy = self.pop_all()
+        if isinstance(dy, list):
+            # optional leading width argument (Type 1 spec, 8.1)
+            dy = dy[-1]
         self.cur = self.cur + Point(0, dy)
         self.new_path()
         self.path.append(tuple(self.cur))

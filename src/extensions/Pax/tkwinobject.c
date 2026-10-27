@@ -348,7 +348,7 @@ tkwin_CreateImage(TkWinObject *self, PyObject *args)
     unsigned int depth, width, height;
     int format, offset, bitmap_pad, bytes_per_line;
     char *data, *newdata;
-    int datalength;
+    Py_ssize_t datalength;
     XImage *ximage;
 
     if (!PyArg_ParseTuple(args, "iiiz#iiii", &depth, &format, &offset,
@@ -381,7 +381,7 @@ tkwin_ShmCreateImage(TkWinObject *self, PyObject *args)
     unsigned int depth, width, height;
     int format;
     char *data;
-    int datalength;
+    Py_ssize_t datalength;
     XImage *ximage = NULL;
     XShmSegmentInfo * shminfo = NULL;
     PyObject * retval = NULL;

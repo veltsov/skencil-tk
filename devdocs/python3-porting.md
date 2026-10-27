@@ -349,10 +349,29 @@ Remaining py3 issues, verified by the suite (in rough priority order):
    name and EPS filename tests built their .sk fixtures with py2
    %r-of-bytes and bytes filenames — ported to skrepr() and unicode
    names.  The headless suite is 101/101 (ui tests still excluded).
-5. **UI layer (stage C/D):** the Xvfb smoke tests are not run yet
-   (`--ignore=test/ui`); `Sketch/UI/*` imports tkinter now, but the
-   pax Tk integration (`call_py_method`, `wantobjects(0)` behaviour)
-   needs the pre-flight experiment under Xvfb described above.
+5. **UI layer — DONE 2026-10-27.**  The Xvfb test layer runs green:
+   115/115 (smoke, screenshot baselines, LaTeX recompile), headless
+   101/101.  Fixes on the way: PY_SSIZE_T_CLEAN/int-length mismatches
+   in _type1module.c (smashed the eexec initial-r local -- every
+   charstring decrypted to garbage) and Pax/tkwinobject.c; the Type 1
+   charstring interpreter now tolerates the optional leading width
+   operand (rmoveto/hmoveto/vmoveto/seac; Type 1 spec 8.1 -- the
+   bezier fallback for fonts without X core fonts works, the whole
+   alphares/avortsel fixtures render); the .sk dialog dispatch; the
+   plugin-dialog text parameter (stage-A indentation regression); the
+   multilinetext plugin dict-view sorts; latextext exec_command output
+   decoding (bytes vs str -- the infinite recompute exception loop);
+   latextext sk.tex written in binary mode.  Test harness: ui tests
+   run with an isolated --configdir and the AppDir fonts via
+   SKETCH_FONTPATH (the user config must not leak: its plugins abort
+   loads with modal dialogs, its default unit changed the screenshots);
+   the app answers MessageBoxes with Cancel under SKENCIL_TEST_HEADLESS=1
+   instead of blocking on modals; the ui screenshot baselines are
+   recorded from the py3 build now (master py2 cannot run the py3
+   test suite any more).  The user's own latextext2.py plugin
+   (~/.config/skencil/Plugins) is py2-only (TabError) and is skipped
+   by the isolation; documents referencing it load with UnknownPlugin
+   placeholders plus a load message.
 6. **Stage D:** devtools (`build-skencil`, `collect-app-dir`,
    AppImage), README, `.vscode`, `skconvert`/`skshow` launchers
    (already version-parameterized), user plugin in

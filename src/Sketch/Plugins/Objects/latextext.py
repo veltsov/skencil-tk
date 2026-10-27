@@ -239,10 +239,12 @@ def create_tex_sk(text,fontsz,doc=None):
 
     try:
         chdir(tdir)
-        with open('sk.tex','w') as tfile:
+        with open('sk.tex','wb') as tfile:
             # texwrapper is always unicode (text and preamble are
             # normalized); the wrapper declares
-            # \usepackage[utf8]{inputenc}, so write utf-8 bytes
+            # \usepackage[utf8]{inputenc}, so write utf-8 bytes --
+            # binary mode, exact bytes regardless of the locale and
+            # without newline translation
             tfile.write(texwrapper.encode('utf-8'))
         if not exists('sk.tex'):
             raise cm_exc("LaTeX", "Can't create tempory file %s" %  os.path.join(tdir,'sk.tex'))
@@ -300,7 +302,9 @@ def exec_command(command):
     try:
         po = Popen(command.split(),stdout=PIPE,stderr=PIPE,stdin=PIPE)
         out,err = po.communicate()
-        return out+err
+        # the output ends up in the warning messages (str); the tool
+        # output is ascii/utf-8, undecodable bytes are replaced
+        return (out + err).decode('utf-8', 'replace')
     except Exception as val:
         raise cm_exc('Error executing external command',
                      'When running %s:\n%s' % (command,str(val)))

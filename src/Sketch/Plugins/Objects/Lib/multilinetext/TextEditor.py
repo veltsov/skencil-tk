@@ -80,8 +80,8 @@ def save_text(name, text, styling=[]):
 class font_families:
     def __init__(self):
         self.family_to_fonts = font.make_family_to_fonts()
-        self.families = self.family_to_fonts.keys()
-        self.families.sort()
+        # a sorted list (a dict view has no .sort() under py3)
+        self.families = sorted(self.family_to_fonts)
 
     def xlfd(self, **kw):
         fonts = self.family_to_fonts[kw['family']]
