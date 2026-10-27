@@ -80,8 +80,8 @@ class FontPanel(StylePropertyPanel):
 
     def __init__(self, master, main_window, doc):
         self.family_to_fonts = font.make_family_to_fonts()
-        self.families = self.family_to_fonts.keys()
-        self.families.sort()
+        # a sorted list (a dict view has no .sort()/.index under py3)
+        self.families = sorted(self.family_to_fonts)
         StylePropertyPanel.__init__(self, master, main_window, doc,
                                     name = 'fontdlg')
         self.family_list.SetList(self.families)

@@ -24,6 +24,7 @@ from Sketch.Base import config, load, plugins
 from Sketch import Publisher, Point, EmptyFillStyle, EmptyLineStyle, \
      EmptyPattern, Document, GuideLine, PostScriptDevice, SketchError
 import Sketch
+from importlib import import_module
 from Sketch.Graphics import image, eps, external
 import Sketch.Scripting
 
@@ -496,8 +497,11 @@ class SketchMainWindow(Publisher):
             dialog = self.dialogs[dlgname]
             dialog.deiconify_and_raise()
         else:
-            exec("from %s import %s" % (module, dlgname))
-            dlgclass = locals()[dlgname]
+            # the dialog modules are addressed absolutely (the bare
+            # module names of the py2 era relied on the implicit
+            # relative import inside the exec)
+            dlgmodule = import_module(module)
+            dlgclass = getattr(dlgmodule, dlgname)
             dialog = dlgclass(self.root, self, self.document)
             dialog.Subscribe(CLOSED, self.__dlg_closed, dlgname)
             self.dialogs[dlgname] = dialog
@@ -520,39 +524,39 @@ class SketchMainWindow(Publisher):
             warn(INTERNAL, 'dialog %s alread removed from dialog list', name)
 
     AddCmd('CreateLayerDialog', _("Layers..."),
-           'CreateDialog', args = ('layerdlg', 'LayerPanel'),
+           'CreateDialog', args = ('Sketch.UI.layerdlg', 'LayerPanel'),
            key_stroke = 'F5')
     AddCmd('CreateAlignDialog', _("Align..."),
-           'CreateDialog', args = ('aligndlg', 'AlignPanel'), key_stroke = ('Shift+Ctrl+A','C-S-A'))
+           'CreateDialog', args = ('Sketch.UI.aligndlg', 'AlignPanel'), key_stroke = ('Shift+Ctrl+A','C-S-A'))
     AddCmd('CreateGridDialog', _("Grid..."),
-           'CreateDialog', args = ('griddlg', 'GridPanel'))
+           'CreateDialog', args = ('Sketch.UI.griddlg', 'GridPanel'))
     AddCmd('CreateLineStyleDialog', _("Line..."),
-           'CreateDialog', args = ('linedlg', 'LinePanel'),
+           'CreateDialog', args = ('Sketch.UI.linedlg', 'LinePanel'),
            key_stroke = 'F7')
     AddCmd('CreateFillStyleDialog', _("Fill..."),
-           'CreateDialog', args = ('filldlg', 'FillPanel'),
+           'CreateDialog', args = ('Sketch.UI.filldlg', 'FillPanel'),
            key_stroke = 'F6')
     AddCmd('CreateFontDialog', _("Font..."),
-           'CreateDialog', args = ('fontdlg', 'FontPanel'), key_stroke = 'F8')
+           'CreateDialog', args = ('Sketch.UI.fontdlg', 'FontPanel'), key_stroke = 'F8')
     AddCmd('CreateStyleDialog', _("Styles..."),
-           'CreateDialog', args = ('styledlg', 'StylePanel'))
+           'CreateDialog', args = ('Sketch.UI.styledlg', 'StylePanel'))
     AddCmd('CreateBlendDialog', _("Blend..."),
-           'CreateDialog', args = ('blenddlg', 'BlendPanel'),
+           'CreateDialog', args = ('Sketch.UI.blenddlg', 'BlendPanel'),
            key_stroke = ('Shift+Ctrl+B','C-S-B'))
     AddCmd('CreateLayoutDialog', _("Page Layout..."),
-           'CreateDialog', args = ('layoutdlg', 'LayoutPanel'))
+           'CreateDialog', args = ('Sketch.UI.layoutdlg', 'LayoutPanel'))
     #AddCmd('CreateExportDialog', 'Export...',
 #	   'CreateDialog', args = ('export', 'ExportPanel'))
     AddCmd('CreateCurveDialog', _("Curve Commands..."),
-           'CreateDialog', args = ('curvedlg', 'CurvePanel'), key_stroke = 'F9')
+           'CreateDialog', args = ('Sketch.UI.curvedlg', 'CurvePanel'), key_stroke = 'F9')
     AddCmd('CreateGuideDialog', _("Guide Lines..."),
-           'CreateDialog', args = ('guidedlg', 'GuidePanel'))
+           'CreateDialog', args = ('Sketch.UI.guidedlg', 'GuidePanel'))
     AddCmd('CreatePrintDialog', _("Print..."),
-           'CreateDialog', args = ('printdlg', 'PrintPanel'),
+           'CreateDialog', args = ('Sketch.UI.printdlg', 'PrintPanel'),
            key_stroke = ('Ctrl+P', 'C-p'))
 
     AddCmd('CreateReloadPanel', _("Reload Module..."),
-           'CreateDialog', args = ('reloaddlg', 'ReloadPanel'))
+           'CreateDialog', args = ('Sketch.UI.reloaddlg', 'ReloadPanel'))
 
     def CreatePluginDialog(self, info):
         if info.HasCustomDialog():

@@ -762,7 +762,9 @@ def MessageDialog(master, title, message, buttons = Ok, default = 0,
 
 def rgb_to_tk(rgb):
     r, g, b = rgb
-    return '#%04x%04x%04x' % (65535 * r, 65535 * g, 65535 * b)
+    # int: the color components are floats; py2's %x accepted
+    # floats (truncating), py3 requires integers
+    return '#%04x%04x%04x' % (int(65535 * r), int(65535 * g), int(65535 * b))
 
 class ColorButton(WidgetWithCommand, tkinter.Button, SketchDropTarget):
 
