@@ -38,6 +38,12 @@ typedef struct {
     PyObject * funcname;
     PyObject * args;
     PyObject * kwargs;
+    /* the string arguments of the functions named in
+     * bytes_funcs are byte strings in a font's encoding
+     * (txt/pt text content) and are returned as bytes,
+     * not unicode */
+    PyObject * bytes_funcs;
+    int strings_as_bytes;
 
     int	token;
     PyObject * value;
@@ -124,8 +130,23 @@ sklex(PyObject ** lval, SKLineInfo * buffer)
 		    {
 			/* The .sk format stores text as utf-8 byte
 			 * strings with \x escapes; decode leniently. */
-			*lval = PyUnicode_DecodeUTF8(destbuf, dest - destbuf,
-						     "surrogateescape");
+			if (buffer->strings_as_bytes)
+			{
+			    /* the string argument of a function like txt/pt
+			     * is a byte string in the font's encoding (see
+			     * devdocs/glyph-text.md); keep the un-escaped
+			     * bytes unchanged */
+			    *lval = PyBytes_FromStringAndSize(destbuf,
+							      dest - destbuf);
+			}
+			else
+			{
+			    /* The .sk format stores text as utf-8 byte
+			     * strings with \x escapes; decode leniently. */
+			    *lval = PyUnicode_DecodeUTF8(destbuf,
+								  dest - destbuf,
+								  "surrogateescape");
+			}
 			free(destbuf);
 			if (!*lval)
 			{
@@ -441,6 +462,19 @@ parse_line(SKLineInfo * line)
 	PyObject * temp;
 
 	line->funcname = line->value;
+	/* the string arguments of the functions in bytes_funcs
+	 * are byte strings in a font's encoding, not utf-8
+	 * (the text content of txt/pt, see
+	 * devdocs/glyph-text.md) */
+	line->strings_as_bytes = 0;
+	if (line->bytes_funcs != NULL)
+	{
+	    int contains = PySequence_Contains(line->bytes_funcs,
+					       line->funcname);
+	    if (contains < 0)
+		return 1;
+	    line->strings_as_bytes = contains;
+	}
 
 	GET_TOKEN(line);
 	if (line->token != '(')
@@ -498,6 +532,8 @@ PyObject * parse_sk_line(PyObject * self, PyObject * args)
 
     if (!PyArg_ParseTuple(args, "OO", &oline, &funcdict))
 	return NULL;
+    info.bytes_funcs = NULL;
+    info.strings_as_bytes = 0;
     if (sk_line_as_utf8(oline, &string, &length) < 0)
 	return NULL;
 
@@ -563,9 +599,21 @@ PyObject * parse_sk_line2(PyObject * self, PyObject * args)
     PyObject * oline;
     SKLineInfo info;
     PyObject * result = NULL;
+    PyObject * bytes_funcs = NULL;
 
-    if (!PyArg_ParseTuple(args, "O", &oline))
+    if (!PyArg_ParseTuple(args, "O|O", &oline, &bytes_funcs))
 	return NULL;
+    if (bytes_funcs == Py_None)
+	bytes_funcs = NULL;
+    else if (bytes_funcs != NULL
+	     && !PySequence_Check(bytes_funcs))
+    {
+	PyErr_SetString(PyExc_TypeError,
+			"bytes_functions must be a sequence of names");
+	return NULL;
+    }
+    info.bytes_funcs = bytes_funcs;
+    info.strings_as_bytes = 0;
     if (sk_line_as_utf8(oline, &string, &length) < 0)
 	return NULL;
 
@@ -615,6 +663,8 @@ PyObject * tokenize_line(PyObject * self, PyObject * args)
 
     if (!PyArg_ParseTuple(args, "O|i", &oline, &max_tokens))
 	return NULL;
+    info.bytes_funcs = NULL;
+    info.strings_as_bytes = 0;
     if (sk_line_as_utf8(oline, &string, &length) < 0)
 	return NULL;
 

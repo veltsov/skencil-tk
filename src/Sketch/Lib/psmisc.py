@@ -29,10 +29,12 @@ def make_ps_quote_table():
             table[i] = '\\' + chr(i)
         else:
             table[i] = chr(i)
+    # PS octal escapes, exactly three digits (as the python2
+    # oct('0%o') form produced; py3's oct() yields '0o%o')
     for i in range(127, 256):
-        table[i] = '\\' + oct(i)[1:]
+        table[i] = '\\%03o' % i
     for i in range(0, 32):
-        table[i] = '\\' + oct(512+i)[2:]
+        table[i] = '\\%03o' % i
     return table
 
 quote_table = make_ps_quote_table()

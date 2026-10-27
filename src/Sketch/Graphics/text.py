@@ -255,7 +255,16 @@ class CommonTextEditor(Editor):
     def InsertCharacter(self, char):
         if len(char) == 1:
             font = _text_font(self.properties)
-            gid = font.GidForChar(char)
+            if ord(char) < 256:
+                # latin-1 resolves through the font's 256-code
+                # encoding table (the byte-char path; e.g. '-' maps
+                # to 'minus' for standard-encoding fonts, see
+                # devdocs/text-input.md)
+                gid = font.GidForChar(char)
+            else:
+                # unicode input resolved against the font's own
+                # glyph names (devdocs/text-input.md)
+                gid = font.GidForUnicode(char)
             if font.IsPrintableGlyph(gid):
                 return self._insert_gid(gid)
         return NullUndo

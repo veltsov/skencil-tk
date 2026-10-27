@@ -472,6 +472,9 @@ class SKLoader(GenericLoader):
         dict = self.get_func_dict()
         from Sketch.Modules import skread
         parse = skread.parse_sk_line2
+        # the string argument of these functions is a byte string in
+        # the font's encoding, not utf-8 (see devdocs/glyph-text.md)
+        byte_string_functions = ('txt', 'pt')
         readline = file.readline
         bezier_load = self.bezier_load
         num = 1
@@ -490,7 +493,8 @@ class SKLoader(GenericLoader):
                     line = bezier_load(line)
                     continue
                 #parse(line, dict)
-                funcname, args, kwargs = parse(line)
+                funcname, args, kwargs = parse(line,
+                                               byte_string_functions)
                 if funcname is not None:
                     function = dict.get(funcname)
                     if function is not None:

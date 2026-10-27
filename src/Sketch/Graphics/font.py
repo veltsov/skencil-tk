@@ -206,7 +206,8 @@ def read_afm_file(filename):
     return (CreateFontMetric(attribs['Ascender'], attribs['Descender'],
                              attribs['FontBBox'], attribs['ItalicAngle'],
                              gid_entries),
-            enc)
+            enc,
+            set(charmetrics))
 
 
 _warned_about_afm = {}
@@ -382,7 +383,12 @@ class Font:
             xlfd_start = xlfd_start.lower()
         self.xlfd_start = xlfd_start
         self.encoding_name = encoding_name
-        self.metric, self.encoding = read_metric(self.PostScriptName())
+        self.metric, self.encoding, glyph_names = \
+            read_metric(self.PostScriptName())
+        # the font's own glyph names (all AFM char metrics), used for
+        # the charset-aware unicode resolution (see
+        # devdocs/text-input.md)
+        self.glyph_names = frozenset(glyph_names)
         # map between the font's 256-code encoding (as used by .sk
         # files and PostScript) and glyph ids (see devdocs/glyph-text.md)
         self.code_to_gid = [glyph_registry.index(name)
@@ -454,9 +460,10 @@ class Font:
                 else:
                     gids.append(glyph_registry.index(name))
             return array('I', gids)
-        # byte string: font-encoding codes
+        # byte string: font-encoding codes (iterating bytes
+        # yields ints)
         code_to_gid = self.code_to_gid
-        return array('I', [code_to_gid[ord(char)] for char in text])
+        return array('I', [code_to_gid[code] for code in text])
 
     def _as_gids(self, text):
         if isinstance(text, array) and text.typecode == 'I':
@@ -476,6 +483,23 @@ class Font:
         """Return the glyph id for the single byte character CHAR (a
         code in this font's encoding)."""
         return self.code_to_gid[ord(char)]
+
+    def GidForUnicode(self, char):
+        """Return the glyph id for the single unicode character CHAR
+        (a character outside latin-1).  The candidate glyph names
+        (canonical uniXXXX plus the legacy afii names) are tried
+        against the font's own glyph names first, so a font with
+        afii-named glyphs resolves them; if the font has none of the
+        candidates, the canonical name is registered (the insertion
+        is then rejected by IsPrintableGlyph).  See
+        devdocs/text-input.md."""
+        names = glyphnames.unicode_to_glyphnames(char)
+        if not names:
+            return NOTDEF_GID
+        for name in names:
+            if name in self.glyph_names:
+                return glyph_registry.index(name)
+        return glyph_registry.index(names[0])
 
     def SpaceGid(self):
         """Return the glyph id of the space character."""
@@ -498,7 +522,7 @@ class Font:
         """Return the glyphs GIDS as a byte string in this font's
         encoding (the serialization form of .sk files and PostScript).
         Glyphs that are not in the encoding become notdef."""
-        return ''.join(map(chr, self.GlyphCodes(gids)))
+        return bytes(self.GlyphCodes(gids))
 
     def TextBoundingBox(self, text, size):
         # Return the bounding rectangle of TEXT (gids, bytes or

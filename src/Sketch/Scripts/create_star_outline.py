@@ -24,7 +24,8 @@ from Sketch.UI.sketchdlg import SKModal
 
 from tkinter import *
 
-import math, unit
+import math
+from Sketch.Scripts import unit
 
 class CreateStarDlg(SKModal):
 

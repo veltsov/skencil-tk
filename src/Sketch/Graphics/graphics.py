@@ -872,11 +872,14 @@ class GraphicsDevice(SimpleGC, CommonDevice):
                     # Draw as text
                     gc.SetFont(xfont)
 
-                    codes = font.GlyphCodes(text)
+                    # one byte per glyph: the code in the font's
+                    # encoding; pax' DrawString passes it to
+                    # XDrawString verbatim (see devdocs/glyph-text.md)
+                    codes = bytes(font.GlyphCodes(text))
                     pos = list(map(self.DocToWin, pos))
                     for i in range(len(text)):
                         x, y = pos[i]
-                        gc.DrawString(x, y, chr(codes[i]))
+                        gc.DrawString(x, y, codes[i:i+1])
             else:
                 # 'greek'. XXX is this really necessary. It avoids
                 # rendering fonts that are too small to read.

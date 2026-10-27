@@ -70,7 +70,7 @@ def test_font_encoded_roundtrip():
     # EncodedText is the inverse of byte-string coercion
     text = make_text('AB\xe9')
     font = text.properties.font
-    assert font.EncodedText(text.text) == 'AB\xe9'
+    assert font.EncodedText(text.text) == b'AB\xe9'
     # and the byte form coerces back to the same gids
     assert font.TextGids('AB\xe9') == text.text
 
@@ -100,7 +100,7 @@ def test_control_glyphs_roundtrip():
     font = text.properties.font
     assert [font.GlyphName(g) for g in text.text] == \
         ['A', 'newline', 'B', 'carriagereturn']
-    assert font.EncodedText(text.text) == 'A\nB\r'
+    assert font.EncodedText(text.text) == b'A\nB\r'
 
 
 def test_sk_save_reload_stable():
@@ -216,7 +216,80 @@ def test_out_of_encoding_glyphs_become_notdef():
     text = make_text('A')
     gid = font.glyph_registry.index('uni0421')   # cyrillic 'С'
     assert text.properties.font.GlyphCodes([gid]) == [0]
-    assert text.properties.font.EncodedText([gid]) == '\x00'
+    assert text.properties.font.EncodedText([gid]) == b'\x00'
+
+
+def test_unicode_to_glyphnames():
+    # candidate glyph names for unicode input (devdocs/text-input.md)
+    from Sketch.Lib import glyphnames
+    assert glyphnames.unicode_to_glyphnames('\u00e9') == ('eacute',)
+    # U+002D: both the encoding-table name and the usual AFM name
+    assert glyphnames.unicode_to_glyphnames('-') == ('minus', 'hyphen')
+    # cyrillic: canonical uniXXXX first, then the legacy afii name
+    assert glyphnames.unicode_to_glyphnames('\u0444') == \
+        ('uni0444', 'afii10086')
+    # private use characters have no glyph names
+    assert glyphnames.unicode_to_glyphnames('\ue000') == ()
+
+
+def test_afii_glyphname_to_unicode():
+    # the reverse alias table lets TextAsUnicode display afii-named
+    # glyphs correctly
+    from Sketch.Lib import glyphnames
+    assert glyphnames.glyphname_to_unicode('afii10086') == '\u0444'
+    assert glyphnames.glyphname_to_unicode('afii10017') == '\u0410'
+
+
+def test_insert_unicode_character():
+    # InsertCharacter accepts unicode characters: latin-1 resolves
+    # through the font's encoding table, non-latin-1 charset-aware
+    # through the font's glyph names (devdocs/text-input.md)
+    sk = testsupport.sketch()
+    from Sketch import Document, SimpleText, Translation, EditMode
+    from Sketch.Graphics.properties import DefaultTextProperties
+    from Sketch.Graphics import text as textmod
+
+    doc = Document(create_layer=1)
+    obj = SimpleText(Translation(100, 100), '',
+                     properties=DefaultTextProperties())
+    doc.Insert(obj)
+    doc.SelectObject(obj)
+    doc.SetMode(EditMode)
+    font = obj.properties.font
+    # latin-1: inserts like the byte path
+    doc.CallObjectMethod(textmod.CommonText, '', 'InsertCharacter',
+                         '\u00e9')
+    assert [font.GlyphName(g) for g in obj.text] == ['eacute']
+    # non-latin-1 glyph the font does not have: rejected
+    doc.CallObjectMethod(textmod.CommonText, '', 'InsertCharacter',
+                         '\u0444')
+    assert len(obj.text) == 1
+
+
+def test_gid_for_unicode_afii_font():
+    # a font whose glyphs use the legacy afii names resolves them
+    # (charset-aware resolution, devdocs/text-input.md)
+    sk = testsupport.sketch()
+    from Sketch.Graphics import font as fontmod
+    font = fontmod.GetFont('Times-Roman')
+    orig_names = font.glyph_names
+    # synthesize an afii-named charset
+    font.glyph_names = frozenset(['afii10086', 'afii10017'])
+    try:
+        assert font.GidForUnicode('\u0444') == \
+            fontmod.glyph_registry.index('afii10086')
+        assert font.GidForUnicode('\u0410') == \
+            fontmod.glyph_registry.index('afii10017')
+        # a glyph the font does not have registers the canonical name
+        gid = font.GidForUnicode('\u00e9')
+        assert fontmod.glyph_registry.name(gid) == 'eacute'
+        # a glyph the font can neither resolve nor encode is not
+        # printable (an insertion of it is rejected)
+        gid = font.GidForUnicode('\u0500')
+        assert fontmod.glyph_registry.name(gid) == 'uni0500'
+        assert not font.IsPrintableGlyph(gid)
+    finally:
+        font.glyph_names = orig_names
 
 
 def test_insert_hyphen_vs_minus():
@@ -250,7 +323,7 @@ def test_insert_hyphen_vs_minus():
     assert font.IsPrintableGlyph(minus_gid)
     assert font.IsPrintableGlyph(hyphen_gid)
     assert font.GlyphCodes([minus_gid, hyphen_gid]) == [45, 173]
-    assert font.EncodedText([hyphen_gid]) == '\xad'
+    assert font.EncodedText([hyphen_gid]) == b'\xad'
     # the insertion is undoable as a single transaction
     doc.Undo()
     assert len(obj.text) == 2

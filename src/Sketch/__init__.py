@@ -205,9 +205,10 @@ def init_ui():
         __import__(name)
 
 def init_modules_from_widget(root):
+    from Sketch import UI, Graphics
     from Sketch.Modules import pax
-    import UI.skpixmaps, Graphics.graphics
-    import UI.tkext, Graphics.color
+    import Sketch.UI.skpixmaps, Sketch.Graphics.graphics
+    import Sketch.UI.tkext, Sketch.Graphics.color
     UI.tkext.InitFromTkapp(root.tk)
     if hasattr(root.tk, 'interpaddr'):
         tkwin = pax.name_to_window('.', root.tk.interpaddr())

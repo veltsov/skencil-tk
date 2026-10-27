@@ -21,7 +21,7 @@
 
 from __future__ import print_function
 import sys
-from io import StringIO
+from io import BytesIO
 
 
 from Sketch.Modules import streamfilter
@@ -31,16 +31,18 @@ from Sketch.Modules._type1 import decode, hexdecode
 from Sketch.Modules.pstokenize import PSTokenizer, OPERATOR, NAME, INT, END
 
 def read_type1_file(filename):
-    data = StringIO()
+    # the type1 file data is binary (pfb) or latin-1-ish (pfa);
+    # it is processed as bytes throughout
+    data = BytesIO()
     file = open(filename, 'rb')
     head = file.read(6)
-    if head[:2] == '%!':
+    if head[:2] == b'%!':
         line = file.readline()
         while line:
             line = file.readline()
-            pos = line.find('eexec')
+            pos = line.find(b'eexec')
             if pos >= 0:
-                data.write(line[:pos + 5] + '\n')
+                data.write(line[:pos + 5] + b'\n')
                 line = line[pos + 5:]
                 break
             data.write(line)
@@ -60,15 +62,16 @@ def read_type1_file(filename):
             pass
     else:
         while 1:
-            if ord(head[0]) != 128:
+            # indexing bytes yields ints
+            if head[0] != 128:
                 raise TypeError('not a pfb file')
-            data_type = ord(head[1])
+            data_type = head[1]
             if data_type == 3:
                 # EOF
                 break
 
-            data_length = ord(head[2]) + 256 * ord(head[3]) \
-                          + 65536 * ord(head[4]) + 16777216 * ord(head[5])
+            data_length = head[2] + 256 * head[3] \
+                          + 65536 * head[4] + 16777216 * head[5]
             if data_type == 1: # ASCII
                 data.write(file.read(data_length))
             elif data_type == 2: #Binary
@@ -189,7 +192,8 @@ class CharStringInterpreter:
 
     def execute(self, cs):
         stack = self.stack
-        cs = list(map(ord, cs))
+        # CS is a byte string; iterating bytes yields ints
+        cs = list(cs)
         try:
             while cs:
                 code = cs[0]; del cs[0]
@@ -422,7 +426,7 @@ def embed_type1_file(fontfile, outfile):
     else:
         file = fontfile
     head = file.read(6)
-    if head[:2] == '%!':
+    if head[:2] == b'%!':
         # PFA
         outfile.write(head)
         data = file.read(4000)
@@ -432,15 +436,16 @@ def embed_type1_file(fontfile, outfile):
     else:
         # Probably PFB
         while 1: # loop over all chunks
-            if ord(head[0]) != 128:
+            # indexing bytes yields ints
+            if head[0] != 128:
                 raise TypeError('not a pfb file')
-            data_type = ord(head[1])
+            data_type = head[1]
             if data_type == 3:
                 # EOF
                 break
 
-            data_length = ord(head[2]) + 256 * ord(head[3]) \
-                          + 65536 * ord(head[4]) + 16777216 * ord(head[5])
+            data_length = head[2] + 256 * head[3] \
+                          + 65536 * head[4] + 16777216 * head[5]
             if data_type == 1: # ASCII
                 outfile.write(file.read(data_length))
             elif data_type == 2: #Binary

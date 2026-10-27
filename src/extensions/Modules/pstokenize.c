@@ -493,7 +493,6 @@ read_name_or_number(PSTokenizerObject * self, int * token, int isname)
 
 	    if (numend == buf)
 	    {
-		Py_DECREF(value);
 		*token = FLOAT;
 		return PyFloat_FromDouble(result);
 	    }
@@ -503,7 +502,6 @@ read_name_or_number(PSTokenizerObject * self, int * token, int isname)
 	    int result = strtol(start, &numend, 10);
 	    if (numend == buf)
 	    {
-		Py_DECREF(value);
 		*token = INT;
 		return PyLong_FromLong(result);
 	    }

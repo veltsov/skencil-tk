@@ -44,7 +44,9 @@ import Sketch
 from Sketch.UI import command
 from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
-from Sketch.UI.tkext import MakeCommand, UpdatedMenu, utf8_to_latin1
+from Sketch.UI.tkext import MakeCommand, UpdatedMenu
+from Sketch.Lib.util import as_unicode
+from Sketch.Graphics.text import CommonText
 
 from Sketch.UI.cursorstack import CursorStack
 from Sketch.UI.view import SketchView
@@ -563,7 +565,9 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
         try:
             state = event.state
             sym = event.keysym
-            char = utf8_to_latin1(event.char)
+            # unicode keyboard input (devdocs/text-input.md); Tk
+            # returns str under python3, as_unicode normalizes anyway
+            char = as_unicode(event.char)
             # key events should probably be also handled by the modes
             if sym == 'Escape':
                 self.cancel_current_mode()
@@ -612,6 +616,14 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
                     cmd.Invoke(stroke)
                 else:
                     cmd.Invoke()
+            elif char and ord(char) >= 32 and self.document.IsEditMode():
+                # a printable character that no keymap entry matches
+                # (e.g. non-latin-1 keyboard input): insert it into
+                # the text object being edited, through the same
+                # CallObjectMethod path the keymap uses (see
+                # devdocs/text-input.md)
+                self.document.CallObjectMethod(CommonText, '',
+                                               'InsertCharacter', char)
         finally:
             self.end_transaction()
 

@@ -315,21 +315,36 @@ remains the py2 reference).  Builds: `python3 setup.py build` →
 
 Remaining py3 issues, verified by the suite (in rough priority order):
 
-1. **Glyph-encoding round-trip (the last content diff):** in
-   `test_save_reload_stable`, a `txt(':')` in font MTMI comes back as
-   `txt('\x00')` after a save/reload/save cycle — the gid →
-   font-encoding byte conversion (`Font.EncodedText`) or the
-   `code_to_gid` table built in `font.py` loses the mapping for this
-   font (suspect: the sfd/encoding tables are read as str now, or an
-   ordering difference in the glyph registry).  This accounts for the
-   save/reload-stable and fixture-baseline failures (the outputs are
-   otherwise byte-identical to each other, just not to the golden
-   baselines).
+1. **Glyph-encoding round-trip -- FIXED 2026-10-27 (the .sk
+   txt/pt byte contract).**  Root cause: the skread C lexer decoded
+   every string literal as utf-8, including the txt/pt arguments,
+   whose bytes are font-encoding codes; TextGids then resolved them
+   as unicode characters (via glyph names) instead of font-encoding
+   codes (MTMI txt(':') resolved the NAME colon, not code 58, and
+   saved back as code 0).  The save side had the mirror problem:
+   Font.EncodedText returned a str of codes which skrepr then
+   utf-8-encoded.  Fix: parse_sk_line2 now takes a sequence of
+   function names (skloader passes ('txt', 'pt')) whose string
+   arguments are returned as the raw un-escaped bytes;
+   Font.EncodedText returns bytes; TextGids iterates the bytes as
+   ints; the PS/X11 sinks (quote_ps_string, xlfd_char_range, pax
+   DrawString) receive bytes.  Also fixed on the way: the PS quote
+   table's octal escapes (py3 oct() yields 0o251, breaking the
+   three-digit \251-style escapes), Lib/type1.py bytes handling
+   (BytesIO, int indexing, charstring interpreter), two stray
+   Py_DECREF(value) calls on an uninitialized local in pstokenize.c's
+   number branches (segfault in the charstring tokenizer), and the
+   missing PY_SSIZE_T_CLEAN define in skaux.c (required for the s#
+   format of _sketch.xlfd_char_range under py3.10; SystemError in the
+   X11 core-font drawing path).  The save/reload-stable,
+   fixture-baseline and sk2ps tests pass again (93 of 97 headless
+   tests).
 2. **`sys.exc_traceback` remnants** in `UI/prompt.py` and
    `Plugins/Filters/xfigloader.py` (use `sys.exc_info()[2]`).
-3. **`reader_decodes_user_strings` / `reader_decodes_style_names`**:
-   `dict_keys.sort()` style leftovers — `GetStyleNames` is fixed;
-   check the remaining `.sort()` on view objects
+3. **`reader_decodes_style_names_for_use_style`** (the
+   `reader_decodes_user_strings` half passes again since the txt/pt
+   fix above): `dict_keys.sort()` style leftovers — `GetStyleNames`
+   is fixed; check the remaining `.sort()` on view objects
    (`document.py:2334` was one; verify all).
 4. **`test_menu_tree_byte_string_path_rejected`**: ScriptRegistry's
    byte-string rejection is py2-only; the check needs a py3 form

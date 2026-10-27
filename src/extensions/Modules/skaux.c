@@ -20,6 +20,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+/* needed for the s# argument format under python 3 */
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "skmember.h"
 #include <gcobject.h>

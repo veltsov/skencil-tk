@@ -2,7 +2,10 @@
 
 from __future__ import print_function
 import math
-import UserDict
+try:
+    from collections import UserDict
+except ImportError:     # python 2
+    from UserDict import UserDict
 
 from Sketch.UI.sketchdlg import MessageDialog
 from Sketch import CreatePath, Point, Rect
@@ -179,7 +182,7 @@ def index(cp, p0, t0, p1, t1):
     else:
         return subdivide(t0, t1, (cp.x - p0.x) / (p1.x - p0.x))
 
-class IntersectionIndex(UserDict.UserDict):
+class IntersectionIndex(UserDict):
     def add(self, object, path, index, cp):
         index_table = self[object] = self.get(object, {})
         segment_table = index_table[path] = index_table.get(path, {})
@@ -200,8 +203,7 @@ def split_paths(object, index_table):
     buffer = []
     paths = list(object.Paths())
     for i in index_table.keys():
-        segments = index_table[i].keys()
-        segments.sort()
+        segments = sorted(index_table[i])
         first = last = None
         for j in range(len(segments)):
             segment = segments[j]

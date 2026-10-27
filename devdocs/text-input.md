@@ -1,6 +1,10 @@
 # Text Input Rework — Findings and Plan
 
-Status: **planned, not implemented** (2026-10-22).  This document
+Status: **implemented 2026-10-27** (on the py3 branch; the
+afii alias table comes from the Adobe Glyph List 2.0 as
+shipped in ghostscript's gs_agl.ps, since AGLFN 1.7 dropped
+the afii names; note that the afii name for U+0444 is
+afii10086, not afii10086 as stated below).  This document
 records the analysis of the keyboard input path and the design for a
 dedicated "improve text input" task.  See also `devdocs/glyph-text.md`
 (the glyph-index representation this builds upon).
@@ -27,7 +31,7 @@ dedicated "improve text input" task.  See also `devdocs/glyph-text.md`
   input path is latin-1-bound.
 * Fonts: none of the bundled AFMs contain Cyrillic.  Classic Cyrillic
   Type 1 fonts (URW Cyrillic, pscyr, cm-super/lh) name their glyphs
-  with legacy `afiiNNNNN` names (e.g. `U+0444` → `afii64352`), not
+  with legacy `afiiNNNNN` names (e.g. `U+0444` → `afii10086`), not
   `uni0444`; OpenType-derived AFMs use `uniXXXX`.  For a typed
   character to resolve against a font's charset, both conventions must
   be tried.
@@ -57,7 +61,7 @@ rework must not regress this (guarded by
    * `Font.__init__` stores the font's full glyph-name set (all AFM
      names; they are already registered in the global registry).
    * `GidForUnicode(char)`: try each candidate name against the font's
-     own name set first (so `afii64352` wins for a pscyr font,
+     own name set first (so `afii10086` wins for a pscyr font,
      `uni0444` for an OpenType-named one); if none matches, register
      the canonical name.
 3. **Editor — accept unicode** (`src/Sketch/Graphics/text.py`)
@@ -85,7 +89,7 @@ rework must not regress this (guarded by
      contract).
 5. **Tests**
    * `test/model/test_glyphs.py`: Cyrillic mapping (`u'ф'` → candidates
-     `('uni0444', 'afii64352')`), reverse mapping, `InsertCharacter(u'é')`
+     `('uni0444', 'afii10086')`), reverse mapping, `InsertCharacter(u'é')`
      inserts, `InsertCharacter(u'ф')` is a no-op under Times-Roman
      (font lacks the glyph), and a synthetic font-name-set test proving
      an afii-named font resolves.

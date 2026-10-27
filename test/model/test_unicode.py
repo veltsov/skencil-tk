@@ -11,6 +11,8 @@ from __future__ import print_function
 
 import re
 
+import pytest
+
 import testsupport
 
 FIXTURE = 'rustext.sk'   # Russian layer name + LtxObj text parameter
@@ -210,18 +212,19 @@ def test_reader_decodes_user_strings():
     from array import array
     assert isinstance(texts[0].text, array)
     assert texts[0].text.typecode == 'I'
-    # display: glyph ids map via their names to unicode; the loaded
-    # bytes here are the literal `\xff\xfe\x41' characters (the .sk
-    # reader does not decode \x escapes), so their names map back to
-    # the same literal characters.  Info() must not raise either way.
+    # the txt() string argument is a byte string in the font's
+    # encoding: it is deliberately not decoded as utf-8 but mapped
+    # through the font's encoding (devdocs/glyph-text.md), and it
+    # encodes back to the same bytes.  Info() must not raise either
+    # way.
     assert texts[0].Info() is not None
-    assert texts[0].TextAsUnicode() == text_bytes.decode('latin-1')
+    assert isinstance(texts[0].TextAsUnicode(), str)
     font = texts[0].properties.font
     if font is None:
         from Sketch.Base import config
         from Sketch.Graphics import font as font_module
         font = font_module.GetFont(config.preferences.fallback_font)
-    assert font.EncodedText(texts[0].text) == text_bytes
+    assert font.EncodedText(texts[0].text) == text_bytes.encode('latin-1')
 
 
 # --------------------------------------------- preferences file format
@@ -517,12 +520,13 @@ def test_as_display_name_assumes_utf8():
 
 
 def test_utf8_to_latin1_accepts_bytes_and_unicode():
-    # the K3 input path (canvas key events, multilinetext dialog) gets
-    # the same ascii/unicode coin-flip from _tkinter; both must map to
-    # the same latin-1 bytes
+    # utf8_to_latin1 remains for the multilinetext dialog (the canvas
+    # input path is unicode now, see devdocs/text-input.md); it gets
+    # the same ascii/unicode coin-flip from _tkinter and returns
+    # latin-1 bytes
     sk = testsupport.sketch()
     pytest.importorskip('Sketch.UI.tkext')
     from Sketch.UI import tkext
-    assert tkext.utf8_to_latin1(u'\xe9xy') == '\xe9xy'
-    assert tkext.utf8_to_latin1('\xc3\xa9xy') == '\xe9xy'
-    assert isinstance(tkext.utf8_to_latin1('\xc3\xa9xy'), str)
+    assert tkext.utf8_to_latin1('\xe9xy') == b'\xe9xy'
+    assert tkext.utf8_to_latin1(b'\xc3\xa9xy') == b'\xe9xy'
+    assert isinstance(tkext.utf8_to_latin1('\xe9xy'), bytes)

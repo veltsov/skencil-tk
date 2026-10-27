@@ -69,7 +69,7 @@ def middle_color(dark, light, factor=0.5):
     r = dark[0] + (light[0] - dark[0]) * factor
     g = dark[1] + (light[1] - dark[1]) * factor
     b = dark[2] + (light[2] - dark[2]) * factor
-    return '#%02X%02X%02X' % (r, g, b)
+    return '#%02X%02X%02X' % (int(r), int(g), int(b))
 
 def lighter_color(color, factor):
     """
