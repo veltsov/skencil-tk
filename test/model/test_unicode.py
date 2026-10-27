@@ -426,16 +426,20 @@ def test_reader_decodes_style_names_for_use_style():
     # style names are used as dict keys in the loader and compared in
     # the styledlg; both file and dialog side are unicode now
     sk = testsupport.sketch()
+    from Sketch.Lib.util import skrepr
     style = u'\u0421\u0442\u0438\u043b\u044c 2'    # 'Стиль 2'
+    layer = u'\u0421\u043b\u043e\u0439'
+    # the .sk strings are written with skrepr (the \x-escaped form of
+    # the py2 master); the reader decodes them to unicode
     content = ('##Sketch 1 2\n'
                'document()\n'
-               'layer(%r,1,1,0,0,(0,0,0))\n' % u'\u0421\u043b\u043e\u0439'.encode('utf-8')
-               + 'dstyle(%r)\n' % style.encode('utf-8')
-               + 'use_style(%r)\n' % style.encode('utf-8')
+               'layer(%s,1,1,0,0,(0,0,0))\n' % skrepr(layer)
+               + 'dstyle(%s)\n' % skrepr(style)
+               + 'use_style(%s)\n' % skrepr(style)
                + 'r(1,0,0,1,10,10)\n')
     path = testsupport.output_path('sk', 'reader_style.sk')
     with open(path, 'wb') as f:
-        f.write(content)
+        f.write(content.encode('utf-8'))
     doc = testsupport.load_document(path)
     assert style in doc.GetStyleNames()
     assert doc.GetDynamicStyle(style) is not None
@@ -479,20 +483,21 @@ def test_eps_with_unicode_filename_info():
     sk = testsupport.sketch()
     import os
     import shutil
-    from Sketch.Lib.util import format
+    from Sketch.Lib.util import format, skrepr
     from Sketch.UI import converters
     eps_name = u'oms\u0448\u0442\u0443\u043a\u0430.eps'
     layer = u'\u0421\u043b\u043e\u0439'
     outdir = testsupport.output_dir('sk')
+    # file names are unicode in the model (and in the filesystem api)
     shutil.copy(testsupport.data_path('oms.eps'),
-                os.path.join(outdir, eps_name.encode('utf-8')))
+                os.path.join(outdir, eps_name))
     content = ('##Sketch 1 2\n'
                'document()\n'
-               + 'layer(%r,1,1,0,0,(0,0,0))\n' % layer.encode('utf-8')
-               + 'eps((1,0,0,1,10,10),%r)\n' % eps_name.encode('utf-8'))
+               + 'layer(%s,1,1,0,0,(0,0,0))\n' % skrepr(layer)
+               + 'eps((1,0,0,1,10,10),%s)\n' % skrepr(eps_name))
     path = os.path.join(outdir, 'reader_eps.sk')
     with open(path, 'wb') as f:
-        f.write(content)
+        f.write(content.encode('utf-8'))
     doc = testsupport.load_document(path)
     doc.SelectAll()
     eps_objs = [o for o in testsupport.iter_objects(doc)

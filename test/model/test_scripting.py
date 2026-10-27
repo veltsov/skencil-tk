@@ -51,9 +51,11 @@ def test_menu_tree_unicode_path_tuple_nested():
 def test_menu_tree_byte_string_path_rejected():
     # A byte string used to be iterated character by character
     # (Script -> T -> e -> X); the strict unicode policy rejects it.
+    # (the byte string is spelled b'TeX': under python2 the plain
+    # literal was a byte string already)
     reg = _registry()
     with pytest.raises(TypeError):
-        reg.Add(_FakeScript(u'script1'), 'TeX')
+        reg.Add(_FakeScript(u'script1'), b'TeX')
 
 
 def test_menu_tree_byte_component_in_sequence_rejected():
