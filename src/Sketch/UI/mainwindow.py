@@ -1181,8 +1181,9 @@ class SketchMainWindow(Publisher):
                                                  initialfile = '')
         if filename:
             try:
-                file = open(filename, 'r')
-                is_eps = eps.IsEpsFileStart(file.read(256))
+                file = open(filename, 'rb')
+                is_eps = eps.IsEpsFileStart(
+                    util.as_latin1_text(file.read(256)))
                 file.close()
                 dir, name = os.path.split(filename)
                 config.preferences.image_dir = dir
