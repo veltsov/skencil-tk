@@ -680,6 +680,13 @@ class SketchMainWindow(Publisher):
         frame.rowconfigure(2, weight = 0)
         hbar['command'] = self.canvas._w + ' xview'
         vbar['command'] = self.canvas._w + ' yview'
+        # Tk's own Button-4/5 bindings on a scrollbar always scroll
+        # vertically (tk::ScrollByUnits returns early when its
+        # orientation argument does not match the scrollbar's), so the
+        # wheel does nothing over a horizontal scrollbar. Bind the
+        # horizontal wheel scrolling explicitly here.
+        hbar.bind('<4>', lambda event: self.canvas.ScrollXUnits(-5))
+        hbar.bind('<5>', lambda event: self.canvas.ScrollXUnits(5))
 
         # the palette
         button = MultiButton(palette_frame, bitmap = pixmaps.NoPattern,

@@ -51,6 +51,16 @@ def test_open_plugin_dialog():
     run_ui('smoke_plugin_dialog.py')
 
 
+def test_scrollbar_wheel():
+    """Wheel events on the scrollbars must scroll and must not crash:
+    Tk's scrollbar bindings invoke the pax widget command directly from
+    the Tcl event dispatch (unlike tk.call), which used to abort with
+    `Fatal Python error: PyEval_RestoreThread: NULL tstate'.  Also
+    covers horizontal wheel scrolling over the hbar and the MOVETO
+    (slider drag) path.  See devdocs/modernize-paxtkinter.md."""
+    run_ui('smoke_scrollbars.py', args=[testsupport.data_path('tarr.sk')])
+
+
 # ------------------------------------------------------- screenshot tests
 
 SHOT_FIXTURE = 'tarr.sk'

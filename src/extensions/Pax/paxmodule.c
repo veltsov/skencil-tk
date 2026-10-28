@@ -529,6 +529,10 @@ paxwidget_widget_cmd_impl(ClientData data, Tcl_Interp * interp,
 	}
 	PaxWidget_RegisterUpdate(paxwidget);
     }
+    /* Note: the exact names 'xview'/'yview' are intercepted before the
+       GIL wrapper in paxwidget_widget_cmd (they may be invoked by Tk
+       scrollbar bindings without the GIL, see paxwidget_scroll_cmd).
+       Only abbreviated names called via tk.call reach this point. */
     else if ((c == 'x') && (strncmp(argv[1], "xview", length) == 0))
     {
 	int count, type;
@@ -603,15 +607,72 @@ handle_expose_event(PaxWidget * paxwidget, XEvent * event)
     PaxWidget_RegisterUpdate(paxwidget);
 }
 
-/* may be invoked from Tcl event dispatch without the GIL */
+/* Handle the xview/yview subcommands of the widget command. These are
+   installed as the -command of Tk scrollbars (mainwindow.py), and Tk's
+   scrollbar bindings (tk::ScrollByUnits etc.) invoke the command
+   directly from the Tcl event dispatch, i.e. without the GIL --
+   unlike the other subcommands, which are only ever invoked via
+   tk.call from Python. So this function must not use the Python C
+   API; the Python methods are marshaled through the call_py_method
+   Tcl command (see paxWidget_EvalMethod), which _tkinter dispatches
+   with proper GIL and tcl_tstate handling (see the comment on
+   pax_call_py_method). */
+static int
+paxwidget_scroll_cmd(PaxWidget * paxwidget, Tcl_Interp * interp,
+		     int argc, char** argv)
+{
+    int count, type, method_idx;
+    double fraction;
+    char args[40];
+
+    type = Tk_GetScrollInfo(interp, argc, argv, &fraction, &count);
+    switch (type)
+    {
+    case TK_SCROLL_ERROR:
+	return TCL_ERROR;
+    case TK_SCROLL_MOVETO:
+	sprintf(args, "%.17g", fraction);
+	method_idx = argv[1][0] == 'x' ? ScrollXMoveIdx : ScrollYMoveIdx;
+	break;
+    case TK_SCROLL_PAGES:
+	sprintf(args, "%d", count);
+	method_idx = argv[1][0] == 'x' ? ScrollXPagesIdx : ScrollYPagesIdx;
+	break;
+    case TK_SCROLL_UNITS:
+	sprintf(args, "%d", count);
+	method_idx = argv[1][0] == 'x' ? ScrollXUnitsIdx : ScrollYUnitsIdx;
+	break;
+    default:
+	return TCL_OK;
+    }
+    paxWidget_EvalMethod(paxwidget, method_idx, args);
+    return TCL_OK;
+}
+
+/* The xview/yview subcommands may be invoked by Tcl directly from the
+   event dispatch (as the -command of Tk scrollbars), so they are
+   dispatched by paxwidget_scroll_cmd without the GIL. All other
+   subcommands are only ever invoked via tk.call, whose return path
+   re-enters Python, so acquiring the GIL with PyGILState_Ensure here
+   does not violate _tkinter's internal tcl_tstate bookkeeping (see
+   the comment on pax_call_py_method). */
 static int
 paxwidget_widget_cmd(ClientData data, Tcl_Interp * interp,
 		     int argc, char** argv)
 {
     int result;
-    PyGILState_STATE gilstate = PyGILState_Ensure();
-    result = paxwidget_widget_cmd_impl(data, interp, argc, argv);
-    PyGILState_Release(gilstate);
+
+    if (argc >= 2
+	&& (strcmp(argv[1], "xview") == 0 || strcmp(argv[1], "yview") == 0))
+    {
+	return paxwidget_scroll_cmd((PaxWidget*)data, interp, argc, argv);
+    }
+
+    {
+	PyGILState_STATE gilstate = PyGILState_Ensure();
+	result = paxwidget_widget_cmd_impl(data, interp, argc, argv);
+	PyGILState_Release(gilstate);
+    }
     return result;
 }
 
@@ -847,6 +908,23 @@ pax_call_py_method(PyObject * self, PyObject * args)
 	    atoi(PyUnicode_AsUTF8(PyTuple_GET_ITEM(args, 2))),
 	    atoi(PyUnicode_AsUTF8(PyTuple_GET_ITEM(args, 3))));
     else if (strcmp(name, "ExtensionEvent") == 0 && argc == 3)
+	call_args = Py_BuildValue(
+	    "(i)", atoi(PyUnicode_AsUTF8(PyTuple_GET_ITEM(args, 2))));
+    else if ((strcmp(name, "ScrollXMove") == 0
+	      || strcmp(name, "ScrollYMove") == 0) && argc == 3)
+    {
+	char * ptr = PyUnicode_AsUTF8(PyTuple_GET_ITEM(args, 2));
+	if (!ptr)
+	{
+	    Py_DECREF(method);
+	    return NULL;
+	}
+	call_args = Py_BuildValue("(d)", strtod(ptr, NULL));
+    }
+    else if ((strcmp(name, "ScrollXUnits") == 0
+	      || strcmp(name, "ScrollXPages") == 0
+	      || strcmp(name, "ScrollYUnits") == 0
+	      || strcmp(name, "ScrollYPages") == 0) && argc == 3)
 	call_args = Py_BuildValue(
 	    "(i)", atoi(PyUnicode_AsUTF8(PyTuple_GET_ITEM(args, 2))));
     else if (argc > 2)

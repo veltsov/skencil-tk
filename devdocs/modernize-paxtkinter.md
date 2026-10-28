@@ -227,11 +227,12 @@ Revised design (implemented on branch `modernize`):
   string; `PaxRegion_FromRegion` transfers ownership). The GIL
   wrappers on these two functions were removed (no direct Python calls
   left there).
-- Kept: GIL wrappers on `paxwidget_cmd`, `paxwidget_widget_cmd` (only
-  ever invoked via `tk.call`, whose return path re-enters Python, so
-  the `tcl_tstate` invariant is not violated) and `PaxWidgetDestroy`
+- Kept: GIL wrappers on `paxwidget_cmd` and `PaxWidgetDestroy`
   (its `Py_XDECREF` needs the GIL; nothing is dispatched after it
-  inside the wrapper).
+  inside the wrapper). The `paxwidget_widget_cmd` wrapper was kept as
+  well, on the assumption that it is only ever invoked via `tk.call`;
+  this turned out to be **wrong** for the xview/yview subcommands
+  (scrollbar `-command`) — fixed 2026-10-28, see below.
 - Deleted: the now-unused `paxWidget_CallMethod` helper.
 
 Validation after the revision (Xvfb):
@@ -244,6 +245,80 @@ Validation after the revision (Xvfb):
   the marshaled path.
 - `pax.call_py_method` invoked directly and via widget commands
   (`bgpixel`, `cget -class`) works.
+
+## Incident: wheel over a scrollbar → `PyEval_RestoreThread: NULL tstate` (fixed 2026-10-28)
+
+Report: turning the mouse wheel over the vertical canvas scrollbar
+aborted the app with
+`Fatal Python error: PyEval_RestoreThread: the function must be called
+with the GIL held, but the GIL is released (the current Python thread
+state is NULL)`; the horizontal scrollbar did nothing at all. Branch
+`py3`, stock `_tkinter` (threaded Tcl), Ubuntu 20.04 / Tk 8.6.10.
+
+### Missed entry path
+
+The widget command (`paxwidget_widget_cmd`) was assumed to be "only
+ever invoked via tk.call". False: `mainwindow.py` installs it as the
+scrollbars' `-command` (`vbar['command'] = canvas._w + ' yview'`), and
+Tk 8.6's scrollbar wheel bindings (`tk::ScrollByUnits %W v -5` →
+`uplevel #0 $cmd scroll -5 units`) invoke the *canvas widget command*
+directly from the Tcl event dispatch — i.e. with the GIL released and
+`tcl_tstate` set (ENTER_TCL around `Tcl_DoOneEvent` in
+`Tkapp_MainLoop`).
+
+### Crash chain
+
+1. `paxwidget_widget_cmd` runs its `PyGILState_Ensure` wrapper: GIL
+   re-acquired, but `tcl_tstate` is *still set* (no repair possible —
+   it is static inside `_tkinter.c`).
+2. The `yview` branch called Python **directly**
+   (`paxWidget_CallMethodArgs` → `ScrollYUnits`), and the method makes
+   a nested `tk.call` (`vbar.set(...)` in `update_scrollbars`), whose
+   `LEAVE_OVERLAP_TCL` sets `tcl_tstate = NULL`.
+3. On unwind, `PyGILState_Release` releases the GIL without restoring
+   `tcl_tstate` → dispatch continues with GIL released *and*
+   `tcl_tstate == NULL`.
+4. The scroll triggers a redraw, whose `call_py_method` marshaling
+   enters `_tkinter`'s `PythonCmd` → `ENTER_PYTHON` →
+   `PyEval_RestoreThread(NULL)` → fatal error. Deterministic, since
+   every scroll causes a redraw. (Scrollbar dragging — the MOVETO
+   path — took the same broken route.)
+
+Reproduced under Xvfb with `event_generate('<Button-4>', when='tail')`
++ `update()` on the scrollbar (the queued event is dispatched from
+Tcl's `update` command, i.e. in the same context as the mainloop
+dispatch); pre-fix the run aborts with the exact message above.
+
+### Fix
+
+- `paxwidget_widget_cmd` now intercepts the exact subcommand names
+  `xview`/`yview` **before** the GIL wrapper and handles them in the
+  new pure-C `paxwidget_scroll_cmd` (no Python C API): `Tk_GetScrollInfo`
+  + `paxWidget_EvalMethod` (the `call_py_method` marshaling). This is
+  correct in both invocation contexts, because `PythonCmd` restores the
+  GIL from `tcl_tstate` whether reached from the event dispatch or from
+  inside a `tk.call`. The prefix-matching branches in
+  `paxwidget_widget_cmd_impl` remain only for abbreviated names called
+  via `tk.call`.
+- `pax.call_py_method` converts the string-marshaled arguments of the
+  scroll methods: `ScrollXMove`/`ScrollYMove` → `double` (strtod),
+  `ScrollXUnits`/`ScrollXPages`/`ScrollYUnits`/`ScrollYPages` → `int`
+  (atoi). Without this the viewport methods would have received
+  strings (e.g. `count * 10` would string-repeat).
+- The horizontal "no reaction" is stock Tk behavior, not a crash: Tk
+  8.6 hardcodes `bind Scrollbar <4> {tk::ScrollByUnits %W v -5}` and
+  `::tk::ScrollByUnits` returns early when its orientation argument
+  does not match the scrollbar's. `mainwindow.py` now adds explicit
+  `<4>`/`<5>` bindings on the horizontal scrollbar calling
+  `canvas.ScrollXUnits(∓5)` (widget-level bindings; the class binding
+  stays a no-op there, so no double scroll).
+
+Validation: `test/ui/scripts/smoke_scrollbars.py` +
+`test/ui/test_smoke.py::test_scrollbar_wheel` (wheel up/down on the
+vbar, wheel on the hbar, MOVETO via the widget command; asserts the
+canvas origin actually moved). Fails pre-fix with the fatal error,
+passes post-fix; the full `smoke` subset is green.
+
 
 
 
