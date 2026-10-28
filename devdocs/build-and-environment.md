@@ -152,8 +152,25 @@ There are three ways to get a build environment:
      `libopenjp2`, `liblcms2`, `libimagequant`, `libjbig`,
      `libdeflate`, `libraqm`, `libfribidi`, `libharfbuzz`) into
      `AppDir/usr/lib/x86_64-linux-gnu`;
-   - `/usr/share/tcltk` and the gsfonts into
-     `build/lib.linux-x86_64-3.10/Resources/Fontmetrics/`.
+   - `/usr/share/tcltk` into `AppDir/usr/share`; the gsfonts
+     (`/usr/share/fonts/type1/gsfonts`, without `*.pfm`) merged into the
+     *AppDir copy* of
+     `AppDir/build/lib.linux-x86_64-3.10/Resources/Fontmetrics/` (no
+     `--delete`: it would remove the files bundled from
+     `src/Resources/Fontmetrics`; there are no filename collisions).
+     `config.font_path` includes the app's Fontmetrics directory
+     (`configutil.py`), so this makes the AppImage self-contained for
+     the URW Type1 fonts.
+     Bug fixed 2026-10-28: this rsync used to write into the *build
+     tree* (`build/lib.linux-x86_64-3.10/Resources/Fontmetrics/`) — and
+     after the build tree had already been rsynced into the AppDir — so
+     the AppDir/AppImage payload contained only the 43 files bundled in
+     the repository while the build tree grew to 113 files with the
+     host gsfonts (the AppImage only worked on machines that had
+     `/usr/share/fonts/type1/gsfonts` installed, and running
+     `make-appimage` a second time silently "fixed" the payload since
+     the polluted build tree was then copied verbatim). The polluted
+     gsfonts-only files were removed from the build tree.
    Stale payload dirs are wiped first (`rsync --delete` does not remove
    top-level extraneous entries).  If a future change makes the
    application import another third-party package, a corresponding

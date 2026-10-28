@@ -60,4 +60,12 @@ share=AppDir/usr/share
 mkdir -p $share
 rsync -av --no-owner --no-group --delete /usr/share/tcltk $share
 
-rsync -av --no-owner --no-group --exclude '*.pfm' /usr/share/fonts/type1/gsfonts/ build/$libdir/Resources/Fontmetrics/
+# The gsfonts are merged into the *AppDir copy* of Resources/Fontmetrics
+# (not into the build tree: the build tree must stay exactly what
+# `python3 setup.py build` produced, and the AppDir snapshot is taken
+# above).  config.font_path includes the app's Fontmetrics directory
+# (configutil.py), so this makes the AppImage self-contained for the
+# URW Type1 fonts.  No --delete here: it would remove the files bundled
+# from src/Resources/Fontmetrics.  Verified: no filename collisions with
+# the bundled files.
+rsync -av --no-owner --no-group --exclude '*.pfm' /usr/share/fonts/type1/gsfonts/ $b/$libdir/Resources/Fontmetrics/

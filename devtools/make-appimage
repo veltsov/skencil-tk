@@ -1,9 +1,19 @@
-#!/bin/sh
-./build-command devtools/collect-app-dir
-if [ ! -x ./appimagetool-x86_64.AppImage ] ; then
-    wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
-    chmod +x appimagetool-x86_64.AppImage
+#!/bin/bash
+# Build the AppImage.  Like build-command, this script changes to the
+# skencil development directory (the parent of the directory containing
+# this script), so it works from any CWD; all other paths are relative
+# to that directory, like in collect-app-dir.
+set -e
+
+dd=$(dirname $(dirname $(readlink -f "$BASH_SOURCE[0]")))
+cd "$dd" || exit 1
+
+./devtools/collect-app-dir
+tool=devtools/appimagetool-x86_64.AppImage
+if [ ! -x "$tool" ] ; then
+    wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O "$tool"
+    chmod +x "$tool"
 fi
 # --appimage-extract-and-run: appimagetool is an AppImage itself; this
 # mode works also on systems without FUSE (/dev/fuse unavailable).
-./appimagetool-x86_64.AppImage --appimage-extract-and-run ../AppDir ../build/Skencil-x86_64.AppImage
+./"$tool" --appimage-extract-and-run AppDir build/Skencil-x86_64.AppImage
