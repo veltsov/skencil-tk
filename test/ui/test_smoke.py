@@ -44,6 +44,13 @@ def test_open_layer_dialog():
     run_ui('smoke_dialog.py', args=[testsupport.data_path('tarr.sk')])
 
 
+def test_open_about_box():
+    """File->About must not crash (py3 regression guard: tkinter has no
+    __version__ attribute there, so building the version string used to
+    raise AttributeError)."""
+    run_ui('smoke_about.py')
+
+
 def test_open_plugin_dialog():
     """Opening the Autoshapes plugin dialog must not crash (py3
     regression guard: the icon palettes go through PIL putpalette,

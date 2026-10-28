@@ -1100,7 +1100,11 @@ class SketchMainWindow(Publisher):
                   % {'version':SketchVersion,
                      'py':sys.version.split()[0],
                      'tcl':TclVersion,
-                     'tkinter':tkinter.__version__.split()[1],
+                     # tkinter has no __version__ in py3; there it is
+                     # versioned together with the interpreter
+                     'tkinter':(tkinter.__version__.split()[1]
+                                if hasattr(tkinter, '__version__')
+                                else sys.version.split()[0]),
                      'tk':TkVersion}
 
         self.application.MessageBox(title = _("About Skencil"),
