@@ -61,6 +61,14 @@ def test_scrollbar_wheel():
     run_ui('smoke_scrollbars.py', args=[testsupport.data_path('tarr.sk')])
 
 
+def test_zorder_moves():
+    """Move To Top / Bottom / Up / Down (single and multi selection)
+    must reorder the objects and undo must restore the original order
+    (py3 regression guard: the permutation was a `range` object, which
+    is immutable, so `del permutation[start]` raised TypeError)."""
+    run_ui('smoke_zorder.py', args=[testsupport.data_path('tarr.sk')])
+
+
 # ------------------------------------------------------- screenshot tests
 
 SHOT_FIXTURE = 'tarr.sk'

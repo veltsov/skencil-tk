@@ -501,7 +501,7 @@ class EditableCompound(Compound):
         # object that is moved to index i in the result.
         objects = self.objects
         length = len(objects)
-        identity = range(length)
+        identity = list(range(length))
         if permutation == identity:
             return NullUndo
         if len(objects) != len(permutation):
@@ -523,7 +523,7 @@ class EditableCompound(Compound):
         undo = [self.begin_change_children()]
         selection = []
         idxs = []
-        permutation = range(len(self.objects))
+        permutation = list(range(len(self.objects)))
         try:
             for start, end in sliced:
                 if isinstance(end, int):
@@ -590,7 +590,7 @@ class EditableCompound(Compound):
         sliced = list_to_tree_sliced(infolist)
         undo = [self.begin_change_children()]
         selection = []
-        permutation = range(len(self.objects))
+        permutation = list(range(len(self.objects)))
         objects = self.objects
         try:
             for start, end in sliced:
@@ -637,7 +637,7 @@ class EditableCompound(Compound):
         sliced.reverse()
         undo = [self.begin_change_children()]
         selection = []
-        permutation = range(len(self.objects))
+        permutation = list(range(len(self.objects)))
         objects = self.objects
         max = len(objects)
         try:

@@ -468,7 +468,7 @@ class CGMLoader(GenericLoader):
         dflt = cp(init)
         reff = dflt
         self.document()
-        self.fntmap = range(78)
+        self.fntmap = list(range(78))
         self.fntmap.insert(0,0)
 
 #   0x0040: 
