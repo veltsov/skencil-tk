@@ -118,10 +118,16 @@ PaxGC_MakeValues(PyObject *dict, unsigned long *pmask, XGCValues *pvalues)
 		    return 0;
 		}
 		if (p->type[0] == 'c')
-		    *((char*)pvalues + p->offset) = PyLong_AsLong(value);
+		    *((char*)pvalues + p->offset) = (char)PyLong_AsLong(value);
+		else if (strcmp(p->type, "unsigned long") == 0)
+		    *(unsigned long*)((char*)pvalues + p->offset) =
+			(unsigned long)PyLong_AsLong(value);
 		else
-		    /* XXX Assume sizeof(int) == sizeof(long)! */
-		    *(long*)((char*)pvalues + p->offset) = PyLong_AsLong(value);
+		    /* int and Bool fields of XGCValues are 4 bytes wide;
+		     * writing them as long would clobber the adjacent
+		     * field */
+		    *(int*)((char*)pvalues + p->offset) =
+			(int)PyLong_AsLong(value);
 	    }
 	    break;
 	}
@@ -427,8 +433,17 @@ GetAttr(PaxGCObject *self, char *name)
     }
     else
     {
-	/* XXX Assume sizeof(int) == sizeof(long) */
-	return PyLong_FromLong(* (long *)((char *)(&values) + p->offset));
+	if (p->type[0] == 'c')
+	    return PyLong_FromLong(
+		*(unsigned char *)((char *)(&values) + p->offset));
+	else if (strcmp(p->type, "unsigned long") == 0)
+	    return PyLong_FromUnsignedLong(
+		*(unsigned long *)((char *)(&values) + p->offset));
+	else
+	    /* int and Bool fields of XGCValues are 4 bytes wide; reading
+	     * them as long would include the adjacent field */
+	    return PyLong_FromLong(
+		*(int *)((char *)(&values) + p->offset));
     }
 }
 
@@ -464,10 +479,14 @@ SetAttr(PaxGCObject *self, char *name, PyObject *value)
 	    break;
     }
     if (p->type[0] == 'c')
-	*((char*)(&values) + p->offset) = PyLong_AsLong(value);
+	*((char*)(&values) + p->offset) = (char)PyLong_AsLong(value);
+    else if (strcmp(p->type, "unsigned long") == 0)
+	*(unsigned long*)((char *)(&values) + p->offset) =
+	    (unsigned long)PyLong_AsLong(value);
     else
-        /* XXX Assume sizeof(int) == sizeof(long) */
-	*(long*)((char *)(&values) + p->offset) = PyLong_AsLong(value);
+	/* int and Bool fields of XGCValues are 4 bytes wide; writing
+	 * them as long would clobber the adjacent field */
+	*(int*)((char *)(&values) + p->offset) = (int)PyLong_AsLong(value);
     XChangeGC(self->display, self->gc, p->mask, &values);
     return 0;
 }
