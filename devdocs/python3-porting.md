@@ -17,7 +17,9 @@ resolved there is done.
   `nobody`):** python3.10.12 at `/usr/bin/python3`.  Already present
   and importable under py3, i.e. **no installation needed**:
   `tkinter` (Tk 8.6), `PIL` 9.0.1 including `PIL.ImageTk` (used by the
-  autoshape toolbar icons), `numpy` 1.21.5, `setuptools` 59.6.0, the
+  autoshape toolbar icons), `numpy` 1.21.5 (present on the host but
+  **unused** — not a dependency of the application or the test suite),
+  `setuptools` 59.6.0, the
   python3.10 C headers (`/usr/include/python3.10`), the Tcl/Tk 8.6 dev
   headers (`/usr/include/tcl8.6`), gcc/make for the stage-B extension
   builds, the stdlib `lib2to3` (deprecated since 3.10 but present —
@@ -27,8 +29,8 @@ resolved there is done.
   nothing essential.  `python3-pytest` is now installed (pytest 6.2.5,
   `python3 -m pytest` works); `python3-pip`/`python3-venv` are not
   installed and are **not wanted** — port policy is to use only the
-  system python3 and system dist-packages (Pillow, numpy are already
-  there).
+  system python3 and system dist-packages (Pillow is already there;
+  numpy is also installed on the host but is not needed).
 - The py2-era set (`python2 python2-dev python-tk python-pil
   python-pil.imagetk tcl-dev tk-dev`) is still what the running app
   builds against.

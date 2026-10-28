@@ -4,7 +4,7 @@ dr=devroot
 mkdir -p $dr
 fakechroot fakeroot debootstrap --variant=minbase \
 	   --include=fakeroot \
-	   focal $dr http://archive.ubuntu.com/ubuntu/
+	   jammy $dr http://archive.ubuntu.com/ubuntu/
 
 # bug with symbolic links
 dd=$(realpath $dr)

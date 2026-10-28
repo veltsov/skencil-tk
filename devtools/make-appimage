@@ -2,13 +2,14 @@
 # Build the AppImage.  Like build-command, this script changes to the
 # skencil development directory (the parent of the directory containing
 # this script), so it works from any CWD; all other paths are relative
-# to that directory, like in collect-app-dir.
+# to that directory, like in collect-app-dir.  The payload collection
+# goes through build-command, so it honors SK_DEV_ENV (host/cont/devroot).
 set -e
 
 dd=$(dirname $(dirname $(readlink -f "$BASH_SOURCE[0]")))
 cd "$dd" || exit 1
 
-./devtools/collect-app-dir
+./devtools/build-command devtools/collect-app-dir
 tool=devtools/appimagetool-x86_64.AppImage
 if [ ! -x "$tool" ] ; then
     wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O "$tool"

@@ -1,2 +1,6 @@
-#!/bin/sh
-podman run -v ..:/skdev skdev "$@"
+#!/bin/bash
+# Run a command in the skdev podman container with the development
+# directory (the parent of the directory containing this script)
+# mounted at /skdev.  Works from any CWD.
+dd=$(dirname $(dirname $(readlink -f "$BASH_SOURCE[0]")))
+exec podman run -v "$dd":/skdev skdev "$@"

@@ -1,9 +1,26 @@
 #!/bin/bash
-# The python3 build environment is the host system itself (no devroot
-# bwrap container is used anymore).  This script changes to the skencil
-# development directory -- the parent of the directory containing this
-# script -- and execs its arguments there.
+# The python3 build environment is selected with the SK_DEV_ENV
+# environment variable:
+#   empty or 'host'   -- the host system (default; no devroot bwrap
+#                        container is used in this mode anymore)
+#   'cont'            -- the podman container (devtools/build-command-cont)
+#   'devroot'         -- the bwrap devroot (devtools/enter-devroot)
+# This script changes to the skencil development directory -- the parent
+# of the directory containing this script -- and execs the arguments in
+# the selected environment there.
 
 dd=$(dirname $(dirname $(readlink -f "$BASH_SOURCE[0]")))
 cd "$dd" || exit 1
-exec "$@"
+
+case "$SK_DEV_ENV" in
+    ''|host)
+	exec "$@" ;;
+    cont)
+	exec devtools/build-command-cont "$@" ;;
+    devroot)
+	exec devtools/enter-devroot "$@" ;;
+    *)
+	echo "build-command: unknown SK_DEV_ENV value '$SK_DEV_ENV'" \
+	     "(want: host, cont or devroot)" >&2
+	exit 1 ;;
+esac

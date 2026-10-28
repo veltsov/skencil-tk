@@ -1,19 +1,25 @@
 # Build, Run and Environment
 
-## Requirements (Ubuntu 20.04, matching `README.md`)
+## Requirements
+
+For the python3 build (the `py3` branch, matching `README.md`; on
+Ubuntu 22.04 jammy `python3` is 3.10, matching
+`build/lib.linux-x86_64-3.10`):
 
 ```
-apt install python2 python2-dev python-tk python-pil python-pil.imagetk \
-        tcl-dev tk-dev python-gi
+apt install python3 python3-dev python3-tk python3-pil python3-pil.imagetk \
+        tcl-dev tk-dev
 ```
 
-For the proper color scheme (older setups used gtk2 defaults):
-```
-wget http://archive.ubuntu.com/ubuntu/pool/universe/p/pygtk/python-gtk2_2.24.0-5.1ubuntu2_amd64.deb
-sudo apt-get install ./python-gtk2_2.24.0-5.1ubuntu2_amd64.deb
-```
-Note: recent commits removed attempts to set fonts/colors via gtk, so this
-package is no longer strictly required (`gtkutils.py` is Tk-only now).
+The test suite additionally uses `xvfb`, `ghostscript`, `pstoedit` and
+`python3-pytest` (the same set as
+`devtools/devcont/install-dev-packages`).
+
+Historical (the py2 `modernize` branch, Ubuntu 20.04): `python2
+python2-dev python-tk python-pil python-pil.imagetk tcl-dev tk-dev
+python-gi`.  The old python-gtk2 deb note is obsolete — recent commits
+removed attempts to set fonts/colors via gtk (`gtkutils.py` is Tk-only
+now).
 
 ## Build and run
 
@@ -105,25 +111,40 @@ _sketchmodule, skreadmodule, streamfilter, _type1module`) into
 There are three ways to get a build environment:
 
 1. **Native (host system)** — used on the current machine for the py3
-   branch.  Since the py3 port the build environment is simply the host
-   (Ubuntu focal with python3.10, tkinter, PIL, numpy, headers; see
-   `devdocs/python3-porting.md`); the former debootstrapped `devroot`
-   (bwrap container, `devtools/build-devroot`, `enter-devroot`) is only
-   kept for the py2 branch.
+   branch.  Since the py3 port the default build environment is simply
+   the host (Ubuntu focal with python3.10, tkinter, PIL, headers;
+   see `devdocs/python3-porting.md`); the debootstrapped `devroot` (bwrap
+   container, `devtools/build-devroot`, `enter-devroot`) and the podman
+   container are the alternative environments, selected with the
+   `SK_DEV_ENV` variable (see below).
+   Note: numpy is installed on the dev host but is **not** a dependency
+   — the application's only third-party import is PIL (verified by an
+   import sweep of `src/`; see the comment in `collect-app-dir`).  Do
+   not add it to the package lists of the environments.
    - `devtools/build-command <cmd>`: changes to the skencil development
      directory (the parent of the directory containing the script,
      resolved with the `dirname $(dirname $(readlink -f ...))` trick,
-     like the old `enter-devroot`) and execs the arguments there.  No
-     container is used anymore.
+     like the old `enter-devroot`) and execs the arguments in the
+     environment selected by `SK_DEV_ENV`:
+     - empty or `host` (default) — the host system;
+     - `cont` — the podman container (via `devtools/build-command-cont`);
+     - `devroot` — the bwrap devroot (via `devtools/enter-devroot`);
+     any other value is rejected with an error.
    - Typical usage: `devtools/build-command python3 setup.py build`
      (wrapped by `devtools/build-skencil`).
 
 2. **Podman container** — `devtools/devcont/Dockerfile` (FROM
-   ubuntu:20.04 + `install-dev-packages`).
-   - `devtools/build-devcont` builds image `skdev`; `devtools/build-skencil`
-     was originally `./build-command ...` (now the bwrap variant);
-     `devtools/build-command-cont` runs commands in the container;
-     `devtools/enter-devcont` gives an interactive shell.
+   ubuntu:22.04 + `install-dev-packages`, the python3.10 package list
+   including the test-suite tools: xvfb, ghostscript, pstoedit, pytest).
+   - `devtools/build-devcont` builds image `skdev`;
+     `devtools/build-command-cont` runs commands in the container and
+     `devtools/enter-devcont` gives an interactive shell; both resolve
+     the development directory with the dirname/readlink trick and
+     mount it at `/skdev`, so they work from any CWD (previously they
+     relied on being run from `devtools/`, mounting `..`).
+   - The container is normally driven through `SK_DEV_ENV=cont
+     devtools/build-command <cmd>` (e.g. `SK_DEV_ENV=cont
+     devtools/build-command python3 setup.py build`).
 
 3. **AppImage packaging** — `devtools/make-appimage` runs
    `devtools/collect-app-dir` and then
