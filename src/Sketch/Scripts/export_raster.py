@@ -42,6 +42,7 @@ import PIL.Image, PIL.ImageChops
 
 import Sketch.Scripting
 from Sketch import _, PostScriptDevice
+from Sketch.Lib import util
 
 # for parameter dialogs
 from Sketch.UI.sketchdlg import SKModal
@@ -107,34 +108,25 @@ def make_ps(document):
 
 def render_ps(filename, resolution, width, height, orig_x = 0, orig_y = 0,
               prolog = '', antialias = '', gsdevice = 'ppmraw'):
-    if prolog:
-        prolog = '-c ' + '"' + prolog + '"'
-
-    if antialias:
-        antialias = ("-dTextAlphaBits=%d -dGraphicsAlphaBits=%d"
-                     % (antialias, antialias))
-    else:
-        antialias = ""
-
-    orig_x = -orig_x
-    orig_y = -orig_y
-
     temp = tempfile.mktemp()
 
+    args = ['-dNOPAUSE', '-g%dx%d' % (width, height), '-r%d' % resolution,
+            '-sOutputFile=' + temp]
+    if antialias:
+        args += ['-dTextAlphaBits=%d' % antialias,
+                 '-dGraphicsAlphaBits=%d' % antialias]
+    args += ['-sDEVICE=' + gsdevice, '-q']
+    if prolog:
+        args += ['-c', prolog]
+    args += ['-c', '%f' % -orig_x, '%f' % -orig_y, 'translate',
+             '-f', filename, '-c', 'quit']
+
     try:
-        gs_cmd = ('gs -dNOPAUSE -g%(width)dx%(height)d -r%(resolution)d '
-                  '-sOutputFile=%(temp)s %(antialias)s '
-                  '-sDEVICE=%(gsdevice)s -q %(prolog)s '
-                  '-c %(orig_x)f %(orig_y)f translate '
-                  '-f%(filename)s -c quit')
-        gs_cmd = gs_cmd % locals()
-        # py2's os.system encodes unicode commands with the default
-        # (ascii) codec; the command may contain utf-8 file names (K6,
-        # devdocs/string-handling.md)
-        retval = os.system(gs_cmd.encode('utf-8'))
+        retval = util.run_gs(args)
         if retval:
-            sys.stderr.write("skencil:export_raster: executing %s failed"
-                             " with exit code %x\n" % (repr(gs_cmd), retval))
+            sys.stderr.write("skencil:export_raster: running %s failed"
+                             " with exit code %x\n"
+                             % (util.ghostscript_command(), retval))
             raise IOError("Error running ghostscript."
                           "  Perhaps it's not installed.")
         image = PIL.Image.open(temp)

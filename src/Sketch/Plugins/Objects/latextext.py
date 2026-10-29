@@ -53,7 +53,7 @@ from Sketch.Base import main
 from Sketch import Group, SketchError
 from Sketch.Base import load
 from Sketch.Base import config
-from Sketch.Lib.util import as_unicode
+from Sketch.Lib.util import as_unicode, run_gs_output
 from tempfile import mkdtemp
 
 import os
@@ -313,9 +313,17 @@ def write_error(btitle,bmessage):
 def remove_temp_files(dirname):
     rmtree(dirname,ignore_errors=True)
 
+# Return the ghostscript version banner (the `gs -v' output, which
+# goes to stderr), or None if the interpreter could not be run.
+def gs_version():
+    try:
+        return run_gs_output(['-v'])[1]
+    except Exception:
+        return None
+
 # Check if pstoedit can process pdf files directly
 try:
     # get ghostscript major version. pstoedit cannot do pdf for version >= 10
-    pstoedit_can_pdf = int(exec_command('gs -v').split()[2].split('.')[0]) < 10
+    pstoedit_can_pdf = int(gs_version().split()[2].split('.')[0]) < 10
 except:
     pstoedit_can_pdf = False

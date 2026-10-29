@@ -39,7 +39,8 @@ else:
 
 
 def latex_available():
-    for tool in ('gs', 'pstoedit', 'pdflatex', 'latex', 'dvips'):
+    for tool in (os.environ.get('GS') or 'gs',
+                 'pstoedit', 'pdflatex', 'latex', 'dvips'):
         if find_executable(tool) is None:
             return False
     return True

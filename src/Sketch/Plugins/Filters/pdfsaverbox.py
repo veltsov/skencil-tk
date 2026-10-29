@@ -33,11 +33,6 @@ from Sketch import PostScriptDevice
 from Sketch.Base import config
 from Sketch.Lib import util
 
-gs_command =  'gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dCompatibilityLevel=%(compat)s' \
-        ' -r%(resolution)d -g%(width)dx%(height)d -sOutputFile=%(filename)s' \
-	' -c %(offx)f %(offy)f translate -f -'
-#        " -dAutoFilterColorImages=false -sColorImageFilter=FlateEncode"
-
 def save(document, file, filename, options = {}):
     bbox = tuple(document.BoundingRect(visible = 0, printable = 1))
     llx, lly, urx, ury = bbox
@@ -48,8 +43,13 @@ def save(document, file, filename, options = {}):
     offx = -llx
     offy = -lly
 
-    filename = util.sh_quote(filename)
-    file = util.popen_write(gs_command % locals())
+    file = util.run_gs_pipe(['-q', '-dNOPAUSE', '-dBATCH', '-sDEVICE=pdfwrite',
+                             '-dCompatibilityLevel=%s' % compat,
+                             '-r%d' % resolution,
+                             '-g%dx%d' % (width, height),
+                             '-sOutputFile=' + filename,
+                             '-c', '%f' % offx, '%f' % offy, 'translate',
+                             '-f', '-'])
     ps = PostScriptDevice(file, document = document, as_eps = 1, embed_fonts = 1,
                           bounding_box = bbox,
                           Title = os.path.basename(filename),

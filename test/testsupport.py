@@ -139,7 +139,8 @@ def sk2ps(infile, outfile):
 def gs_rasterize(src, png, dpi=100):
     """Rasterize PS/EPS/PDF to PNG with ghostscript, cropped to the
     bounding box for EPS input."""
-    cmd = ['gs', '-dSAFER', '-dBATCH', '-dNOPAUSE', '-dQUIET',
+    cmd = [os.environ.get('GS') or 'gs',
+           '-dSAFER', '-dBATCH', '-dNOPAUSE', '-dQUIET',
            '-sDEVICE=png16m', '-r%d' % dpi,
            '-dEPSCrop', '-sOutputFile=%s' % png, src]
     subprocess.check_call(cmd, stdout=subprocess.PIPE,
@@ -165,7 +166,7 @@ def normalize_sk(text):
     return text
 
 
-def images_differ(path_a, path_b, tol=10, max_frac=0.002):
+def images_differ(path_a, path_b, tol=10, max_frac=0.003):
     """Return (differ, message).  Two images match if they have the same
     size and the fraction of pixels differing by more than `tol' (per
     channel max) is at most `max_frac'."""

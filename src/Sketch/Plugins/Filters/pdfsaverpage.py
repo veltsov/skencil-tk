@@ -33,10 +33,6 @@ from Sketch import PostScriptDevice
 from Sketch.Base import config
 from Sketch.Lib import util
 
-gs_command =  'gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dCompatibilityLevel=%(compat)s' \
-	' -r%(resolution)d -g%(width)dx%(height)d -sOutputFile=%(filename)s' \
-	' -f -'
-
 def save(document, file, filename, options = {}):
     bbox = tuple(document.PageRect())
     llx, lly, urx, ury = bbox
@@ -45,8 +41,12 @@ def save(document, file, filename, options = {}):
     width = int((urx-llx)*resolution/72)
     height = int((ury-lly)*resolution/72)
 
-    filename = util.sh_quote(filename)
-    file = util.popen_write(gs_command % locals())
+    file = util.run_gs_pipe(['-q', '-dNOPAUSE', '-dBATCH', '-sDEVICE=pdfwrite',
+                             '-dCompatibilityLevel=%s' % compat,
+                             '-r%d' % resolution,
+                             '-g%dx%d' % (width, height),
+                             '-sOutputFile=' + filename,
+                             '-f', '-'])
     ps = PostScriptDevice(file, document = document, as_eps = 0, embed_fonts = 1,
                           bounding_box = bbox,
                           Title = os.path.basename(filename),

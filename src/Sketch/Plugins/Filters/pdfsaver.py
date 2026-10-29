@@ -36,11 +36,6 @@ from Sketch import PostScriptDevice
 from Sketch.Base import config
 from Sketch.Lib import util
 
-gs_command =  'gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dCompatibilityLevel=%(compat)s' \
-        ' %(imfilter)s' \
-        ' -r%(resolution)d -g%(width)dx%(height)d -sOutputFile=%(filename)s' \
-	' -c %(offx)f %(offy)f translate -f -'
-
 def save(document, file, filename, options = {}):
     if options.get('box'):
         bbox = document.BoundingRect(visible = 0, printable = 1)
@@ -55,13 +50,16 @@ def save(document, file, filename, options = {}):
     offx = -llx
     offy = -lly
 
+    args = ['-q', '-dNOPAUSE', '-dBATCH', '-sDEVICE=pdfwrite',
+            '-dCompatibilityLevel=%s' % compat]
     if options.get('images'):
-        imfilter = "-dAutoFilterColorImages=false -sColorImageFilter=FlateEncode"
-    else:
-        imfilter = ''
+        args.append("-dAutoFilterColorImages=false"
+                    " -sColorImageFilter=FlateEncode")
+    args += ['-r%d' % resolution, '-g%dx%d' % (width, height),
+             '-sOutputFile=' + filename,
+             '-c', '%f' % offx, '%f' % offy, 'translate', '-f', '-']
 
-    filename = util.sh_quote(filename)
-    file = util.popen_write(gs_command % locals())
+    file = util.run_gs_pipe(args)
     ps = PostScriptDevice(file, document = document, as_eps = 1, embed_fonts = 1,
                           bounding_box = bbox,
                           Title = os.path.basename(filename),

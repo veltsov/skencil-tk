@@ -50,6 +50,49 @@ def getenv(s):
     return None
 
 
+# Return the ghostscript interpreter command: $GS if set, else plain
+# 'gs'.  The GS variable is also honored by pstoedit's ghostscript
+# frontend (verified with pstoedit 3.78), so a single setting selects
+# the interpreter for the whole toolchain.  This is used e.g. by the
+# AppImage, which bundles a self-contained interpreter as `skgs' (not
+# `gs', so that the Ubuntu AppArmor profile for the system gs, which
+# prevents reading font files from user directories, does not apply).
+def ghostscript_command():
+    return os.environ.get('GS') or 'gs'
+
+
+def _gs_command(args):
+    # the full command line for the given ghostscript arguments
+    return [ghostscript_command()] + list(args)
+
+
+def run_gs(args):
+    """Run the ghostscript interpreter with ARGS (a list of command
+    line arguments, without the program name; no shell involved, so
+    arguments with spaces need no quoting) and wait for it.  Return
+    the exit status."""
+    return subprocess.call(_gs_command(args))
+
+
+def run_gs_pipe(args):
+    """Run the ghostscript interpreter with ARGS and return a file
+    object connected to its standard input, for piping PostScript into
+    it (like popen_write, but without a shell)."""
+    return subprocess.Popen(_gs_command(args),
+                            stdin=subprocess.PIPE).stdin
+
+
+def run_gs_output(args):
+    """Run the ghostscript interpreter with ARGS and return a tuple
+    (exit status, combined standard output and error as unicode)."""
+    po = subprocess.Popen(_gs_command(args), stdin=subprocess.PIPE,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = po.communicate()
+    # the output ends up in warning messages (str); undecodable bytes
+    # are replaced
+    return po.returncode, (out + err).decode('utf-8', 'replace')
+
+
 # Return the pwd entry for the current user in the format of
 # pwd.getpwuid.
 def get_pwd():

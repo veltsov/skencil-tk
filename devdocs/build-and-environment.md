@@ -192,6 +192,41 @@ There are three ways to get a build environment:
      `make-appimage` a second time silently "fixed" the payload since
      the polluted build tree was then copied verbatim). The polluted
      gsfonts-only files were removed from the build tree.
+    - the ghostscript interpreter built by `devtools/fetch-gs` into
+      `AppDir/usr/bin/skgs` (when present).  `fetch-gs` downloads the
+      latest 9.x ghostscript source tarball (9.56.1; 9.x deliberately —
+      pstoedit cannot process PDF directly with ghostscript >= 10, see
+      `latextext.py`) from the Artifex ghostpdl-downloads releases and
+      builds it with the default compile-inits, so the init files and
+      the base 14 URW fonts are embedded in the executable (ROM file
+      system) and only the system libc family stays dynamically linked.
+      The executable is named **skgs**, not gs: the Ubuntu AppArmor
+      profile for the system gs prevents reading font files from user
+      directories on newer Ubuntu releases, and a differently named
+      binary is not confined by that profile.  `AppRun` exports `GS`
+      pointing at the bundled interpreter; one variable drives the
+      whole toolchain, since all ghostscript invocations of the
+      application go through `Sketch.Lib.util.run_gs` /
+      `ghostscript_command()` (EPS preview, raster export, PDF export,
+      the LaTeX plugin) and pstoedit's ghostscript frontend also
+      honors `GS` (verified with pstoedit 3.78).
+    - the system **pstoedit** (so that the LaTeX plugin's toolchain is
+      fully self-contained together with the bundled ghostscript):
+      `/usr/bin/pstoedit`, the core library `libpstoedit.so.0` and the
+      C++ runtime (`libstdc++.so.6`, `libgcc_s.so.1` — pstoedit is the
+      only C++ component of the payload) into the LD_LIBRARY_PATH'd
+      multiarch directory, and the standard driver plugin
+      `libp2edrvstd.so` (which contains the Sketch format driver) into
+      `AppDir/usr/lib/pstoedit/` — the `<exedir>/../lib/pstoedit`
+      location where pstoedit searches for its plugins at runtime.
+      The other plugins (magick++, wmf, libplot) are not needed.
+      Relocation verified with bwrap: with the system pstoedit, plugin
+      directory and C++ runtime hidden, the AppDir pstoedit maps only
+      its bundled libraries (checked via /proc/<pid>/maps) and
+      produces a valid .sk file; the core library is found through
+      LD_LIBRARY_PATH (AppRun's), the plugin through the executable's
+      own directory.
+
    Stale payload dirs are wiped first (`rsync --delete` does not remove
    top-level extraneous entries).  If a future change makes the
    application import another third-party package, a corresponding
@@ -228,6 +263,20 @@ AppDir and the extracted AppImage.
   `font_path` (`/usr/share/fonts/type1/gsfonts` etc.) and the
   `SKETCH_FONTPATH` environment variable is supported (added in this fork).
   Text can be drawn as curves when the X11 font is missing (new feature).
+- Ghostscript invocations (EPS preview rendering, raster export, PDF
+  export, the LaTeX plugin's `gs -v` probe) go through the
+  `Sketch.Lib.util.run_gs` family (`run_gs`, `run_gs_pipe`,
+  `run_gs_output`), which runs the interpreter from `ghostscript_command()`:
+  the `GS` environment variable if set, else `gs`.  The `GS` variable
+  is used (instead of a skencil-specific name) because pstoedit's
+  ghostscript frontend honors it as well (verified with pstoedit
+  3.78), so one setting selects the interpreter for the whole
+  toolchain.  This exists because the AppArmor profile of the system
+  gs on newer Ubuntu releases prevents reading font files from user
+  directories; selecting another interpreter (e.g. the
+  AppImage-bundled `skgs`, see the AppImage packaging section) works
+  around it.  The run_gs functions pass argument lists directly to
+  the interpreter (no shell), so file names need no quoting.
 - `pstoedit` is needed in the dev image (used somewhere in filters/tests).
 
 ## Known build artifacts / cruft

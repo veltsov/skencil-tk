@@ -1,0 +1,81 @@
+#!/bin/bash
+# Download and build a self-contained ghostscript interpreter for the
+# AppImage payload.  devtools/collect-app-dir copies the result to
+# AppDir/usr/bin/skgs, AppRun exports GS pointing at it.
+#
+# The latest 9.x release is used deliberately: pstoedit cannot process
+# PDF directly with ghostscript >= 10 (this is checked by the LaTeX
+# plugin, src/Sketch/Plugins/Objects/latextext.py), so 9.x keeps the
+# direct pdf path of the LaTeX toolchain alive.
+#
+# Self-containment: the default compile-inits build embeds the init
+# files and the base 14 URW fonts (the Resource/ directory of the
+# source tree) into the ROM file system inside the executable, and the
+# bundled copies of png/jpeg/zlib/tiff/lcms/freetype are used, so only
+# the system libc family remains dynamically linked (verified below).
+#
+# The executable is named skgs, not gs: the Ubuntu AppArmor profile
+# for ghostscript is tied to the name of the system gs binary and on
+# newer Ubuntu releases prevents it from reading font files from user
+# directories (unfixable without root); a differently named binary is
+# not confined by that profile.
+#
+# Cached in build/gs/: an existing build/gs/skgs or unpacked source
+# tree is kept (remove build/gs/ to force a fresh download and build).
+set -e
+
+version=9.56.1
+srcdir=ghostscript-$version
+url="https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs${version//./}/$srcdir.tar.gz"
+
+mkdir -p build/gs
+cd build/gs
+
+if [ ! -x "$srcdir/bin/gs" ] ; then
+    if [ ! -f "$srcdir.tar.gz" ] ; then
+	wget "$url" -O "$srcdir.tar.gz"
+    fi
+    rm -rf "$srcdir"
+    tar xzf "$srcdir.tar.gz"
+    cd "$srcdir"
+    # No X11, no cups/tesseract/libidn/libpaper (not needed for the
+    # command line interpreter); fontconfig is disabled as well -- the
+    # needed fonts (base 14 URW) are embedded in the executable, and
+    # this keeps it self-contained (fontconfig would otherwise remain
+    # the only non-libc dynamic dependency).  The bundled copies of
+    # the other libraries are used (see the self-containment note
+    # above).
+    ./configure --without-x --disable-cups --without-tesseract \
+		--without-libidn --without-libpaper --disable-fontconfig
+    make -j"$(nproc)"
+    cd ..
+fi
+
+cp -f "$srcdir/bin/gs" skgs
+chmod +x skgs
+
+# --- verification -----------------------------------------------------
+echo "fetch-gs: dynamic libraries of build/gs/skgs:"
+ldd skgs
+if ldd skgs | grep -qv -E 'lib(c|m|dl|pthread)\.so|ld-linux|linux-vdso' ; then
+    echo "fetch-gs: WARNING: unexpected dynamic dependencies above" >&2
+fi
+
+echo "fetch-gs: version check in an empty environment:"
+env -i "$(pwd)/skgs" --version
+
+# Render a small PostScript file with a base font, still in an empty
+# environment (no GS_LIB, no HOME), proving that the embedded
+# resources (init files + base fonts) are sufficient.
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+cat > "$tmp/test.ps" <<'EOF'
+%!PS-Adobe-3.0
+/Times-Roman findfont 12 scalefont setfont
+72 700 moveto (skgs self-test) show
+showpage
+EOF
+env -i "$(pwd)/skgs" -q -dNOPAUSE -dBATCH -sDEVICE=png16m \
+    -sOutputFile="$tmp/test.png" "$tmp/test.ps"
+test -s "$tmp/test.png"
+echo "fetch-gs: build/gs/skgs OK"

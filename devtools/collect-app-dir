@@ -69,3 +69,43 @@ rsync -av --no-owner --no-group --delete /usr/share/tcltk $share
 # from src/Resources/Fontmetrics.  Verified: no filename collisions with
 # the bundled files.
 rsync -av --no-owner --no-group --exclude '*.pfm' /usr/share/fonts/type1/gsfonts/ $b/$libdir/Resources/Fontmetrics/
+
+# The bundled ghostscript interpreter, built by devtools/fetch-gs
+# (self-contained: init files and base 14 URW fonts are embedded in
+# the executable; only the system libc family is dynamically linked).
+# It is named skgs, not gs, so that the AppArmor profile tied to the
+# system gs name (Ubuntu) does not apply to it; AppRun exports GS
+# pointing at it.
+if [ -x build/gs/skgs ] ; then
+    cp -f build/gs/skgs $bin/skgs
+fi
+
+# The bundled pstoedit, so that the LaTeX plugin's toolchain is
+# self-contained (together with the bundled ghostscript, GS is already
+# exported by AppRun).  Only the binary, the core library and the
+# standard driver plugin (which contains the Sketch format driver)
+# are bundled -- the other plugins (magick++, wmf, libplot) are not
+# needed by the application.  The core library and the C++ runtime
+# (pstoedit is the only C++ component of the payload) go into the
+# LD_LIBRARY_PATH'd multiarch directory; the plugin goes into the
+# <exedir>/../lib/pstoedit directory where pstoedit searches for its
+# plugins at runtime (relocation verified: with the system plugin
+# directory hidden, the relocated plugin is found and mapped).
+if [ -x /usr/bin/pstoedit ] ; then
+    cp -f /usr/bin/pstoedit $bin/pstoedit
+    rm -rf $lib/pstoedit
+    mkdir -p $lib/pstoedit
+    cp -a /usr/lib/x86_64-linux-gnu/pstoedit/libp2edrvstd.so \
+          /usr/lib/x86_64-linux-gnu/pstoedit/libp2edrvstd.so.0 \
+          /usr/lib/x86_64-linux-gnu/pstoedit/libp2edrvstd.so.0.0.0 \
+          $lib/pstoedit/
+    # core library: dereference the soname symlink, recreate it here
+    src=$(readlink -f /usr/lib/x86_64-linux-gnu/libpstoedit.so.0)
+    cp -f "$src" $lib/x86_64-linux-gnu/$(basename $src)
+    ln -sf $(basename $src) $lib/x86_64-linux-gnu/libpstoedit.so.0
+    # C++ runtime
+    src=$(readlink -f /usr/lib/x86_64-linux-gnu/libstdc++.so.6)
+    cp -f "$src" $lib/x86_64-linux-gnu/$(basename $src)
+    ln -sf $(basename $src) $lib/x86_64-linux-gnu/libstdc++.so.6
+    cp -f /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 $lib/x86_64-linux-gnu/
+fi

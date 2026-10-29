@@ -21,6 +21,15 @@ if [ -d "${HERE}/fonts" ] ; then
     export GS_LIB="$SKETCH_FONTPATH":"$GS_LIB"
 fi
 
+# The bundled ghostscript interpreter, named skgs (not gs, so that the
+# AppArmor profile of the system gs does not apply to it; newer Ubuntu
+# releases prevent gs from reading font files from user directories).
+# GS selects the interpreter both for skencil's own invocations
+# (Sketch.Lib.util.run_gs) and for pstoedit's ghostscript frontend.
+if [ -x "${HERE}/usr/bin/skgs" ] ; then
+    export GS="${HERE}/usr/bin/skgs"
+fi
+
 case $MAIN in
     sk-*)
 	tryexec="${MAIN:3}"

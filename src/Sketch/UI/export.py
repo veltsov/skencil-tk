@@ -88,7 +88,7 @@ class ExportPanel(SketchPanel):
 
 import os
 
-from Sketch.Lib.util import popen_write
+from Sketch.Lib import util
 
 
 def export_bitmap(document):
@@ -98,13 +98,11 @@ def export_bitmap(document):
     height = round(height)
     res = 72
     outfile = '/tmp/export.ppm'
-    gs_cmd = 'gs -dNOPAUSE -g%(width)dx%(height)d -r%(res)d -sDEVICE=ppmraw '\
-           '-sOutputFile=%(outfile)s -q -' % locals()
-    #gs_cmd = 'cat > ' + outfile
-
+    args = ['-dNOPAUSE', '-g%dx%d' % (width, height), '-r%d' % res,
+            '-sDEVICE=ppmraw', '-sOutputFile=' + outfile, '-q', '-']
     if __debug__:
-        print(gs_cmd)
-    file = util.popen_write(gs_cmd)
+        print(args)
+    file = util.run_gs_pipe(args)
     try:
         device = PostScriptDevice(file, as_eps = 0)
         document.Draw(device)

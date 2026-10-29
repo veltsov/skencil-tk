@@ -33,20 +33,11 @@ from Sketch.Graphics.base import GraphicsObject
 from Sketch.Graphics.external import ExternalData, get_cached, ExternalGraphics
 
 
-gs_command = ('gs -sDEVICE=ppmraw -r%(resolution)d -dNOPAUSE -dSAFER -q'
-              ' -sOutputFile=%(temp)s -g%(width)dx%(height)d'
-              ' -c %(offx)f %(offy)f translate'
-              ' /oldshowpage /showpage load def /showpage \'{}\' def '
-              ' -f %(filename)s -c oldshowpage quit')
-
 def render_preview(filename, startx, starty, width, height, resolution = None):
     import tempfile
     temp = tempfile.mktemp()
 
     try:
-        # quote the filename so that it can have spaces and to avoid a
-        # security hole
-        filename = util.sh_quote(filename)
         if resolution is None:
             resolution = config.preferences.eps_preview_resolution
         factor = resolution / 72.0
@@ -54,10 +45,16 @@ def render_preview(filename, startx, starty, width, height, resolution = None):
         height = int(math.ceil(height * factor))
         offx = -startx
         offy = -starty
-        # py2's os.system encodes unicode commands with the default
-        # (ascii) codec; the command may contain utf-8 file names (K6,
-        # devdocs/string-handling.md)
-        os.system((gs_command % locals()).encode('utf-8'))
+        # render the preview without showing the page (the showpage
+        # operator is redefined to do nothing); no shell involved, so
+        # the file name needs no quoting (util.run_gs)
+        util.run_gs(['-sDEVICE=ppmraw', '-r%d' % resolution,
+                     '-dNOPAUSE', '-dSAFER', '-q',
+                     '-sOutputFile=' + temp,
+                     '-g%dx%d' % (width, height),
+                     '-c', '%f' % offx, '%f' % offy, 'translate',
+                     '/oldshowpage /showpage load def', '/showpage {} def',
+                     '-f', filename, '-c', 'oldshowpage quit'])
 
         image = PIL.Image.open(temp)
         image.load()
