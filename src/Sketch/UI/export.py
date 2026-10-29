@@ -98,8 +98,9 @@ def export_bitmap(document):
     height = round(height)
     res = 72
     outfile = '/tmp/export.ppm'
-    args = ['-dNOPAUSE', '-g%dx%d' % (width, height), '-r%d' % res,
-            '-sDEVICE=ppmraw', '-sOutputFile=' + outfile, '-q', '-']
+    args = ['-dSAFER', '-dNOPAUSE', '-g%dx%d' % (width, height),
+            '-r%d' % res, '-sDEVICE=ppmraw',
+            '-sOutputFile=' + outfile, '-q', '-']
     if __debug__:
         print(args)
     file = util.run_gs_pipe(args)

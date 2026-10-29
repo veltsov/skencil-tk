@@ -313,17 +313,18 @@ def write_error(btitle,bmessage):
 def remove_temp_files(dirname):
     rmtree(dirname,ignore_errors=True)
 
-# Return the ghostscript version banner (the `gs -v' output, which
-# goes to stderr), or None if the interpreter could not be run.
-def gs_version():
-    try:
-        return run_gs_output(['-v'])[1]
-    except Exception:
-        return None
-
-# Check if pstoedit can process pdf files directly
+# Check if pstoedit can process pdf files directly.  Two constraints:
+# - the new C-based PDF interpreter of ghostscript (pdfi), the default
+#   since gs 9.56, bypasses the PostScript operators redefined by
+#   pstoedit: PDF input then silently produces an empty output file
+#   (the old PostScript-based interpreter must be the default; gs
+#   9.55 is the last release with it);
+# - gs >= 10 is reported as incompatible by older pstoedit versions.
+# Hence the maximum allowed version is 9.55.
 try:
-    # get ghostscript major version. pstoedit cannot do pdf for version >= 10
-    pstoedit_can_pdf = int(gs_version().split()[2].split('.')[0]) < 10
+    # the `gs -v' version banner goes to stderr
+    banner = run_gs_output(['-v'])[1]
+    version = banner.split()[2].split('.')
+    pstoedit_can_pdf = (int(version[0]), int(version[1])) <= (9, 55)
 except:
     pstoedit_can_pdf = False

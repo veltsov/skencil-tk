@@ -110,8 +110,8 @@ def render_ps(filename, resolution, width, height, orig_x = 0, orig_y = 0,
               prolog = '', antialias = '', gsdevice = 'ppmraw'):
     temp = tempfile.mktemp()
 
-    args = ['-dNOPAUSE', '-g%dx%d' % (width, height), '-r%d' % resolution,
-            '-sOutputFile=' + temp]
+    args = ['-dSAFER', '-dNOPAUSE', '-g%dx%d' % (width, height),
+            '-r%d' % resolution, '-sOutputFile=' + temp]
     if antialias:
         args += ['-dTextAlphaBits=%d' % antialias,
                  '-dGraphicsAlphaBits=%d' % antialias]

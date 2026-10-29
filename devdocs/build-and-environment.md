@@ -194,12 +194,23 @@ There are three ways to get a build environment:
      gsfonts-only files were removed from the build tree.
     - the ghostscript interpreter built by `devtools/fetch-gs` into
       `AppDir/usr/bin/skgs` (when present).  `fetch-gs` downloads the
-      latest 9.x ghostscript source tarball (9.56.1; 9.x deliberately —
-      pstoedit cannot process PDF directly with ghostscript >= 10, see
-      `latextext.py`) from the Artifex ghostpdl-downloads releases and
-      builds it with the default compile-inits, so the init files and
-      the base 14 URW fonts are embedded in the executable (ROM file
-      system) and only the system libc family stays dynamically linked.
+      **9.55.0** source tarball from the Artifex ghostpdl-downloads
+      releases and builds it with the default compile-inits, so the
+      init files and the base 14 URW fonts are embedded in the
+      executable (ROM file system) and only the system libc family
+      stays dynamically linked.  9.55 is chosen deliberately: it is
+      the last release with the PostScript-based PDF interpreter as
+      the default; the new C-based interpreter (pdfi), the default
+      since 9.56, bypasses the PostScript operators redefined by
+      pstoedit, so PDF input through pstoedit silently produces an
+      empty output file (the LaTeX plugin's `pstoedit_can_pdf` check
+      in `latextext.py` caps the version at 9.55 accordingly; gs >= 10
+      is excluded as before).  9.55 also matches the ghostscript of
+      the development environment, so the AppImage rasterization
+      matches the test baselines; the trade-off is the missing
+      upstream security fixes after 2021, mitigated by running the
+      application's own invocations with `-dSAFER` (the pstoedit
+      internal ones use `-dDELAYSAFER`).
       The executable is named **skgs**, not gs: the Ubuntu AppArmor
       profile for the system gs prevents reading font files from user
       directories on newer Ubuntu releases, and a differently named

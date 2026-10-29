@@ -50,7 +50,7 @@ def save(document, file, filename, options = {}):
     offx = -llx
     offy = -lly
 
-    args = ['-q', '-dNOPAUSE', '-dBATCH', '-sDEVICE=pdfwrite',
+    args = ['-dSAFER', '-q', '-dNOPAUSE', '-dBATCH', '-sDEVICE=pdfwrite',
             '-dCompatibilityLevel=%s' % compat]
     if options.get('images'):
         args.append("-dAutoFilterColorImages=false"

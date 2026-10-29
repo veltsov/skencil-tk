@@ -3,10 +3,20 @@
 # AppImage payload.  devtools/collect-app-dir copies the result to
 # AppDir/usr/bin/skgs, AppRun exports GS pointing at it.
 #
-# The latest 9.x release is used deliberately: pstoedit cannot process
-# PDF directly with ghostscript >= 10 (this is checked by the LaTeX
-# plugin, src/Sketch/Plugins/Objects/latextext.py), so 9.x keeps the
-# direct pdf path of the LaTeX toolchain alive.
+# Version 9.55.0 is used deliberately, for two reasons:
+# - pstoedit (the bundled 3.78, and 3.78-based distributions generally)
+#   converts PDF input by running ghostscript with redefined
+#   PostScript operators; the new C-based PDF interpreter (pdfi), the
+#   default since gs 9.56, bypasses those redefinitions and pstoedit
+#   silently produces an empty output file.  9.55 is the last release
+#   with the PostScript-based PDF interpreter as the default.  (It is
+#   also still < 10, which the LaTeX plugin's pstoedit_can_pdf check
+#   requires, see src/Sketch/Plugins/Objects/latextext.py.)
+# - it matches the ghostscript of the development environment, so the
+#   AppImage rasterization matches the test baselines.
+# The trade-off is the missing upstream security fixes after 2021; the
+# ghostscript invocations of the application use -dSAFER (except the
+# pstoedit-internal ones, which use -dDELAYSAFER).
 #
 # Self-containment: the default compile-inits build embeds the init
 # files and the base 14 URW fonts (the Resource/ directory of the
@@ -24,7 +34,7 @@
 # tree is kept (remove build/gs/ to force a fresh download and build).
 set -e
 
-version=9.56.1
+version=9.55.0
 srcdir=ghostscript-$version
 url="https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs${version//./}/$srcdir.tar.gz"
 

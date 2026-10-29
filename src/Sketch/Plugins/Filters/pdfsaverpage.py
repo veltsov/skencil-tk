@@ -41,7 +41,8 @@ def save(document, file, filename, options = {}):
     width = int((urx-llx)*resolution/72)
     height = int((ury-lly)*resolution/72)
 
-    file = util.run_gs_pipe(['-q', '-dNOPAUSE', '-dBATCH', '-sDEVICE=pdfwrite',
+    file = util.run_gs_pipe(['-dSAFER', '-q', '-dNOPAUSE', '-dBATCH',
+                             '-sDEVICE=pdfwrite',
                              '-dCompatibilityLevel=%s' % compat,
                              '-r%d' % resolution,
                              '-g%dx%d' % (width, height),

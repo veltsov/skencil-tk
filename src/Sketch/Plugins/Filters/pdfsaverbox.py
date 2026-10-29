@@ -43,7 +43,8 @@ def save(document, file, filename, options = {}):
     offx = -llx
     offy = -lly
 
-    file = util.run_gs_pipe(['-q', '-dNOPAUSE', '-dBATCH', '-sDEVICE=pdfwrite',
+    file = util.run_gs_pipe(['-dSAFER', '-q', '-dNOPAUSE', '-dBATCH',
+                             '-sDEVICE=pdfwrite',
                              '-dCompatibilityLevel=%s' % compat,
                              '-r%d' % resolution,
                              '-g%dx%d' % (width, height),
