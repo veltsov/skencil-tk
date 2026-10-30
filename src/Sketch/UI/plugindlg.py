@@ -58,7 +58,8 @@
 
 from Sketch.Base.warn import warn, USER
 from Sketch.Base.const import SELECTION
-from Sketch import _
+from Sketch import _, SketchError
+from Sketch.Graphics.document import AbortTransactionError
 
 from tkinter import Label, IntVar, DoubleVar, StringVar, RIGHT, E, W, Text, \
     WORD, Checkbutton, Radiobutton
@@ -323,12 +324,23 @@ class PluginPanel(PropertyPanel,PluginDlg):
         doc.BeginTransaction(_("Set %s") % var.label) # NLS
         try:
             try:
-                kw = {var.name: var()}
-                doc.AddUndo(self.current_object().SetParameters(kw))
-            except:
-                doc.AbortTransaction()
-        finally:
-            doc.EndTransaction()
+                try:
+                    kw = {var.name: var()}
+                    doc.AddUndo(self.current_object().SetParameters(kw))
+                except SketchError:
+                    # the plugin has rejected the change: the recompute
+                    # failed and reported the error, the object is
+                    # unchanged.  Roll the transaction back -- no undo
+                    # entry and no EDITED message, so the object and
+                    # the dialog fields stay exactly as they were
+                    # before the update.
+                    doc.AbortTransaction(warn = 0)  # AbortTransactionError
+            except AbortTransactionError:
+                pass
+            finally:
+                doc.EndTransaction()
+        except AbortTransactionError:
+            pass
 
     def can_apply(self):
         return 1
@@ -339,22 +351,35 @@ class PluginPanel(PropertyPanel,PluginDlg):
             doc.BeginTransaction(_("Set Parameters"))
             try:
                 try:
-                    kw = {}
-                    for var in self.vars:
-                        kw[var.name] = var()
-                    doc.AddUndo(self.current_object().SetParameters(kw))
-                except:
-                    doc.AbortTransaction()
-            finally:
-                doc.EndTransaction()
+                    try:
+                        kw = {}
+                        for var in self.vars:
+                            kw[var.name] = var()
+                        doc.AddUndo(self.current_object().SetParameters(kw))
+                    except SketchError:
+                        # rejected by the plugin (see set_parameter)
+                        doc.AbortTransaction(warn = 0)
+                except AbortTransactionError:
+                    pass
+                finally:
+                    doc.EndTransaction()
+            except AbortTransactionError:
+                pass
         else:
             # create that object
             dict = {}
             for var in self.vars:
                 dict[var.name] = var()
-            obj = self.info.Constructor()(*(), **dict)
-            text = 'Create ' + self.info.menu_text # NLS
-            self.main_window.canvas.PlaceObject(obj, text)
+            try:
+                obj = self.info.Constructor()(*(), **dict)
+            except SketchError:
+                # the plugin has reported the error itself (e.g. the
+                # LaTeX toolchain is not installed); no object is
+                # created -- as if Update had not been pressed
+                pass
+            else:
+                text = 'Create ' + self.info.menu_text # NLS
+                self.main_window.canvas.PlaceObject(obj, text)
 
 
     def current_is_plugin(self):

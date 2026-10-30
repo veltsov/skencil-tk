@@ -70,10 +70,16 @@ class TrafoPlugin(PluginCompound):
 
     def SetParameters(self, kw):
         undo = PluginCompound.SetParameters(self, kw)
+        undo_params = undo[1]
         try:
             self.recompute()
         except:
-            Undo(undo)
+            # restore the parameters directly, without re-rendering:
+            # Undo(undo) here would call SetParameters again with the
+            # old parameters, running recompute once more -- which may
+            # fail again (and, before the plugin error reporting was
+            # sealed, used to loop forever)
+            PluginCompound.SetParameters(self, undo_params)
             raise
         return undo
 

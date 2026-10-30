@@ -789,7 +789,14 @@ class SketchMainWindow(Publisher):
         return list(map(MakeCommand, entries))
 
     def place_plugin_object(self, info):
-        self.canvas.PlaceObject(info())
+        try:
+            obj = info()
+        except SketchError:
+            # the plugin has reported the error itself (e.g. the LaTeX
+            # toolchain is not installed); nothing is placed
+            pass
+        else:
+            self.canvas.PlaceObject(obj)
 
     def create_plugin_group(self, info):
         self.document.group_selected(info.menu_text, info.CallFactory)

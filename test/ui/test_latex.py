@@ -99,3 +99,38 @@ def test_latex_recompile_unicode():
         print('NOTE: pstoedit produced no objects (pstoedit 3.78 Sketch '
               'driver regression); the utf-8 path through pdflatex/'
               'pstoedit was still exercised and the parameter was saved')
+
+
+def test_latex_undo_exact_state():
+    # Exact-state undo/redo: two successful recomputes (each runs the
+    # toolchain), then Undo/Redo must restore the byte-identical
+    # previous document state without running the toolchain again
+    # (LtxObj.SetParameters stores the previous rendering in the undo
+    # entry; _restore_ltx_state swaps parameters and rendering).
+    out = testsupport.output_path('sk', 'rustext_undo')
+    script = os.path.join(SCRIPTS, 'latex_undo.py')
+    env = {'SKENCIL_TEST_HEADLESS': '1',
+           'SKENCIL_LTX_OUT': out}
+    rc, app_out, app_err = testsupport.run_app(
+        [testsupport.data_path('rustext.sk')],
+        script=script, script_env=env, timeout=300)
+    stdout = app_out.decode('utf-8', 'replace')
+    stderr = app_err.decode('utf-8', 'replace')
+    assert rc == 0, ('application exited with %d\nstdout:\n%s\nstderr:\n%s'
+                     % (rc, stdout, stderr))
+    assert 'undo-runs=0 redo-runs=0' in stdout, \
+        'unexpected toolchain run pattern (the runs counter counts the\n' \
+        'exec_command calls of the two successful recomputes)\nstdout:\n%s' % stdout
+    assert 'Traceback' not in stdout, 'traceback on stdout:\n%s' % stdout
+    assert 'Traceback' not in stderr, 'traceback on stderr:\n%s' % stderr
+    with open(out + '.A', 'rb') as f:
+        a = f.read()
+    with open(out + '.A-undo', 'rb') as f:
+        a_undo = f.read()
+    with open(out + '.B', 'rb') as f:
+        b = f.read()
+    with open(out + '.B-redo', 'rb') as f:
+        b_redo = f.read()
+    assert a != b, 'the two states must differ'
+    assert a_undo == a, 'Undo did not restore the exact previous state'
+    assert b_redo == b, 'Redo did not restore the exact previous state'

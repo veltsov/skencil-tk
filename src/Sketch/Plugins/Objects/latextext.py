@@ -53,15 +53,15 @@ from Sketch.Base import main
 from Sketch import Group, SketchError
 from Sketch.Base import load
 from Sketch.Base import config
-from Sketch.Lib.util import as_unicode, run_gs_output
+from Sketch.Lib.util import as_unicode, run_gs_output, ghostscript_command
 from tempfile import mkdtemp
 
 import os
+import sys
 from os.path import exists
 from os import getcwd, chdir
-from posix import system
-from shutil import rmtree
-from subprocess import Popen, PIPE
+from shutil import rmtree, which
+from subprocess import Popen, PIPE, TimeoutExpired
 
 #set this to 1 to display the intermediate messages to the console
 print_messages=0
@@ -69,7 +69,17 @@ print_messages=0
 default_size=25
 
 
-class cm_exc(BaseException):
+# Expected failure of the external LaTeX toolchain: a missing or
+# failing program, or a missing output file.  Raised as a
+# (title, message) pair, reported to the user and re-raised, so that
+# the caller (TrafoPlugin.SetParameters -> the plugin dialog) can
+# reject the change.  A SketchError subclass, so that generic dialog
+# code can catch it without importing this module.  (The original
+# plugin derived it from BaseException, which made it invisible to
+# `except Exception' handlers, while the bare `except:' handlers on
+# its propagation path caught it anyway; the exception escaping
+# recompute() used to result in an endless recompute exception loop.)
+class cm_exc(SketchError):
     pass
 
 class LtxObj(TrafoPlugin):
@@ -124,22 +134,36 @@ class LtxObj(TrafoPlugin):
         # self.text is always unicode (normalized in __init__; see
         # devdocs/string-handling.md)
         if  self.text != self.ptext \
-                or self.size != self.psize:
-            #text is new or changed
+                or self.size != self.psize \
+                or self.redraw:
+            # text/size are new or changed (or the initial run requested
+            # through self.redraw): render them.  Atomic: ptext/psize,
+            # the group and the children are committed together, only
+            # after create_tex_sk succeeded.  If it fails, it reports
+            # the error and re-raises -- the object then stays exactly
+            # as it was (the parameters are restored by
+            # TrafoPlugin.SetParameters) and the caller rejects the
+            # change.
+            try:
+                group = create_tex_sk(self.text,self.size,self.app.main_window.document)
+            finally:
+                # do not retry on unrelated recomputes (e.g. triggered
+                # by a move), whether the run succeeded or not
+                self.redraw = 0
             self.ptext = self.text
             self.psize = self.size
-            self.redraw = 1
+            self.group = group
+        self.rebuild_children()
 
-        if self.redraw:
-            self.redraw = 0
-            self.group = create_tex_sk(self.text,self.size,self.app.main_window.document)
-
+    def rebuild_children(self):
+        # (re)build the children from the current rendering (self.group)
+        # and the current transformation
         trafo = self.trafo
 
         if self.group is None:
             objects=[]
         else:
-            #duplicate the object, and transform the duplicate to the trafo    
+            #duplicate the object, and transform the duplicate to the trafo
             group=self.group.__class__(duplicate = self.group)
             group.Transform(trafo)
             objects=group.Ungroup()
@@ -147,6 +171,22 @@ class LtxObj(TrafoPlugin):
 
         self.set_objects(objects)
         self.connect_objects()
+
+    def SetParameters(self, kw):
+        # Exact-state undo: on success the undo entry stores the
+        # previous rendering (self.group) together with the previous
+        # parameters, so Undo/Redo restore the exact curves without
+        # re-running the LaTeX toolchain.  On failure cm_exc propagates
+        # (after being reported by create_tex_sk); the object has not
+        # been changed (recompute is atomic, the parameters are
+        # restored by TrafoPlugin.SetParameters).
+        old_params = (self.text, self.size)
+        old_group = self.group
+        stock_undo = TrafoPlugin.SetParameters(self, kw)
+        if (self.text, self.size) == old_params and self.group is old_group:
+            return stock_undo
+        return (_restore_ltx_state, self, old_params, old_group,
+                (self.text, self.size), self.group)
 
     def Text(self):
         return self.text
@@ -230,12 +270,23 @@ def create_tex_sk(text,fontsz,doc=None):
 ''' % (preamb,FontSizeCommand(fontsz),text)
     #print(texwrapper)
     
+    if pstoedit_can_pdf:
+        lcmd, lext, sext = 'pdflatex', 'pdf', 'pdf'
+    else:
+        lcmd, lext, sext = 'latex', 'dvi', 'ps'
+
     tdir = mkdtemp()
 
     msgs = ''
     group = None
 
     try:
+        # fail early, and with a clear message, when a required
+        # external program is not installed (inside the try: the
+        # cm_exc handler below must be the only exit path)
+        check_tools((lcmd, 'pstoedit', ghostscript_command())
+                    if pstoedit_can_pdf
+                    else (lcmd, 'dvips', 'pstoedit', ghostscript_command()))
         chdir(tdir)
         with open('sk.tex','wb') as tfile:
             # texwrapper is always unicode (text and preamble are
@@ -247,44 +298,56 @@ def create_tex_sk(text,fontsz,doc=None):
         if not exists('sk.tex'):
             raise cm_exc("LaTeX", "Can't create tempory file %s" %  os.path.join(tdir,'sk.tex'))
 
-        if pstoedit_can_pdf:
-            lcmd = 'pdflatex'
-            lext = 'pdf'
-            sext = 'pdf'
-        else:
-            lcmd = 'latex'
-            lext = 'dvi'
-            sext = 'ps'
-        
-        res = exec_command('%s -interaction=scrollmode sk.tex' % lcmd)
-        if not exists('sk.%s' %lext):
-            raise cm_exc("LaTeX",res)
+        res = run_tool('%s -interaction=scrollmode sk.tex' % lcmd,
+                       'sk.%s' % lext, "LaTeX")
         msgs = msgs + '--latex--\n' + res
 
         if not pstoedit_can_pdf:
-            res = exec_command('dvips sk')
-            if not exists('sk.ps'):
-                raise cm_exc("dvips",res)
+            res = run_tool('dvips sk', 'sk.ps', "dvips")
             msgs = msgs + '--dvips--\n' + res
 
-        res = exec_command('pstoedit -nfr -nomaptoisolatin1 -dt -f sk sk.%s sk.sk' % sext)
-        if not exists('sk.sk'):
-            raise cm_exc("pstoedit",res)
+        res = run_tool('pstoedit -nfr -nomaptoisolatin1 -dt -f sk sk.%s sk.sk'
+                       % sext, 'sk.sk', "pstoedit")
         msgs = msgs + '--pstoedit--\n' + res
 
         doc = load.load_drawing('sk.sk')
         group = doc.as_group()
         messages = doc.meta.load_messages
         if messages:
-            write_error('Import Warnings:', messages)
+            # warnings, not a failure: the render stays valid even when
+            # the report fails (falls back to stderr)
+            try:
+                write_error('Import Warnings:', messages)
+            except Exception:
+                sys.stderr.write('LaTeX Text: Import Warnings:\n%s\n'
+                                 % messages)
             doc.meta.load_messages = ''
 
     except cm_exc as val:
-        print((val[0], val[1]))
-        write_error(val[0], val[1])
+        # The error report itself must never raise: the message box may
+        # be unavailable (then the report falls back to stderr).  After
+        # reporting, re-raise, so that the caller rejects the change:
+        # TrafoPlugin.SetParameters restores the parameters, recompute
+        # is atomic (the children have not been touched), and the
+        # plugin dialog aborts the transaction (no undo entry, no
+        # EDITED message) -- the object and the dialog stay exactly as
+        # they were before the update.
+        title, message = val.args
+        if print_messages:
+            print(title, message)
+        try:
+            write_error(title, message)
+        except Exception:
+            sys.stderr.write('LaTeX Text: %s:\n%s\n' % (title, message))
+        raise
 
     except SketchError as value:
-        write_error('Loading formatted LaTeX', str(value))
+        try:
+            write_error('Loading formatted LaTeX', str(value))
+        except Exception:
+            sys.stderr.write('LaTeX Text: Loading formatted LaTeX:\n%s\n'
+                             % value)
+        raise
 
     finally:
         chdir(cwd)
@@ -296,16 +359,56 @@ def create_tex_sk(text,fontsz,doc=None):
     return group
 
 
+# give up on a toolchain command after this many seconds; a hung TeX
+# (or pstoedit/ghostscript) would otherwise freeze the whole UI
+command_timeout = 120
+
 def exec_command(command):
     try:
         po = Popen(command.split(),stdout=PIPE,stderr=PIPE,stdin=PIPE)
-        out,err = po.communicate()
+        try:
+            out,err = po.communicate(timeout=command_timeout)
+        except TimeoutExpired:
+            po.kill()
+            po.communicate()
+            raise cm_exc('Timeout running external command',
+                         'When running %s:\n'
+                         'the program did not terminate within %d seconds'
+                         % (command, command_timeout))
         # the output ends up in the warning messages (str); the tool
         # output is ascii/utf-8, undecodable bytes are replaced
         return (out + err).decode('utf-8', 'replace')
+    except cm_exc:
+        raise
     except Exception as val:
         raise cm_exc('Error executing external command',
                      'When running %s:\n%s' % (command,str(val)))
+
+def check_tools(progs):
+    # raise a single clear cm_exc naming the programs that are missing
+    missing = [prog for prog in progs if which(prog) is None]
+    if missing:
+        raise cm_exc('LaTeX Text',
+                     'Required external program(s) not found: %s\n'
+                     'Install them (TeX Live, pstoedit, ghostscript) '
+                     'and try again.' % ', '.join(missing))
+
+def run_tool(command, output_file, title):
+    # run one toolchain step and require its output file
+    res = exec_command(command)
+    if not exists(output_file):
+        raise cm_exc(title, res)
+    return res
+
+def _restore_ltx_state(obj, params, group, other_params, other_group):
+    # Undo/Redo entry of LtxObj.SetParameters: restore an exact
+    # previous state -- parameters and rendering -- without running the
+    # LaTeX toolchain, and return the entry for the opposite direction.
+    obj.text, obj.size = params
+    obj.ptext, obj.psize = params
+    obj.group = group
+    obj.rebuild_children()
+    return (_restore_ltx_state, obj, other_params, other_group, params, group)
 
 def write_error(btitle,bmessage):
     main.application.MessageBox(title = btitle, message=bmessage)

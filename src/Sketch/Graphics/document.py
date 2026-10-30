@@ -504,9 +504,10 @@ class EditDocument(SketchDocument, QueueingPublisher):
             elif self.transaction < 0:
                 raise SketchInternalError('transaction < 0')
 
-    def abort_transaction(self):
+    def abort_transaction(self, warn = 1):
         self.transaction_aborted = 1
-        warn_tb(INTERNAL, "in transaction `%s'" % self.transaction_name)
+        if warn:
+            warn_tb(INTERNAL, "in transaction `%s'" % self.transaction_name)
         raise AbortTransactionError
 
     # public versions of the transaction methods

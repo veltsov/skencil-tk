@@ -392,7 +392,28 @@ Remaining py3 issues, verified by the suite (in rough priority order):
    plugin-dialog text parameter (stage-A indentation regression); the
    multilinetext plugin dict-view sorts; latextext exec_command output
    decoding (bytes vs str -- the infinite recompute exception loop);
-   latextext sk.tex written in binary mode.  Test harness: ui tests
+   latextext sk.tex written in binary mode.  Second instance of the
+   same loop class, fixed 2026-10-29: with pdflatex not installed the
+   plugin's error report itself raised (py3 exceptions are not
+   subscriptable -- the old `val[0]/val[1]' indexing in the except
+   handler), the exception escaped recompute() and the undo machinery
+   re-ran it endlessly.  cm_exc is a SketchError now, the error
+   report is wrapped with a stderr fallback (nothing may escape
+   create_tex_sk), the tools are pre-checked with shutil.which (a
+   single clear "not found" message), exec_command has a timeout.
+   Update semantics (2026-10-30): a failed recompute is a *rejected
+   update* -- create_tex_sk re-raises after reporting,
+   TrafoPlugin.SetParameters restores the parameters without
+   re-rendering (no Undo() there: it re-ran recompute), recompute is
+   atomic (ptext/psize/group/children commit together only on
+   success), and the plugin dialog aborts the transaction (no undo
+   entry, no EDITED message -- object and dialog stay exactly as
+   before the update).  A successful LtxObj parameter change gets an
+   exact-state undo: the entry stores the previous rendering
+   (_restore_ltx_state), so Undo/Redo swap two complete states
+   without running the toolchain.  Tests: test/ui/test_latex_missing.py
+   (rejection, tools hidden) and test_latex.py::test_latex_undo_exact_state
+   (byte-identical undo/redo, no toolchain runs).  Test harness: ui tests
    run with an isolated --configdir and the AppDir fonts via
    SKETCH_FONTPATH (the user config must not leak: its plugins abort
    loads with modal dialogs, its default unit changed the screenshots);
