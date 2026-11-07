@@ -323,7 +323,6 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
                 'Sketch.UI',
                 'Sketch.Plugins',
                 'Sketch.Plugins.Filters',
-                'Sketch.Plugins.Filters.Lib',
                 'Sketch.Plugins.Objects',
                 'Sketch.Plugins.Objects.Lib',
                 'Sketch.Plugins.Objects.Lib.multilinetext',
@@ -365,8 +364,15 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
 # .py source compiling
 #################################################
 if sys.argv[1] == 'build':
-    import compileall
-    compileall.compile_dir('build/')
+    # byte-compile the copied application tree only -- not the whole
+    # build/ root (it also holds the cached ghostscript source tree
+    # from devtools/fetch-gs, with third-party python2-era tool
+    # scripts that must not be scanned, and per-version trees of
+    # other interpreters)
+    import glob, compileall
+    version = '%d.%d' % sys.version_info[:2]
+    for libdir in glob.glob('build/lib.*-' + version):
+        compileall.compile_dir(libdir)
     
         
 ##############################################
