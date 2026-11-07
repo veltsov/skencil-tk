@@ -1,80 +1,66 @@
 # AGENTS.md — Knowledge Base for Working on skencil-tk
 
-Skencil is an interactive vector drawing program for X11, written almost
-entirely in Python 2 with performance-critical parts in C extension modules.
+Skencil is an interactive vector drawing program for X11, written in
+Python with performance-critical parts in C extension modules.
 This repository is a continuation of the Skencil project
 (http://www.skencil.org), based on skencil-1.0alpha by Igor E. Novikov,
 which in turn is based on Bernhard Herzog's "Sketch" (1996–2005).
-The current maintainer's fork (Vladimir Eltsov, 2018+) converted the UI
-from GTK to **Tk** and added many features (see `README.md`).
+The current maintainer's fork (Vladimir Eltsov, 2018+) added many features (see `README.md`) and made port to Python 3.
 
 **Read this file first. Detailed notes are in `devdocs/`:**
 
-| File | Contents |
-|------|----------|
-| `devdocs/build-and-environment.md` | How to build, run, package; devtools scripts; required packages; Python 2.7 build environment (containerless bwrap root, podman container, AppImage) |
-| `devdocs/architecture.md` | Source layout, package structure, C extension modules, plugin system, file formats, key classes and data flow |
-| `devdocs/python3-porting.md` | The current port-relevant state of the codebase and the porting plan: remaining py2 constructs (verified inventory), C extension issues, stage-by-stage strategy |
-| `devdocs/paxtkinter-analysis.md` | Deep analysis of the `paxtkinter` module: why it exists (GIL/TclLock), full dependency surface, and the plan to drop it in favor of stock `_tkinter` (branch `modernize`) |
-| `devdocs/modernize-paxtkinter.md` | Pre-flight experiment record (2026-10-20): running the app on stock `_tkinter` segfaults at the first pax→Python call (gdb backtrace); corrected conclusions and the simplified fix |
-| `devdocs/modernize-roadmap.md` | Roadmap of pre-py3 modernization batches (dead code, 2to3-based mechanical cleanups, deeper items) with status |
-| `devdocs/testing.md` | The automatic test suite in `test/`: layers (model/formats/Xvfb app/screenshot), baseline recording from `master`, fixture management, known findings |
-| `devdocs/unicode-runtime-audit.md` | The unicode-at-runtime bug class (gettext shim returns unicode on py2): fixed instances, the `.sk` utf-8/\x-escape format decision, and the planned proactive audit tooling (not yet executed) |
-| `devdocs/string-handling.md` | The string-kind taxonomy (origins → types → conversions) and the conventions that replace scattered type checks; feeds the py3 port |
-| `devdocs/glyph-text.md` | The glyph-index text representation of `SimpleText` (global glyph registry, gid arrays, conversions at all sinks); supersedes the byte-per-character K3 form |
-| `devdocs/text-input.md` | Findings and design for the planned text input rework: unicode keyboard input (Cyrillic etc.), keymap dispatch, afii/uniXXXX glyph-name candidates — **planned, not implemented** |
-| `devdocs/import-restructure.md` | The import machinery findings (implicit relative imports, fake plugin packages, `module.so` suffix trick) and the executed restructuring into a canonical real-package layout with absolute imports |
-| `devdocs/image-transparency.md` | Image alpha transparency: current state (model keeps RGBA; display/PS/PDF drop it), the near-term plan (display blending, PS flatten, PDF via ghostscript `-dALLOWPSTRANSPARENCY` SMask recipe) — **planned, not implemented** |
-| `devdocs/display-backends.md` | Modern display backends (pixman, XRender, cairo, GPU/Tk-native) evaluated against Skencil's device architecture; post-py3 strategy; antialiasing and font-model modernization goals — **analysis only** |
-| `devdocs/divaudit-findings.md` | Integer-division audit results (static + runtime coverage, int-division site list, C-boundary verification) and 7 bugs found by the audit sessions — **all fixed** |
+| File                               | Contents                                                                                                                                                                             |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `devdocs/build-and-environment.md` | How to build, run, package; devtools scripts; required packages; AppImage (bundled ghostscript/pstoedit/fonts)                                                                       |
+| `devdocs/architecture.md`          | Source layout, package structure, C extension modules, plugin system, file formats, key classes and data flow                                                                        |
+| `devdocs/testing.md`               | The automatic test suite in `test/`: layers (model/formats/Xvfb app/screenshot), baseline recording from `master`, fixture management                                                |
+| `devdocs/string-handling.md`       | The string-kind taxonomy (origins → types → conversions) and the conventions that replace scattered type checks                                                                      |
+| `devdocs/glyph-text.md`            | The glyph-index text representation of `SimpleText` (global glyph registry, gid arrays, conversions at all sinks)                                                                    |
+| `devdocs/text-input.md`            | The unicode keyboard input path; open follow-up items (multilinetext latin-1 input, full-charset insertion)                                                                          |
+| `devdocs/image-transparency.md`    | Image alpha transparency: current state and the plan (display blending, PS flatten, PDF via ghostscript SMask recipe) — **planned, not implemented**                                 |
+| `devdocs/display-backends.md`      | Modern display backends (pixman, XRender, cairo, GPU/Tk-native) evaluated against Skencil's device architecture; antialiasing and font-model modernization goals — **analysis only** |
 
 ## Quick facts
 
-- **Language:** Python 2 (2.7) + C extension modules. ~200 `.py` files under
-  `src/`, ~57k lines of Python, plus ~10k lines of C in `src/extensions/`.
-- **UI toolkit:** Tk (via `Tkinter`), plus the custom C extension `pax`
-  (X11/pixmap rendering for Tk widgets). Since the `modernize` branch,
-  the stock `_tkinter` is used directly — the former `paxtkinter`
-  `_tkinter`-replacement module was dropped (see
-  `devdocs/modernize-paxtkinter.md`); the runtime now *requires
-  threaded Tcl* (checked at startup). No GTK anymore (despite the
-  legacy name `Sketch/Base/gtkutils.py`, which now contains only Tk
-  font/color helpers).
-- **Build:** `python2 setup.py build` (distutils). Result goes to
-  `build/lib.linux-x86_64-2.7/` and the launcher to
-  `build/scripts-2.7/skencil`. The app is run *directly from the build
+- **Language:** Python 3 (3.10 on the dev systems) + C extension
+  modules. ~200 `.py` files under `src/`, ~57k lines of Python, plus
+  ~10k lines of C in `src/extensions/`.
+- **UI toolkit:** Tk via the stock `_tkinter`, plus the custom C
+  extension `pax` (X11/pixmap rendering for Tk widgets). The runtime
+  *requires threaded Tcl* (checked at startup); `wantobjects(0)` is set
+  so `tk.call` results come back as strings. pax's Tcl-context
+  callbacks are marshaled through `_tkinter`'s `createcommand`
+  (`pax.call_py_method`, GIL-safe) — preserve this design.
+- **Localization:** user-visible strings go through `_()` from `Sketch`
+  (standard `gettext` module; per-domain caching shim in
+  `Sketch/__init__.py`).
+- **Build:** `python3 setup.py build` (distutils). Result goes to
+  `build/lib.linux-x86_64-3.10/` and the launcher to
+  `build/scripts-3.10/skencil`. The app is run *directly from the build
   directory*, no install needed (see `README.md`). Because of this,
   **every source change (including plain `.py` files) must be followed
-  by a rebuild** — `src/` is not on the runtime `sys.path`; the app only
-  reads from `build/lib.linux-x86_64-2.7/`.
-- **Version:** `1.1` (`src/Sketch/VERSION`, also `setup.py` and
+  by a rebuild** — `src/` is not on the runtime `sys.path`; the app
+  only reads from `build/lib.linux-x86_64-3.10/`.
+- **Version:** `1.2` (`src/Sketch/VERSION`, also `setup.py` and
   `PKG-INFO`; shown by `--version` and in the PostScript Creator
   comment).
 - **License:** LGPL (most), GPL for some parts; see `README`, `COPYING`.
-- **Current environment used for development:** Ubuntu 20.04 (focal) with
-  `python2, python2-dev, python-tk, python-pil, python-pil.imagetk,
-  tcl-dev, tk-dev` (see `README.md` and `devtools/devcont/install-dev-packages`).
-- **No test suite.** `tests/` contains only scratch/demo scripts run by hand
-  under python2 (and `tests/` is gitignored, as are `old/`, `AppDir/` build
-  artifacts, `build/`, `*.sav*` backups).
 
 ## Repository layout
 
 - `src/` — the application source
   - `Sketch/` — main Python package (`Base`, `Graphics`, `UI`, `Lib`,
-    `Modules`, `Scripting`)
+    `Modules`, `Scripting`, `Scripts`, `Plugins/{Filters,Objects}`)
   - `extensions/` — C sources of the extension modules
     (`Modules/` geometry+font+image, `Pax/` Tk/X11 integration, `Filter/`
     stream filters)
-  - `Plugins/` — import/export filters (`Filters/`) and plugin objects
-    (`Objects/`)
-  - `Script/` — user scripts (run via `--run-script` or Scripts menu)
   - `Resources/` — pixmaps, font metrics, misc resources, translations
   - `skencil`, `skencil.py`, `sk2ps`, `skconvert.py`, `skshow.py` —
     launcher / CLI scripts
 - `po/` — gettext translations (built to `src/Resources/Messages` by setup.py)
 - `devtools/` — build/dev-environment scripts (see build doc)
 - `AppDir/` — assembled AppImage directory (gitignored parts)
+- `test/` — the automatic regression test suite (`test/run_tests.sh`)
 - `tests/` — hand-run scratch scripts (gitignored)
 - `old/` — archived old plugins (gitignored)
 - `setup.py`, `MANIFEST.in`, `setup.cfg`, `PKG-INFO` — distutils build
@@ -86,48 +72,59 @@ from GTK to **Tk** and added many features (see `README.md`).
 
 - When analysing code (greps, searches, reading), **skip the `AppDir/`**
   directory — it is a bundled AppImage payload containing a full copy of
-  the python2 stdlib and third-party modules that pollutes every search.
+  the python3 stdlib and third-party modules that pollutes every search.
   Concentrate on `src/` (plus `test/` and `devdocs/` as appropriate).
 - Do not touch anything outside the task scope; when only asked to
   document, do not modify source files.
-- The code is Python 2: keep new code Python 2 compatible unless the task
-  explicitly says otherwise. Do not "modernize" code opportunistically —
-  the codebase is intentionally kept buildable with python2.7 until the
-  Python 3 port is done (see `devdocs/python3-porting.md` for the port plan).
-- Never reformat or whitespace-fix old files wholesale; edits should be
-  minimal and localized.
+- New code is Python 3 (3.10 baseline). Do not reformat or
+  whitespace-fix old files wholesale; edits should be minimal and
+  localized.
 - After **any** source change — C extensions, `setup.py`, *and plain
-  Python files* — rebuild with `python2 setup.py build` and test from
-  the build tree. The app imports from `build/lib.linux-x86_64-2.7/`,
-  not from `src/`, so editing a `.py` file in `src/` has no effect on
-  the running application until the build copies it over.
-- **Never run `python2 setup.py build` while the `py3` branch is
-  checked out** (and vice versa: `python3 setup.py build` on a py2
-  branch).  distutils `build_py` copies *all* `.py` sources into
-  `build/lib.linux-x86_64-2.7/` before `build_ext` fails on the
-  py3-only C code, leaving py3-only Python files in the py2 build
-  tree; the py2 app then crashes at startup (e.g.
-  `AttributeError: type object 'str' has no attribute 'maketrans'`
-  from `Sketch/Graphics/font.py`).  This happened on 2026-10-27.
-  Build each branch from its own git worktree and copy only the
-  matching `build/lib.linux-x86_64-2.7`, `build/scripts-2.7` and
-  `build/temp.linux-x86_64-2.7` over (see
-  `devdocs/build-and-environment.md` for the full incident record and
-  recovery procedure).
-- Localization: user-visible strings should go through `_()` from `Sketch`
-  (standard `gettext` module; per-domain caching shim in
-  `Sketch/__init__.py` — the former `intl` C extension was dropped).
+  Python files* — rebuild with `python3 setup.py build` and test from
+  the build tree. The app imports from
+  `build/lib.linux-x86_64-3.10/`, not from `src/`, so editing a `.py`
+  file in `src/` has no effect on the running application until the
+  build copies it over. Incremental builds are cheap (timestamp-based
+  re-copy + `compileall`).
+- **The test suite is the gate for every change:** `test/run_tests.sh`
+  (headless model + formats + Xvfb app/screenshot layers; see
+  `devdocs/testing.md`). Run it after every non-trivial change.
+- One build tree serves one interpreter version (per-version
+  subdirectories); do not build branches that target a different
+  interpreter version in this checkout — distutils `build_py` copies
+  *all* `.py` sources before `build_ext` runs, so a failed cross-version
+  build leaves a corrupted build tree. Build such branches from their
+  own git worktree.
 
 ## Entry points (runtime flow)
 
-1. `src/skencil` (launcher) puts `../lib.linux-x86_64-2.7` on `sys.path`
-   and calls `Sketch.main.main()`.
+1. `src/skencil` (launcher) puts `../lib.linux-x86_64-3.10` on
+   `sys.path` and calls `Sketch.main.main()`.
 2. `Sketch/Base/main.py:main()` parses options, calls `Sketch.init_ui()`,
    creates `SketchApplication`
    (`Sketch/UI/skapp.py`; `init_tk` checks that Tcl is threaded and sets
    `wantobjects(0)`) and runs the Tk mainloop.
-3. `Sketch/__init__.py` is the package bootstrap: extends `__path__` with
-   `Modules/` and `Base/`, sets up gettext, imports and re-exports
-   geometry primitives from `_sketch` C module, initializes PIL, loads
-   config (`config.init_directories`), and imports/re-exports the whole
-   graphics model from `Sketch/Graphics/*`.
+3. `Sketch/__init__.py` is the package bootstrap: sets up gettext,
+   imports and re-exports geometry primitives from the `_sketch` C
+   module (`Sketch.Modules._sketch`), initializes PIL, loads config
+   (`config.init_directories`), and imports/re-exports the whole
+   graphics model from `Sketch/Graphics/*`. The C extension modules
+   import under their real names (`Sketch.Modules.{pax,_sketch,
+   streamfilter,pstokenize,skread,_type1}`); no `__path__`/`sys.path`
+   manipulation exists anywhere.
+
+## Test suite
+
+- `test/run_tests.sh` — runs everything under pytest (python3),
+  comparing against the golden artifacts in `test/baselines/`
+  (`BASELINE-REV` records the master revision they were recorded from;
+  the runner warns when master has moved past it).
+- `test/run_tests.sh --record` — (re)generates the baselines: builds a
+  git worktree of `master` at the recorded revision and runs the whole
+  suite against it with `SKENCIL_TEST_RECORD=1`.
+- Layers: headless document-model tests (`test/model/`), format
+  round-trips incl. ghostscript raster comparison (`test/formats/`),
+  app smoke + screenshot tests under Xvfb (`test/ui/`). See
+  `devdocs/testing.md`.
+- `test/add-fixture <file.sk>` installs a new fixture and regenerates
+  its baselines; `test/data/fixtures.txt` is the manifest.

@@ -1,23 +1,21 @@
 # Glyph-Index Text Representation
 
-Status: implemented (2026-10-22).  This document describes the internal
+Status: implemented.  This document describes the internal
 representation of text-object content and the conversion points to and
-from the legacy byte-string form.
+from the byte-code serialization form.
 
 ## Why
 
-Until the `modernize` work, the content of `SimpleText` (and
-`InternalPathText`) was a Python 2 byte string with **one byte per
-glyph**, the byte being the code of the glyph in the font's 256-code
-encoding (usually iso-latin-1/Adobe standard).  That representation
+The content of `SimpleText` (and `InternalPathText`) is **not** a byte
+string with one byte per glyph (the code of the glyph in the font's
+256-code encoding), as it was in the original Sketch format's in-memory
+form.  That representation
 
 * hard-limits text to the 256 glyphs of the font encoding,
 * makes sensible unicode conversion impossible (a byte only means
   something together with the font's encoding),
 * couples the model to the external 256-code worlds (PostScript, X11
-  core fonts) instead of treating them as sinks,
-* is the main remaining bytes-in-the-model string kind (K3) that
-  complicates the Python 3 port.
+  core fonts) instead of treating them as sinks.
 
 The representation is now an **array of glyph indices** (`array.array('I')`)
 into a **process-global glyph registry** — a monotonic table of Adobe
@@ -96,12 +94,11 @@ map back, so byte-compatibility with existing files is preserved.
 `InternalPathText.DrawShape` skips them, as it skipped the byte
 characters before.  All other C0 control bytes map to notdef.
 
-## Python 3 alignment
+## Serialization form
 
-`array.array('I')` has identical semantics on 2.7 and 3.x.  The K3
-string kind (font-encoding bytes in the model) is gone; K3 is now
-"sequence of glyph indices", with the byte form remaining a legacy
-*serialization* form at the `.sk`/input boundary only.
+`array.array('I')` has identical semantics everywhere.  The model-side
+byte-per-glyph kind is gone; the byte form remains a *serialization*
+form only, at the `.sk`/input boundary.
 
 ## Known quirk: code 45 is 'minus'
 
@@ -121,8 +118,11 @@ quirk: code 45 is named 'minus'").
 ## Future (not implemented)
 
 * Full-charset access: let text reference any glyph of a font (the
-  registry already carries all AFM glyph names).
+  registry already carries all AFM glyph names); the
+  `IsPrintableGlyph` gate currently rejects glyphs outside the font's
+  256-code encoding when typed.
 * PS export via `/name glyphshow` for out-of-encoding glyphs; a
   `.sk` directive carrying glyph names.
 * A complete Adobe Glyph List in `glyphnames.py` for full unicode
-  round-tripping beyond latin-1.
+  round-tripping beyond latin-1 (the afii alias table exists; the
+  full AGL name set does not).

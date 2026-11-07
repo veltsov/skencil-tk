@@ -4,23 +4,20 @@
 
 The `Sketch` package is unusual and central to understanding the code:
 
-- It inserts `Modules/` and `Base/` into its own `__path__`, so modules
-  like `config`, `undo`, `connector`, `warn`, `skexceptions`, `plugins`,
-  `loadres` (in `Sketch/Base/`) are importable as top-level names
-  (`import config`, not `import Sketch.Base.config`).
-- It inserts `Modules/` into `sys.path[1:]`, so the C extensions
-  (`_sketch`, `pax`, `streamfilter`, `pstokenize`,
-  `skreadmodule`, `_type1module`) are importable top-level too.
+- One canonical real-package tree with absolute imports everywhere;
+  no implicit relative imports, no `sys.path`/`__path__` manipulation,
+  no fake packages. The C extensions are built and imported under
+  their real names (`Sketch.Modules.{pax,_sketch,streamfilter,
+  pstokenize,skread,_type1}`).
 - It sets up localization with the standard `gettext` module
-  (per-domain caching shim; the former `intl` C extension was
-  dropped), defines `_`.
+  (per-domain caching shim), defines `_`.
 - It imports and re-exports almost the whole graphics model so user code
   does `from Sketch import Trafo, PolyBezier, ...`.
-- `_import_PIL()` imports PIL (package or old top-level `Image`) and
-  patches `sys.modules` so `PIL.Image` always works.
+- It initializes PIL (`from PIL import Image`; PIL is the application's
+  only third-party dependency) and loads config
+  (`config.init_directories`).
 - `init_ui()` loads user preferences via `init_lib()` and imports the
-  standard scripts (the old `paxtkinter`-for-`_tkinter` substitution
-  was removed on the `modernize` branch).
+  standard scripts.
 - `init_modules_from_widget(root)` imports `pax`, initializes
   `UI.tkext` from the Tk app (`pax.create_tcl_commands(tk)`), etc.
 
@@ -30,7 +27,8 @@ The `Sketch` package is unusual and central to understanding the code:
 - `config.py` — global config; defaults, path setup (`init_directories`),
   user preferences handling (`preferences` object), font path, plugin
   directories, `SKETCH_FONTPATH` support.
-- `configutil.py` — preferences/persistence helpers.
+- `configutil.py` — preferences/persistence helpers (the preferences
+  file is plain utf-8 string literals, exec'd on load).
 - `main.py` — `main()`, option parsing (`-d`, `-g/--geometry`,
   `--run-script`, `--version`, `-geometry` hack).
 - `connector.py` — **pub/sub machinery** (Publisher, Issue, Subscribe,
@@ -38,17 +36,13 @@ The `Sketch` package is unusual and central to understanding the code:
 - `undo.py`, `undodict.py` — undo/redo framework (Undo, UndoList,
   CreateListUndo, ...); graphics objects return undo entries from
   mutation methods.
-- `plugins.py` — plugin loading (`__import__` + `exec` based), plugin
-  initialization, `create_packages`.
+- `plugins.py` — plugin loading on `importlib` (real packages; user
+  content under `$XDG_CONFIG_HOME/skencil`, default
+  `~/.config/skencil`, `--configdir` override), plugin initialization.
 - `load.py` — file type detection and dispatch to import filters;
   `load_drawing()`.
-- `loadres.py` — resource loading (uses `skreadmodule`).
+- `loadres.py` — resource loading (uses `Sketch.Modules.skread`).
 - `warn.py` — warning/debug system (`warn`, USER/INTERNAL levels).
-- `gtkutils.py` — **name is legacy**: contains Tk font/color helpers
-  (`ColorScheme`, `set_ui_font`, color conversion). The `gtk3utils` git
-  branch was an experiment (partially reverting to gtk for fonts/colors)
-  that was abandoned; commit "Remove attempts to set fonts and colors via
-  gtk. Modern tk is good enough..." is the state on master.
 - `skexceptions.py`, `const.py` — exceptions and event/constants.
 
 ### `Sketch/Graphics/` — the document model and rendering (no Tk)
@@ -58,9 +52,10 @@ The `Sketch` package is unusual and central to understanding the code:
   `selection.py` — selection handling; `layer.py`, `guide.py`,
   `compound.py`, `group.py`, `maskgroup.py`, `clone.py`, `blendgroup.py`.
 - Shape classes: `rectangle.py`, `ellipse.py`, `bezier.py` (1444 lines,
-  with `curveop.py` boolean ops), `text.py`, `image.py`, `eps.py`,
-  `external.py` (linked images; the fork added automatic reloading — see
-  `reloaddlg.py`).
+  with `curveop.py` boolean ops), `text.py` (glyph-index text, see
+  `devdocs/glyph-text.md`), `image.py` (`RasterImage`/`ImageData`, PIL
+  as boundary codec), `eps.py`, `external.py` (linked images with
+  automatic reloading — see `reloaddlg.py`).
 - Properties: `properties.py` (`Style`, `FillStyle`, `LineStyle`,
   `PropertyStack`), `color.py`, `pattern.py` (solid, hatching, gradients,
   image tiles), `dashes.py`, `arrow.py`, `font.py`, `gradient.py`,
@@ -73,14 +68,19 @@ The `Sketch` package is unusual and central to understanding the code:
   objects.
 
 ### `Sketch/UI/` — Tk interface
-- `skapp.py` — `SketchApplication` (Tk root, preferences, mainloop).
+- `skapp.py` — `SketchApplication` (Tk root, preferences, mainloop);
+  checks that Tcl is threaded and sets `wantobjects(0)`.
 - `mainwindow.py` (1389 lines) — main window, menus, commands.
 - `canvas.py` (1955 lines) — the drawing canvas widget (uses pax-backed
   tkext widget for fast rendering), event handling, tools/modes
   (`modes.py`), `view.py`/`viewport.py` (zoom/pan; fork added middle-mouse
   scroll and wheel zoom), `ruler.py`, `miniscroll.py`.
 - `tkext.py` (950 lines) — Tk widget extensions, the bridge to `pax`
-  (`pax.register_object`, `InitFromTkapp`, `UpdateWhenIdle`, ...).
+  (`pax.register_object`, `InitFromTkapp`, `UpdateWhenIdle`, ...);
+  `GetOpen/SaveFilename` normalize Tk file-dialog results via
+  `util.as_unicode` (the single filename boundary).
+- `tkutils.py` — Tk font/color helpers (`ColorScheme`, `set_ui_font`,
+  color conversion).
 - Dialogs: `filldlg.py`, `linedlg.py`/`styledlg.py`, `colordlg.py`,
   `fontdlg.py`, `curvedlg.py`, `guidedlg.py`, `griddlg.py`,
   `layoutdlg.py`, `layerdlg.py`, `aligndlg.py`, `blenddlg.py`,
@@ -91,71 +91,67 @@ The `Sketch` package is unusual and central to understanding the code:
 - `command.py` — command infrastructure (`RegisterCommands`).
 
 ### `Sketch/Lib/` — pure-python helper libs
-- `type1.py`, `encoding.py` — Type 1 font parsing (with `_type1module`
-  for decryption), font metrics.
+- `type1.py`, `encoding.py` — Type 1 font parsing (with
+  `Sketch.Modules._type1` for decryption), font metrics.
 - `dscparser.py`, `psmisc.py` — PostScript/DSC parsing (EPS import).
-- `units.py`, `util.py`, `skcompleter.py`.
+- `glyphnames.py` — unicode ↔ Adobe glyph name mapping (AGL names,
+  uniXXXX, legacy afii aliases, control-code reserved names); the
+  model-side support of the glyph-index text representation.
+- `units.py`, `util.py` (`as_unicode`, `format`, the `run_gs` family,
+  `popen_read/write`), `skcompleter.py`.
 
 ### `Sketch/Modules/`
-Only `X.py` (X11 constants) is Python here; the C extension `.so` files
-appear here only after `build&copy`.
+Contains only `__init__.py` in the source tree; the built C extension
+`.so` files appear here in the build tree.
 
 ### C extensions (`src/extensions/`, built into `Sketch.Modules.*`)
 - `Modules/_sketchmodule.c` — the core: `Point`, `Rect`, `Trafo`
   (2D affine), `CreatePath`/curve objects (`curveobject.c`,
   `curvefunc.c`, `curvedraw.c`, `curvelow.c`), color (`skcolor.c`),
-  font metrics (`skfm.c`), image dithering (`skimage.c`), plus misc
-  helpers (`skaux.c`, `skreadmodule`-style fast parsing).
+  font metrics (`skfm.c`, gid-indexed), image scaling/gradient fills
+  (`skimage.c`, `skdither.c`), plus misc helpers (`skaux.c`).
 - `Modules/skreadmodule.c` — `skread.parse_sk_line2` used by the .sk
-  loader to parse save-file lines safely (eval-like parsing).
+  loader to parse save-file lines safely (eval-like parsing); takes a
+  sequence of function names whose string arguments are returned as
+  raw bytes (the `txt`/`pt` text-content contract, see
+  `devdocs/glyph-text.md`).
 - `Modules/pstokenize.c` (+ `pschartab.c`) — PostScript tokenizer
   (EPS/PDF import).
 - `Modules/_type1module.c` — Type 1 font decryption.
 - `Filter/streamfilter.c` + filters — stream abstraction with
-  Base64Decode, SubFileDecode, HexFilter, ASCII85, zlib; imported
-  top-level, e.g. `from streamfilter import Base64Decode, SubFileDecode`.
-- `Pax/paxmodule.c` — the X11/Tk rendering layer core.  The former
-  `paxtkinter` (a private copy of Python 1.5.2's `_tkinter` that used
-  to replace `sys.modules['_tkinter']` at startup) was **dropped on
-  the `modernize` branch** and its source deleted (2026-10-26) — pax
-  now runs on the stock `_tkinter`
-  (its Tcl-context callbacks acquire the GIL via `PyGILState_Ensure`;
-  threaded Tcl is required and checked at startup).
+  Base64Decode, SubFileDecode, HexFilter, ASCII85, zlib; imported as
+  `from Sketch.Modules.streamfilter import Base64Decode, SubFileDecode`.
+- `Pax/paxmodule.c` — the X11/Tk rendering layer core, running on the
+  stock `_tkinter`: Tcl-context callbacks are registered via
+  `_tkinter`'s `createcommand` (`pax.call_py_method`) and acquire the
+  GIL with `PyGILState_Ensure` — GIL-safe by design; **threaded Tcl is
+  required** and checked at startup. Preserve this design when
+  touching the Tk/pax boundary.
   `pax` provides off-screen X11 pixmaps, GC
   objects, windows (`tkwinobject.c`), regions, clipping, fonts, images,
   and registers Tcl commands; used by `Sketch/UI/tkext.py`,
   `canvas.py`, `ruler.py`, `miniscroll.py`, `gradientedit.py`.
-  See `devdocs/paxtkinter-analysis.md` and
-  `devdocs/modernize-paxtkinter.md` for the full story.
-- `Pax/intl.c` — former gettext bindings (`Sketch.Modules.intl`);
-  **dropped on the `modernize` branch** (source deleted 2026-10-26) —
-  localization now uses the standard `gettext` module (shim in
-  `Sketch/__init__.py`).
 - `Pax/gcmethods.c` — GC method wrappers, pulled in via
   `#include "gcmethods.c"` from `gcobject.c` (deliberately not in the
   Extension sources list; deleting it breaks the build).
 - `Pax/Generate/` — the code generator (`mkgc.py`, using
   `mktools.py`/`typedefs.py`) that produces `gcmethods.c`.
-- Small patches exist: `skcolor.c.patch`, `skpoint.c.patch`,
-  `skrect.c.patch` (leftovers; check whether applied before using).
 
-### Plugins (`src/Plugins/`)
+### Plugins (`src/Sketch/Plugins/`)
 - `Filters/` — loaders/savers registered through
   `Sketch/Base/plugins.py`:
   - Import: `skloader.py` (native `.sk` format, uses `skread`),
-    `svgloader.py`, `ailoader.py` (Adobe Illustrator), `wmfloader.py`,
-    `cmxloader.py`, `xfigloader.py`, `cgmloader.py`,
-    `drawinput.py`, plus gzip/bzip-wrapping loaders.
+    `svgloader.py`, `wmfloader.py`, `xfigloader.py`, plus
+    gzip/bzip-wrapping loaders.
   - Export: `sksaver.py`, `epssaver.py`, `pssaver.py`, `svgsaver.py`,
-    `aisaver.py`, `wmfsaver.py`, and the fork's working PDF export:
+    `wmfsaver.py`, and the fork's working PDF export:
     `pdfsaver.py`, `pdfsaverbox.py`, `pdfsaverpage.py`.
-  - `Lib/` — helper libs for formats (e.g. `drawfile.py`).
 - `Objects/` — plugin compound objects: `arrow.py`, `regpoly.py`,
   `lcdtext.py`, `multilinetext.py` (with `Lib/multilinetext/`),
   `autoshapeplugin.py` (with `Lib/autoshapes/`), `latextext.py`
   (renders LaTeX text; made robust in this fork).
 
-### Scripts (`src/Script/`)
+### Scripts (`src/Sketch/Scripts/`)
 Python modules that are also user-callable scripts (Scripts menu /
 `--run-script`): e.g. `create_star.py`, `transform.py`, `TeX.py`,
 `reload_image.py`, `export_raster.py`, `pathutils/` package. Enabled via
@@ -178,6 +174,6 @@ Python modules that are also user-callable scripts (Scripts menu /
   `build_locales`, plus the custom `build&copy` and Debian (`DEBIAN=1`)
   packaging logic (see `DEBIAN/`, `AppDir/`).
 - The package list and `package_dir` mapping in `setup.py` must be
-  updated when adding packages (e.g. `Plugins.Objects.Lib.autoshapes`
-  also declares icon data files).
-
+  updated when adding or removing packages (e.g.
+  `Sketch.Plugins.Objects.Lib.autoshapes` also declares icon data
+  files).

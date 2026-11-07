@@ -1,14 +1,13 @@
 # Display backends: modern alternatives, antialiasing, font model
 
-Status: **exploratory analysis, no code** (recorded 2026-10-25, branch
-`modernize`). Motivated by the question "the internal image model now
-preserves alpha — rather than reimplementing compositing by hand, what
-modern composition-supporting display pipelines fit Skencil's design
-and its performance requirements?" — to be considered after the
-Python 3 port. Companion: `devdocs/image-transparency.md` (near-term
+Status: **exploratory analysis, no code**. Motivated by the question
+"the internal image model now preserves alpha — rather than
+reimplementing compositing by hand, what modern composition-supporting
+display pipelines fit Skencil's design and its performance
+requirements?" Companion: `devdocs/image-transparency.md` (near-term
 transparency plan inside the current pipeline).
 
-## Maintainer's stated future goals (2026-10-25)
+## Maintainer's stated future goals
 
 1. **Antialiasing of vector shapes** on the display is a future goal.
 2. **Modernizing the font model** is a further future goal (as a new
@@ -39,8 +38,8 @@ transparency plan inside the current pipeline).
   `StartDblBuffer/EndDblBuffer` (offscreen pixmap); images uploaded
   via `XImage`/`ShmPutImage`.
 - **X11-bound already.** pax is X11-direct (XShm, XImage, XGetImage,
-  X fonts); Tk stays X11 on Linux, so this does not change with the
-  py3 port — only *what we composite with* can change.
+  X fonts); Tk stays X11 on Linux, so this does not change — only
+  *what we composite with* can change.
 - **Text stack.** glyph-id text with Type1 fonts and custom
   encodings; no FreeType/fontconfig anywhere. Biggest friction point
   for any full renderer; but with goal 3 above (curves, not font
@@ -104,7 +103,7 @@ replacing the skimage.c raster loop collection and much of `SimpleGC`.
 - **Fit:** good *because* of the device abstraction — the interface
   maps almost 1:1 onto cairo concepts (trafos → cairo matrices;
   pattern fill via clip+paint is cairo's natural idiom). `pycairo`
-  is Python-3-only → this is the **post-py3-port** move.
+  is Python-3-only — no obstacle, the app runs on py3.
 - **Speed:** pixman-backed software raster (same engine as option A);
   with dirty-region-only rendering the cost profile stays close to
   today's. Full-frame ARGB32 at 1920×1080 ≈ 8 MB per full repaint —
@@ -144,16 +143,16 @@ C. Revisit only if profiling of real user documents proves a wall.
 Photo images have alpha compositing (`-compositingrule`) since 8.6,
 but the reason for `paxwidget` is to bypass Tk's slow, Python-object-
 heavy path. Whole-frame rendering through Tk photo/canvas was already
-evaluated and rejected — `devdocs/paxtkinter-analysis.md`, Option D
-("drop pax rendering entirely (pure Tk Canvas / ImageTk). Weeks of UI
-rewrite; not now").
+evaluated and rejected: dropping pax rendering entirely (pure Tk
+Canvas / ImageTk) would mean weeks of UI
+rewrite; not now.
 
 ## Recommendation (timeline)
 
 | Phase | When | What |
 |---|---|---|
 | 1. Transparency without hand-rolled compositing | now / any time | **A + B(1)**: pixman (or XRender) compositing for RGBA images inside skimage.c. Modern composition, minimal risk, keeps every performance property (Shm uploads, dirty rects, pixmap tile cache). |
-| 2. The strategic move | after the py3 port | **C**: cairo `ImageSurface` display device as a new device class behind the existing interface; X11 device kept as fallback. AA + transparency everywhere; later option to swap PDF export to a cairo PDF surface (SMask free). The device-interface cleanliness is what makes this swappable — keep all new display code behind `CommonDevice`, not ad-hoc `gc.` calls. |
+| 2. The strategic move | next | **C**: cairo `ImageSurface` display device as a new device class behind the existing interface; X11 device kept as fallback. AA + transparency everywhere; later option to swap PDF export to a cairo PDF surface (SMask free). The device-interface cleanliness is what makes this swappable — keep all new display code behind `CommonDevice`, not ad-hoc `gc.` calls. |
 | 3. Non-goals | — | GPU/skia (unless profiling demands), Tk-native rendering, Wayland-native (XWayland covers the X11 backend; an EGL backend would be the escape hatch if ever needed). |
 
 Phases 1 and 2 are not wasted work relative to each other: pixman (1)
@@ -182,7 +181,7 @@ modernization budget spent on C.
     truth; `devdocs/text-input.md` (unicode input) is the input-side
     companion of the same modernization.
 
-## Facts verified 2026-10-25
+## Facts verified
 
 - gs 9.55.0 installed; `-dALLOWPSTRANSPARENCY` gating in `gs_init.ps`
   (see `devdocs/image-transparency.md`).

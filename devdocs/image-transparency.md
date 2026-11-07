@@ -1,6 +1,6 @@
 # Image Transparency: display and PS/PDF export — analysis and plan
 
-Status: **planned, not implemented** (recorded 2026-10-25, branch `modernize`).
+Status: **planned, not implemented**.
 Scope: raster images whose alpha channel the internal model already
 preserves (see `Sketch/Graphics/image.py`, `RasterImage`/`ImageData` and
 `test/model/test_image.py`); vector-object opacity is a separate,
@@ -36,7 +36,7 @@ larger topic (see `devdocs/display-backends.md`).
   `config.preferences.pdf_compatibility_level`). So PDF transparency
   is entirely determined by what the PostScript stream expresses.
 
-## Verified environment facts (2026-10-25)
+## Verified environment facts
 
 - Ghostscript **9.55.0** is installed in the dev environment.
 - gs's PostScript transparency operators
@@ -120,7 +120,7 @@ Open decision: white vs. a preference for the background color.
 
 ### Step 4 — rebuild, tests, baselines, docs
 
-- `python2 setup.py build` (after C *and* .py changes), then run
+- `python3 setup.py build` (after C *and* .py changes), then run
   `test/` (model, formats, ui via Xvfb) — see `devdocs/testing.md`.
 - Re-record affected baselines (`test/add-fixture` / `record.py`):
   at minimum the `alphares.sk` EPS baseline (formats layer compares
