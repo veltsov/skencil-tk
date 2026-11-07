@@ -21,11 +21,13 @@ PYTHON=${PYTHON:-python3}
 
 if [ "$1" = "--record" ]; then
     shift
-    REV=$($PYTHON -c "import subprocess;print(subprocess.check_output(['git','rev-parse','master']).strip()[:12])")
+    REV=$(git rev-parse master | cut -c1-12)
     WORKTREE=/tmp/skencil-baseline-$REV
     if [ ! -d "$WORKTREE" ]; then
         echo "Creating baseline worktree $WORKTREE (master @ $REV)"
-        git worktree add "$WORKTREE" master
+        # detached: the baseline build must not depend on where (or
+        # whether) the master branch is currently checked out
+        git worktree add --detach "$WORKTREE" master
     fi
     if [ ! -d "$WORKTREE"/build/lib.linux* ]; then
         echo "Building baseline (this may take a while)..."
