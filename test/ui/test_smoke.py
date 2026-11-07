@@ -40,7 +40,7 @@ def test_open_fixture(name):
 
 def test_open_layer_dialog():
     """Opening the Layers dialog must not crash (pax/GIL regression
-    guard; see devdocs/modernize-paxtkinter.md)."""
+    guard)."""
     run_ui('smoke_dialog.py', args=[testsupport.data_path('tarr.sk')])
 
 
@@ -64,7 +64,7 @@ def test_scrollbar_wheel():
     the Tcl event dispatch (unlike tk.call), which used to abort with
     `Fatal Python error: PyEval_RestoreThread: NULL tstate'.  Also
     covers horizontal wheel scrolling over the hbar and the MOVETO
-    (slider drag) path.  See devdocs/modernize-paxtkinter.md."""
+    (slider drag) path."""
     run_ui('smoke_scrollbars.py', args=[testsupport.data_path('tarr.sk')])
 
 

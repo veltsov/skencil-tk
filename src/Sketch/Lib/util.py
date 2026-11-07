@@ -282,8 +282,7 @@ rx_format = re.compile(r'%\((?P<item>[a-zA-Z_0-9]+)\)'
                        r'\[(?P<converter>[a-zA-Z_]+)\]')
 
 def as_unicode(s):
-    # Byte strings at runtime are utf-8 encoded (see
-    # devdocs/unicode-runtime-audit.md).  Convert them for safe mixing
+    # Byte strings at runtime are utf-8 encoded.  Convert them for safe mixing
     # with the gettext templates; other types pass through unchanged.
     # python3: only bytes need conversion.
     if isinstance(s, bytes):

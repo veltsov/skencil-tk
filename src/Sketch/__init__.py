@@ -23,7 +23,7 @@ _parentdir = os.path.join(_pkgdir, '..')
 SketchVersion = open(os.path.join(_pkgdir, 'VERSION')).read().strip()
 
 # The C extension modules live in the real subpackage Sketch.Modules;
-# no path manipulation is needed (import-restructure.md, batch B2).
+# no path manipulation is needed.
 
 
 message_dir = os.path.join(_parentdir, 'Resources/Messages')
@@ -195,7 +195,7 @@ def init_lib():
 def init_ui():
     # paxtkinter (a copy of _tkinter from Python 1.5.2) used to be
     # substituted for _tkinter here; pax now works with the stock
-    # _tkinter (GIL-safe callbacks; see devdocs/modernize-paxtkinter.md).
+    # _tkinter (GIL-safe callbacks).
     # The runtime requires threaded Tcl; this is checked in
     # UI.skapp.TkApplication.init_tk as soon as an interpreter exists.
 

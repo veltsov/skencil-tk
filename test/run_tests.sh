@@ -17,7 +17,7 @@ TEST_DIR=$(cd "$(dirname "$0")" && pwd)
 REPO_ROOT=$(dirname "$TEST_DIR")
 cd "$REPO_ROOT"
 
-PYTHON=${PYTHON:-python2}
+PYTHON=${PYTHON:-python3}
 
 if [ "$1" = "--record" ]; then
     shift

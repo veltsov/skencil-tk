@@ -377,7 +377,7 @@ class XFigLoader(SimplifiedLoader):
             straight = path.AppendLine
             last = pts[0]
             cur = pts[1]
-            start = node = (last + cur) / 2  # divaudit: unverified (not exercised by the audit)
+            start = node = (last + cur) / 2
             if closed:
                 straight(node)
             else:
@@ -386,7 +386,7 @@ class XFigLoader(SimplifiedLoader):
             last = cur
             for cur in pts[2:]:
                 c1 = f13 * node + f23 * last
-                node = (last + cur) / 2  # divaudit: unverified (not exercised by the audit)
+                node = (last + cur) / 2
                 c2 = f13 * node + f23 * last
                 curve(c1, c2, node)
                 last = cur

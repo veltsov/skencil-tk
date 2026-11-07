@@ -40,7 +40,7 @@ def create_packages(package):
     """
     Return the package's module and create it and it's parents if
     necessary.  For the built-in plugin categories real packages exist
-    (Sketch.Plugins.Filters etc., see devdocs/import-restructure.md);
+    (Sketch.Plugins.Filters etc.);
     fake namespace modules are only created for user-defined nested
     categories.
     """

@@ -483,8 +483,8 @@ class WMFLoader(GenericLoader):
         self._print('->', left, top, right, bottom, ellw, ellh)
         self.prop_stack.AddStyle(self.curstyle.Duplicate())
         self.rectangle(right - left, 0, 0, bottom - top, left, top,
-                       radius1 = abs(ellw / (right - left)),  # divaudit: unverified (not exercised by the audit)
-                       radius2 = abs(ellh / (bottom - top)))  # divaudit: unverified (not exercised by the audit)
+                       radius1 = abs(ellw / (right - left)),
+                       radius2 = abs(ellh / (bottom - top)))
 
 
     def Escape(self):

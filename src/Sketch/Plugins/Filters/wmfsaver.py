@@ -81,12 +81,12 @@ def cr(P1, P2):
 
 def FlattenPath(P0, P1, P2, P3):
 
-    P4 = (P0 + P1) / 2  # divaudit: unverified (not exercised by the audit)
-    P5 = (P1 + P2) / 2  # divaudit: unverified (not exercised by the audit)
-    P6 = (P2 + P3) / 2  # divaudit: unverified (not exercised by the audit)
-    P7 = (P4 + P5) / 2  # divaudit: unverified (not exercised by the audit)
-    P8 = (P5 + P6) / 2  # divaudit: unverified (not exercised by the audit)
-    P9 = (P7 + P8) / 2  # divaudit: unverified (not exercised by the audit)
+    P4 = (P0 + P1) / 2
+    P5 = (P1 + P2) / 2
+    P6 = (P2 + P3) / 2
+    P7 = (P4 + P5) / 2
+    P8 = (P5 + P6) / 2
+    P9 = (P7 + P8) / 2
 
     B = P3 - P0
     S = P9 - P0
@@ -137,7 +137,7 @@ class WMFSaver:
     def packrec(self, *args):
         if args[1] is None:
             # compute size of the record
-            args = (args[0], struct.calcsize(args[0]) / 2) + args[2:]  # divaudit: unverified (not exercised by the audit)
+            args = (args[0], struct.calcsize(args[0]) // 2) + args[2:]
         self.maxrecord = max(args[1], self.maxrecord)
         self.pack(*args)
 
@@ -399,8 +399,8 @@ class WMFSaver:
 
     def write_headers(self):
         self.file.seek(0, 2)
-        filesize = max(0, (self.file.tell()  # divaudit: unverified (not exercised by the audit)
-                           - struct.calcsize(struct_placeable_header)) / 2)
+        filesize = max(0, (self.file.tell()
+                           - struct.calcsize(struct_placeable_header)) // 2)
         self.file.seek(0)
 
         placeable = self.get_placeable(0)
@@ -428,7 +428,7 @@ class WMFSaver:
         inch = 1440
         x = max(width, height)
         if x * (inch / 72.) > 32767:
-            inch = 32767 / x  # divaudit: unverified (not exercised by the audit)
+            inch = 32767 / x
         sc = inch / 72.
         self.trafo = Trafo(sc, 0, 0, -sc, - sc * left, sc * top)
         self.Scale = sc

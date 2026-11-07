@@ -5,7 +5,7 @@
 # names) and any other unicode reaching the object model must not leak
 # into saved .sk files as u'...' (parse_sk_line2 rejects the u prefix);
 # they must be written as utf-8 \x-escaped byte strings, byte-compatible
-# with master.  See devdocs/unicode-runtime-audit.md.
+# with master.
 
 
 import re

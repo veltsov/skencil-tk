@@ -174,7 +174,7 @@ def _assign_preferences(values):
 
 def _load_userhooks():
     # Execute the optional userhooks.py from the user config directory
-    # by file path; no sys.path manipulation (import-restructure.md).
+    # by file path; no sys.path manipulation.
     filename = os.path.join(config.user_config_dir, 'userhooks.py')
     if not os.path.isfile(filename):
         return
@@ -205,7 +205,7 @@ def load_user_preferences():
     # Load the user specific configuration.
     # User content lives below the configuration directory: Plugins/ is
     # scanned like the built-in plugin tree, Scripts/ becomes importable
-    # as Sketch.Scripts.<name> (devdocs/import-restructure.md).  This
+    # as Sketch.Scripts.<name>.  This
     # happens here (not in init_directories), so that --configdir is
     # honored.
     user_plugin_dir = os.path.join(config.user_config_dir, 'Plugins')

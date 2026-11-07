@@ -882,7 +882,7 @@ class SVGHandler(saxhandler.ContentHandler):
         scalex =  width / image.size[0]
 
         height = self.user_length(attrs['height']) 
-        scaley = -height / image.size[1]  # divaudit: unverified (not exercised by the audit)
+        scaley = -height / image.size[1]
 
         style = attrs.get('style', '')
         if style:

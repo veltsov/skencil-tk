@@ -4,8 +4,7 @@
 # tk.call, without the GIL -- which used to abort the app with
 # "Fatal Python error: PyEval_RestoreThread: NULL tstate" on the first
 # wheel event over a scrollbar. Regression guard for the fix that
-# marshals xview/yview through call_py_method (see
-# devdocs/modernize-paxtkinter.md).
+# marshals xview/yview through call_py_method.
 
 import os
 import traceback

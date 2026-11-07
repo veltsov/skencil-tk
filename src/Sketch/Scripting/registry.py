@@ -33,7 +33,7 @@ class ScriptRegistry:
         # Menu path components are user-visible strings (K1): the
         # origins (the scripts) pass unicode literals.  A byte string
         # is rejected loudly instead of being iterated character by
-        # character (see devdocs/unicode-runtime-audit.md, instance 6).
+        # character.
         if isinstance(menu, str):
             menu = (menu,)
         for item in menu:

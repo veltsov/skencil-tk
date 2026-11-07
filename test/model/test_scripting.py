@@ -3,8 +3,7 @@
 # The menu path components are user-visible strings (K1): the scripts
 # pass unicode literals, and ScriptRegistry.Add must reject byte strings
 # loudly instead of iterating them character by character (which used to
-# produce single-letter nested submenus in the Script menu; see
-# devdocs/unicode-runtime-audit.md, instance 6).
+# produce single-letter nested submenus in the Script menu).
 
 
 import pytest
