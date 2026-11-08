@@ -56,8 +56,9 @@ The current maintainer's fork (Vladimir Eltsov, 2018+) added many features (see 
     (`Modules/` geometry+font+image, `Pax/` Tk/X11 integration, `Filter/`
     stream filters)
   - `Resources/` — pixmaps, font metrics, misc resources, translations
-  - `skencil`, `skencil.py`, `sk2ps`, `skconvert.py`, `skshow.py` —
-    launcher / CLI scripts
+  - `skencil`, `sk2ps`, `skconvert` — launcher / CLI scripts
+    installed into `build/scripts-3.10` (and dispatched by AppRun);
+    `sk2ppm.py`, `skshow.py` — CLI scripts that are not installed
 - `po/` — gettext translations (built to `src/Resources/Messages` by setup.py)
 - `devtools/` — build/dev-environment scripts (see build doc)
 - `AppDir/` — assembled AppImage directory (gitignored parts)

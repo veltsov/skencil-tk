@@ -37,6 +37,9 @@ case $MAIN in
 	;;
 esac
 
+# The tool is chosen by the invocation name (a symlink to the AppImage
+# named sk2ps or skconvert runs that script of build/scripts-<X.Y>;
+# anything else runs skencil).
 # The launcher (src/skencil) expects build/scripts-<X.Y>/<tool> next to
 # build/lib.linux-<arch>-<X.Y>/; derive <X.Y> from the bundled
 # interpreter so this follows the build tree layout.

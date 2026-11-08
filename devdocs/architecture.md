@@ -173,7 +173,7 @@ Python modules that are also user-callable scripts (Scripts menu /
 ## Distribution / packaging
 
 - `setup.py` (distutils): `build`, `install`, `sdist`, `bdist_rpm`,
-  `build_locales`, plus the custom `build&copy` and Debian (`DEBIAN=1`)
+  `build_locales`, plus the custom Debian (`DEBIAN=1`)
   packaging logic (see `DEBIAN/`, `AppDir/`).
 - The package list and `package_dir` mapping in `setup.py` must be
   updated when adding or removing packages (e.g.

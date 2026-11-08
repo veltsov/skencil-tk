@@ -52,17 +52,12 @@ The launcher script (`src/skencil`) inserts `sys.path[0] +
 `build/scripts-3.10` and `build/lib.linux-x86_64-3.10`. Keep this layout
 intact when changing the build.
 
-Other CLI tools in `src/`: `sk2ps` (sk→PS converter, installed as a
-script), `skconvert.py`, `sk2ppm.py`, `skshow.py`.
-
-### Development shortcut
-
-`setup.py` supports `python3 setup.py build&copy` — builds and then copies
-the freshly built `.so` files (`paxmodule, pstokenize,
-_sketchmodule, skreadmodule, streamfilter, _type1module`) into
-`src/Sketch/Modules/` so that the app can also be started from `src/` via
-`src/skencil.py` (which imports `Sketch` from the source tree).
-`src/skencil.sav` is a backup of the older launcher.
+The CLI tools `sk2ps` (sk→PS converter) and `skconvert` (any readable
+format → any export format, chosen by the output extension, with the
+format's default options) are installed as scripts next to the launcher
+and use the same `sys.path` insertion.  `sk2ppm.py` and `skshow.py` in
+`src/` are not installed.  `src/skencil.sav` is a backup of the older
+launcher.
 
 ## Dev environment options (`devtools/`)
 

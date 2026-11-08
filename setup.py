@@ -44,7 +44,6 @@ if sys.version_info[0] < 3:
     sys.exit(1)
 
 
-COPY = False
 DEBIAN = False
 VERSION = '1.2'
 
@@ -160,11 +159,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == 'build_locales':
         generate_locales()
         sys.exit(0)
-        
-    if len(sys.argv) > 1 and sys.argv[1] == 'build&copy':
-        COPY = True
-        sys.argv[1] = 'build'
-        generate_locales()
         
     if len(sys.argv) > 1 and sys.argv[1] == 'bdist_deb':
         DEBIAN = True
@@ -350,7 +344,7 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
            
             #scripts=['src/skencil.py','src/skconvert.py','src/sk2ps.py',
             #         'src/sk2ps.py','src/skshow.py',],
-            scripts=['src/skencil', 'src/sk2ps'],
+            scripts=['src/skencil', 'src/sk2ps', 'src/skconvert'],
                     
             data_files=[
                     ('/usr/share/applications', ['src/skencil.desktop', ]),
@@ -375,38 +369,6 @@ if sys.argv[1] == 'build':
         compileall.compile_dir(libdir)
     
         
-##############################################
-# This section for developing purpose only
-# Command 'python setup.py build&copy' allows
-# automating build and native extension copying
-# into package directory
-##############################################    
-            
-if COPY:
-    import platform
-    version = sys.version[:3]
-    
-    shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/pax.so', 'src/Sketch/Modules/')
-    print('\n pax.so has been copied to src/ directory')
-    
-    shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/pstokenize.so', 'src/Sketch/Modules/')
-    print('\n pstokenize.so has been copied to src/ directory')
-    
-    shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/_sketchmodule.so', 'src/Sketch/Modules/')
-    print('\n _sketchmodule.so has been copied to src/ directory')
-    
-    shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/skreadmodule.so', 'src/Sketch/Modules/')
-    print('\n skreadmodule.so has been copied to src/ directory')
-    
-    shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/streamfilter.so', 'src/Sketch/Modules/')
-    print('\n streamfilter.so has been copied to src/ directory')
-    
-    shutil.copy('build/lib.linux-' + platform.machine() + '-' + version + '/skencil/Sketch/Modules/_type1module.so', 'src/Sketch/Modules/')
-    print('\n _type1module.so has been copied to src/ directory')
-    
-    os.system('rm -rf build')
-    
-    
 #################################################
 # Implementation of bdist_deb command
 #################################################

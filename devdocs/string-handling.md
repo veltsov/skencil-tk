@@ -33,7 +33,7 @@ external output.
   boundary.
 * `sys.argv` (document filename, `--run-script`, CLI tools): decoded
   leniently (`util.as_display_name`) at the entry points
-  (`main.py`, `sk2ps`, `skconvert.py`, `skshow.py`).
+  (`main.py`, `sk2ps`, `skconvert`, `skshow.py`).
 * `os.listdir` (`plugins.py`, `font.py`, `curvetext.py`);
   `SKETCH_FONTPATH`/`gethome()` decoded in `configutil.py`/`util.py`.
 * The filesystem name representation is assumed to be utf-8 (modern

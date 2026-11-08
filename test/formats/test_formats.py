@@ -45,3 +45,23 @@ def test_gzip_load():
     testsupport.sk2ps(gz, out)
     with open(out, 'rb') as f:
         assert f.read().startswith(b'%!PS-Adobe')
+
+
+@pytest.mark.parametrize('ext, magic', [('.pdf', b'%PDF'), ('.svg', b'<?xml'),
+                                        ('.wmf', b'\xd7\xcd\xc6\x9a')])
+def test_skconvert(ext, magic):
+    """The skconvert script of the build tree must convert with the
+    default options of the format, without asking for them (the
+    ask_options stub prints them)."""
+    import os, subprocess, sys
+    out = testsupport.output_path('skconvert', 'tarr' + ext)
+    if os.path.exists(out):
+        os.remove(out)
+    script = os.path.join(testsupport.build_scripts(), 'skconvert')
+    result = subprocess.run([sys.executable, script,
+                             testsupport.data_path('tarr.sk'), out],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == b''
+    with open(out, 'rb') as f:
+        assert f.read().startswith(magic)

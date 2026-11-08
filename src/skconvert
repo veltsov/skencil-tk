@@ -26,6 +26,10 @@ by its extension.
 """
 
 import sys, os
+import platform
+
+sys.path.insert(0, sys.path[0] + '/../lib.linux-%s-%d.%d' %
+                (platform.machine(), sys.version_info[0], sys.version_info[1]))
 
 from Sketch.Base import load, plugins
 import Sketch
@@ -35,12 +39,16 @@ def convert(infile, outfile):
     # file names are unicode in the model; argv bytes are utf-8 on the
     # assumed systems (devdocs/string-handling.md)
     from Sketch.Lib.util import as_display_name
-    doc = load.load_drawing(as_display_name(infile))
+    infile = as_display_name(infile)
+    outfile = as_display_name(outfile)
+    doc = load.load_drawing(infile)
     extension = os.path.splitext(outfile)[1]
     fileformat = plugins.guess_export_plugin(extension)
     if fileformat:
         saver = plugins.find_export_plugin(fileformat)
-        saver(doc, outfile)
+        # the default options of the format (options = None would ask
+        # for them interactively)
+        saver(doc, outfile, options = {})
     else:
         sys.stderr.write("skconvert: unrecognized extension %s\n" % extension)
         sys.exit(1)
