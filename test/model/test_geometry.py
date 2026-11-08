@@ -50,3 +50,14 @@ def test_point_unsupported_operations():
         p % 2
     with pytest.raises(TypeError):
         divmod(p, 2)
+
+
+def test_color_compares_only_with_colors():
+    # the C compare read a non-color operand as a color: black == None
+    # was true, so PostScriptDevice skipped setting black after a
+    # grestore
+    sk = testsupport.sketch()
+    black = sk.CreateRGBColor(0, 0, 0)
+    assert black != None and not black == None
+    assert black == sk.CreateRGBColor(0, 0, 0)
+    assert black != sk.CreateRGBColor(0, 0, 1)

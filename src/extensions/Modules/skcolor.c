@@ -269,6 +269,8 @@ skcolor_getattr(PyObject * self, char * name)
 static PyObject *
 skcolor_richcompare(PyObject * v, PyObject * w, int op)
 {
+    if (!SKColor_Check(v) || !SKColor_Check(w))
+	Py_RETURN_NOTIMPLEMENTED;
     return SK_RichCompare(skcolor_compare((SKColorObject*)v, (SKColorObject*)w), op);
 }
 
