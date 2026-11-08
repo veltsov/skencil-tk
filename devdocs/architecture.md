@@ -144,10 +144,10 @@ Contains only `__init__.py` in the source tree; the built C extension
     `svgloader.py`, `wmfloader.py`, `xfigloader.py`, plus
     gzip/bzip-wrapping loaders.
   - Export: `sksaver.py`, `epssaver.py`, `pssaver.py`, `wmfsaver.py`,
-    the SVG export `svgsaver.py` ("Inkscape SVG") and
-    `svgsaverplain.py` ("Plain SVG"; see `devdocs/svg-export.md`),
-    and the fork's working PDF export:
-    `pdfsaver.py`, `pdfsaverbox.py`, `pdfsaverpage.py`.
+    the SVG export `svgsaver.py` (Inkscape and Plain flavours; see
+    `devdocs/svg-export.md`),
+    and the fork's PDF export `pdfsaver.py` (PostScript through
+    ghostscript; export area and image compression are options).
 - `Objects/` — plugin compound objects: `arrow.py`, `regpoly.py`,
   `lcdtext.py`, `multilinetext.py` (with `Lib/multilinetext/`),
   `autoshapeplugin.py` (with `Lib/autoshapes/`), `latextext.py`
@@ -163,7 +163,9 @@ Contains only `__init__.py` in the source tree; the built C extension
   export).  The chosen export options are kept per document for the
   session in `document.options['Export.<format>']`
   (`ExportInfo.GetOptions`); Export Again and calls without options
-  reuse them, starting from the defaults.
+  reuse them, starting from the defaults.  `plugins.parse_export_option`
+  parses the command line form `NAME=VALUE` (`skconvert -o`; a choice
+  by number or by a prefix of its untranslated or translated label).
 
 ### Scripts (`src/Sketch/Scripts/`)
 Python modules that are also user-callable scripts (Scripts menu /

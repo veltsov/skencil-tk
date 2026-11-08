@@ -4,6 +4,10 @@
 # Pythons; fixing it is a separate project).
 
 
+import os
+import subprocess
+import sys
+
 import pytest
 
 import testsupport
@@ -47,21 +51,46 @@ def test_gzip_load():
         assert f.read().startswith(b'%!PS-Adobe')
 
 
-@pytest.mark.parametrize('ext, magic', [('.pdf', b'%PDF'), ('.svg', b'<?xml'),
-                                        ('.wmf', b'\xd7\xcd\xc6\x9a')])
-def test_skconvert(ext, magic):
+@pytest.mark.parametrize('ext, magic, args', [
+    ('.pdf', b'%PDF', []),
+    ('.svg', b'<?xml', []),
+    ('.wmf', b'\xd7\xcd\xc6\x9a', []),
+    # the format independently of the extension, with options
+    ('.out', b'<?xml', ['-f', 'svg', '-o', 'flavour=plain',
+                        '-o', 'box=bounding']),
+])
+def test_skconvert(ext, magic, args):
     """The skconvert script of the build tree must convert with the
-    default options of the format, without asking for them (the
-    ask_options stub prints them)."""
-    import os, subprocess, sys
+    default options of the format, or those given with -o, without
+    asking for them."""
     out = testsupport.output_path('skconvert', 'tarr' + ext)
     if os.path.exists(out):
         os.remove(out)
-    script = os.path.join(testsupport.build_scripts(), 'skconvert')
-    result = subprocess.run([sys.executable, script,
-                             testsupport.data_path('tarr.sk'), out],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = run_skconvert(args + [testsupport.data_path('tarr.sk'), out])
     assert result.returncode == 0, result.stderr
     assert result.stdout == b''
     with open(out, 'rb') as f:
-        assert f.read().startswith(magic)
+        data = f.read()
+    assert data.startswith(magic)
+    if args:
+        assert b'inkscape:' not in data
+        # the bounding box, not the A4 page
+        assert b'width="595' not in data
+
+
+def run_skconvert(args):
+    script = os.path.join(testsupport.build_scripts(), 'skconvert')
+    return subprocess.run([sys.executable, script] + args,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+def test_skconvert_options_and_errors():
+    result = run_skconvert(['--options', '-f', 'PDF'])
+    assert result.returncode == 0
+    assert b'0 page (default)' in result.stdout
+    out = testsupport.output_path('skconvert', 'bad.pdf')
+    for args in (['-o', 'box=nosuch'], ['-o', 'nosuch=1'], ['-f', 'nosuch']):
+        result = run_skconvert(args + [testsupport.data_path('tarr.sk'), out])
+        assert result.returncode == 1, args
+        assert result.stderr.startswith(b'skconvert: '), result.stderr
+    assert not os.path.exists(out)

@@ -17,12 +17,23 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Usage: skconvert infile outfile
+"""Usage: skconvert [options] infile outfile
+       skconvert --options [-f FORMAT | outfile]
 
 Convert a vector graphics file into another format. This is done by
 reading infile into Skencil and saving it as outfile. infile can be in
 any format Skencil can read. The format of the output file is determined
-by its extension.
+by its extension unless given with -f.
+
+Options:
+  -h --help             Print this help message and the export formats
+  -f --format=FORMAT    Export format (see below), case-insensitive
+  -o --option=NAME=VALUE
+                        Set an option of the export format; may be
+                        repeated.  A choice is given by its number or by
+                        (a unique prefix of) its name, e.g. box=bounding
+  --options             List the options of the format given by -f or
+                        by the extension of outfile, and exit
 """
 
 import sys, os
@@ -35,33 +46,83 @@ from Sketch.Base import load, plugins
 import Sketch
 
 
-def convert(infile, outfile):
-    # file names are unicode in the model; argv bytes are utf-8 on the
-    # assumed systems (devdocs/string-handling.md)
-    from Sketch.Lib.util import as_display_name
-    infile = as_display_name(infile)
-    outfile = as_display_name(outfile)
-    doc = load.load_drawing(infile)
-    extension = os.path.splitext(outfile)[1]
-    fileformat = plugins.guess_export_plugin(extension)
+def fail(message):
+    sys.stderr.write('skconvert: %s\n' % message)
+    sys.exit(1)
+
+
+def usage():
+    formats = ', '.join(info.format_name for info in plugins.export_plugins)
+    return __doc__ + '\nExport formats: %s\n' % formats
+
+
+def export_format(fileformat, outfile):
     if fileformat:
-        saver = plugins.find_export_plugin(fileformat)
-        # the default options of the format (options = None would ask
-        # for them interactively)
-        saver(doc, outfile, options = {})
-    else:
-        sys.stderr.write("skconvert: unrecognized extension %s\n" % extension)
-        sys.exit(1)
+        name = plugins.find_export_plugin_nocase(fileformat)
+        if not name:
+            fail("unknown format %s\n%s" % (fileformat, usage()))
+        return plugins.find_export_plugin(name)
+    extension = os.path.splitext(outfile)[1]
+    name = plugins.guess_export_plugin(extension)
+    if not name:
+        fail("unrecognized extension %s (use -f)" % extension)
+    return plugins.find_export_plugin(name)
 
 
 def main():
+    import getopt
+    from Sketch import SketchError
+    # file names are unicode in the model; argv bytes are utf-8 on the
+    # assumed systems (devdocs/string-handling.md)
+    from Sketch.Lib.util import as_display_name
     Sketch.init_lib()
-    if len(sys.argv) != 3:
-        sys.stderr.write(__doc__)
-        sys.exit(1)
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'hf:o:',
+                                   ['help', 'format=', 'option=', 'options'])
+    except getopt.GetoptError as exc:
+        fail('%s\n%s' % (exc, usage()))
+    fileformat = ''
+    options = []
+    list_options = 0
+    for opt, value in opts:
+        if opt in ('-h', '--help'):
+            sys.stdout.write(usage())
+            sys.exit(0)
+        elif opt in ('-f', '--format'):
+            fileformat = value
+        elif opt in ('-o', '--option'):
+            options.append(value)
+        elif opt == '--options':
+            list_options = 1
+    args = [as_display_name(arg) for arg in args]
 
-    convert(sys.argv[1], sys.argv[2])
+    if list_options:
+        if len(args) > 1 or not (fileformat or args):
+            fail('--options needs -f FORMAT or outfile')
+        info = export_format(fileformat, args and args[-1] or '')
+        if info.parameters:
+            sys.stdout.write('%s options:\n%s\n'
+                             % (info.format_name,
+                                plugins.describe_export_options(info)))
+        else:
+            sys.stdout.write('%s has no options\n' % info.format_name)
+        return
+
+    if len(args) != 2:
+        fail('need infile and outfile\n' + usage())
+    infile, outfile = args
+    info = export_format(fileformat, outfile)
+    values = {}
+    try:
+        for option in options:
+            name, value = plugins.parse_export_option(info, option)
+            values[name] = value
+    except SketchError as exc:
+        fail(exc)
+    doc = load.load_drawing(infile)
+    # unset options get their defaults (options = None would mean the
+    # stored options of the document)
+    info(doc, outfile, options = values)
 
 
 main()
-

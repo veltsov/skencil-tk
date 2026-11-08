@@ -18,7 +18,7 @@ The current maintainer's fork (Vladimir Eltsov, 2018+) added many features (see 
 | `devdocs/glyph-text.md`            | The glyph-index text representation of `SimpleText` (global glyph registry, gid arrays, conversions at all sinks)                                                                    |
 | `devdocs/text-input.md`            | The unicode keyboard input path; open follow-up items (multilinetext latin-1 input, full-charset insertion)                                                                          |
 | `devdocs/image-transparency.md`    | Image alpha transparency: current state and the plan (display blending, PS flatten, PDF via ghostscript SMask recipe) — **planned, not implemented**                                 |
-| `devdocs/svg-export.md`            | SVG export: Plain and Inkscape SVG filters, object/paint mapping onto the PostScript semantics, text modes, TexText, EPS, limitations                                                |
+| `devdocs/svg-export.md`            | SVG export: the Inkscape and Plain flavours, object/paint mapping onto the PostScript semantics, text modes, TexText, EPS, limitations                                              |
 | `devdocs/display-backends.md`      | Modern display backends (pixman, XRender, cairo, GPU/Tk-native) evaluated against Skencil's device architecture; antialiasing and font-model modernization goals — **analysis only** |
 
 ## Quick facts

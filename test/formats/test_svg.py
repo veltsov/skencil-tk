@@ -1,5 +1,5 @@
-# Layer 2: SVG export (Plain SVG and Inkscape SVG filters, see
-# devdocs/svg-export.md).
+# Layer 2: SVG export (the Inkscape and Plain flavours of the SVG
+# filter, see devdocs/svg-export.md).
 #
 # The visual tests rasterize the exported SVG with Inkscape and compare
 # it with the ghostscript rendering of the sk2ps output of the same
@@ -54,14 +54,19 @@ def fixture_path(name):
     return _svgall[0]
 
 
-def export(name, fmt, options=None, document=None, suffix=''):
+FLAVOURS = {'inkscape': 0, 'plain': 1}
+
+
+def export(name, flavour, options=None, document=None, suffix=''):
     testsupport.sketch()
     from Sketch.Base import plugins
     if document is None:
         document = testsupport.load_document(fixture_path(name))
     base = os.path.splitext(name)[0]
-    out = testsupport.output_path('svg', '%s-%s%s.svg' % (base, fmt, suffix))
-    plugins.find_export_plugin(fmt)(document, out, options=dict(options or {}))
+    out = testsupport.output_path('svg', '%s-%s%s.svg'
+                                  % (base, flavour, suffix))
+    options = dict(options or {}, flavour=FLAVOURS[flavour])
+    plugins.find_export_plugin('SVG')(document, out, options=options)
     return out
 
 
@@ -118,7 +123,7 @@ def difference(png_a, png_b, scale=4, tol=40):
 @pytest.mark.skipif(not have_inkscape, reason='inkscape not installed')
 @pytest.mark.parametrize('name', SVG_FIXTURES)
 def test_plain_svg_matches_postscript(name):
-    svgfile = export(name, 'SVG')
+    svgfile = export(name, 'plain')
     width, height = page_size(svgfile)
     frac = difference(rasterize_ps(name, width, height),
                       rasterize_svg(svgfile))
@@ -136,8 +141,8 @@ def test_inkscape_svg_matches_plain(text):
         if not layer.is_SpecialLayer and \
            layer.Visible() != layer.Printable():
             doc.layers.remove(layer)
-    plain = export('svgall.sk', 'SVG', document=doc, suffix='-vis')
-    ink = export('svgall.sk', 'SVG-Inkscape', {'text': text},
+    plain = export('svgall.sk', 'plain', document=doc, suffix='-vis')
+    ink = export('svgall.sk', 'inkscape', {'text': text},
                  document=doc, suffix='-vis%d' % text)
     frac = difference(rasterize_svg(plain), rasterize_svg(ink))
     assert frac <= DEFAULT_MAX_DIFF, frac
@@ -155,7 +160,7 @@ def all_attribute_names(root):
 
 
 def test_plain_svg_has_no_editing_structure():
-    root = parse(export('svgall.sk', 'SVG'))
+    root = parse(export('svgall.sk', 'plain'))
     for name in all_attribute_names(root):
         assert not name.startswith((INKSCAPE, SODIPODI, SKENCIL, TEXTEXT)), \
                name
@@ -174,7 +179,7 @@ def inkscape_layers(root):
 
 
 def test_inkscape_layers_and_guides():
-    root = parse(export('svgall.sk', 'SVG-Inkscape'))
+    root = parse(export('svgall.sk', 'inkscape'))
     layers = inkscape_layers(root)
     assert [layer.get(INKSCAPE + 'label') for layer in layers] \
            == ['Layer 1', 'Hidden printable', 'Notes (non-printable)']
@@ -192,7 +197,7 @@ def test_inkscape_layers_and_guides():
 
 
 def test_inkscape_structure():
-    root = parse(export('svgall.sk', 'SVG-Inkscape'))
+    root = parse(export('svgall.sk', 'inkscape'))
     plugins = [elem.get(SKENCIL + 'plugin') for elem in root.iter()
                if elem.get(SKENCIL + 'plugin')]
     assert 'RegularPolygon' in plugins and 'LCDText' in plugins
@@ -212,7 +217,7 @@ def test_inkscape_structure():
 
 
 def test_inkscape_text_mode():
-    root = parse(export('svgall.sk', 'SVG-Inkscape', {'text': 1},
+    root = parse(export('svgall.sk', 'inkscape', {'text': 1},
                         suffix='-text'))
     texts = {elem.text: elem for elem in root.iter(SVG + 'text')}
     elem = texts['Plain Times fi AV']
@@ -234,21 +239,21 @@ def test_inkscape_clone_is_use():
     clone.Translate(Point(10, 20))
     # a Clone is not a GraphicsObject: Insert takes it in a list
     layer.Insert([clone], len(layer.GetObjects()))
-    root = parse(export('svgall.sk', 'SVG-Inkscape', document=doc,
+    root = parse(export('svgall.sk', 'inkscape', document=doc,
                         suffix='-clone'))
     uses = list(root.iter(SVG + 'use'))
     assert len(uses) == 1
     ref = uses[0].get(XLINK_HREF)[1:]
     assert any(elem.get('id') == ref for elem in root.iter())
     assert uses[0].get('transform') == 'translate(10 -20)'
-    plain = parse(export('svgall.sk', 'SVG', document=doc, suffix='-clone'))
+    plain = parse(export('svgall.sk', 'plain', document=doc, suffix='-clone'))
     assert plain.find('.//' + SVG + 'use') is None
 
 
 def test_textext_attributes():
     testsupport.sketch()
     from Sketch.Plugins.Filters.svgsaver import textext_text
-    root = parse(export('alphares.sk', 'SVG-Inkscape'))
+    root = parse(export('alphares.sk', 'inkscape'))
     groups = [elem for elem in root.iter()
               if elem.get(SKENCIL + 'plugin') == 'LtxObj']
     assert groups
@@ -275,8 +280,17 @@ def test_textext_attributes():
            == '%\\preamble|\\usepackage{bm}|\n$\\bm{x}$'
 
 
-def test_skconvert_svg_is_plain():
+def test_default_flavour_is_inkscape():
+    # one SVG filter: the default (also of skconvert) is the Inkscape
+    # flavour with all layers, Plain has only the printable ones
     testsupport.sketch()
     from Sketch.Base import plugins
     assert plugins.guess_export_plugin('.svg') == 'SVG'
     assert plugins.guess_export_plugin('.pdf') == 'PDF'
+    doc = testsupport.load_document(fixture_path('svgall.sk'))
+    out = testsupport.output_path('svg', 'svgall-default.svg')
+    plugins.find_export_plugin('SVG')(doc, out, options={})
+    assert len(inkscape_layers(parse(out))) == 3
+    plain = parse(export('svgall.sk', 'plain', document=doc))
+    assert not inkscape_layers(plain)
+    assert len([elem for elem in plain if elem.tag == SVG + 'g']) == 2

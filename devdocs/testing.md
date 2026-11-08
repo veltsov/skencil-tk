@@ -30,7 +30,7 @@ staleness warning.
 | `test/record.py` | regenerate baselines for given fixtures (used by add-fixture) |
 | `test/data/` | fixtures: `.sk` files + every external file they reference, `fixtures.txt` manifest |
 | `test/model/` | layer 1: headless document-model tests (load, save/reload, mutations, undo, bezier node edits, glyph/text behavior, internal raster image representation) |
-| `test/formats/` | layer 2: `sk2ps` output vs baseline EPS (byte compare, then ghostscript raster compare), fig import, headless `.sk.gz` load, the `skconvert` script |
+| `test/formats/` | layer 2: `sk2ps` output vs baseline EPS (byte compare, then ghostscript raster compare), fig import, headless `.sk.gz` load, the `skconvert` script (`-f`, `-o`, `--options`, errors) |
 | `test/ui/` | layers 3+4: full app under Xvfb driven by `--run-script` payloads (`test/ui/scripts/`), screenshot comparisons |
 | `test/baselines/` | golden artifacts recorded from master: `sk/` (.sk saves), `eps/` (EPS + rasterized PNG), `shots/` (screenshots), `BASELINE-REV` |
 | `test/output/` | per-run artifacts (gitignored) |

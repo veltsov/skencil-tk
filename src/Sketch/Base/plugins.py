@@ -219,6 +219,8 @@ class ExportInfo(ConfigInfo):
         self.extensions = extensions
         self.preopen_output = preopen_output
         self.parameters = parameters
+        # untranslated, for the option names of the command line
+        self.declared_parameters = parameters
         self.translate()
         export_formats[format_name] = self
 
@@ -283,6 +285,108 @@ class ExportInfo(ConfigInfo):
 
 def find_export_plugin(name):
     return export_formats.get(name)
+
+def find_export_plugin_nocase(name):
+    """Return the format name of the export plugin NAME, compared
+    case-insensitively, or ''."""
+    for format_name in export_formats:
+        if format_name.lower() == name.lower():
+            return format_name
+    return ''
+
+#
+#   Export options as text (skconvert -o NAME=VALUE)
+#
+
+def _option_word(text):
+    # 'Bounding box' -> 'bounding_box'
+    return '_'.join(re.findall(r'[a-z0-9]+', text.lower()))
+
+def _choice_words(info, index):
+    # the words a choice of parameter INDEX can be given by: its
+    # declared and its translated label
+    declared = info.declared_parameters[index][3]
+    translated = info.parameters[index][3]
+    return [[_option_word(declared[i]), _option_word(translated[i])]
+            for i in range(len(declared))]
+
+def parse_export_option(info, text):
+    """Parse TEXT, `NAME=VALUE', as an option of the export plugin INFO
+    and return (NAME, value).  A choice is given by its number or by
+    (a unique prefix of) its label, in lowercase with `_' between the
+    words; a check by 0/1, yes/no or on/off.  Raise SketchError with a
+    message for the user if TEXT is not a valid option."""
+    name, sep, value = text.partition('=')
+    name = name.strip()
+    value = value.strip()
+    names = [param[0] for param in info.parameters]
+    if not sep or name not in names:
+        raise SketchError(_("%(format)s has no option `%(name)s' "
+                            "(options: %(names)s)")
+                          % {'format': info.format_name, 'name': name,
+                             'names': ', '.join(names) or _("none")})
+    index = names.index(name)
+    type, prange = info.parameters[index][1], info.parameters[index][3]
+    try:
+        if type == 'choice':
+            choices = _choice_words(info, index)
+            if value.isdigit() and int(value) < len(choices):
+                return name, int(value)
+            word = _option_word(value)
+            found = [i for i in range(len(choices))
+                     if [w for w in choices[i] if w.startswith(word)]]
+            if word and len(found) == 1:
+                return name, found[0]
+            raise ValueError
+        elif type == 'check':
+            return name, {'0': 0, '1': 1, 'no': 0, 'yes': 1, 'off': 0,
+                          'on': 1}[value.lower()]
+        elif type == 'text':
+            return name, value
+        elif type in ('int', 'float', 'length', 'ptlength'):
+            number = int(value) if type == 'int' else float(value)
+            lo, hi = prange
+            if (lo is not None and number < lo) \
+               or (hi is not None and number > hi):
+                raise ValueError
+            return name, number
+    except (ValueError, KeyError):
+        pass
+    raise SketchError(_("invalid value `%(value)s' of option %(name)s "
+                        "(%(valid)s)")
+                      % {'value': value, 'name': name,
+                         'valid': describe_values(info, index)})
+
+def describe_values(info, index):
+    type, value, prange = info.parameters[index][1:4]
+    if type == 'choice':
+        words = [w[0] for w in _choice_words(info, index)]
+        return ', '.join('%d %s' % (i, words[i]) for i in range(len(words)))
+    if type == 'check':
+        return '0/1'
+    if type in ('int', 'float', 'length', 'ptlength'):
+        lo, hi = prange
+        return '%s..%s' % ('' if lo is None else lo, '' if hi is None else hi)
+    return _("text")
+
+def describe_export_options(info):
+    """Text listing the options of the export plugin INFO: name,
+    label, values and default."""
+    lines = []
+    for index in range(len(info.parameters)):
+        name, type, value, prange, label = info.parameters[index]
+        if type == 'choice':
+            lines.append('  %-10s %s' % (name, label))
+            words = [w[0] for w in _choice_words(info, index)]
+            for i in range(len(words)):
+                lines.append('  %-10s   %d %s%s'
+                             % ('', i, words[i],
+                                i == value and _(" (default)") or ''))
+        else:
+            lines.append('  %-10s %s: %s (default %s)'
+                         % (name, label, describe_values(info, index),
+                            value))
+    return '\n'.join(lines)
 
 def guess_export_plugin(extension):
     # several plugins may handle an extension (e.g. PDF, SVG); prefer

@@ -78,8 +78,8 @@ def test_zorder_moves():
 
 
 EXPORT_MAGIC = {'SK-1': b'##Sketch', 'EPS': b'%!PS-Adobe', 'PS': b'%!PS-Adobe',
-                'PDF': b'%PDF', 'PDF-bbox': b'%PDF', 'PDF-full': b'%PDF',
-                'SVG': b'<?xml', 'SVG-Inkscape': b'<?xml',
+                'PDF': b'%PDF',
+                'SVG': b'<?xml',
                 'WMF': b'\xd7\xcd\xc6\x9a'}
 
 

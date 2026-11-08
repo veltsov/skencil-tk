@@ -64,7 +64,7 @@ def _body():
         if info.parameters:
             check(info)
             checked.append(info.format_name)
-    assert sorted(checked) == ['PDF', 'SVG', 'SVG-Inkscape'], checked
+    assert sorted(checked) == ['PDF', 'SVG'], checked
 
 
 def body():

@@ -1,15 +1,16 @@
 # SVG Export
 
-Status: implemented.  Two export filters share one saver:
+Status: implemented.  One export filter, `Plugins/Filters/svgsaver.py`
+(`format_name` `SVG`), in two flavours chosen by the option `flavour`:
 
-| Filter | Module | `format_name` | Goal |
-|---|---|---|---|
-| Plain SVG | `Plugins/Filters/svgsaverplain.py` | `SVG` | the printable layers, visually identical to the PostScript output; no editing structure |
-| Inkscape SVG | `Plugins/Filters/svgsaver.py` | `SVG-Inkscape` | the same drawing plus as much editing structure as Inkscape can keep |
+| Flavour | `flavour` | Goal |
+|---|---|---|
+| Inkscape SVG (default) | 0 | all layers, visually identical to the PostScript output of the printable ones, plus as much editing structure as Inkscape can keep |
+| Plain SVG | 1 | the printable layers only, visually identical to the PostScript output; no editing structure |
 
-`plugins.guess_export_plugin('.svg')` (used by `skconvert`) prefers
-the plugin whose format name equals the extension, so it gives Plain
-SVG (and `PDF` for `.pdf`), independently of the plugin scan order.
+`plugins.guess_export_plugin` prefers the plugin whose format name
+equals the extension (`SVG` for `.svg`, `PDF` for `.pdf`),
+independently of the plugin scan order.
 
 ## Reference semantics
 
@@ -35,11 +36,13 @@ elements get the inverse in their `gradientTransform` /
 
 Declared as `#parameters` in the plugin headers and asked for by the
 export options dialog of File → Export (see `devdocs/architecture.md`,
-Plugins); `skconvert` uses the defaults, and the options dict of
+Plugins); `skconvert` takes them as `-o NAME=VALUE` (e.g. `-o
+flavour=plain -o box=bounding`), and the options dict of
 `ExportInfo.__call__` (tests, scripts) can override them.
 
-| Option | Values (default first) | Filters |
+| Option | Values (default first) | Flavours |
 |---|---|---|
+| `flavour` | 0 Inkscape, 1 Plain | — |
 | `box` | 0 page, 1 bounding box of the printable layers | both |
 | `text` | 0 glyph paths, 1 SVG `<text>` | Inkscape |
 | `eps` | 0 vector (converted), 1 raster image | both |
@@ -143,7 +146,7 @@ SVG agrees with the screen there.
 
 ## Tests
 
-`test/formats/test_svg.py` (see `devdocs/testing.md`): both filters
+`test/formats/test_svg.py` (see `devdocs/testing.md`): the Plain flavour
 rasterized by Inkscape against the ghostscript rendering of `sk2ps`
 with embedded fonts (4x downsampled, `KNOWN_DIFFERENCES` for the
 cases above); Inkscape

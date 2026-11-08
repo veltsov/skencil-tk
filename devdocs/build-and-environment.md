@@ -53,8 +53,9 @@ The launcher script (`src/skencil`) inserts `sys.path[0] +
 intact when changing the build.
 
 The CLI tools `sk2ps` (sk→PS converter) and `skconvert` (any readable
-format → any export format, chosen by the output extension, with the
-format's default options) are installed as scripts next to the launcher
+format → any export format, chosen by the output extension or `-f
+FORMAT`; export options with `-o NAME=VALUE`, listed by `skconvert
+--options -f FORMAT`, default otherwise) are installed as scripts next to the launcher
 and use the same `sys.path` insertion.  `sk2ppm.py` and `skshow.py` in
 `src/` are not installed.  `src/skencil.sav` is a backup of the older
 launcher.

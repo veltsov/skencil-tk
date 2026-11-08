@@ -17,44 +17,51 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# SVG export.  This module holds the shared saver and the "Inkscape
-# SVG" export filter; svgsaverplain.py is the "Plain SVG" filter.
+# SVG export filter, in two flavours (the option `flavour'):
+#
+# - Inkscape (default): all layers, with the editing structure: layers
+#   with their names and state, guides, grid, clones as <use>,
+#   editable ellipse arcs, LaTeX objects as TexText groups, skencil:*
+#   metadata of plugin objects and text, optionally text as <text>.
+# - Plain: the printable layers only, no editing structure.
 #
 # Both reproduce the PostScript rendering (psdevice.py and
-# Resources/Misc/sketch-proc.ps) as closely as SVG allows.  The
-# Inkscape flavour additionally keeps the editing structure: layers
-# with their names and state, guides, grid, clones as <use>, editable
-# ellipse arcs, LaTeX objects as TexText groups, skencil:* metadata of
-# plugin objects and text, optionally text as <text>.
+# Resources/Misc/sketch-proc.ps) as closely as SVG allows.
 # See devdocs/svg-export.md.
 
 ###Sketch Config
 #type = Export
-#tk_file_type = ("Inkscape SVG", '.svg')
+#tk_file_type = ("Scalable Vector Graphics (SVG)", '.svg')
 #extensions = '.svg'
-format_name = 'SVG-Inkscape'
+format_name = 'SVG'
 #parameters = (\
+#    ('flavour','choice',0,('Inkscape (all layers, editable)',\
+#                           'Plain (printable layers)'),'Flavour'), \
 #    ('box','choice',0,('Page','Bounding box'),'Export area'), \
-#    ('text','choice',0,('Paths','Text'),'Text as'), \
+#    ('text','choice',0,('Paths','Text'),'Text as (Inkscape only)'), \
 #    ('eps','choice',0,('Vector','Image'),'EPS files'), \
 #    ('eps_dpi','int',300,(30,2400),'EPS image resolution'), \
-#    ('images','choice',0,('Embed','Link'),'Linked images'))
+#    ('images','choice',0,('Embed','Link'),\
+#     'Linked images (Inkscape only)'))
 #unload = 1
 #standard_messages = 1
 ###End
 
-(''"Inkscape SVG")
+(''"Scalable Vector Graphics (SVG)")
+(''"Flavour")
+(''"Inkscape (all layers, editable)")
+(''"Plain (printable layers)")
 (''"Export area")
 (''"Page")
 (''"Bounding box")
-(''"Text as")
+(''"Text as (Inkscape only)")
 (''"Paths")
 (''"Text")
 (''"EPS files")
 (''"Vector")
 (''"Image")
 (''"EPS image resolution")
-(''"Linked images")
+(''"Linked images (Inkscape only)")
 (''"Embed")
 (''"Link")
 
@@ -1515,4 +1522,5 @@ def save_svg(document, file, filename, options, inkscape_mode):
     saver.Save()
 
 def save(document, file, filename, options = {}):
-    save_svg(document, file, filename, options, 1)
+    save_svg(document, file, filename, options,
+             not options.get('flavour', 0))
