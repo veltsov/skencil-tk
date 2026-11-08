@@ -143,8 +143,10 @@ Contains only `__init__.py` in the source tree; the built C extension
   - Import: `skloader.py` (native `.sk` format, uses `skread`),
     `svgloader.py`, `wmfloader.py`, `xfigloader.py`, plus
     gzip/bzip-wrapping loaders.
-  - Export: `sksaver.py`, `epssaver.py`, `pssaver.py`, `svgsaver.py`,
-    `wmfsaver.py`, and the fork's working PDF export:
+  - Export: `sksaver.py`, `epssaver.py`, `pssaver.py`, `wmfsaver.py`,
+    the SVG export `svgsaver.py` ("Inkscape SVG") and
+    `svgsaverplain.py` ("Plain SVG"; see `devdocs/svg-export.md`),
+    and the fork's working PDF export:
     `pdfsaver.py`, `pdfsaverbox.py`, `pdfsaverpage.py`.
 - `Objects/` — plugin compound objects: `arrow.py`, `regpoly.py`,
   `lcdtext.py`, `multilinetext.py` (with `Lib/multilinetext/`),

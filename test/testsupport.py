@@ -125,13 +125,15 @@ def baseline_path(kind, name):
 
 # ------------------------------------------------------- external tools
 
-def sk2ps(infile, outfile):
+def sk2ps(infile, outfile, embed_fonts=0):
     """Convert a drawing to PostScript with the sk2ps script of the
     build tree under test.  Deterministic header values are forced."""
     script = os.path.join(build_scripts(), 'sk2ps')
     cmd = [sys.executable, script,
-           '-t', 'test', '-d', 'Jan  1 00:00:00 2026', '-f', 'test',
-           infile, outfile]
+           '-t', 'test', '-d', 'Jan  1 00:00:00 2026', '-f', 'test']
+    if embed_fonts:
+        cmd.append('-e')
+    cmd += [infile, outfile]
     subprocess.check_call(cmd, stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE)
 

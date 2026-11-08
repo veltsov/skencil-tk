@@ -275,10 +275,17 @@ def find_export_plugin(name):
     return export_formats.get(name)
 
 def guess_export_plugin(extension):
+    # several plugins may handle an extension (e.g. PDF, SVG); prefer
+    # the one whose format name is the extension, independently of the
+    # order in which the plugins were found
+    found = ''
     for plugin in export_plugins:
         if extension in plugin.extensions:
-            return plugin.format_name
-    return ''
+            if plugin.format_name.lower() == extension[1:].lower():
+                return plugin.format_name
+            if not found:
+                found = plugin.format_name
+    return found
 
 def select_export_plugin_by_tktype(tktype):
     for plugin in export_plugins:

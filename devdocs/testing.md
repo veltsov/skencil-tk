@@ -49,8 +49,15 @@ staleness warning.
 2. **Format tests.** Round-trip stability of saved `.sk` files and
    `sk2ps` output compared against master baselines (exact bytes, then
    ghostscript rasterization with a small pixel-diff tolerance).  SVG
-   import/export is deliberately NOT tested (the SVG loader is broken
-   on modern Pythons; separate project).
+   export (`test/formats/test_svg.py`) is compared differently: the
+   SVG rasterized by Inkscape against the ghostscript rendering of the
+   `sk2ps -e` output of the *same* build (fonts embedded, as most are
+   unknown to ghostscript; no baselines; 4x downsampled to
+   remove antialiasing differences), plus structural checks; its own
+   fixture `svgall.sk` is not in the manifest (path text, which the
+   master build cannot load).  Skipped without `inkscape`.  SVG import
+   is deliberately NOT tested (the SVG loader is broken on modern
+   Pythons; separate project).
 3. **App smoke tests.** The full application runs under `xvfb-run`,
    driven by a `--run-script` payload (executed by `mainwindow.py`
    before the mainloop).  Asserts exit status 0 and no traceback.
@@ -65,7 +72,8 @@ staleness warning.
 ## Requirements
 
 python3 + build tree, pytest, xvfb, ghostscript (`gs`), ImageMagick
-(`import`), xdotool (for the input test).  All comparisons go through
+(`import`), xdotool (for the input test), inkscape (SVG export tests),
+dvisvgm (EPS objects in SVG export; inkscape is the fallback).  All comparisons go through
 `test/testsupport.py`.
 
 ## UI test isolation and harness behavior

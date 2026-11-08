@@ -216,6 +216,26 @@ class LtxObj(TrafoPlugin):
 def FontSizeCommand(size):
     return('\\fontsize{%g}{%g}\\selectfont '% (size, size*1.2)  )
 
+def find_user_preamble(doc=None):
+    """Return (filename, contents) of the user's preamble file
+    sk-ltx.tex for the document DOC: the first readable one in the
+    document's directory, its parent and the user config directory.
+    (None, None) if there is none."""
+    if doc is not None and doc.meta.fullpathname is not None:
+        docdir = os.path.dirname(doc.meta.fullpathname)
+    else:
+        docdir = getcwd()
+    for dpre in [docdir,os.path.dirname(docdir),config.user_config_dir]:
+        filename = os.path.join(dpre,'sk-ltx.tex')
+        try:
+            with open(filename,'r') as fpre:
+                # the preamble file is utf-8 text; normalize so the
+                # wrapper stays unicode throughout
+                return filename, as_unicode(fpre.read())
+        except IOError:
+            pass
+    return None, None
+
 def create_tex_sk(text,fontsz,doc=None):
     # default preamble
     preamb='''
@@ -229,20 +249,9 @@ def create_tex_sk(text,fontsz,doc=None):
         text = text[8:]
     else:
         # try to find the user's preamble
-        if doc is not None and doc.meta.fullpathname is not None:
-            docdir = os.path.dirname(doc.meta.fullpathname)
-        else:
-            docdir = cwd
-
-        for dpre in [docdir,os.path.dirname(docdir),config.user_config_dir]:
-            try:
-                with open(os.path.join(dpre,'sk-ltx.tex'),'r') as fpre:
-                    # the preamble file is utf-8 text; normalize so the
-                    # wrapper below stays unicode throughout
-                    preamb = as_unicode(fpre.read())
-                    break
-            except IOError:
-                pass
+        filename, user_preamble = find_user_preamble(doc)
+        if filename:
+            preamb = user_preamble
 
     # allow additions to the preamble as \preamble<char>pretext<char>
     # where <char> is any char not in pretext

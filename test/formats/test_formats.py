@@ -1,7 +1,7 @@
 # Layer 2: format tests -- converter output against baselines recorded
-# from the master build.  SVG import/export is deliberately NOT tested
-# (the SVG loader is broken on modern Pythons; fixing it is a separate
-# project).
+# from the master build.  SVG export is tested in test_svg.py; SVG
+# import is deliberately NOT tested (the SVG loader is broken on modern
+# Pythons; fixing it is a separate project).
 
 
 import pytest
