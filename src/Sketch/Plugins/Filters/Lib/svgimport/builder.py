@@ -146,6 +146,8 @@ class Builder:
         self.cascade = tree.Cascade(root)
         self.use_stack = []
         self.current_vp = (100.0, 100.0)
+        # opacity is blended toward this color (black in masks)
+        self.background = paint.WHITE
         self._tree_styles = {}
         self.page = None
         self.root_scale = PT_PER_PX
@@ -636,7 +638,7 @@ class Builder:
         alpha = value[3] * self.opacity(style, which)
         if alpha <= paint.MIN_ALPHA:
             return None
-        return paint.blend(value, alpha)
+        return paint.blend(value, alpha, self.background)
 
     def line_width(self, style, ctm):
         width = values.length(style['stroke-width'], 0.0, style['font-size'])
@@ -688,8 +690,8 @@ class Builder:
             if isinstance(fill_value, tuple):
                 alpha = fill_value[3] * self.opacity(style, 'fill')
                 if alpha > paint.MIN_ALPHA:
-                    base.fill_pattern = paint.solid(paint.blend(fill_value,
-                                                                alpha))
+                    base.fill_pattern = paint.solid(paint.blend(
+                        fill_value, alpha, self.background))
                     if alpha < 1:
                         self.note_opacity()
                 fill_value = None
@@ -722,7 +724,8 @@ class Builder:
         return [obj]
 
     def note_opacity(self):
-        self.warn(_("Transparent colors blended with white"))
+        if self.background is paint.WHITE:
+            self.warn(_("Transparent colors blended with white"))
 
 
 def _point(x, y):

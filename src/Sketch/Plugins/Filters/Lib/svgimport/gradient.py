@@ -197,7 +197,8 @@ def multigradient(builder, stops, spread, s_at_0, s_at_1, alpha):
             a = rgba[3] * alpha
             if a < 1:
                 transparent = True
-            color = paint.rgb_color(*paint.blend(rgba, a))
+            color = paint.rgb_color(*paint.blend(rgba, a,
+                                                 builder.background))
             if t <= last_t:
                 # Sketch's gradients do not allow equal positions
                 t = last_t + 1e-6
@@ -325,7 +326,8 @@ class Gradients:
             obj.SetProperties(fill_pattern = EmptyPattern)
         else:
             obj.SetProperties(fill_pattern = paint.solid(
-                paint.blend(rgba, rgba[3] * alpha)))
+                paint.blend(rgba, rgba[3] * alpha,
+                            self.builder.background)))
         return obj
 
     def linear(self, stops, spread, M, x1, y1, x2, y2, rect, alpha):

@@ -268,6 +268,24 @@ SAMPLES['markers'] = (doc('width="400" height="200"', '''
 '''), 0.003)
 
 
+# a mask of opaque white shapes is a clip; the other masks are
+# flattened into the alpha of images, which PostScript ignores: tested
+# in test_svgimport_model.py
+SAMPLES['masks'] = (doc('width="300" height="120"', '''
+<defs>
+  <mask id="white" maskUnits="userSpaceOnUse" x="0" y="0" width="300"
+    height="120">
+    <circle cx="60" cy="60" r="45" fill="white"/>
+    <rect x="10" y="10" width="20" height="20" fill="#fff"/>
+  </mask>
+</defs>
+<g mask="url(#white)"><rect x="0" y="0" width="120" height="120"
+  fill="teal"/><path d="M0 60 H120" stroke="orange" stroke-width="10"/></g>
+<rect x="150" y="0" width="120" height="120" fill="olive"
+  mask="url(#white)" transform="translate(150 0)"/>
+'''), 0.003)
+
+
 def write(name, dir):
     path = os.path.join(dir, name + '.svg')
     with open(path, 'w') as f:

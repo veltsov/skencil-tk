@@ -51,11 +51,16 @@ def solid(rgb):
         pattern = _patterns[key] = SolidPattern(rgb_color(*key))
     return pattern
 
-def blend(rgb, alpha):
-    """RGB with opacity ALPHA over white."""
+WHITE = (1.0, 1.0, 1.0)
+BLACK = (0.0, 0.0, 0.0)
+
+def blend(rgb, alpha, background = WHITE):
+    """RGB with opacity ALPHA over BACKGROUND (white; black for the
+    content of masks, whose value is luminance times alpha)."""
     if alpha >= 1.0:
         return tuple(rgb[:3])
-    return tuple(c * alpha + 1.0 - alpha for c in rgb[:3])
+    return tuple(c * alpha + b * (1.0 - alpha)
+                 for c, b in zip(rgb[:3], background))
 
 def current_color(style):
     value = values.color(style.get('color'))

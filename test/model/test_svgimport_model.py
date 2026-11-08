@@ -729,3 +729,59 @@ def test_native_arrows_round_trip():
         a = o.Paths()[0]; b = i.Paths()[0]
         assert close(a.Node(0), b.Node(0), 1e-3)
         assert close(a.Node(-1), b.Node(-1), 1e-3)
+
+
+# ------------------------------------------------------------------- masks
+
+def png_uri(image):
+    import base64, io
+    buf = io.BytesIO()
+    image.save(buf, 'PNG')
+    return 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode()
+
+
+def test_image_mask_is_flattened():
+    from PIL import Image
+    picture = Image.new('RGB', (10, 10), (255, 0, 0))
+    # the mask: left half white, right half 50% gray
+    mask = Image.new('RGB', (10, 10), (128, 128, 128))
+    mask.paste((255, 255, 255), (0, 0, 5, 10))
+    doc = load('<mask id="m" maskUnits="userSpaceOnUse" x="0" y="0" '
+               'width="100" height="100"><image width="40" height="40" '
+               'xlink:href="%s"/></mask>'
+               '<image width="40" height="40" mask="url(#m)" '
+               'xlink:href="%s"/>' % (png_uri(mask), png_uri(picture)))
+    image = single(doc)
+    assert image.is_Image
+    data = image.data.Image()
+    assert data.mode == 'RGBA'
+    alpha = data.getchannel('A')
+    assert alpha.getpixel((1, 5)) == 255
+    assert abs(alpha.getpixel((8, 5)) - 128) <= 2
+    assert 'flattened' in doc.meta.load_messages
+
+
+def test_gradient_mask_on_image():
+    from PIL import Image
+    picture = Image.new('RGB', (20, 4), (0, 0, 255))
+    doc = load('<linearGradient id="g"><stop offset="0" stop-color="white"/>'
+               '<stop offset="1" stop-color="black"/></linearGradient>'
+               '<mask id="m"><rect width="100" height="10" fill="url(#g)"/>'
+               '</mask><image width="100" height="20" '
+               'preserveAspectRatio="none" mask="url(#m)" '
+               'xlink:href="%s"/>' % png_uri(picture))
+    alpha = single(doc).data.Image().getchannel('A')
+    # the mask region (bbox -10%..120%) covers the image; the fade
+    # runs over x = 0..100, the mask rect covers y = 0..10 (rows 0, 1)
+    values = [alpha.getpixel((x, 0)) for x in (0, 10, 19)]
+    assert values[0] > 230 and 100 < values[1] < 155 and values[2] < 25
+    assert alpha.getpixel((10, 3)) == 0
+
+
+def test_mask_with_opacity_and_unsupported_mask():
+    doc = load('<mask id="half"><rect width="100" height="100" '
+               'fill="white" opacity="0.5"/></mask>'
+               '<rect width="50" height="50" fill="red" mask="url(#half)"/>')
+    # a semi-transparent mask on a vector shape cannot be represented
+    assert single(doc).is_Rectangle
+    assert 'Masks ignored' in doc.meta.load_messages
