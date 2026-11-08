@@ -29,7 +29,7 @@ from Sketch import _, Trafo, CreatePath, PolyBezier, Rectangle, Ellipse, \
 from Sketch.Graphics.properties import factory_defaults
 from Sketch.Base import const
 
-from . import values, pathdata, paint, tree
+from . import values, pathdata, paint, tree, extras
 from .values import mul, IDENTITY
 
 # elements that are never rendered directly (only through references)
@@ -150,6 +150,7 @@ class Builder:
         self.background = paint.WHITE
         self._tree_styles = {}
         self.page = None
+        self.guides = []
         self.root_scale = PT_PER_PX
         # hooks of the other modules
         from . import text, image, clip, gradient, marker, mask, fillrule
@@ -224,6 +225,7 @@ class Builder:
         ctm, vp, page = self.root_viewport()
         self.page = page
         self.root_scale = values.mean_scale(ctm)
+        self.guides = extras.guides(self, ctm, vp[1])
         style = self.cascade.compute(root, tree.ROOT_STYLE)
         layers = []
         pending = []
@@ -247,6 +249,8 @@ class Builder:
                 for layer in layers:
                     for obj in layer[-1]:
                         obj.Translate(_point(dx, dy))
+                self.guides = [(pos + (dy if horizontal else dx), horizontal)
+                               for pos, horizontal in self.guides]
                 self.page = (box[2] - box[0], box[3] - box[1])
         return self.page, layers
 
@@ -306,8 +310,21 @@ class Builder:
         if tag in SHAPES:
             objects = self.shape(node, ctm, style, vp)
         elif tag in ('g', 'a'):
+            if node.get('skencil:eps-file') is not None:
+                eps = extras.eps_object(self, node, ctm)
+                if eps is not None:
+                    return [eps]
             objects = self.children(node, ctm, style, vp)
-            if wrap and len(objects) > 1:
+            special = None
+            if objects and not self.clips.clip_mode:
+                if node.get('skencil:plugin') is not None:
+                    special = extras.plugin_object(self, node, objects)
+                elif node.get('textext:text') is not None:
+                    special = extras.textext_object(self, node, objects,
+                                                    ctm)
+            if special is not None:
+                objects = [special]
+            elif wrap and len(objects) > 1:
                 objects = [Group(objects)]
         elif tag == 'switch':
             objects = self.switch(node, ctm, style, vp)
@@ -478,6 +495,11 @@ class Builder:
             subpaths = pathdata.polyline(node.get('points'),
                                          tag == 'polygon')
         else:
+            if node.get('sodipodi:type') == 'arc' \
+               and not self.clips.clip_mode:
+                objects = extras.arc(self, node, ctm, style)
+                if objects is not None:
+                    return objects
             subpaths = pathdata.parse(node.get('d'))
         if not subpaths:
             return []

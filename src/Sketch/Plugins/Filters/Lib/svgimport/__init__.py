@@ -102,6 +102,12 @@ class SVGLoader(GenericLoader):
                        attrs.get('outlined', 0))
             for obj in objects:
                 self.append_object(obj)
+        if builder.guides:
+            from Sketch import GuideLayer, GuideLine, Point
+            self.begin_layer_class(GuideLayer, (_("Guide Lines"),))
+            for pos, horizontal in builder.guides:
+                point = Point(0, pos) if horizontal else Point(pos, 0)
+                self.append_object(GuideLine(point, horizontal))
         self.end_all()
         doc = self.object
         if page is not None and self.options.get('page', 1):

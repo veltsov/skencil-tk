@@ -8,6 +8,10 @@ Status: implemented.  One export filter, `Plugins/Filters/svgsaver.py`
 | Inkscape SVG (default) | 0 | all layers, visually identical to the PostScript output of the printable ones, plus as much editing structure as Inkscape can keep |
 | Plain SVG | 1 | the printable layers only, visually identical to the PostScript output; no editing structure |
 
+The SVG import (`devdocs/svg-import.md`) restores the editing
+structure of the Inkscape flavour: layers, guides, arcs, arrows, plugin
+and LaTeX objects, linked EPS files.
+
 `plugins.guess_export_plugin` prefers the plugin whose format name
 equals the extension (`SVG` for `.svg`, `PDF` for `.pdf`),
 independently of the plugin scan order.

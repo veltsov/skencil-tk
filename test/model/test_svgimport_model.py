@@ -785,3 +785,88 @@ def test_mask_with_opacity_and_unsupported_mask():
     # a semi-transparent mask on a vector shape cannot be represented
     assert single(doc).is_Rectangle
     assert 'Masks ignored' in doc.meta.load_messages
+
+
+# ------------------------------------------------- Inkscape and Sketch extras
+
+def test_inkscape_arc():
+    from Sketch.Base import const
+    doc = load('<path sodipodi:type="arc" sodipodi:cx="50" sodipodi:cy="50" '
+               'sodipodi:rx="20" sodipodi:ry="10" sodipodi:start="0" '
+               'sodipodi:end="1.5707963" sodipodi:open="true" '
+               'sodipodi:arc-type="arc" d="M 70,50 A 20,10 0 0 1 50,60" '
+               'fill="none" stroke="black"/>'
+               '<path sodipodi:type="arc" sodipodi:cx="50" sodipodi:cy="50" '
+               'sodipodi:rx="20" sodipodi:ry="20" sodipodi:start="0" '
+               'sodipodi:end="6.2831853" d="M 70,50 A 20,20 0 1 1 30,50 '
+               'A 20,20 0 1 1 70,50 Z"/>')
+    arc, circle = objects(doc)
+    assert arc.is_Ellipse and arc.arc_type == const.ArcArc
+    # from (70, 50) clockwise on screen to (50, 60): in the document
+    # (y up) from (50, 40) counterclockwise to (70, 50)
+    t = arc.trafo
+    def point(angle):
+        return t(math.cos(angle), math.sin(angle))
+    assert close(point(arc.start_angle), (50, 40))
+    assert close(point(arc.end_angle), (70, 50))
+    assert circle.is_Ellipse and circle.start_angle == circle.end_angle
+
+
+def test_inkscape_guides():
+    doc = load('<sodipodi:namedview><sodipodi:guide position="20,30" '
+               'orientation="0,1"/><sodipodi:guide position="40,0" '
+               'orientation="1,0"/><sodipodi:guide position="1,1" '
+               'orientation="0.7,0.7"/></sodipodi:namedview>')
+    guides = sorted((g.horizontal, round(g.point.x, 6), round(g.point.y, 6))
+                    for g in doc.GuideLines())
+    # y up from the bottom of the page; diagonal guides are dropped
+    assert guides == [(0, 40, 0), (1, 0, 30)]
+
+
+def count_classes(document):
+    counts = {}
+    def walk(objs):
+        for obj in objs:
+            name = obj.__class__.__name__
+            counts[name] = counts.get(name, 0) + 1
+            if obj.is_Compound and not obj.is_Plugin:
+                walk(obj.GetObjects())
+    for layer in document.layers:
+        if not layer.is_SpecialLayer:
+            walk(layer.GetObjects())
+    return counts
+
+
+def test_editing_structure_round_trip():
+    """Plugin objects (LaTeX objects among them), linked EPS files and
+    guides of Sketch's Inkscape SVG come back."""
+    from Sketch.Base import plugins
+    doc = testsupport.load_document(testsupport.data_path('alphares.sk'))
+    out = testsupport.output_path('svgimport', 'alphares-structure.svg')
+    plugins.find_export_plugin('SVG')(doc, out, options = {'flavour': 0})
+    imported = svgimport().import_svg(out)
+    before = count_classes(doc)
+    after = count_classes(imported)
+    for name in ('LtxObj', 'EpsImage'):
+        assert before.get(name) and after.get(name) == before[name], \
+            (name, before, after)
+    ltx = [o for layer in imported.layers for o in layer.GetObjects()
+           if o.__class__.__name__ == 'LtxObj']
+    orig = [o for layer in doc.layers for o in layer.GetObjects()
+            if o.__class__.__name__ == 'LtxObj']
+    assert sorted(o.text for o in ltx) == sorted(o.text for o in orig)
+    for a, b in zip(sorted(orig, key = lambda o: o.text),
+                    sorted(ltx, key = lambda o: o.text)):
+        assert close(a.trafo.coeff(), b.trafo.coeff(), 1e-3)
+    assert len(imported.GuideLines()) == len(doc.GuideLines())
+
+
+def test_textext_group_without_skencil_attributes():
+    doc = load('<g xmlns:textext="http://www.iki.fi/pav/software/textext/" '
+               'textext:text="$x^2$" textext:scale="1.2" '
+               'transform="matrix(1 0 0 1 10 20)">'
+               '<path d="M0 0 h5 v5 z"/><path d="M6 0 h5 v5 z"/></g>')
+    obj = single(doc)
+    assert obj.__class__.__name__ == 'LtxObj'
+    assert obj.text == '$x^2$' and obj.size == pytest.approx(12)
+    assert len(obj.GetObjects()) == 2

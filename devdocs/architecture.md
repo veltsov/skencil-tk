@@ -141,7 +141,9 @@ Contains only `__init__.py` in the source tree; the built C extension
 - `Filters/` — loaders/savers registered through
   `Sketch/Base/plugins.py`:
   - Import: `skloader.py` (native `.sk` format, uses `skread`),
-    `svgloader.py`, `wmfloader.py`, `xfigloader.py`, plus
+    `svgloader.py` (the SVG import, a wrapper of the package
+    `Filters/Lib/svgimport/`, which other code can use directly; see
+    `devdocs/svg-import.md`), `wmfloader.py`, `xfigloader.py`, plus
     gzip/bzip-wrapping loaders.
   - Export: `sksaver.py`, `epssaver.py`, `pssaver.py`, `wmfsaver.py`,
     the SVG export `svgsaver.py` (Inkscape and Plain flavours; see
