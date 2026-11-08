@@ -25,7 +25,16 @@ format_name = 'PDF'
 #    ('images','choice',0,('Automatic','Lossless'),'Image compression'))
 #unload = 1
 #preopen_output = 0
+#standard_messages = 1
 ###End
+
+(''"Portable Document Format (PDF)")
+(''"Export area")
+(''"Page")
+(''"Bounding box")
+(''"Image compression")
+(''"Automatic")
+(''"Lossless")
 
 __version__ = "$Revision: 251 $"
 # $Source$

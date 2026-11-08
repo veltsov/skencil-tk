@@ -152,6 +152,18 @@ Contains only `__init__.py` in the source tree; the built C extension
   `lcdtext.py`, `multilinetext.py` (with `Lib/multilinetext/`),
   `autoshapeplugin.py` (with `Lib/autoshapes/`), `latextext.py`
   (renders LaTeX text; made robust in this fork).
+- Parameters: object and export plugins declare them in the config
+  header as `#parameters = ((NAME, TYPE, DEFAULT, RANGE, LABEL), ...)`
+  (types and ranges: `UI/plugindlg.py`; labels and `choice` strings are
+  translated, so mark them with `(''"...")` lines and set
+  `#standard_messages = 1`).  `UI/plugindlg.py` builds the widgets for
+  both: `PluginPanel` (the object property panel) and
+  `ExportOptionsDlg`, the modal dialog File → Export shows after the
+  file dialog (`MainWindow.ask_export_options`; Cancel cancels the
+  export).  The chosen export options are kept per document for the
+  session in `document.options['Export.<format>']`
+  (`ExportInfo.GetOptions`); Export Again and calls without options
+  reuse them, starting from the defaults.
 
 ### Scripts (`src/Sketch/Scripts/`)
 Python modules that are also user-callable scripts (Scripts menu /

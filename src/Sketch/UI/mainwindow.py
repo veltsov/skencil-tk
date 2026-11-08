@@ -257,19 +257,39 @@ class SketchMainWindow(Publisher):
                                                typevariable = self.exporttype)
             if not filename:
                 return
+            options = None
             if use_dialog == 1:
                 fileformat = plugins.NativeFormat
             else:
                 fileformat = plugins.select_export_plugin_by_tktype(self.exporttype.get())
                 if not fileformat:
                     fileformat = plugins.NativeFormat
+                options = self.ask_export_options(fileformat)
+                if options is None:
+                    return
                 self.document.meta.last_export_filename = filename
                 self.document.meta.last_export_format = fileformat
+                self.document.meta.last_export_plugin_options = options
             compressed_file = '' # guess compression from filename
             compressed = ''
         else:
             fileformat = plugins.NativeFormat
-        self.SaveToFile(filename, fileformat, compressed, compressed_file)
+            options = None
+        self.SaveToFile(filename, fileformat, compressed, compressed_file,
+                        plugin_options = options)
+
+    def ask_export_options(self, fileformat):
+        """Ask for the options of the export plugin FILEFORMAT, starting
+        from those of the last export of the document in that format.
+        Return the options, {} if the plugin has none, or None if the
+        user cancelled."""
+        info = plugins.find_export_plugin(fileformat)
+        if not info.parameters:
+            return {}
+        from Sketch.UI.plugindlg import ExportOptionsDlg
+        dialog = ExportOptionsDlg(self.root, info,
+                                  info.GetOptions(self.document))
+        return dialog.RunDialog()
 
     def SaveToFile(self, filename, fileformat = None, compressed = '',
                    compressed_file = '', plugin_options = None):

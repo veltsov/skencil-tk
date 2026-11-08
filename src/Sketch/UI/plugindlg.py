@@ -62,11 +62,11 @@ from Sketch import _, SketchError
 from Sketch.Graphics.document import AbortTransactionError
 
 from tkinter import Label, IntVar, DoubleVar, StringVar, RIGHT, E, W, Text, \
-    WORD, Checkbutton, Radiobutton
+    WORD, Checkbutton, Radiobutton, Frame, Button, LEFT, X, TclError
 from Sketch.UI.tkext import MyEntry, MyOptionMenu
 from Sketch.UI.miniscroll import MiniScroller
 
-from Sketch.UI.sketchdlg import PropertyPanel
+from Sketch.UI.sketchdlg import PropertyPanel, SKModal
 from Sketch.UI.lengthvar import create_length_widgets
 
 
@@ -245,10 +245,11 @@ class ChoiceParameter(Parameter):
         label.grid(row = row, columnspan = 4, sticky = W)
         choices = self.range
         for j in range(len(choices)):
-            # XXX Translatable text
             b = Radiobutton(master, text=choices[j], command = self.var_changed,
                             variable = self.var, value = j, indicatoron = 1)
-            b.grid(row = row+j+1, column = 1, columnspan = 3, sticky = W)
+            # indented below the label
+            b.grid(row = row+j+1, column = 0, columnspan = 4, sticky = W,
+                   padx = (16, 0))
             
 parameter_types['choice'] = ChoiceParameter
 
@@ -276,13 +277,17 @@ class CheckParameter(Parameter):
 parameter_types['check'] = CheckParameter
 
 class PluginDlg:
-    
-    def build_plugin_dlg(self):
+
+    # VALUES, if given, maps parameter names to the initial values
+    # (instead of the declared defaults)
+    def build_plugin_dlg(self, values = None):
         top = self.top
         row = 0
 
         for param in self.info.parameters:
             name, type, value, prange, label = param
+            if values and name in values:
+                value = values[name]
             try:
                 #print name, type, value, prange, label
                 var = parameter_types[type](self, name, value, prange, label)
@@ -412,3 +417,55 @@ class PluginPanel(PropertyPanel,PluginDlg):
     def close_dlg(self):
         self.vars = []
         PropertyPanel.close_dlg(self)
+
+
+class ExportOptionsDlg(SKModal, PluginDlg):
+
+    """Modal dialog for the parameters of an export plugin. RunDialog
+    returns the dict of the chosen options, None if cancelled."""
+
+    class_name = 'SKExportOptions'
+
+    def __init__(self, master, info, options, **kw):
+        self.info = info
+        self.options = options
+        self.title = _("%s Options") % info.tk_file_type[0]
+        self.vars = []
+        SKModal.__init__(self, master, **kw)
+
+    def build_dlg(self):
+        self.top.configure(padx = 6, pady = 6)
+        self.build_plugin_dlg(self.options)
+
+    def create_std_buttons(self, master):
+        frame = Frame(master)
+        button = Button(frame, text = _("OK"), command = self.ok)
+        button.pack(side = LEFT, expand = 1, fill = X)
+        button = Button(frame, text = _("Cancel"), command = self.cancel)
+        button.pack(side = RIGHT, expand = 1, fill = X)
+        return frame
+
+    def set_parameter(self, var):
+        # the options are taken on OK
+        pass
+
+    def invalid_parameters(self):
+        invalid = []
+        for var in self.vars:
+            try:
+                if hasattr(var, 'is_valid') and not var.is_valid():
+                    invalid.append(var)
+            except (TclError, ValueError):
+                # not a number
+                invalid.append(var)
+        return invalid
+
+    def ok(self, *args):
+        invalid = self.invalid_parameters()
+        if invalid:
+            warn(USER, _("Invalid value of %s"), invalid[0].label)
+            return
+        options = {}
+        for var in self.vars:
+            options[var.name] = var()
+        self.close_dlg(options)

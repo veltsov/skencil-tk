@@ -5,6 +5,7 @@
 
 
 import os
+import re
 
 import pytest
 
@@ -87,7 +88,8 @@ def test_export_all_formats():
     work through the main window's SaveToFile (py3 regression guard:
     the PDF filters, WMF, the compressed save and Export Again all
     failed, and no test went through them; File->Export did not enable
-    Export Again)."""
+    Export Again).  The options dialog of File->Export is answered by a
+    stub (see test_export_options_dialog)."""
     import gzip
     outdir = testsupport.output_dir('export')
     for name in os.listdir(outdir):
@@ -104,11 +106,23 @@ def test_export_all_formats():
     for fmt in formats:
         with open(os.path.join(outdir, 'export.' + fmt), 'rb') as f:
             assert f.read().startswith(EXPORT_MAGIC[fmt]), fmt
-    # written by Export Again after File->Export
+    # written by Export Again after File->Export with the export area
+    # set to the bounding box
     with open(os.path.join(outdir, 'interactive.pdf'), 'rb') as f:
-        assert f.read().startswith(b'%PDF')
+        data = f.read()
+    assert data.startswith(b'%PDF')
+    with open(os.path.join(outdir, 'export.PDF'), 'rb') as f:
+        page = f.read()
+    mediabox = re.compile(br'/MediaBox\s*\[([^\]]*)\]')
+    assert mediabox.search(data).group(1) != mediabox.search(page).group(1)
     with gzip.open(os.path.join(outdir, 'compressed.sk.gz')) as f:
         assert f.read().startswith(b'##Sketch')
+
+
+def test_export_options_dialog():
+    """The export options dialog must offer the parameters of every
+    export plugin that has them and return the chosen options."""
+    run_ui('smoke_export_options.py', args=[testsupport.data_path('tarr.sk')])
 
 
 # ------------------------------------------------------- screenshot tests

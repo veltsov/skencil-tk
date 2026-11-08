@@ -40,7 +40,23 @@ format_name = 'SVG-Inkscape'
 #    ('eps_dpi','int',300,(30,2400),'EPS image resolution'), \
 #    ('images','choice',0,('Embed','Link'),'Linked images'))
 #unload = 1
+#standard_messages = 1
 ###End
+
+(''"Inkscape SVG")
+(''"Export area")
+(''"Page")
+(''"Bounding box")
+(''"Text as")
+(''"Paths")
+(''"Text")
+(''"EPS files")
+(''"Vector")
+(''"Image")
+(''"EPS image resolution")
+(''"Linked images")
+(''"Embed")
+(''"Link")
 
 import os, re, base64, io, shutil, subprocess, tempfile
 from math import atan2, hypot, pi, sqrt, cos, sin

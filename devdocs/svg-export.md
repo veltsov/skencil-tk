@@ -33,10 +33,10 @@ elements get the inverse in their `gradientTransform` /
 
 ## Options
 
-Declared as `#parameters` in the plugin headers.  There is no options
-dialog yet (`ExportInfo.ask_options` is a stub), so the defaults are
-what the UI uses; the options dict of `ExportInfo.__call__` (tests,
-scripts) can override them.
+Declared as `#parameters` in the plugin headers and asked for by the
+export options dialog of File → Export (see `devdocs/architecture.md`,
+Plugins); `skconvert` uses the defaults, and the options dict of
+`ExportInfo.__call__` (tests, scripts) can override them.
 
 | Option | Values (default first) | Filters |
 |---|---|---|

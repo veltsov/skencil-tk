@@ -178,7 +178,10 @@ export_formats = {}
 def translate_parameters(params,mygettext):
         parameters = []
         for parameter in params:
-            parameters.append(parameter[:-1] + (mygettext(parameter[-1]),))
+            name, type, value, range, label = parameter
+            if type == 'choice':
+                range = tuple(map(mygettext, range))
+            parameters.append((name, type, value, range, mygettext(label)))
         return tuple(parameters)
 
 class _BinaryWriter:
@@ -231,20 +234,27 @@ class ExportInfo(ConfigInfo):
             opts[param[0]] = param[2]
         return opts
 
-    def ask_options(self, myoptions):
-        # Not implemented yet
-        print(myoptions)
-        return myoptions
+    def stored_options(self, document):
+        # the options of the last export of DOCUMENT in this format
+        # (kept for the session), completed by the defaults
+        poptkey = 'Export.' + self.format_name
+        options = self.get_default_options()
+        options.update(document.options.get(poptkey, {}))
+        document.options[poptkey] = options
+        return options
+
+    def GetOptions(self, document):
+        """Return a copy of the options the next export of DOCUMENT
+        uses unless others are given: those of its last export in this
+        format, or the defaults."""
+        return self.stored_options(document).copy()
 
     def __call__(self, document, filename, file = None, options = None):
-        poptkey = 'Export.' + self.format_name
-        if poptkey not in document.options:
-            document.options[poptkey] = self.get_default_options()
-        myoptions = document.options[poptkey]
-        if options is None:
-            if len(self.parameters):
-                myoptions = self.ask_options(myoptions)
-        elif len(options):
+        # OPTIONS (a dict, possibly partial) update the stored options;
+        # None uses them as they are.  The UI asks for them
+        # (plugindlg.ExportOptionsDlg).
+        myoptions = self.stored_options(document)
+        if options:
             myoptions.update(options)
         try:
             module = self.load_module()

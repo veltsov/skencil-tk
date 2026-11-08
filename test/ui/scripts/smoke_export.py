@@ -32,18 +32,37 @@ def _body():
     for info in plugins.export_plugins:
         filename = os.path.join(outdir, 'export.' + info.format_name)
         win.SaveToFile(filename, info.format_name)
-    # File->Export with the file dialog answered, then Export Again,
-    # which the export must have enabled
+    # File->Export with the file dialog and the options dialog
+    # answered, then Export Again, which the export must have enabled
+    # and which must not ask for the options again
     filename = os.path.join(outdir, 'interactive.pdf')
     app.GetSaveFilename = lambda **kw: filename
     win.exporttype.set(plugins.find_export_plugin('PDF').tk_file_type[0])
+    asked = []
+    answer = {'box': 1, 'images': 0}
+    def ask_export_options(fileformat):
+        asked.append(fileformat)
+        return answer
+    win.ask_export_options = ask_export_options
     assert not win.commands.ExportAgain.sensitive
     win.SaveToFileInteractive(2)
+    assert asked == ['PDF'], asked
+    assert doc.options['Export.PDF']['box'] == 1, doc.options
     command = win.commands.ExportAgain
     assert command.sensitive, 'Export Again is not enabled'
     assert command.menu_name.endswith('interactive.pdf'), command.menu_name
     os.remove(filename)
     command.Invoke()
+    assert asked == ['PDF'], asked
+    assert os.path.exists(filename)
+    # a cancelled options dialog cancels the export
+    cancelled = os.path.join(outdir, 'cancelled.pdf')
+    app.GetSaveFilename = lambda **kw: cancelled
+    answer = None
+    win.SaveToFileInteractive(2)
+    assert asked == ['PDF', 'PDF'], asked
+    assert not os.path.exists(cancelled)
+    assert command.menu_name.endswith('interactive.pdf'), command.menu_name
     # compressed native save
     filename = os.path.join(outdir, 'compressed.sk')
     win.SaveToFile(filename, plugins.NativeFormat, 'gzip', filename + '.gz')

@@ -30,7 +30,17 @@ format_name = 'SVG'
 #    ('eps','choice',0,('Vector','Image'),'EPS files'), \
 #    ('eps_dpi','int',300,(30,2400),'EPS image resolution'))
 #unload = 1
+#standard_messages = 1
 ###End
+
+(''"Plain SVG")
+(''"Export area")
+(''"Page")
+(''"Bounding box")
+(''"EPS files")
+(''"Vector")
+(''"Image")
+(''"EPS image resolution")
 
 from Sketch.Plugins.Filters.svgsaver import save_svg
 
