@@ -706,12 +706,12 @@ class InternalPathText(CommonText, Primitive):
         sizes = [a.font_size] * length
 
         boxes = list(map(a.font.TextBoundingBox, self.text[:length], sizes))
-        rects = list(map(lambda *a:a, list(map(lambda r, b: r(*b), [Rect] * length, boxes))))
+        rects = [Rect(*box) for box in boxes]
         self.bounding_rect = reduce(UnionRects, list(map(lambda t, r: t(r), self.trafos, rects)),
                                     EmptyRect)
 
         boxes = list(map(a.font.TextCoordBox, self.text[:length], sizes))
-        rects = list(map(lambda *a:a, list(map(lambda r, b: r(*b), [Rect] * length, boxes))))
+        rects = [Rect(*box) for box in boxes]
         self.coord_rect = reduce(UnionRects, list(map(lambda t, r: t(r), self.trafos, rects)),
                                  EmptyRect)
 

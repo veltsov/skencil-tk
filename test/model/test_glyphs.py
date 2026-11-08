@@ -330,3 +330,32 @@ def test_insert_hyphen_vs_minus():
     doc.Redo()
     assert fontmod.glyph_registry.name(obj.text[1]) == 'hyphen'
 
+
+
+def test_path_text_rects():
+    # the per-glyph metrics of path text take single gids, and the
+    # glyph rectangles are united (both broke in the py3 port)
+    sk = testsupport.sketch()
+    from Sketch import CreatePath, PolyBezier, Document, SimpleText, \
+         Identity
+    from Sketch.Graphics.text import PathText
+    from Sketch.Graphics.properties import DefaultTextProperties
+    path = CreatePath()
+    path.AppendLine(0, 0)
+    path.AppendBezier(30, 70, 110, 70, 140, 0)
+    text = SimpleText(Identity, 'on a path',
+                      properties = DefaultTextProperties())
+    doc = Document(create_layer = 1)
+    obj = PathText(text, PolyBezier((path,)))
+    doc.Insert(obj)
+    rect = obj.bounding_rect
+    assert rect.left < rect.right and rect.bottom < rect.top
+    assert rect.right <= 160 and rect.top <= 90
+
+
+def test_space_encodes_as_32():
+    # iso_latin_1 names both 32 and 160 'space'; the glyph is written
+    # with the lowest code (it came out as a no-break space)
+    sk = testsupport.sketch()
+    font = sk.GetFont('Times-Roman')
+    assert font.EncodedText(font.TextGids('a b')) == b'a b'

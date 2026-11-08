@@ -396,9 +396,11 @@ class Font:
         # reserved control glyphs (see devdocs/glyph-text.md)
         self.code_to_gid[0x0A] = NEWLINE_GID
         self.code_to_gid[0x0D] = CARRIAGE_RETURN_GID
+        # a glyph with several codes (space at 32 and 160 in the
+        # iso_latin_1 table) maps to the lowest one
         self.gid_to_code = dict(
             [(self.code_to_gid[code], code)
-             for code in range(256)
+             for code in range(255, -1, -1)
              if self.encoding[code] != encoding.notdef])
         # control-code glyphs round-trip through their byte codes
         self.gid_to_code[NEWLINE_GID] = 0x0A
@@ -466,6 +468,10 @@ class Font:
 
     def _as_gids(self, text):
         if isinstance(text, array) and text.typecode == 'I':
+            return text
+        if isinstance(text, int):
+            # a single gid (e.g. the per-glyph metrics of path text);
+            # the C metric functions accept it directly
             return text
         return self.TextGids(text)
 
