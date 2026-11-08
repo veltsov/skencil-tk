@@ -476,6 +476,7 @@ class SketchMainWindow(Publisher):
                            message = _("An error occurred:\n") + str(value))
             #warn_tb(USER, "An error occurred:\n", str(value))
             self.remove_mru_file(filename)
+            return
         else:
             messages = doc.meta.load_messages
             if messages:

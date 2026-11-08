@@ -317,6 +317,8 @@ Copyright (C) 2010 by Igor E. Novikov. sK1 Team (http://sk1project.org)
                 'Sketch.UI',
                 'Sketch.Plugins',
                 'Sketch.Plugins.Filters',
+                'Sketch.Plugins.Filters.Lib',
+                'Sketch.Plugins.Filters.Lib.svgimport',
                 'Sketch.Plugins.Objects',
                 'Sketch.Plugins.Objects.Lib',
                 'Sketch.Plugins.Objects.Lib.multilinetext',

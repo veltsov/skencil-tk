@@ -56,8 +56,13 @@ staleness warning.
    remove antialiasing differences), plus structural checks; its own
    fixture `svgall.sk` is not in the manifest (path text, which the
    master build cannot load).  Skipped without `inkscape`.  SVG import
-   is deliberately NOT tested (the SVG loader is broken on modern
-   Pythons; separate project).
+   (`test/formats/test_svgimport.py`, samples in `svgimport_samples.py`)
+   likewise: the sample SVGs rasterized by Inkscape against the
+   imported document through `sk2ps -e` and ghostscript; every fixture
+   exported to SVG (both flavours) and imported again against the
+   fixture's own rendering; the EPS fixtures through `dvisvgm -E`.  The
+   parsers and the structure of imported documents are checked
+   headless in `test/model/test_svgimport_model.py`.
 3. **App smoke tests.** The full application runs under `xvfb-run`,
    driven by a `--run-script` payload (executed by `mainwindow.py`
    before the mainloop).  Asserts exit status 0 and no traceback.
