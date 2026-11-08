@@ -145,6 +145,7 @@ class Builder:
                 self.ids[id] = node
         self.cascade = tree.Cascade(root)
         self.use_stack = []
+        self.current_vp = (100.0, 100.0)
         self._tree_styles = {}
         self.page = None
         self.root_scale = PT_PER_PX
@@ -428,6 +429,7 @@ class Builder:
     def shape(self, node, ctm, style, vp):
         if style['visibility'] in ('hidden', 'collapse'):
             return []
+        self.current_vp = vp
         tag = node.tag
         fs = style['font-size']
         def length(name, ref, default = 0.0):
@@ -485,7 +487,8 @@ class Builder:
         def make(properties):
             return Rectangle(Trafo(*m), radius1 = r1, radius2 = r2,
                              properties = properties)
-        return self.finish_shape(node, ctm, style, make, closed = 1)
+        return self.finish_shape(node, ctm, style, make,
+                                 user_box = (x, y, x + w, y + h))
 
     def ellipse(self, node, ctm, style, cx, cy, rx, ry):
         m = mul(ctm, (rx, 0.0, 0.0, ry, cx, cy))
@@ -495,7 +498,9 @@ class Builder:
             return []
         def make(properties):
             return Ellipse(Trafo(*m), properties = properties)
-        return self.finish_shape(node, ctm, style, make, closed = 1)
+        return self.finish_shape(node, ctm, style, make,
+                                 user_box = (cx - rx, cy - ry,
+                                             cx + rx, cy + ry))
 
     def path(self, node, ctm, style, subpaths, fill = 1):
         """Objects for the SUBPATHS (user space) of NODE."""
@@ -511,6 +516,7 @@ class Builder:
                                properties = empty_properties())]
         objects = []
         if doc:
+            user_box = pathdata.bbox(subpaths)
             fill_paths = stroke_paths = doc
             filled = fill and self.has_paint(style, 'fill')
             if filled and len(doc) > 1:
@@ -524,15 +530,15 @@ class Builder:
                 return obj
             if fill_paths is stroke_paths:
                 objects = self.finish_shape(node, ctm, style, make,
-                                            fill = fill, subpaths = doc)
+                                            fill = fill, user_box = user_box)
             else:
                 # the stroke needs the original subpaths
                 objects = self.finish_shape(
                     node, ctm, style,
                     lambda props: make(props, fill_paths), fill = fill,
-                    stroke = 0, subpaths = fill_paths) \
+                    stroke = 0, user_box = user_box) \
                     + self.finish_shape(node, ctm, style, make, fill = 0,
-                                        subpaths = doc)
+                                        user_box = user_box)
                 if len(objects) > 1:
                     objects = [Group(objects)]
         if dots:
@@ -661,8 +667,9 @@ class Builder:
                     line_dashes = paint.dashes(style, width, scale, cap))
 
     def finish_shape(self, node, ctm, style, make, fill = 1, stroke = 1,
-                     subpaths = None, closed = 0):
-        """Create the object(s) with MAKE(properties)."""
+                     user_box = None):
+        """Create the object(s) with MAKE(properties).  USER_BOX is the
+        geometric bounding box in user space (for paint servers)."""
         base = factory_defaults.Copy()
         base.fill_pattern = EmptyPattern
         fill_value = None
@@ -693,13 +700,15 @@ class Builder:
             fill_style.line_pattern = EmptyPattern
             base.fill_pattern = EmptyPattern
             below = make(PropertyStack(base = base))
-            above = make(PropertyStack(base = fill_style))
+            above = [make(PropertyStack(base = fill_style))]
             if fill_value is not None:
-                self.gradients.apply(above, fill_value, style, ctm)
-            return [Group([below, above])]
+                above = self.gradients.apply(above[0], fill_value, style,
+                                             ctm, user_box)
+            return [Group([below] + above)]
         obj = make(PropertyStack(base = base))
         if fill_value is not None:
-            self.gradients.apply(obj, fill_value, style, ctm)
+            return self.gradients.apply(obj, fill_value, style, ctm,
+                                        user_box)
         return [obj]
 
     def note_opacity(self):

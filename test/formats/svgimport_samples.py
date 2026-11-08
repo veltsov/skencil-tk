@@ -143,6 +143,86 @@ SAMPLES['images'] = (doc('width="300" height="200"', '''
 ''' % {'rgb': png_data_uri()}), 0.006)
 
 
+SAMPLES['gradients'] = (doc('width="400" height="300"', '''
+<defs>
+  <linearGradient id="base">
+    <stop offset="0" stop-color="red"/>
+    <stop offset="0.5" style="stop-color:yellow"/>
+    <stop offset="1" stop-color="blue"/>
+  </linearGradient>
+  <linearGradient id="diag" xlink:href="#base" x1="0" y1="0" x2="1" y2="1"/>
+  <linearGradient id="user" xlink:href="#base" gradientUnits="userSpaceOnUse"
+    x1="120" y1="0" x2="200" y2="0" gradientTransform="rotate(20 160 50)"/>
+  <radialGradient id="radial">
+    <stop offset="0.2" stop-color="white"/>
+    <stop offset="1" stop-color="green"/>
+  </radialGradient>
+  <radialGradient id="radial-user" xlink:href="#radial"
+    gradientUnits="userSpaceOnUse" cx="330" cy="60" r="70"/>
+  <linearGradient id="opaque" x2="0" y2="1">
+    <stop offset="0" stop-color="black" stop-opacity="0.2"/>
+    <stop offset="1" stop-color="purple"/>
+  </linearGradient>
+</defs>
+<rect x="10" y="10" width="100" height="80" fill="url(#base)"/>
+<rect x="120" y="10" width="80" height="80" fill="url(#user)"/>
+<ellipse cx="260" cy="50" rx="45" ry="30" fill="url(#diag)"
+  stroke="black" stroke-width="3"/>
+<rect x="300" y="10" width="90" height="100" fill="url(#radial-user)"/>
+<circle cx="260" cy="170" r="50" fill="url(#radial)"/>
+<path d="M320 130 l60 0 l-30 60 z" fill="url(#opaque)"
+  transform="rotate(15 350 160)"/>
+<rect x="10" y="210" width="180" height="40"
+  fill="url(#missing) orange"/>
+<rect x="210" y="230" width="180" height="60" fill="url(#base)"
+  transform="skewX(20) translate(-80 0)"/>
+'''), 0.008)
+
+# Sketch's PostScript output samples gradients in 50 steps
+# (gradient_steps_print), too coarse for many periods.  (Inkscape
+# places the tiles of objectBoundingBox patterns differently from the
+# specification: tested in test_svgimport_model.py instead.)
+SAMPLES['gradient-spread'] = (doc('width="200" height="110"', '''
+<defs>
+  <linearGradient id="base">
+    <stop offset="0" stop-color="red"/>
+    <stop offset="0.5" style="stop-color:yellow"/>
+    <stop offset="1" stop-color="blue"/>
+  </linearGradient>
+  <linearGradient id="reflect" xlink:href="#base" x1="0.3" x2="0.7"
+    spreadMethod="reflect"/>
+  <linearGradient id="repeat" xlink:href="#base" x1="0.2" x2="0.6"
+    spreadMethod="repeat"/>
+</defs>
+<rect x="10" y="10" width="180" height="40" fill="url(#reflect)"/>
+<rect x="10" y="60" width="180" height="40" fill="url(#repeat)"/>
+'''), 0.05)
+
+SAMPLES['patterns'] = (doc('width="400" height="200"', '''
+<defs>
+  <pattern id="checker" width="20" height="20" patternUnits="userSpaceOnUse">
+    <rect width="10" height="10" fill="black"/>
+    <rect x="10" y="10" width="10" height="10" fill="black"/>
+  </pattern>
+  <pattern id="dots" x="3" y="5" width="16" height="20"
+    patternUnits="userSpaceOnUse">
+    <circle cx="8" cy="8" r="4" fill="red"/>
+  </pattern>
+  <pattern id="tile" width="16" height="8" patternUnits="userSpaceOnUse"
+    patternTransform="rotate(30)">
+    <image width="16" height="8" preserveAspectRatio="none"
+      style="image-rendering:optimizeSpeed" xlink:href="%(png)s"/>
+  </pattern>
+  <pattern id="lines" xlink:href="#checker" patternTransform="scale(0.5)"/>
+</defs>
+<rect x="10" y="10" width="120" height="80" fill="url(#checker)"
+  stroke="blue" stroke-width="2"/>
+<circle cx="210" cy="50" r="40" fill="url(#dots)"/>
+<rect x="270" y="10" width="120" height="80" fill="url(#tile)"/>
+<rect x="10" y="110" width="120" height="80" fill="url(#lines)"/>
+''' % {'png': png_data_uri((16, 8))}), 0.006)
+
+
 def write(name, dir):
     path = os.path.join(dir, name + '.svg')
     with open(path, 'w') as f:

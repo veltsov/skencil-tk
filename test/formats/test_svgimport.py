@@ -92,8 +92,7 @@ def test_sample(name):
 # import is known to be inexact.
 ROUND_TRIP_DIFFERENCES = {
     ('tarr.sk', 'inkscape'): 0.01,      # markers (not yet)
-    ('svgall.sk', 'plain'): 0.06,       # gradients, patterns (not yet)
-    ('svgall.sk', 'inkscape'): 0.06,
+    ('svgall.sk', 'inkscape'): 0.006,
 }
 
 

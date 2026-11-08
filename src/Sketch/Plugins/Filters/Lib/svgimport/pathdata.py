@@ -62,12 +62,58 @@ class SubPath:
                 pts.append((seg[i], seg[i + 1]))
         return pts
 
+    def bbox(self):
+        """The exact bounding box (l, b, r, t) of the subpath."""
+        xs = [self.start[0]]; ys = [self.start[1]]
+        x0, y0 = self.start
+        for seg in self.segments:
+            if seg[0] == 'L':
+                x0, y0 = seg[1], seg[2]
+                xs.append(x0); ys.append(y0)
+                continue
+            x1, y1, x2, y2, x3, y3 = seg[1:]
+            xs.append(x3); ys.append(y3)
+            for t in _extrema(x0, x1, x2, x3) + _extrema(y0, y1, y2, y3):
+                s = 1 - t
+                xs.append(s * s * s * x0 + 3 * s * s * t * x1
+                          + 3 * s * t * t * x2 + t * t * t * x3)
+                ys.append(s * s * s * y0 + 3 * s * s * t * y1
+                          + 3 * s * t * t * y2 + t * t * t * y3)
+            x0, y0 = x3, y3
+        return (min(xs), min(ys), max(xs), max(ys))
+
     def is_degenerate(self):
         x0, y0 = self.start
         for x, y in self.points():
             if x != x0 or y != y0:
                 return False
         return True
+
+
+def _extrema(p0, p1, p2, p3):
+    """The parameters in (0, 1) where a cubic coordinate has zero
+    derivative."""
+    a = -p0 + 3 * p1 - 3 * p2 + p3
+    b = 2 * (p0 - 2 * p1 + p2)
+    c = p1 - p0
+    result = []
+    if abs(a) < 1e-12:
+        if abs(b) > 1e-12:
+            result.append(-c / b)
+    else:
+        disc = b * b - 4 * a * c
+        if disc >= 0:
+            sq = math.sqrt(disc)
+            result.extend(((-b + sq) / (2 * a), (-b - sq) / (2 * a)))
+    return [t for t in result if 0 < t < 1]
+
+
+def bbox(subpaths):
+    boxes = [sub.bbox() for sub in subpaths]
+    if not boxes:
+        return None
+    return (min(b[0] for b in boxes), min(b[1] for b in boxes),
+            max(b[2] for b in boxes), max(b[3] for b in boxes))
 
 
 rx_token = re.compile(r'\s*,?\s*(?:([MmZzLlHhVvCcSsQqTtAa])|'

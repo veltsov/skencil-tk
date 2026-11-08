@@ -440,3 +440,150 @@ def test_import_svg_group():
     group, messages = svgimport().import_svg_group(svg(
         '<rect width="1" height="1"/><circle r="1"/>'))
     assert group.is_Group and len(group.GetObjects()) == 2
+
+
+# --------------------------------------------------------------- gradients
+
+def skencil_color(obj, x, y):
+    """The color of OBJ's gradient fill at (x, y), by the formulas of
+    Graphics/pattern.py."""
+    pattern = obj.Properties().fill_pattern
+    rect = obj.bounding_rect
+    w = rect.right - rect.left
+    h = rect.top - rect.bottom
+    if pattern.is_AxialGradient:
+        dx, dy = pattern.Direction()
+        cx = (rect.left + rect.right) / 2
+        cy = (rect.bottom + rect.top) / 2
+        extent = (w * abs(dx) + h * abs(dy)) * (1 - pattern.Border())
+        t = 0.5 - ((x - cx) * dx + (y - cy) * dy) / extent
+    else:
+        px, py = pattern.Center()
+        cx = rect.left + px * w
+        cy = rect.bottom + py * h
+        radius = max(math.hypot(a - cx, b - cy)
+                     for a in (rect.left, rect.right)
+                     for b in (rect.bottom, rect.top)) \
+                 * (1 - pattern.Border())
+        t = 1 - math.hypot(x - cx, y - cy) / radius
+    c = pattern.Gradient().ColorAt(min(max(t, 0), 1))
+    return (c.red, c.green, c.blue)
+
+
+STOPS = ('<stop offset="0" stop-color="#ff0000"/>'
+         '<stop offset="0.5" stop-color="#ffff00"/>'
+         '<stop offset="1" stop-color="#0000ff"/>')
+
+def svg_stops(s):
+    """The color of STOPS at the (padded) position S."""
+    s = min(max(s, 0), 1)
+    if s <= 0.5:
+        return (1, s * 2, 0)
+    f = (s - 0.5) * 2
+    return (1 - f, 1 - f, f)
+
+
+def test_linear_gradient_is_exact():
+    # gradient vector (20, 10) - (80, 40) in user space, rotated and
+    # sheared element: the color must agree everywhere in the object
+    doc = load('<linearGradient id="g" gradientUnits="userSpaceOnUse" '
+               'x1="20" y1="10" x2="80" y2="40" '
+               'gradientTransform="rotate(10)">%s</linearGradient>'
+               '<rect x="0" y="0" width="100" height="60" fill="url(#g)" '
+               'transform="translate(0 20) skewX(15)"/>' % STOPS)
+    obj = single(doc)
+    from Sketch.Plugins.Filters.Lib.svgimport import values
+    g = values.rotate(10)
+    inv = values.inverse(g)
+    ctm = values.mul((1, 0, 0, -1, 0, 100), values.mul(
+        values.translate(0, 20), values.parse_transform('skewX(15)')))
+    for ux, uy in ((5, 5), (50, 30), (95, 55), (30, 50), (70, 10)):
+        # SVG: position along the gradient vector in gradient space
+        qx, qy = values.apply(inv, ux, uy)
+        s = ((qx - 20) * 60 + (qy - 10) * 30) / (60 ** 2 + 30 ** 2)
+        x, y = values.apply(ctm, ux, uy)
+        expected = svg_stops(s)
+        assert close(skencil_color(obj, x, y), expected, 0.01), (ux, uy)
+
+
+def test_radial_gradient_is_exact():
+    doc = load('<radialGradient id="g" cx="0.3" cy="0.4" r="0.6">%s'
+               '</radialGradient><rect x="10" y="20" width="50" '
+               'height="50" fill="url(#g)"/>' % STOPS)
+    obj = single(doc)
+    cx, cy, r = 10 + 0.3 * 50, 20 + 0.4 * 50, 0.6 * 50
+    for ux, uy in ((15, 25), (25, 40), (55, 65), (40, 30)):
+        s = math.hypot(ux - cx, uy - cy) / r
+        assert close(skencil_color(obj, ux, 100 - uy), svg_stops(s), 0.01)
+
+
+def test_repeat_gradient_keeps_period_ends():
+    doc = load('<linearGradient id="g" x1="0" x2="0.5" '
+               'spreadMethod="repeat">%s</linearGradient>'
+               '<rect width="100" height="10" fill="url(#g)"/>' % STOPS)
+    obj = single(doc)
+    # just before the end of the first period: blue; just after: red
+    assert close(skencil_color(obj, 49.9, 95), (0, 0, 1), 0.02)
+    assert close(skencil_color(obj, 50.1, 95), (1, 0, 0), 0.02)
+    # the right end of the object is the end of the second period
+    assert close(skencil_color(obj, 100, 95), (0, 0, 1), 0.02)
+
+
+def test_gradient_stop_opacity_and_fallbacks():
+    doc = load('<linearGradient id="g"><stop offset="0" stop-color="red" '
+               'stop-opacity="0.5"/><stop offset="1" stop-color="red"/>'
+               '</linearGradient>'
+               '<linearGradient id="one"><stop stop-color="lime"/>'
+               '</linearGradient><linearGradient id="none"/>'
+               '<rect width="10" height="10" fill="url(#g)"/>'
+               '<rect width="10" height="10" fill="url(#one)"/>'
+               '<rect width="10" height="10" fill="url(#none)"/>'
+               '<rect width="10" height="10" fill="url(#missing) blue"/>'
+               '<rect width="10" height="10" fill="url(#missing)" '
+               'stroke="url(#g)"/>')
+    first, one, none, fallback, stroke = objects(doc)
+    stops = first.Properties().fill_pattern.Gradient().Colors()
+    c = stops[0][1]
+    assert close((c.red, c.green, c.blue), (1, 0.5, 0.5))
+    assert rgb(one.Properties().fill_pattern) == (0, 1, 0)
+    assert none.Properties().fill_pattern.is_Empty
+    assert rgb(fallback.Properties().fill_pattern) == (0, 0, 1)
+    # gradient strokes: the middle color (opacity 0.75, over white)
+    assert stroke.Properties().fill_pattern.is_Empty
+    assert rgb(stroke.Properties().line_pattern) == (1, 0.25, 0.25)
+    assert 'Gradient or pattern strokes' in doc.meta.load_messages
+
+
+def test_pattern_object_bounding_box_tiles():
+    # tiles of 0.25 x 0.5 of the bounding box, content in bbox units
+    doc = load('<pattern id="p" width="0.25" height="0.5" '
+               'patternContentUnits="objectBoundingBox">'
+               '<rect x="0.05" y="0.1" width="0.1" height="0.2" '
+               'fill="red"/></pattern>'
+               '<rect x="10" y="20" width="80" height="40" '
+               'fill="url(#p)"/>')
+    # the tiles lie within the rect: no clip needed
+    tiles = single(doc)
+    assert tiles.is_Group and not tiles.is_MaskGroup
+    rects = sorted((round(r.coord_rect.left, 6), round(r.coord_rect.top, 6))
+                   for r in tiles.GetObjects())
+    # 4 x 2 tiles of 20 x 20, the red rect at (4, 4) in each
+    assert rects == sorted((x, 100 - y) for x in (14, 34, 54, 74)
+                           for y in (24, 44))
+
+
+def test_image_pattern_is_tiled():
+    from Sketch.Plugins.Filters.Lib import svgimport
+    import base64, io
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new('RGB', (4, 2), (255, 0, 0)).save(buf, 'PNG')
+    uri = 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode()
+    doc = load('<pattern id="p" width="8" height="4" '
+               'patternUnits="userSpaceOnUse"><image width="8" height="4" '
+               'preserveAspectRatio="none" xlink:href="%s"/></pattern>'
+               '<rect width="50" height="50" fill="url(#p)"/>' % uri)
+    pattern = single(doc).Properties().fill_pattern
+    assert pattern.is_Tiled
+    # a tile pixel is 2 x 2
+    assert close(pattern.trafo.coeff()[:4], (2, 0, 0, -2))
