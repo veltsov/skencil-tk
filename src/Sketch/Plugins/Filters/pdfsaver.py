@@ -32,7 +32,7 @@ __version__ = "$Revision: 251 $"
 # $Id: epssaver.py 251 2002-11-02 19:04:18Z bherzog $
 
 import os
-from Sketch import PostScriptDevice
+from Sketch import _, PostScriptDevice
 from Sketch.Base import config
 from Sketch.Lib import util
 
@@ -53,8 +53,8 @@ def save(document, file, filename, options = {}):
     args = ['-dSAFER', '-q', '-dNOPAUSE', '-dBATCH', '-sDEVICE=pdfwrite',
             '-dCompatibilityLevel=%s' % compat]
     if options.get('images'):
-        args.append("-dAutoFilterColorImages=false"
-                    " -sColorImageFilter=FlateEncode")
+        args += ['-dAutoFilterColorImages=false',
+                 '-sColorImageFilter=FlateEncode']
     args += ['-r%d' % resolution, '-g%dx%d' % (width, height),
              '-sOutputFile=' + filename,
              '-c', '%f' % offx, '%f' % offy, 'translate', '-f', '-']
@@ -67,4 +67,6 @@ def save(document, file, filename, options = {}):
                           CreationDate = util.current_date())
     document.Draw(ps)
     ps.Close()
-    file.close()
+    status = file.close()
+    if status:
+        raise IOError(_("ghostscript failed (exit status %d)") % status)

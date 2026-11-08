@@ -311,6 +311,8 @@ class SketchMainWindow(Publisher):
                         cmd = 'bzip2 > ' + util.sh_quote(compressed_file)
                     file = util.popen_write(cmd)
                     saver(self.document, filename, file = file, options = plugin_options)
+                    if file.close():
+                        raise IOError(_("%s failed") % compressed)
                 else:
                     saver(self.document, filename, options = plugin_options)
             finally:
@@ -347,6 +349,8 @@ class SketchMainWindow(Publisher):
         self.show_status_message(_("Wrote to %s") % name)
 
         self.set_window_title()
+        # SaveToFileInteractive may have set a new export file name
+        self.commands.ExportAgain.Update()
 
     AddCmd('ExportAgain', '', key_stroke = ('Ctrl+E','C-e'),
            sensitive_cb = 'CanExportAgain',
@@ -354,8 +358,11 @@ class SketchMainWindow(Publisher):
     def ExportAgain(self):
         filename = self.document.meta.last_export_filename
         if filename:
+            # the plugin keeps the options of the last export in
+            # document.options; an empty dict reuses them without asking
+            options = self.document.meta.last_export_plugin_options or {}
             self.SaveToFile(filename,self.document.meta.last_export_format,
-                            plugin_parameters = self.document.meta.last_export_plugin_options)
+                            plugin_options = options)
 
     def CanExportAgain(self):
         return len(self.document.meta.last_export_filename) > 0

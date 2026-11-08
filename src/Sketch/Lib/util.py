@@ -23,6 +23,30 @@
 import os, re, stat
 import subprocess
 
+class ProcessPipe:
+    """The standard input of a child process, a replacement for the file
+    os.popen(cmd, 'w') returned in python 2: write accepts str (utf-8
+    encoded) and bytes, and close waits for the process and returns
+    its exit status (None if it is 0)."""
+
+    def __init__(self, process):
+        self.process = process
+        self.file = process.stdin
+
+    def write(self, data):
+        if isinstance(data, str):
+            data = data.encode('utf-8')
+        return self.file.write(data)
+
+    def close(self):
+        if not self.file.closed:
+            self.file.close()
+        return self.process.wait() or None
+
+    def __getattr__(self, name):
+        return getattr(self.file, name)
+
+
 def popen_write(cmd):
     """Run CMD through the shell and return a file object connected to
     its standard input. Replacement for os.popen(cmd, 'w')."""
@@ -31,8 +55,8 @@ def popen_write(cmd):
         # (ascii) codec; the shell command may contain utf-8 file names
         # (K2/K6, devdocs/string-handling.md)
         cmd = cmd.encode('utf-8')
-    return subprocess.Popen(cmd, shell=True,
-                            stdin=subprocess.PIPE).stdin
+    return ProcessPipe(subprocess.Popen(cmd, shell=True,
+                                        stdin=subprocess.PIPE))
 
 def popen_read(cmd):
     """Run CMD through the shell and return a file object connected to
@@ -78,8 +102,8 @@ def run_gs_pipe(args):
     """Run the ghostscript interpreter with ARGS and return a file
     object connected to its standard input, for piping PostScript into
     it (like popen_write, but without a shell)."""
-    return subprocess.Popen(_gs_command(args),
-                            stdin=subprocess.PIPE).stdin
+    return ProcessPipe(subprocess.Popen(_gs_command(args),
+                                        stdin=subprocess.PIPE))
 
 
 def run_gs_output(args):

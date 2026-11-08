@@ -62,7 +62,9 @@ staleness warning.
    driven by a `--run-script` payload (executed by `mainwindow.py`
    before the mainloop).  Asserts exit status 0 and no traceback.
    Covers bare launch, every fixture, and opening the Layers dialog
-   (the pax/GIL crash canary).
+   (the pax/GIL crash canary); `smoke_export.py` exports through the
+   main window's `SaveToFile` with every export plugin, Export Again
+   and a gzip-compressed save.
 4. **Screenshot tests.** `shot_basic/shot_mutated/shot_xdotool`
    payloads capture the X root window (ImageMagick `import`) after a
    fixed set of document mutations, or after synthetic keyboard input

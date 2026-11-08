@@ -76,6 +76,41 @@ def test_zorder_moves():
     run_ui('smoke_zorder.py', args=[testsupport.data_path('tarr.sk')])
 
 
+EXPORT_MAGIC = {'SK-1': b'##Sketch', 'EPS': b'%!PS-Adobe', 'PS': b'%!PS-Adobe',
+                'PDF': b'%PDF', 'PDF-bbox': b'%PDF', 'PDF-full': b'%PDF',
+                'SVG': b'<?xml', 'SVG-Inkscape': b'<?xml',
+                'WMF': b'\xd7\xcd\xc6\x9a'}
+
+
+def test_export_all_formats():
+    """Every export plugin, Export Again and the compressed save must
+    work through the main window's SaveToFile (py3 regression guard:
+    the PDF filters, WMF, the compressed save and Export Again all
+    failed, and no test went through them; File->Export did not enable
+    Export Again)."""
+    import gzip
+    outdir = testsupport.output_dir('export')
+    for name in os.listdir(outdir):
+        os.remove(os.path.join(outdir, name))
+    out, err = run_ui('smoke_export.py',
+                      args=[testsupport.data_path('tarr.sk')],
+                      script_env={'SKENCIL_EXPORT_DIR': outdir})
+    # SaveToFile reports failures in a message box
+    assert b'MessageBox' not in out, out.decode('utf-8', 'replace')
+    testsupport.sketch()
+    from Sketch.Base import plugins
+    formats = [info.format_name for info in plugins.export_plugins]
+    assert set(formats) == set(EXPORT_MAGIC)
+    for fmt in formats:
+        with open(os.path.join(outdir, 'export.' + fmt), 'rb') as f:
+            assert f.read().startswith(EXPORT_MAGIC[fmt]), fmt
+    # written by Export Again after File->Export
+    with open(os.path.join(outdir, 'interactive.pdf'), 'rb') as f:
+        assert f.read().startswith(b'%PDF')
+    with gzip.open(os.path.join(outdir, 'compressed.sk.gz')) as f:
+        assert f.read().startswith(b'##Sketch')
+
+
 # ------------------------------------------------------- screenshot tests
 
 SHOT_FIXTURE = 'tarr.sk'

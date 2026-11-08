@@ -39,7 +39,7 @@ from Sketch.Base import const
 # If you find the curves not smooth enough, lower this value.
 EPS = 2
 
-rx_magic = '\xd7\xcd\xc6\x9a'
+rx_magic = b'\xd7\xcd\xc6\x9a'
 
 struct_wmf_header = ('<'
                      'H'        # Type
@@ -152,8 +152,8 @@ class WMFSaver:
         self.file.close()
 
     def SelectObject(self, num):
-        type = self.objects[num][4]
-        if type == '\xFA':
+        type = self.objects[num][4]     # low byte of the function
+        if type == 0xFA:
             if self.cur_pen == num:
                 return
             self.cur_pen = num
@@ -294,7 +294,7 @@ class WMFSaver:
             self.pack(*lens)
             for lst in set:
                 fmt = '<%dh' % len(lst)
-                self.pack(*(fmt,) + tuple(lst))
+                self.pack(*(fmt,) + tuple(map(rndtoint, lst)))
 
     def rect_to_ltrb(self, rct, zero = Point(0,0)):
         trf = rct.trafo
@@ -312,8 +312,8 @@ class WMFSaver:
             self.FillStyle(rct.Properties())
             left, top, right, bottom = self.rect_to_ltrb(rct)
             if rct.radius1 != 0 or rct.radius2 != 0:
-                ell_h = abs(self.trafo.m11 * trf.m11 * rct.radius1)
-                ell_w = abs(self.trafo.m22 * trf.m22 * rct.radius2)
+                ell_h = rndtoint(abs(self.trafo.m11 * trf.m11 * rct.radius1))
+                ell_w = rndtoint(abs(self.trafo.m22 * trf.m22 * rct.radius2))
                 self.packrec('<LHhhhhhh', 9, 0x061C, ell_h, ell_w, bottom,
                              right, top, left)
             else:
@@ -428,7 +428,7 @@ class WMFSaver:
         inch = 1440
         x = max(width, height)
         if x * (inch / 72.) > 32767:
-            inch = 32767 / x
+            inch = int(32767 / x)
         sc = inch / 72.
         self.trafo = Trafo(sc, 0, 0, -sc, - sc * left, sc * top)
         self.Scale = sc
