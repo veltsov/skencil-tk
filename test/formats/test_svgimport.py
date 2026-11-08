@@ -28,6 +28,8 @@ have_dvisvgm = shutil.which('dvisvgm') is not None
 
 # fraction of (4x downsampled) pixels allowed to differ
 DEFAULT_MAX_DIFF = 0.002
+# ghostscript renders the glyphs of TeX fonts slightly bolder
+LATEX_MAX_DIFF = 0.004
 
 
 def svgimport():
@@ -90,10 +92,7 @@ def test_sample(name):
 
 # Fraction of differing pixels allowed for the round trips where the
 # import is known to be inexact.
-ROUND_TRIP_DIFFERENCES = {
-    ('tarr.sk', 'inkscape'): 0.01,      # markers (not yet)
-    ('svgall.sk', 'inkscape'): 0.006,
-}
+ROUND_TRIP_DIFFERENCES = {}
 
 
 @pytest.mark.parametrize('flavour', ['plain', 'inkscape'])
@@ -122,3 +121,79 @@ def test_dvisvgm_eps(name):
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     doc = compare_with_inkscape(out, 'svgimport')
     assert not doc.meta.load_messages
+
+
+LATEX = r'''\documentclass{article}
+\usepackage{xcolor}
+\usepackage{tikz}
+\pagestyle{empty}
+\begin{document}
+Text with math $\int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}$,
+\textcolor{red}{red text}, a rule \rule{1cm}{2pt} and ligatures: fi ffl.
+\[ \sum_{k=1}^n k^2 = \frac{n(n+1)(2n+1)}{6} \]
+\begin{tikzpicture}
+\fill[blue!30] (0,0) rectangle (2,1);
+\fill[red, opacity=0.5] (3,0.5) circle (0.4);
+\begin{scope}
+\clip (5,0.5) circle (0.5);
+\fill[orange] (4.5,0) rectangle (5.3,1);
+\end{scope}
+\draw[->, thick, dashed] (0,-0.3) -- (4,-0.3);
+\end{tikzpicture}
+\end{document}
+'''
+
+have_latex = all(shutil.which(tool) for tool in ('latex', 'pdflatex',
+                                                 'dvips'))
+
+_latex = {}
+
+def latex_outputs():
+    """The DVI, EPS and PDF of LATEX (once per session)."""
+    if not _latex:
+        dir = testsupport.output_dir('svgimport-latex')
+        with open(os.path.join(dir, 't.tex'), 'w') as f:
+            f.write(LATEX)
+        for cmd in (['latex', '-interaction=batchmode', 't.tex'],
+                    ['pdflatex', '-interaction=batchmode', 't.tex'],
+                    ['dvips', '-q', '-E', 't.dvi', '-o', 't.eps']):
+            subprocess.check_call(cmd, cwd = dir, stdout = subprocess.PIPE,
+                                  stderr = subprocess.PIPE)
+        _latex['dir'] = dir
+    return _latex['dir']
+
+
+def dvisvgm(dir, args, out):
+    out = os.path.join(dir, out)
+    subprocess.check_call(['dvisvgm'] + args + ['-o', out], cwd = dir,
+                          stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    return out
+
+
+@pytest.mark.skipif(not (have_dvisvgm and have_inkscape and have_latex),
+                    reason='dvisvgm, inkscape or latex not installed')
+@pytest.mark.parametrize('variant', ['nofonts', 'eps', 'pdf'])
+def test_dvisvgm_latex(variant):
+    """LaTeX output through dvisvgm: glyphs as paths (DVI with
+    --no-fonts, EPS, PDF)."""
+    dir = latex_outputs()
+    args = {'nofonts': ['--no-fonts', 't.dvi'],
+            'eps': ['-E', '--no-fonts', 't.eps'],
+            'pdf': ['--pdf', '--no-fonts', 't.pdf']}[variant]
+    out = dvisvgm(dir, args, 't-%s.svg' % variant)
+    compare_with_inkscape(out, 'svgimport-latex', LATEX_MAX_DIFF)
+
+
+@pytest.mark.skipif(not (have_dvisvgm and have_inkscape and have_latex),
+                    reason='dvisvgm, inkscape or latex not installed')
+def test_dvisvgm_svg_fonts():
+    """dvisvgm's default output (SVG fonts, which Inkscape does not
+    render): compared with Inkscape's rendering of the --no-fonts
+    output."""
+    dir = latex_outputs()
+    fonts = dvisvgm(dir, ['t.dvi'], 't-fonts.svg')
+    paths = dvisvgm(dir, ['--no-fonts', 't.dvi'], 't-paths.svg')
+    doc, png = render_imported(fonts, 'svgimport-latex')
+    ref = render_inkscape(paths, os.path.splitext(png)[0] + '-ref.png')
+    frac = test_svg.difference(png, ref)
+    assert frac <= LATEX_MAX_DIFF, (frac, doc.meta.load_messages)

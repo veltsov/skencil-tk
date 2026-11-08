@@ -80,10 +80,12 @@ def rect_of(obj):
         t = obj.trafo
         if obj.radius1 or obj.radius2:
             return None
-        if abs(t.m12) > EPS or abs(t.m21) > EPS:
+        # the unit square stays axis-parallel under multiples of 90 degrees
+        if not (abs(t.m12) < EPS and abs(t.m21) < EPS
+                or abs(t.m11) < EPS and abs(t.m22) < EPS):
             return None
-        xs = (t.v1, t.v1 + t.m11)
-        ys = (t.v2, t.v2 + t.m22)
+        xs = (t.v1, t.v1 + t.m11 + t.m12)
+        ys = (t.v2, t.v2 + t.m21 + t.m22)
         return (min(xs), min(ys), max(xs), max(ys))
     if obj.is_Bezier and len(obj.Paths()) == 1:
         sub = subpath_from_path(obj.Paths()[0])
@@ -112,8 +114,8 @@ class Clipper:
 
     def apply(self, node, objects, ctm, style, vp):
         b = self.builder
-        id = values.url_id(style['clip-path'])
-        ref = b.lookup(id)
+        ref_id = values.url_id(style['clip-path'])
+        ref = b.lookup(ref_id)
         if ref is None or ref.tag != 'clipPath':
             if style['clip-path'].strip().startswith('url'):
                 b.warn(_("Reference to an unknown clip path ignored"))
@@ -185,8 +187,8 @@ class Clipper:
                 # an empty clip path: nothing is visible
                 result.append(None)
         if style['clip-path'] != 'none':
-            id = values.url_id(style['clip-path'])
-            outer = b.lookup(id)
+            ref_id = values.url_id(style['clip-path'])
+            outer = b.lookup(ref_id)
             if outer is not None and outer.tag == 'clipPath' \
                and outer not in b.use_stack:
                 b.use_stack.append(outer)

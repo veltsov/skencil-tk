@@ -587,3 +587,145 @@ def test_image_pattern_is_tiled():
     assert pattern.is_Tiled
     # a tile pixel is 2 x 2
     assert close(pattern.trafo.coeff()[:4], (2, 0, 0, -2))
+
+
+# -------------------------------------------------------------------- text
+
+import shutil
+
+have_inkscape = shutil.which('inkscape') is not None
+
+
+def leaves(obj):
+    if obj.is_Compound:
+        result = []
+        for child in obj.GetObjects():
+            result.extend(leaves(child))
+        return result
+    return [obj]
+
+
+@pytest.mark.skipif(not have_inkscape, reason='inkscape not installed')
+def test_text_converted_by_inkscape():
+    doc = load('<style>text { fill: green }</style>'
+               '<text x="10" y="50" font-size="20">Ab <tspan fill="red">'
+               'cd</tspan></text>')
+    paths = leaves(single(doc))
+    assert all(p.is_Bezier for p in paths)
+    # the paint comes from this document's cascade
+    colors = [rgb(p.Properties().fill_pattern) for p in paths
+              if p.Properties().fill_pattern.is_Solid]
+    assert (0, 0.502, 0) in colors and (1, 0, 0) in colors
+    r = single(doc).coord_rect
+    assert 9 < r.left < 12 and r.bottom > 100 - 52 and r.top < 100 - 30
+
+
+def test_text_fallback_without_inkscape(monkeypatch):
+    monkeypatch.setenv('INKSCAPE', '/nonexistent/inkscape')
+    doc = load('<text x="50" y="50" font-size="20" fill="blue" '
+               'text-anchor="middle">A☃B<tspan x="10" y="80" '
+               'fill="red">C</tspan></text>')
+    texts = leaves(single(doc))
+    assert [t.__class__.__name__ for t in texts] == ['SimpleText'] * 2
+    first, second = texts
+    from Sketch.Base import config
+    assert first.Font().PostScriptName() == config.preferences.fallback_font
+    # the snowman is not in the font
+    assert len(first.Text()) == 2
+    assert first.FontSize() == 20
+    assert rgb(first.Properties().fill_pattern) == (0, 0, 1)
+    assert rgb(second.Properties().fill_pattern) == (1, 0, 0)
+    # centered on x = 50
+    r = first.coord_rect
+    assert abs((r.left + r.right) / 2 - 50) < 2
+    # the tspan inherits text-anchor: centered on x = 10
+    r = second.coord_rect
+    assert abs((r.left + r.right) / 2 - 10) < 1 and second.trafo.v2 == 20
+    messages = doc.meta.load_messages
+    assert 'inkscape not found' in messages and 'missing' in messages
+
+
+def test_svg_font_text():
+    # a two-glyph SVG font with 100 units per em: a square and a bar
+    doc = load('<defs><font id="f" horiz-adv-x="100">'
+               '<font-face font-family="sq" units-per-em="100"/>'
+               '<glyph unicode="a" d="M0 0 h50 v50 h-50z"/>'
+               '<glyph unicode="b" horiz-adv-x="200" d="M0 0 h150 v10 h-150z"/>'
+               '<glyph unicode="ab" d="M0 0 h10 v10 h-10z"/>'
+               '</font></defs>'
+               '<text x="10" y="50" font-family="sq" font-size="20">'
+               'aba<tspan dx="5">b</tspan></text>')
+    group = single(doc)
+    # "ab" is a ligature (2 x 2 at 10), then "a" at 10 + 0.2 * 100 = 30
+    # (advance of the ligature: the font default), then "b" 5 later
+    # one curve per run (the tspan is a run of its own)
+    boxes = sorted((round(b[0], 6), round(b[2], 6)) for obj in leaves(group)
+                   for b in [subpath_box(p) for p in obj.Paths()])
+    assert boxes == [(10, 12), (30, 40), (55, 85)]
+
+
+def subpath_box(path):
+    xs = [path.Node(i).x for i in range(path.len)]
+    ys = [path.Node(i).y for i in range(path.len)]
+    return (min(xs), min(ys), max(xs), max(ys))
+
+
+# ----------------------------------------------------------------- markers
+
+def test_marker_vertices():
+    from Sketch.Plugins.Filters.Lib.svgimport import marker, pathdata
+    subs = pathdata.parse('M0 0 L10 0 L10 10 Z M20 0 L30 0')
+    verts = marker.vertices(subs)
+    # the closing point is a vertex
+    assert [v[0] for v in verts] == ['start', 'mid', 'mid', 'mid', 'mid',
+                                     'end']
+    # the start of a closed subpath bisects the closing and the first
+    # segment
+    assert verts[0][3] == pytest.approx(math.radians(-135))
+    # at (10, 10): in 90 (down), out -135 (closing segment)
+    kind, x, y, a_in, a_out = verts[2]
+    assert marker.bisector(a_in, a_out) == pytest.approx(math.radians(157.5))
+
+
+def test_markers_are_drawn():
+    doc = load('<marker id="m" markerWidth="4" markerHeight="4" refX="2" '
+               'refY="2" orient="auto"><rect width="4" height="2"/></marker>'
+               '<path d="M10 10 L50 10 L50 50" stroke="black" '
+               'stroke-width="2" fill="none" marker-start="url(#m)" '
+               'marker-mid="url(#m)" marker-end="url(#m)"/>')
+    group = single(doc)
+    assert group.is_Group
+    path, *marks = group.GetObjects()
+    assert path.is_Bezier and len(marks) == 3
+    # 4 x 2 marker units times the stroke width; the end marker is
+    # rotated by 90 degrees (pointing down)
+    r = marks[2].coord_rect
+    assert close((r.right - r.left, r.top - r.bottom), (4, 8))
+
+
+def test_native_arrows_round_trip():
+    from Sketch.Base import plugins
+    doc = testsupport.load_document(testsupport.data_path('tarr.sk'))
+    out = testsupport.output_path('svgimport', 'tarr-arrows.svg')
+    plugins.find_export_plugin('SVG')(doc, out, options = {'flavour': 0})
+    imported = svgimport().import_svg(out)
+    def arrows(document):
+        result = []
+        for obj in objects(document):
+            for leaf in leaves(obj):
+                if leaf.is_Bezier and leaf.Properties().HasLine():
+                    props = leaf.Properties()
+                    if props.line_arrow1 or props.line_arrow2:
+                        result.append((leaf, props))
+        return result
+    # paths with several subpaths are exported with explicit arrows
+    original = [item for item in arrows(doc) if len(item[0].Paths()) == 1]
+    found = arrows(imported)
+    assert original and len(found) == len(original)
+    for (o, op), (i, ip) in zip(original, found):
+        assert (op.line_arrow1 is None) == (ip.line_arrow1 is None)
+        assert (op.line_arrow2 is None) == (ip.line_arrow2 is None)
+        # the original path ends are restored
+        a = o.Paths()[0]; b = i.Paths()[0]
+        assert close(a.Node(0), b.Node(0), 1e-3)
+        assert close(a.Node(-1), b.Node(-1), 1e-3)

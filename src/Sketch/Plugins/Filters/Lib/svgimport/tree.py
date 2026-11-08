@@ -58,6 +58,7 @@ class Node:
         self.attrib = dict((normalize(k), v)
                            for k, v in element.attrib.items())
         self.parent = parent
+        self.element = element
         self.text = element.text or ''
         self.tail = element.tail or ''
         self.children = [Node(child, self) for child in element
@@ -99,7 +100,10 @@ INHERITED = {
     'stroke-linecap': 'butt', 'stroke-linejoin': 'miter',
     'stroke-miterlimit': '4', 'stroke-dasharray': 'none',
     'stroke-dashoffset': '0', 'color': 'black', 'visibility': 'visible',
-    'font-family': 'serif', 'font-size': 'medium', 'font-style': 'normal',
+    # the initial font is up to the user agent: Inkscape's, which
+    # converts the text (text.py)
+    'font-family': 'sans-serif', 'font-size': 'medium',
+    'font-style': 'normal',
     'font-weight': 'normal', 'font-variant': 'normal',
     'font-stretch': 'normal', 'text-anchor': 'start',
     'clip-rule': 'nonzero', 'marker-start': 'none', 'marker-mid': 'none',

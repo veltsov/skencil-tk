@@ -223,6 +223,51 @@ SAMPLES['patterns'] = (doc('width="400" height="200"', '''
 ''' % {'png': png_data_uri((16, 8))}), 0.006)
 
 
+SAMPLES['text'] = (doc('width="400" height="220"', '''
+<style>.big { font-size: 28px; font-family: serif }</style>
+<text x="10" y="40" class="big">Serif <tspan fill="red"
+  font-weight="bold">bold red</tspan> x<tspan dy="-10"
+  font-size="16">2</tspan></text>
+<text x="390" y="80" style="font-family:sans-serif;font-size:20px;
+  text-anchor:end" fill="blue">anchored at the end</text>
+<text x="200" y="120" text-anchor="middle" font-family="monospace"
+  font-size="18" letter-spacing="3">mono spaced</text>
+<text x="20 40 60 80" y="170 160 170 160" font-size="24"
+  rotate="0 15 30 45">abcd</text>
+<g transform="translate(250 200) rotate(-20)"><text font-size="22"
+  stroke="green" stroke-width="0.8" fill="yellow">stroked</text></g>
+<defs><path id="arc" d="M120 210 Q200 140 280 210"/></defs>
+<text font-size="16"><textPath xlink:href="#arc">text on a path
+  </textPath></text>
+'''), 0.01)
+
+SAMPLES['markers'] = (doc('width="400" height="200"', '''
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5"
+    markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M0 0 L10 5 L0 10 z" fill="navy"/>
+  </marker>
+  <marker id="dot" markerWidth="8" markerHeight="8" refX="4" refY="4"
+    markerUnits="userSpaceOnUse">
+    <circle cx="4" cy="4" r="3" fill="red"/>
+  </marker>
+  <marker id="clipped" markerWidth="4" markerHeight="4" refX="2" refY="2"
+    orient="45">
+    <rect width="4" height="4" fill="green"/>
+  </marker>
+</defs>
+<path d="M20 30 L150 30 L180 80" fill="none" stroke="black"
+  stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<polyline points="220,30 260,80 300,30 340,80 380,30" fill="none"
+  stroke="gray" stroke-width="1.5" marker-mid="url(#dot)"
+  marker-start="url(#dot)" marker-end="url(#dot)"/>
+<path d="M30 120 C80 60 130 180 180 120" fill="none" stroke="purple"
+  stroke-width="3" style="marker:url(#clipped)"/>
+<polygon points="250,110 330,110 290,180" fill="#fe8" stroke="black"
+  marker-mid="url(#dot)"/>
+'''), 0.003)
+
+
 def write(name, dir):
     path = os.path.join(dir, name + '.svg')
     with open(path, 'w') as f:

@@ -140,9 +140,9 @@ class Builder:
         self.warn = warn or (lambda message: None)
         self.ids = {}
         for node in root.iter():
-            id = node.get('id')
-            if id and id not in self.ids:
-                self.ids[id] = node
+            node_id = node.get('id')
+            if node_id and node_id not in self.ids:
+                self.ids[node_id] = node
         self.cascade = tree.Cascade(root)
         self.use_stack = []
         self.current_vp = (100.0, 100.0)
@@ -283,6 +283,11 @@ class Builder:
         tag = node.tag
         if tag in NOT_RENDERED or ':' in tag or tag[0] == '{':
             return []
+        if tag in ('text', 'flowRoot'):
+            converted = self.text.replacement(node)
+            if converted is not None:
+                # text converted to curves by Inkscape (text.py)
+                return self.render(converted, ctm, parent_style, vp)
         if style is None:
             style = self.cascade.compute(node, parent_style)
         if style['display'] == 'none':
@@ -312,7 +317,7 @@ class Builder:
             objects = self.images.image(self, node, ctm, style, vp)
         elif tag == 'text':
             objects = self.text.text(node, ctm, style, vp)
-        elif tag in ('flowRoot',):
+        elif tag == 'flowRoot':
             objects = self.text.flow(node, ctm, style, vp)
         else:
             if tag not in ('tspan', 'textPath', 'tref', 'flowRegion',
@@ -354,10 +359,10 @@ class Builder:
     # ---------------------------------------------------------- references
 
     def use(self, node, ctm, style, vp):
-        id = values.href_id(node.href())
-        ref = self.lookup(id)
+        ref_id = values.href_id(node.href())
+        ref = self.lookup(ref_id)
         if ref is None:
-            if id:
+            if ref_id:
                 self.warn(_("Reference to an unknown element ignored"))
             return []
         if ref in self.use_stack or len(self.use_stack) > MAX_USE_DEPTH:
@@ -523,6 +528,11 @@ class Builder:
                 rule = style['fill-rule']
                 fill_paths = self.fillrule.even_odd_equivalent(
                     doc, rule, self.warn)
+                if len(fill_paths) == len(doc):
+                    fill_paths = doc
+                elif not self.has_paint(style, 'stroke'):
+                    # the dropped subpaths are not needed for a line
+                    doc = stroke_paths = fill_paths
             def make(properties, paths = None):
                 paths = tuple(make_path(sub) for sub in (paths or doc))
                 obj = PolyBezier(paths = paths, properties = properties)
