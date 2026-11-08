@@ -45,6 +45,7 @@ from Sketch.Base import config
 from Sketch.Base.connector import Issue, RemovePublisher, Connect, Disconnect, \
      QueueingPublisher, Connector
 from Sketch.Base.undodict import UndoDict
+from Sketch.Base.plugins import NativeFormat
 
 from Sketch import Rect, Point, UnionRects, InfinityRect, Trafo, Rotation
 from Sketch import UndoRedo, Undo, CreateListUndo, NullUndo, UndoAfter
@@ -260,10 +261,24 @@ class SketchDocument(Protocols):
 #	Each document has an instance of this class as the variable
 #	meta. The application object uses this variable to store various
 #	data about the document, such as the name of the file it was
-#	read from, the file type, etc. See skapp.py
+#	read from, the file type, etc. The class attributes are the
+#	defaults.
 #
 class MetaInfo:
-    pass
+    fullpathname = None			# the full pathname if read from a file
+    filename = 'unnamed.sk'		# filename without dir
+    directory = None			# the directory
+    backup_created = 0			# true if a backup has been created
+    format_name = NativeFormat		# the filetype (do we need this ?)
+    native_format = 1			# whether the file was in native format
+    ps_directory = None			# dir where PostScript file was created
+    ps_filename = ''			# name of last postscript file
+    compressed = ''			# was compressed (by gzip or bzip2)
+    compressed_file = ''		# filename of compressed file
+    load_messages = ''			# (warning) messages
+    last_export_filename = ''
+    last_export_format = None
+    last_export_plugin_options = None
 
 class AbortTransactionError(SketchInternalError):
     pass

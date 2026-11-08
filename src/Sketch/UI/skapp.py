@@ -23,7 +23,6 @@ from Sketch import _, Publisher
 from Sketch.Base import config, plugins
 from Sketch.UI import tkutils
 import Sketch
-from Sketch.Graphics import document
 
 from Sketch.Base.const import CLIPBOARD
 
@@ -34,30 +33,6 @@ from Sketch.UI import tooltips
 
 from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
-
-#
-# meta info defaults
-#
-meta_defaults = [
-    ('fullpathname', None),		# the full pathname if read from a file
-    ('filename', 'unnamed.sk'),		# filename without dir
-    ('directory', None),		# the directory
-    ('backup_created', 0),		# true if a backup has been created
-    ('format_name', plugins.NativeFormat),# the filetype (do we need this ?)
-    ('native_format', 1),		# whether the file was in native format
-    ('ps_directory', None),		# dir where PostScript file was created
-    ('ps_filename', ''),		# name of last postscript file
-    ('compressed', ''),			# was compressed (by gzip or bzip2)
-    ('compressed_file', ''),		# filename of compressed file
-    ('load_messages', ''),		# (warning) messages
-    ('last_export_filename', ''),
-    ('last_export_format', None),
-    ('last_export_plugin_options', None),
-]
-
-for key, val in meta_defaults:
-    if not hasattr(document.MetaInfo, key):
-        setattr(document.MetaInfo, key, val)
 
 #
 #	file type info

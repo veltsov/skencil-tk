@@ -24,3 +24,24 @@ def test_fig_import():
     doc = testsupport.load_document(testsupport.data_path('zz.fig'))
     assert len(doc.layers) >= 1
     assert doc.DocumentInfo()
+
+
+def test_gzip_load():
+    """A gzip-compressed drawing must load headless and convert with
+    sk2ps (regression guard: the loader read a meta info default that
+    only the UI installed)."""
+    import gzip
+    infile = testsupport.data_path('tarr.sk')
+    gz = testsupport.output_path('gzip', 'tarr.sk.gz')
+    with open(infile, 'rb') as src, gzip.open(gz, 'wb') as dst:
+        dst.write(src.read())
+    doc = testsupport.load_document(gz)
+    assert doc.meta.compressed == 'gzip'
+    assert doc.meta.compressed_file == gz
+    plain = testsupport.load_document(infile)
+    assert [len(layer.GetObjects()) for layer in doc.layers] \
+           == [len(layer.GetObjects()) for layer in plain.layers]
+    out = testsupport.output_path('gzip', 'tarr.eps')
+    testsupport.sk2ps(gz, out)
+    with open(out, 'rb') as f:
+        assert f.read().startswith(b'%!PS-Adobe')
