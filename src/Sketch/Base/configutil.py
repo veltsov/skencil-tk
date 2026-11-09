@@ -230,6 +230,7 @@ def load_user_preferences():
         except:
             warn_tb(USER, "Cannot read the preferences file")
         else:
+            config.image_dir_persistent = 'image_dir' in loaded.__dict__
             _assign_preferences(loaded.__dict__)
     _load_userhooks()
 
@@ -311,6 +312,8 @@ def save_user_preferences():
     items = sorted(preferences.__dict__.items())
     for key, value in items:
         if key in defaults and defaults[key] == value:
+            continue
+        if key == 'image_dir' and not config.image_dir_persistent:
             continue
         lines.append('preferences.%s = %s\n' % (key, save_repr(value)))
     try:

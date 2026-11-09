@@ -147,6 +147,9 @@ class SketchMainWindow(Publisher):
         self.document = document
         for channel in channels:
             self.document.Subscribe(channel, self.issue, channel)
+        if not config.image_dir_persistent:
+            config.preferences.image_dir = (document.meta.directory
+                                            or os.getcwd())
         if self.canvas is not None:
             self.canvas.SetDocument(document)
         self.issue_document()
