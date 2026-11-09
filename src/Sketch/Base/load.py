@@ -45,7 +45,7 @@ from Sketch.Base.const import ArcPieSlice
 from Sketch.Graphics import document, layer, group, text
 from Sketch import _, PolyBezier, Rectangle, Ellipse, Trafo, Translation, \
      Style, PropertyStack, EmptyPattern, Document, SketchLoadError, \
-     ImageData, Image
+     SketchLoadCancelled, ImageData, Image
 from Sketch.Lib.util import decode_sk_string
 
 
@@ -171,17 +171,25 @@ class GenericLoader(LoaderWithComposites):
 
     base_style = None
 
-    def __init__(self, file, filename, match):
+    def __init__(self, file, filename, match, options = None):
         LoaderWithComposites.__init__(self)
         self.file = file
         self.filename = filename
         self.match = match
+        # the import options (the plugin's #parameters)
+        self.options = options or {}
         self.style = Style()
         if self.base_style is not None:
             self.prop_stack = PropertyStack(base=self.base_style.Duplicate())
         else:
             self.prop_stack = PropertyStack()
         self.messages = {}
+
+    def OptionInfo(self):
+        """Return None if the options need not be asked for (the
+        default), else a description of the file for the import
+        options dialog (e.g. its number of pages)."""
+        return None
 
     def get_prop_stack(self):
         stack = self.prop_stack
@@ -324,10 +332,10 @@ class SimplifiedLoader(GenericLoader):
 
 
 
-do_profile = 0
-def load_drawing_from_file(file, filename = '', doc_class = None):
-    # Note: the doc_class argument is only here for plugin interface
-    # compatibility with 0.7 (especiall e.g. gziploader)
+def match_import_plugins(file):
+    """Read the header line of FILE and yield (info, match) for the
+    import plugins in order: MATCH is the match of the plugin's magic,
+    or None."""
     line = file.readline()
     # XXX ugly hack for riff-based files, e.g. Corel's CMX. The length
     # might contain newline characters.
@@ -340,10 +348,53 @@ def load_drawing_from_file(file, filename = '', doc_class = None):
     else:
         magic_line = line
     for info in plugins.import_plugins:
-        match = info.rx_magic.match(magic_line)
+        yield info, info.rx_magic.match(magic_line)
+
+
+def find_import_plugin(filename):
+    """Return the import plugin that would read the file FILENAME, or
+    None (e.g. to parse its options before loading)."""
+    with open(filename, 'rb') as file:
+        for info, match in match_import_plugins(file):
+            if match:
+                return info
+    return None
+
+
+do_profile = 0
+def load_drawing_from_file(file, filename = '', doc_class = None,
+                           options = None, ask_options = None):
+    # Note: the doc_class argument is only here for plugin interface
+    # compatibility with 0.7 (especiall e.g. gziploader)
+    #
+    # OPTIONS (a dict, possibly partial) are options of the import
+    # plugin (its #parameters), completed by those of the last import
+    # in the format and the defaults.  ASK_OPTIONS(info, description,
+    # options), if given, asks the user for them when the loader wants
+    # that (GenericLoader.OptionInfo); it returns the options or None
+    # (cancelled: SketchLoadCancelled is raised).
+    for info, match in match_import_plugins(file):
         if match:
-            loader = info(file, filename, match)
+            if info.parameters:
+                plugin_options = info.GetOptions(options)
+                loader = info(file, filename, match,
+                              options = plugin_options)
+            else:
+                loader = info(file, filename, match)
+            # for wrapping loaders (gziploader), which load the
+            # contents with load_drawing_from_file again
+            loader.outer_options = options, ask_options
             try:
+                if info.parameters:
+                    description = loader.OptionInfo() if ask_options \
+                                  else None
+                    if description is not None:
+                        plugin_options = ask_options(info, description,
+                                                     plugin_options)
+                        if plugin_options is None:
+                            raise SketchLoadCancelled(_("cancelled"))
+                        loader.options = plugin_options
+                    info.last_options = dict(loader.options)
                 if do_profile:
                     import profile
                     warn(INTERNAL, 'profiling...')
@@ -367,7 +418,8 @@ def load_drawing_from_file(file, filename = '', doc_class = None):
         raise SketchLoadError(_("unrecognised file type"))
 
 
-def load_drawing(filename):
+def load_drawing(filename, options = None, ask_options = None):
+    # OPTIONS, ASK_OPTIONS: see load_drawing_from_file
     if isinstance(filename, str):
         try:
             file = open(filename, 'rb')
@@ -380,4 +432,5 @@ def load_drawing(filename):
         # SKLoder requires the filename for external objects.
         file = filename
         filename = ''
-    return load_drawing_from_file(file, filename)
+    return load_drawing_from_file(file, filename, options = options,
+                                  ask_options = ask_options)

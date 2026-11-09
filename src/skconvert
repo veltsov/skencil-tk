@@ -19,6 +19,7 @@
 
 """Usage: skconvert [options] infile outfile
        skconvert --options [-f FORMAT | outfile]
+       skconvert --input-options infile
 
 Convert a vector graphics file into another format. This is done by
 reading infile into Skencil and saving it as outfile. infile can be in
@@ -34,6 +35,12 @@ Options:
                         (a unique prefix of) its name, e.g. box=bounding
   --options             List the options of the format given by -f or
                         by the extension of outfile, and exit
+  -i --input-option=NAME=VALUE
+                        Set an option of the import format of infile
+                        (e.g. pages=2-4 for PostScript and PDF); may be
+                        repeated
+  --input-options       List the options of the import format of
+                        infile, and exit
 """
 
 import sys, os
@@ -69,6 +76,16 @@ def export_format(fileformat, outfile):
     return plugins.find_export_plugin(name)
 
 
+def import_format(infile):
+    try:
+        info = load.find_import_plugin(infile)
+    except OSError as exc:
+        fail('%s: %s' % (infile, exc.strerror))
+    if info is None:
+        fail('%s: unrecognised file type' % infile)
+    return info
+
+
 def main():
     import getopt
     from Sketch import SketchError
@@ -77,13 +94,15 @@ def main():
     from Sketch.Lib.util import as_display_name
     Sketch.init_lib()
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hf:o:',
-                                   ['help', 'format=', 'option=', 'options'])
+        opts, args = getopt.getopt(sys.argv[1:], 'hf:o:i:',
+                                   ['help', 'format=', 'option=', 'options',
+                                    'input-option=', 'input-options'])
     except getopt.GetoptError as exc:
         fail('%s\n%s' % (exc, usage()))
     fileformat = ''
     options = []
-    list_options = 0
+    input_options = []
+    list_options = list_input_options = 0
     for opt, value in opts:
         if opt in ('-h', '--help'):
             sys.stdout.write(usage())
@@ -94,6 +113,10 @@ def main():
             options.append(value)
         elif opt == '--options':
             list_options = 1
+        elif opt in ('-i', '--input-option'):
+            input_options.append(value)
+        elif opt == '--input-options':
+            list_input_options = 1
     args = [as_display_name(arg) for arg in args]
 
     if list_options:
@@ -108,18 +131,36 @@ def main():
             sys.stdout.write('%s has no options\n' % info.format_name)
         return
 
+    if list_input_options:
+        if len(args) != 1:
+            fail('--input-options needs infile')
+        info = import_format(args[0])
+        if info.parameters:
+            sys.stdout.write('%s options:\n%s\n'
+                             % (info.format_name,
+                                plugins.describe_export_options(info)))
+        else:
+            sys.stdout.write('%s has no options\n' % info.format_name)
+        return
+
     if len(args) != 2:
         fail('need infile and outfile\n' + usage())
     infile, outfile = args
     info = export_format(fileformat, outfile)
     values = {}
+    in_values = {}
     try:
         for option in options:
-            name, value = plugins.parse_export_option(info, option)
+            name, value = plugins.parse_plugin_option(info, option)
             values[name] = value
+        if input_options:
+            in_info = import_format(infile)
+            for option in input_options:
+                name, value = plugins.parse_plugin_option(in_info, option)
+                in_values[name] = value
+        doc = load.load_drawing(infile, options = in_values)
     except SketchError as exc:
         fail(exc)
-    doc = load.load_drawing(infile)
     # unset options get their defaults (options = None would mean the
     # stored options of the document)
     info(doc, outfile, options = values)

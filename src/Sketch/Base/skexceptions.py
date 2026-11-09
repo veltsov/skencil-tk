@@ -26,6 +26,10 @@ class SketchInternalError(SketchError):
 class SketchLoadError(SketchError):
     pass
 
+class SketchLoadCancelled(SketchLoadError):
+    # the user cancelled the import options dialog
+    pass
+
 
 class SketchIOError(SketchError):
 

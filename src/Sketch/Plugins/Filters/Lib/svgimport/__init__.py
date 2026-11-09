@@ -40,6 +40,9 @@ def page_layout(width, height):
     from Sketch.Graphics.pagelayout import PageLayout
     from Sketch.Graphics.papersize import PapersizesList
     from Sketch.Graphics.pagelayout import Portrait, Landscape
+    # no rounding noise of the unit conversion (pt -> px -> pt)
+    width = round(width, 6)
+    height = round(height, 6)
     for name, w, h in PapersizesList:
         if abs(w - width) < 1 and abs(h - height) < 1:
             return PageLayout(name, orientation = Portrait)

@@ -50,8 +50,12 @@ class GZIPLoader:
             if ext != '.gz':
                 basename = self.filename
             stream = popen_read('gzip -d -c ' + sh_quote(self.filename))
+            options, ask_options = getattr(self, 'outer_options',
+                                            (None, None))
             doc = load.load_drawing_from_file(stream, basename,
-                                              doc_class = self.doc_class)
+                                              doc_class = self.doc_class,
+                                              options = options,
+                                              ask_options = ask_options)
             if doc:
                 doc.meta.compressed = "gzip"
                 doc.meta.compressed_file = self.filename

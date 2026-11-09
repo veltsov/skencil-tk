@@ -141,7 +141,8 @@ class ImportInfo(ConfigInfo):
 
     def __init__(self, module_name, dir, rx_magic, class_name, format_name,
                  tk_file_type = (), version = '1.0.0', unload = None,
-                 load_immediately = 0, standard_messages = 0):
+                 load_immediately = 0, standard_messages = 0,
+                 parameters = ()):
         ConfigInfo.__init__(self, module_name, dir, version = version,
                             unload = unload,
                             load_immediately = load_immediately,
@@ -150,12 +151,34 @@ class ImportInfo(ConfigInfo):
         self.class_name = class_name
         self.format_name = format_name
         self.tk_file_type = tk_file_type
+        self.parameters = parameters
+        # untranslated, for the option names of the command line
+        self.declared_parameters = parameters
+        # the options of the last import in this format (the session)
+        self.last_options = {}
         self.translate()
 
     def translate(self):
         name, ext = self.tk_file_type
         name = self.gettext(name)
         self.tk_file_type = name, ext
+        self.parameters = translate_parameters(self.parameters,self.gettext)
+
+    def get_default_options(self):
+        opts = {}
+        for param in self.parameters:
+            opts[param[0]] = param[2]
+        return opts
+
+    def GetOptions(self, options = None):
+        """Return the options the next import uses: the defaults,
+        updated by those of the last import in this format and by
+        OPTIONS (a dict, possibly partial)."""
+        opts = self.get_default_options()
+        opts.update(self.last_options)
+        if options:
+            opts.update(options)
+        return opts
 
     def __call__(self, *args, **kw):
         try:
@@ -310,9 +333,9 @@ def _choice_words(info, index):
     return [[_option_word(declared[i]), _option_word(translated[i])]
             for i in range(len(declared))]
 
-def parse_export_option(info, text):
-    """Parse TEXT, `NAME=VALUE', as an option of the export plugin INFO
-    and return (NAME, value).  A choice is given by its number or by
+def parse_plugin_option(info, text):
+    """Parse TEXT, `NAME=VALUE', as an option of the import or export
+    plugin INFO and return (NAME, value).  A choice is given by its number or by
     (a unique prefix of) its label, in lowercase with `_' between the
     words; a check by 0/1, yes/no or on/off.  Raise SketchError with a
     message for the user if TEXT is not a valid option."""
@@ -356,6 +379,8 @@ def parse_export_option(info, text):
                         "(%(valid)s)")
                       % {'value': value, 'name': name,
                          'valid': describe_values(info, index)})
+
+parse_export_option = parse_plugin_option
 
 def describe_values(info, index):
     type, value, prange = info.parameters[index][1:4]

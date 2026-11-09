@@ -195,11 +195,21 @@ class StringVarForText:
 
 class TextParameter(Parameter):
 
+    def one_line(self):
+        return self.range is not None and self.range[1] == 1
+
     def number_of_rows(self):
-        return 2
+        return 1 if self.one_line() else 2
 
     def build_widgets(self, master, row):
-        # XXX make special one-line entry for h=1
+        if self.one_line():
+            Parameter.build_widgets(self, master, row)
+            self.var = StringVar(master)
+            self.var.set(self.value)
+            entry = MyEntry(master, textvariable = self.var,
+                            width = self.range[0])
+            entry.grid(row = row, column = 1, columnspan = 3, sticky = 'ew')
+            return
         label = Label(master, text = self.label + ':')
         label.grid(row = row, columnspan = 4, sticky = W)
         if self.range is None:
@@ -280,9 +290,8 @@ class PluginDlg:
 
     # VALUES, if given, maps parameter names to the initial values
     # (instead of the declared defaults)
-    def build_plugin_dlg(self, values = None):
+    def build_plugin_dlg(self, values = None, row = 0):
         top = self.top
-        row = 0
 
         for param in self.info.parameters:
             name, type, value, prange, label = param
@@ -419,23 +428,28 @@ class PluginPanel(PropertyPanel,PluginDlg):
         PropertyPanel.close_dlg(self)
 
 
-class ExportOptionsDlg(SKModal, PluginDlg):
+class OptionsDlg(SKModal, PluginDlg):
 
-    """Modal dialog for the parameters of an export plugin. RunDialog
-    returns the dict of the chosen options, None if cancelled."""
+    """Modal dialog for the parameters of an import or export plugin.
+    RunDialog returns the dict of the chosen options, None if
+    cancelled."""
 
-    class_name = 'SKExportOptions'
-
-    def __init__(self, master, info, options, **kw):
+    def __init__(self, master, info, options, description = '', **kw):
         self.info = info
         self.options = options
+        self.description = description
         self.title = _("%s Options") % info.tk_file_type[0]
         self.vars = []
         SKModal.__init__(self, master, **kw)
 
     def build_dlg(self):
         self.top.configure(padx = 6, pady = 6)
-        self.build_plugin_dlg(self.options)
+        row = 0
+        if self.description:
+            label = Label(self.top, text = self.description, justify = LEFT)
+            label.grid(row = 0, columnspan = 4, sticky = W, pady = 4)
+            row = 1
+        self.build_plugin_dlg(self.options, row)
 
     def create_std_buttons(self, master):
         frame = Frame(master)
@@ -469,3 +483,14 @@ class ExportOptionsDlg(SKModal, PluginDlg):
         for var in self.vars:
             options[var.name] = var()
         self.close_dlg(options)
+
+
+class ExportOptionsDlg(OptionsDlg):
+    # after the file dialog of File -> Export
+    class_name = 'SKExportOptions'
+
+
+class ImportOptionsDlg(OptionsDlg):
+    # after the file dialog of File -> Open and Insert Document;
+    # DESCRIPTION describes the file (e.g. its pages)
+    class_name = 'SKImportOptions'

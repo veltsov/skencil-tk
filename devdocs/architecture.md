@@ -143,8 +143,9 @@ Contains only `__init__.py` in the source tree; the built C extension
   - Import: `skloader.py` (native `.sk` format, uses `skread`),
     `svgloader.py` (the SVG import, a wrapper of the package
     `Filters/Lib/svgimport/`, which other code can use directly; see
-    `devdocs/svg-import.md`), `wmfloader.py`, `xfigloader.py`, plus
-    gzip/bzip-wrapping loaders.
+    `devdocs/svg-import.md`), `psloader.py` (EPS, PostScript and PDF,
+    a wrapper of `Filters/Lib/psimport/`; see `devdocs/ps-import.md`),
+    `wmfloader.py`, `xfigloader.py`, plus gzip/bzip-wrapping loaders.
   - Export: `sksaver.py`, `epssaver.py`, `pssaver.py`, `wmfsaver.py`,
     the SVG export `svgsaver.py` (Inkscape and Plain flavours; see
     `devdocs/svg-export.md`),
@@ -165,9 +166,29 @@ Contains only `__init__.py` in the source tree; the built C extension
   export).  The chosen export options are kept per document for the
   session in `document.options['Export.<format>']`
   (`ExportInfo.GetOptions`); Export Again and calls without options
-  reuse them, starting from the defaults.  `plugins.parse_export_option`
-  parses the command line form `NAME=VALUE` (`skconvert -o`; a choice
-  by number or by a prefix of its untranslated or translated label).
+  reuse them, starting from the defaults.  `plugins.parse_plugin_option`
+  (alias `parse_export_option`) parses the command line form
+  `NAME=VALUE` (`skconvert -o`; a choice by number or by a prefix of
+  its untranslated or translated label).
+- Import plugins declare `#parameters` the same way (e.g. `pages` of
+  `psloader.py`).  `load.load_drawing(filename, options = None,
+  ask_options = None)` works like this:
+  - it creates the loader with `options` (the defaults, updated by
+    `ImportInfo.last_options` of the session and OPTIONS);
+  - if the loader's `OptionInfo()` returns a description (not None:
+    e.g. a file of several pages), it calls `ask_options(info,
+    description, options)`;
+  - `None` from it raises `SketchLoadCancelled`.
+
+  File → Open and Insert Document pass
+  `MainWindow.ask_import_options`, which shows
+  `plugindlg.ImportOptionsDlg` (the description above the widgets);
+  Cancel does nothing.  Non-interactive callers get the defaults.
+  `skconvert -i NAME=VALUE` sets import options
+  (`load.find_import_plugin` finds the plugin by the magic), and
+  `--input-options INFILE` lists them.  Wrapping loaders (gzip, bzip2)
+  pass `outer_options` on.  `TextParameter` with range `(width, 1)` is
+  a one-line entry.
 
 ### Scripts (`src/Sketch/Scripts/`)
 Python modules that are also user-callable scripts (Scripts menu /

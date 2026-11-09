@@ -20,6 +20,7 @@ The current maintainer's fork (Vladimir Eltsov, 2018+) added many features (see 
 | `devdocs/image-transparency.md`    | Image alpha transparency: current state and the plan (display blending, PS flatten, PDF via ghostscript SMask recipe) — **planned, not implemented**                                 |
 | `devdocs/svg-export.md`            | SVG export: the Inkscape and Plain flavours, object/paint mapping onto the PostScript semantics, text modes, TexText, EPS, limitations                                              |
 | `devdocs/svg-import.md`            | SVG import (`Plugins/Filters/Lib/svgimport`): geometry, paint and opacity, fill rule, gradients, clips/masks, markers, text as curves (SVG fonts, Inkscape), round trip of the export, API |
+| `devdocs/ps-import.md`             | EPS/PS/PDF import (`Plugins/Filters/Lib/psimport`): the intermediate gs → pdftocairo → svgimport pipeline, page selection as import options, the approaches compared, the planned native PDF reader |
 | `devdocs/display-backends.md`      | Modern display backends (pixman, XRender, cairo, GPU/Tk-native) evaluated against Skencil's device architecture; antialiasing and font-model modernization goals — **analysis only** |
 
 ## Quick facts

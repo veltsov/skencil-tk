@@ -14,6 +14,10 @@ The test suite additionally uses `xvfb`, `ghostscript`, `pstoedit` and
 `python3-pytest` (the same set as
 `devtools/devcont/install-dev-packages`).
 
+The EPS/PS/PDF import filter needs `poppler-utils` (`pdftocairo`,
+`pdfinfo`) at runtime; it is not in the AppImage (devdocs/ps-import.md),
+and its tests are skipped without it.
+
 numpy may be installed on the dev host but is **not** a dependency —
 the application's only third-party import is PIL (verified by an
 import sweep of `src/`; see the comment in `collect-app-dir`). Do not

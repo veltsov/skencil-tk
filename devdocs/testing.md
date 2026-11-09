@@ -66,7 +66,13 @@ staleness warning.
    `test/formats/matlab_svg_samples.m` when missing (skipped without
    `matlab`; about 30 s).  The
    parsers and the structure of imported documents are checked
-   headless in `test/model/test_svgimport_model.py`.
+   headless in `test/model/test_svgimport_model.py`.  EPS/PS/PDF
+   import (`test/formats/test_psimport.py`, skipped without
+   ghostscript or poppler-utils): generated EPS and multi-page PS,
+   the EPS of `test/data` and pdflatex output, imported and rendered
+   through `sk2ps -e`, against ghostscript's rendering of the original
+   page; the generic import options with a stub plugin in
+   `test/model/test_import_options.py`.
 3. **App smoke tests.** The full application runs under `xvfb-run`,
    driven by a `--run-script` payload (executed by `mainwindow.py`
    before the mainloop).  Asserts exit status 0 and no traceback.

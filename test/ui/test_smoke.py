@@ -119,6 +119,22 @@ def test_export_all_formats():
         assert f.read().startswith(b'##Sketch')
 
 
+def test_import_options_dialog():
+    """File -> Open and Insert Document of a multi-page PostScript file
+    ask for the pages (plugindlg.ImportOptionsDlg); Cancel does
+    nothing."""
+    import shutil
+    if not (shutil.which('pdftocairo') and shutil.which('pdfinfo')):
+        pytest.skip('poppler-utils not installed')
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), '..', 'formats'))
+    import test_psimport
+    run_ui('smoke_import_options.py',
+           args=[testsupport.data_path('tarr.sk')],
+           script_env={'SKENCIL_TEST_PS': test_psimport.multi_page()})
+
+
 def test_export_options_dialog():
     """The export options dialog must offer the parameters of every
     export plugin that has them and return the chosen options."""

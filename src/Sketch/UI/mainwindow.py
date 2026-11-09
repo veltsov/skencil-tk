@@ -22,7 +22,8 @@ from Sketch.Base.warn import warn, warn_tb, INTERNAL, USER
 from Sketch import _, SketchVersion
 from Sketch.Base import config, load, plugins
 from Sketch import Publisher, Point, EmptyFillStyle, EmptyLineStyle, \
-     EmptyPattern, Document, GuideLine, PostScriptDevice, SketchError
+     EmptyPattern, Document, GuideLine, PostScriptDevice, SketchError, \
+     SketchLoadCancelled
 import Sketch
 from importlib import import_module
 from Sketch.Graphics import image, eps, external
@@ -203,9 +204,12 @@ class SketchMainWindow(Publisher):
         try:
             if not os.path.isabs(filename):
                 filename = os.path.join(os.getcwd(), filename)
-            doc = load.load_drawing(filename)
+            doc = load.load_drawing(filename,
+                                    ask_options = self.ask_import_options)
             self.SetDocument(doc)
             self.add_mru_file(filename)
+        except SketchLoadCancelled:
+            pass
         except SketchError as value:
             app.MessageBox(title = _("Open"),
                            message = _("An error occurred:\n") + str(value))
@@ -289,6 +293,15 @@ class SketchMainWindow(Publisher):
         from Sketch.UI.plugindlg import ExportOptionsDlg
         dialog = ExportOptionsDlg(self.root, info,
                                   info.GetOptions(self.document))
+        return dialog.RunDialog()
+
+    def ask_import_options(self, info, description, options):
+        """Ask for the OPTIONS of the import plugin INFO, the file being
+        described by DESCRIPTION (load.load_drawing).  Return the
+        options or None if the user cancelled."""
+        from Sketch.UI.plugindlg import ImportOptionsDlg
+        dialog = ImportOptionsDlg(self.root, info, options,
+                                  description = description)
         return dialog.RunDialog()
 
     def SaveToFile(self, filename, fileformat = None, compressed = '',
@@ -469,8 +482,11 @@ class SketchMainWindow(Publisher):
         try:
             if not os.path.isabs(filename):
                 filename = os.path.join(os.getcwd(), filename)
-            doc = load.load_drawing(filename)
+            doc = load.load_drawing(filename,
+                                    ask_options = self.ask_import_options)
             group = doc.as_group()
+        except SketchLoadCancelled:
+            return
         except SketchError as value:
             app.MessageBox(title = _("Insert Document"),
                            message = _("An error occurred:\n") + str(value))

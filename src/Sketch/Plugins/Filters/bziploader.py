@@ -49,8 +49,12 @@ class BZIP2Loader:
         if ext != '.bz2':
             basename = self.filename
         stream = popen_read('bzip2 -d -c ' + sh_quote(self.filename))
+        options, ask_options = getattr(self, 'outer_options',
+                                        (None, None))
         doc = load.load_drawing_from_file(stream, basename,
-                                          doc_class = self.doc_class)
+                                          doc_class = self.doc_class,
+                                          options = options,
+                                          ask_options = ask_options)
         if doc:
             doc.meta.compressed = "bzip2"
             doc.meta.compressed_file = self.filename

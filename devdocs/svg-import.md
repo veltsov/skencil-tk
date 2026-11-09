@@ -224,5 +224,6 @@ pattern tiles differently; those cases are tested numerically.
 
 - LaTeX objects through `dvisvgm --no-fonts` and `import_svg_group`
   (an alternative to pstoedit in `latextext.py`).
-- An EPS/PS/PDF import filter through `dvisvgm -E` / `--pdf`
-  (`svgsaver.eps_vector` already runs dvisvgm).
+- EPS/PS/PDF import: implemented through ghostscript, pdftocairo and
+  this importer (`devdocs/ps-import.md`; dvisvgm drops PostScript
+  shadings).
