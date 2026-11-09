@@ -472,7 +472,12 @@ class PostScriptDevice(CommonDevice):
                         self.write_path(path.get_save())
                         if not path.closed:
                             write('closepath\n')
-                    self.fill_path(clip)
+                    if fill:
+                        self.fill_path(clip)
+                    else:
+                        # a clip mask without fill: no fill in the
+                        # current color
+                        write('eoclip newpath\n')
 
             if line:
                 for path in paths:

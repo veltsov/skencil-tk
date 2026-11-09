@@ -93,3 +93,32 @@ def test_skconvert_options_and_errors():
         assert result.returncode == 1, args
         assert result.stderr.startswith(b'skconvert: '), result.stderr
     assert not os.path.exists(out)
+
+
+def test_ps_mask_with_open_path():
+    """A clip mask with an open subpath and no fill must only clip: the
+    PostScript device filled it with the current color."""
+    sk = testsupport.sketch()
+    from Sketch import Point, CreatePath, PolyBezier, Rectangle, \
+        MaskGroup, Trafo, SolidPattern, EmptyPattern, CreateRGBColor, \
+        EditDocument
+    from Sketch.Base import plugins
+    red = Rectangle(Trafo(40, 0, 0, 40, 10, 10))
+    red.SetProperties(fill_pattern = SolidPattern(CreateRGBColor(1, 0, 0)),
+                      line_pattern = EmptyPattern)
+    path = CreatePath()
+    for x, y in ((100, 10), (180, 10), (180, 90), (100, 90)):
+        path.AppendLine(Point(x, y))          # not closed
+    mask = PolyBezier((path,))
+    mask.SetProperties(fill_pattern = EmptyPattern, line_pattern = EmptyPattern)
+    blue = Rectangle(Trafo(20, 0, 0, 20, 90, 0))
+    blue.SetProperties(fill_pattern = SolidPattern(CreateRGBColor(0, 0, 1)),
+                       line_pattern = EmptyPattern)
+    doc = EditDocument(create_layer = 1)
+    doc.Insert(red)
+    doc.Insert(MaskGroup([mask, blue]))
+    out = testsupport.output_path('formats', 'openmask.eps')
+    plugins.find_export_plugin('EPS')(doc, out, options = {})
+    text = open(out).read()
+    assert 'gsave F grestore eoclip' not in text
+    assert 'eoclip newpath' in text
