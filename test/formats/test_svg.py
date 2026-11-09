@@ -294,3 +294,53 @@ def test_default_flavour_is_inkscape():
     plain = parse(export('svgall.sk', 'plain', document=doc))
     assert not inkscape_layers(plain)
     assert len([elem for elem in plain if elem.tag == SVG + 'g']) == 2
+
+
+# Nested clips as cairo writes them: dvisvgm turns them into chains of
+# clipPath elements with clip-paths of their own, which Inkscape ignores.
+NESTED_CLIPS_EPS = b'''%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 0 0 160 120
+%%EndComments
+gsave 5 5 150 110 rectclip
+gsave newpath 80 60 50 0 360 arc closepath clip newpath
+gsave 40 0 80 120 rectclip
+0.2 0.3 0.8 setrgbcolor 0 0 160 120 rectfill
+1 0.6 0 setrgbcolor 0 50 160 20 rectfill
+grestore
+0 setgray 4 setlinewidth 0 0 moveto 160 120 lineto stroke
+grestore grestore
+showpage
+%%EOF
+'''
+
+
+def nested_clips_fixture():
+    dir = testsupport.output_dir('svg-eps')
+    with open(os.path.join(dir, 'nested.eps'), 'wb') as f:
+        f.write(NESTED_CLIPS_EPS)
+    name = os.path.join(dir, 'nestedclips.sk')
+    with open(name, 'w') as f:
+        f.write("##Sketch 1 2\ndocument()\nlayout((300,200),0)\n"
+                "layer('base',1,1,0,0,(0,0,0))\n"
+                "eps((1.2,0,0,1.2,30,20),'nested.eps')\n")
+    return name
+
+
+@pytest.mark.skipif(not have_inkscape, reason='inkscape not installed')
+@pytest.mark.parametrize('converter', ['dvisvgm', 'pdftocairo'])
+def test_eps_nested_clips(converter, monkeypatch):
+    if not shutil.which(converter):
+        pytest.skip(converter + ' not installed')
+    name = nested_clips_fixture()
+    if converter != 'dvisvgm':
+        which = shutil.which
+        monkeypatch.setattr(shutil, 'which', lambda cmd, *args:
+                            None if cmd == 'dvisvgm' else which(cmd, *args))
+    svgfile = export(name, 'plain', suffix='-' + converter)
+    monkeypatch.undo()
+    root = parse(svgfile)
+    assert not root.findall('.//%sclipPath[@clip-path]' % SVG)
+    assert not root.findall('.//%simage' % SVG)
+    ref = rasterize_ps(name, *page_size(svgfile))
+    frac = difference(rasterize_svg(svgfile), ref)
+    assert frac <= DEFAULT_MAX_DIFF, frac

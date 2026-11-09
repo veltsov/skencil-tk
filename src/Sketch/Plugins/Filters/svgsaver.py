@@ -1375,11 +1375,31 @@ class SVGSaver:
                                         stderr = subprocess.PIPE,
                                         timeout = 120)
                 ok = result.returncode == 0 and os.path.exists(out)
+            pdftocairo = shutil.which('pdftocairo')
+            if not ok and pdftocairo:
+                # ghostscript's PDF through poppler's SVG output
+                pdf = os.path.join(tempdir, 'eps.pdf')
+                result = subprocess.run([util.ghostscript_command(),
+                                         '-q', '-dSAFER', '-dBATCH',
+                                         '-dNOPAUSE', '-sDEVICE=pdfwrite',
+                                         '-dEPSCrop', '-sOutputFile=' + pdf,
+                                         filename],
+                                        stdout = subprocess.PIPE,
+                                        stderr = subprocess.PIPE,
+                                        timeout = 120)
+                if result.returncode == 0 and os.path.exists(pdf):
+                    result = subprocess.run([pdftocairo, '-svg', pdf, out],
+                                            stdout = subprocess.PIPE,
+                                            stderr = subprocess.PIPE,
+                                            timeout = 120)
+                    ok = result.returncode == 0 and os.path.exists(out)
             if not ok:
+                # inkscape's EPS import loses clipped lines
                 ink = shutil.which('inkscape')
                 if not ink:
-                    raise SketchError(_("neither dvisvgm nor inkscape "
-                                        "can convert the file"))
+                    raise SketchError(_("neither dvisvgm, ghostscript with "
+                                        "pdftocairo nor inkscape can "
+                                        "convert the file"))
                 subprocess.run([ink, filename, '--export-type=svg',
                                 '--export-plain-svg',
                                 '--export-filename=' + out],
@@ -1416,6 +1436,7 @@ class SVGSaver:
                              sodipodi('namedview')):
                 continue
             group.append(child)
+        unchain_clips(group)
         prefix_ids(group, prefix)
         return outer
 
@@ -1515,6 +1536,69 @@ def prefix_ids(root, prefix):
                 elem.set(key, '#' + prefix + value[1:])
             elif 'url(' in value:
                 elem.set(key, _url_rx.sub(fix_url, value))
+
+
+def unchain_clips(root):
+    """Replace the chains of clip paths (a clipPath with a clip-path of
+    its own, as dvisvgm writes nested PostScript clips) in the element
+    tree ROOT by nested groups with one clip path each: Inkscape ignores
+    the clip-path of a clipPath."""
+    clips = {}
+    parents = {}
+    for elem in root.iter():
+        for child in elem:
+            parents[child] = elem
+        if elem.tag == svg('clipPath') and elem.get('id'):
+            clips[elem.get('id')] = elem
+    def clip_of(elem):
+        match = _url_rx.search(elem.get('clip-path') or '')
+        return match and clips.get(match.group(1))
+    def inside_clip(elem):
+        while elem is not None:
+            if elem.tag == svg('clipPath'):
+                return True
+            elem = parents.get(elem)
+        return False
+    # the clip paths used inside clip paths (no groups allowed there)
+    # keep their chains
+    keep = set()
+    for elem in list(root.iter()):
+        clip = clip_of(elem)
+        if elem.tag == svg('clipPath') or clip is None \
+           or clip_of(clip) is None:
+            continue
+        if inside_clip(elem):
+            while clip is not None:
+                keep.add(clip)
+                clip = clip_of(clip)
+            continue
+        chain = []
+        clip = clip_of(clip)
+        while clip is not None and clip not in chain:
+            chain.append(clip)
+            clip = clip_of(clip)
+        parent = parents[elem]
+        index = list(parent).index(elem)
+        parent.remove(elem)
+        outer = inner = None
+        for clip in reversed(chain):
+            group = ET.Element(svg('g'))
+            group.set('clip-path', 'url(#%s)' % clip.get('id'))
+            if inner is None:
+                outer = group
+            else:
+                inner.append(group)
+            inner = group
+        # the clip paths are in the user space of ELEM
+        transform = elem.attrib.pop('transform', None)
+        if transform:
+            outer.set('transform', transform)
+        inner.append(elem)
+        parent.insert(index, outer)
+        parents[outer] = parent
+    for clip in clips.values():
+        if clip not in keep:
+            clip.attrib.pop('clip-path', None)
 
 
 def save_svg(document, file, filename, options, inkscape_mode):
