@@ -309,3 +309,59 @@ def test_skconvert_input_option():
     listing = subprocess.check_output([sys.executable, skconvert,
                                        '--input-options', multi_page()])
     assert b'pages' in listing
+
+
+# a figure of two image tiles, each clipped to its own rectangle (the
+# rectangles overlapping by 0.1 pt) inside a common curved clip, at
+# fractional positions; and an image really cropped by its clip
+TILES_EPS = b'''%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 0 0 200 120
+%%EndComments
+/tile { % x w color
+  /c exch def /w exch def /x exch def
+  gsave x 10.27 w 60.31 rectclip
+  gsave x 0.13 sub 10.2 translate w 0.3 add 60.5 scale
+  4 4 8 [4 0 0 -4 0 4] {c} false 3 colorimage
+  grestore grestore
+} def
+gsave newpath 10.4 10.4 moveto 140.6 10.4 lineto 140.6 70.4 lineto
+10.4 70.4 75.5 30.5 80.5 arcn closepath clip
+10.728 69.241 <ff8080ff8080ff8080ff8080ff8080ff8080ff8080ff8080
+ff8080ff8080ff8080ff8080ff8080ff8080ff8080ff8080> tile
+79.863 61.0 <8080ff8080ff8080ff8080ff8080ff8080ff8080ff8080ff
+8080ff8080ff8080ff8080ff8080ff8080ff8080ff8080ff> tile
+grestore
+gsave 150.2 20.3 30 60 rectclip
+150.2 10.3 translate 30 80 scale
+4 4 8 [4 0 0 -4 0 4] {<80ff8080ff8080ff8080ff8080ff8080ff8080ff8080ff80
+80ff8080ff8080ff8080ff8080ff8080ff8080ff8080ff80>} false 3 colorimage
+grestore
+showpage
+%%EOF
+'''
+
+
+def test_snapped_image_clips_dropped():
+    """pdftocairo aligns image bounds to whole points by clips, opening
+    gaps between tiled images: those clips are dropped, real clips
+    kept."""
+    from Sketch.Plugins.Filters.Lib.svgimport import clip
+    eps = write('tiles.eps', TILES_EPS)
+    doc = compare_eps(eps)
+    images = [obj for obj in testsupport.iter_objects(doc) if obj.is_Image]
+    assert len(images) == 3
+    def clips(image):
+        # the masks of the clips around IMAGE, innermost first
+        result = []
+        obj = image.parent
+        while obj is not None and obj.is_MaskGroup:
+            result.append(obj.Mask())
+            obj = obj.parent
+        return result
+    for image in images[:2]:
+        masks = clips(image)
+        # only the curved clip
+        assert len(masks) == 1 and clip.rect_of(masks[0]) is None, masks
+    # a real crop stays (its edges aligned by poppler as well)
+    rect = clip.rect_of(clips(images[2])[0])
+    assert rect == pytest.approx((150.2, 20.3, 180.2, 80.3), abs=0.5)

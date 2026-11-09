@@ -37,6 +37,7 @@ from Sketch.Base.load import GenericLoader
 from Sketch.Graphics.layer import Layer
 from Sketch.Lib import dscparser, util
 from Sketch.Plugins.Filters.Lib import svgimport
+from Sketch.Plugins.Filters.Lib.svgimport import clip
 
 TIMEOUT = 120
 
@@ -241,6 +242,8 @@ class Source:
             page = svgimport.import_svg(self.page_svg(number),
                                         filename = self.filename,
                                         base_dir = self.dir)
+            for layer in page.layers:
+                drop_snapped_image_clips(layer)
             for line in (page.meta.load_messages or '').splitlines():
                 if len(numbers) > 1:
                     line = _("Page %(page)d: %(message)s") \
@@ -274,6 +277,60 @@ class Source:
                               "corners are aligned"))
         doc.meta.load_messages = '\n'.join(messages)
         return doc
+
+
+# Poppler aligns the bounds of an image to whole device pixels -- whole
+# points in SVG output -- by clipping it to the rounded rectangle
+# (intersected with the PDF's own clip).  Images tiled with overlapping
+# clips (e.g. a figure split into several images) then show gaps of up
+# to half a point between the tiles.  A rectangular clip that differs
+# from the image's own bounds by less than SNAP_TOLERANCE on every side
+# is dropped: it can only be such an alignment or a trim of a fraction
+# of a point.
+SNAP_TOLERANCE = 1.0
+
+def single_image(obj):
+    """The image OBJ consists of (through nested clips), or None."""
+    while obj.is_MaskGroup:
+        objects = obj.MaskedObjects()
+        if len(objects) != 1:
+            return None
+        obj = objects[0]
+    if obj.is_Image:
+        t = obj.trafo
+        if abs(t.m12) < 1e-9 and abs(t.m21) < 1e-9:
+            return obj
+    return None
+
+
+def is_snapped_image_clip(obj):
+    if not obj.is_MaskGroup or len(obj.MaskedObjects()) != 1:
+        return False
+    rect = clip.rect_of(obj.Mask())
+    image = single_image(obj.MaskedObjects()[0])
+    if rect is None or image is None:
+        return False
+    bounds = image.coord_rect
+    return all(abs(a - b) < SNAP_TOLERANCE for a, b in
+               zip(rect, (bounds.left, bounds.bottom, bounds.right,
+                          bounds.top)))
+
+
+def drop_snapped_image_clips(compound):
+    """Replace the clips around images in COMPOUND (recursively) that
+    only align the image to whole points (see SNAP_TOLERANCE) by their
+    contents."""
+    objects = compound.objects
+    for index in range(len(objects)):
+        obj = objects[index]
+        while is_snapped_image_clip(obj):
+            obj = obj.MaskedObjects()[0]
+        if obj is not objects[index]:
+            objects[index] = obj
+            obj.SetParent(compound)
+            compound.del_lazy_attrs()
+        if obj.is_Compound:
+            drop_snapped_image_clips(obj)
 
 
 def content_layers(doc):

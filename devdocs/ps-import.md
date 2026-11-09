@@ -31,6 +31,16 @@ of an EPS with a TIFF/WMF preview) only declares the package
    - opacity is blended with white;
    - nonzero fills are made even-odd;
    - soft masks are flattened on images.
+   Then a repair (`drop_snapped_image_clips`):
+   - poppler aligns the bounds of an image to whole device pixels by a
+     rectangular clip (rounded image bounds ∩ the PDF's clip);
+   - in SVG output a device pixel is one point, so images tiled with
+     overlapping clips (a figure split into several images) get white
+     gaps of up to half a point between the tiles;
+   - a rectangular clip around a single image (through nested clips)
+     whose edges are all within 1 pt of the image's own bounds is
+     therefore dropped.  It only aligns, or trims a fraction of a
+     point.
 5. **Assemble**: one selected page gives an ordinary document with the
    page's size.  With several pages:
    - each page is one layer `Page N` in the document of the first one
