@@ -167,7 +167,9 @@ model.
   copied with its font properties made explicit (style sheets do not
   survive the copy) into a group `sktextN` of a temporary SVG, with
   the style sheets, SVG fonts and textPath paths.  The converted groups
-  (one path per tspan, with the tspan's own style) replace the text
+  (one path per tspan, with the tspan's own style; a text of one line
+  becomes a single path carrying the text's transform and style, which
+  are moved to the group) replace the text
   elements, take the original's declarations and transform, and are
   imported like any content — the paint comes from the original
   cascade (so `use` instances get theirs).  This covers tspans,
@@ -208,7 +210,8 @@ curves (or in the fallback font).
 `test/model/test_svgimport_model.py` (headless: parsers, cascade, fill
 rule cases, gradient colors against the SVG formulas, structure of
 imported documents) and `test/formats/test_svgimport.py` (visual:
-samples from `svgimport_samples.py` against Inkscape, round trips of
+samples from `svgimport_samples.py` and the real-world files in
+`test/data/svgimport` against Inkscape, round trips of
 the fixtures through both export flavours, dvisvgm output of the EPS
 fixtures, LaTeX generated at test time, MATLAB R2022b `print -dsvg`
 output from `test/formats/matlab_svg_samples.m`); see

@@ -90,6 +90,20 @@ def test_sample(name):
     compare_with_inkscape(svgfile, 'svgimport', max_diff)
 
 
+# Real-world files in test/data/svgimport (not regenerable: skipped
+# when missing).
+DATA_FILES = ['becuse.svg']    # Inkscape 1.3 from PDF: flipped text
+
+
+@pytest.mark.skipif(not have_inkscape, reason='inkscape not installed')
+@pytest.mark.parametrize('name', DATA_FILES)
+def test_data_file(name):
+    path = testsupport.data_path(os.path.join('svgimport', name))
+    if not os.path.exists(path):
+        pytest.skip('%s missing' % path)
+    compare_with_inkscape(path, 'svgimport')
+
+
 # Fraction of differing pixels allowed for the round trips where the
 # import is known to be inexact.
 ROUND_TRIP_DIFFERENCES = {}

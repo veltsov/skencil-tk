@@ -239,6 +239,10 @@ SAMPLES['text'] = (doc('width="400" height="220"', '''
 <defs><path id="arc" d="M120 210 Q200 140 280 210"/></defs>
 <text font-size="16"><textPath xlink:href="#arc">text on a path
   </textPath></text>
+<text transform="matrix(1.2,0,-0.4,1,15,210)" font-size="16">sheared</text>
+<g transform="matrix(1,0,0,-1,0,220)"><text
+  transform="matrix(1,0,0,-1,320,100)" font-size="16"><tspan x="0"
+  y="0">flipped</tspan></text></g>
 '''), 0.01)
 
 SAMPLES['markers'] = (doc('width="400" height="200"', '''

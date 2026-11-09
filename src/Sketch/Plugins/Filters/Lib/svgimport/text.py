@@ -313,6 +313,12 @@ class TextConverter:
                 converted = wrapper
                 converted.attrib = {}
                 converted.decls = []
+                if len(wrapper.children) == 1:
+                    # one path (a text of one line): it carries the
+                    # original's transform and style, now the group's
+                    path = wrapper.children[0]
+                    path.attrib.pop('transform', None)
+                    path.decls = []
             converted.tag = 'g'
             converted.parent = node.parent
             # the original's style (sheet, attributes) and transform
