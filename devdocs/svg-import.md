@@ -210,7 +210,8 @@ rule cases, gradient colors against the SVG formulas, structure of
 imported documents) and `test/formats/test_svgimport.py` (visual:
 samples from `svgimport_samples.py` against Inkscape, round trips of
 the fixtures through both export flavours, dvisvgm output of the EPS
-fixtures and of LaTeX generated at test time); see
+fixtures, LaTeX generated at test time, MATLAB R2022b `print -dsvg`
+output from `test/formats/matlab_svg_samples.m`); see
 `devdocs/testing.md`.  Inkscape is not a reference where it departs
 from the specification: it ignores `preserveAspectRatio` on images,
 `rgba()` in attributes, marker clipping and places objectBoundingBox
