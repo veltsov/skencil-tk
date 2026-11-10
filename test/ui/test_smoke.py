@@ -88,6 +88,14 @@ def test_open_plugin_dialog():
     run_ui('smoke_plugin_dialog.py')
 
 
+def test_sidebar():
+    """With docked panels, the panels open in the side bar of the main
+    window: stacking, scrollbar, collapse, resize, close, hide/show,
+    reuse of an open plugin panel, non-dockable panels as windows."""
+    out, err = run_ui('smoke_sidebar.py')
+    assert b'SIDEBAR-OK' in out, (out, err)
+
+
 def test_scrollbar_wheel():
     """Wheel events on the scrollbars must scroll and must not crash:
     Tk's scrollbar bindings invoke the pax widget command directly from

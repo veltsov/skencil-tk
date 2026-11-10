@@ -377,6 +377,13 @@ class ProgramDefaults(connector.Publisher):
     #	manager introduces by reparenting.
     panel_correct_wm = 1
 
+    #	If true, the panels are docked in a side bar at the right of the
+    #	main window instead of being separate windows.
+    panel_docking = 0
+
+    #	The width of the side bar in pixels
+    sidebar_width = 280
+
     #
     #	Blend Panel
     #

@@ -33,6 +33,7 @@ class ReloadPanel(SketchPanel):
 
     title = 'Reload Modules'
     receivers = []
+    dockable = 0
 
     def __init__(self, master, main_window, doc):
         SketchPanel.__init__(self, master, main_window, doc,

@@ -86,6 +86,9 @@ class SketchPanel(Publisher):
     title = 'Skencil'		# The window title
     class_name = 'SKPanel'	# the class_name for resources
 
+    dockable = 1		# may be docked in the side bar
+    resize_policy = 'fixed'	# 'elastic': the layout absorbs any height
+
     def __init__(self, master, main_window, doc, **kw):
         self.master = master
         self.main_window = main_window
@@ -101,7 +104,11 @@ class SketchPanel(Publisher):
         self.container.after_build()
 
     def create_container(self, master, **kw):
-        from Sketch.UI.sidebar import WindowContainer
+        from Sketch.UI.sidebar import WindowContainer, DockContainer
+        sidebar = getattr(self.main_window, 'sidebar', None)
+        if config.preferences.panel_docking and self.dockable \
+           and sidebar is not None:
+            return DockContainer(self, sidebar, **kw)
         return WindowContainer(self, master, **kw)
 
     if __debug__:

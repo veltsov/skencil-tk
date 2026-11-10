@@ -608,7 +608,21 @@ class SketchMainWindow(Publisher):
     AddCmd('CreateReloadPanel', _("Reload Module..."),
            'CreateDialog', args = ('Sketch.UI.reloaddlg', 'ReloadPanel'))
 
+    def sidebar_visible(self, visible):
+        if visible:
+            self.panes.add(self.sidebar, width = config.preferences.sidebar_width,
+                           minsize = 120, stretch = 'never')
+        else:
+            self.panes.forget(self.sidebar)
+
+    def sidebar_resized(self, event):
+        if self.sidebar.visible:
+            config.preferences.sidebar_width = event.width
+
     def CreatePluginDialog(self, info):
+        if info.class_name in self.dialogs:
+            self.dialogs[info.class_name].deiconify_and_raise()
+            return
         if info.HasCustomDialog():
             dialog = info.CreateCustomDialog(self.root, self, self.document)
         else:
@@ -696,8 +710,18 @@ class SketchMainWindow(Publisher):
         palette_frame = Frame(root, name = 'palette_frame')
         palette_frame.pack(side = BOTTOM, fill = X, pady = 0)
 
-        frame = Frame(root, name = 'canvas_frame')
-        frame.pack(side = TOP, fill = BOTH, expand = 1, padx = 0)
+        # the canvas and, when panels are docked, the side bar
+        panes = tkinter.PanedWindow(root, name = 'panes', orient = HORIZONTAL,
+                                    borderwidth = 0, sashwidth = 5,
+                                    sashrelief = 'raised')
+        panes.pack(side = TOP, fill = BOTH, expand = 1, padx = 0)
+        self.panes = panes
+
+        frame = Frame(panes, name = 'canvas_frame')
+        panes.add(frame, stretch = 'always')
+        from Sketch.UI.sidebar import SideBar
+        self.sidebar = SideBar(panes, self.sidebar_visible, name = 'sidebar')
+        self.sidebar.bind('<Configure>', self.sidebar_resized)
         vbar = Scrollbar(frame)
         vbar.grid(in_ = frame, column = 2, row = 1, sticky = 'ns')
         hbar = Scrollbar(frame, orient = HORIZONTAL)

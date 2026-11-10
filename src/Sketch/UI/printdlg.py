@@ -36,6 +36,7 @@ import Sketch
 class PrintPanel(SketchPanel):
 
     title = _("Print")
+    dockable = 0
 
     def __init__(self, master, main_window, doc):
         SketchPanel.__init__(self, master, main_window, doc, name = 'printdlg')
