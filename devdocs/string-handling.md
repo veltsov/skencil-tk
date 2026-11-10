@@ -85,9 +85,8 @@ and normalize at construction.
   string literals containing the utf-8 characters directly (only `\`,
   `'` and C0 controls escaped; the header declares
   `-*- coding: utf-8 -*-`; no `\x` byte escapes).  On load it is
-  exec'd directly (py3 decodes the literals natively); the loader
-  drops undecodable values with a console warning, so the model only
-  ever sees K2 `str`.
+  exec'd as utf-8 source, so the values are K2 `str` directly; no
+  conversion happens on load.
 
 ## Sink rules
 

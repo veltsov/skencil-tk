@@ -87,64 +87,11 @@ def check_path(path):
 
 class _LoadedPreferences(object):
     # Plain attribute bag used only while the preferences file is
-    # executed (load_user_preferences).  The file's raw values are
-    # collected here, away from the live preferences object, so that
-    # nothing compares or publishes them before they are normalized
-    # (python2 reads the plain utf-8 string literals of the file as
-    # byte strings; the preferences object must only ever see unicode,
-    # K2 in devdocs/string-handling.md).
+    # executed (load_user_preferences): the values are collected here
+    # and assigned to the live preferences object afterwards
+    # (_assign_preferences), which also tells which settings the file
+    # contains (e.g. image_dir).
     pass
-
-
-def _warn_undecodable(key, value):
-    sys.stderr.write('Sketch: preferences file: ignoring the value of '
-                     '%s, it is not valid utf-8: %r\n' % (key, value))
-
-
-INVALID = object()  # marker for values that must be dropped
-
-
-def _decode_item(key, value):
-    # Convert one value read from the preferences file to its runtime
-    # representation.  This is the only place where the py2
-    # str/unicode distinction for preference values is handled: byte
-    # strings are decoded strictly as utf-8.  A value that is not
-    # valid utf-8 cannot be interpreted; it is dropped with a warning
-    # on the console -- except that undecodable entries of lists (e.g.
-    # the mru_files list) are skipped individually and image_dir is
-    # reset to the current directory.
-    if isinstance(value, bytes):
-        try:
-            return value.decode('utf-8')
-        except UnicodeDecodeError:
-            _warn_undecodable(key, value)
-            if key == 'image_dir':
-                return os.getcwd()
-            return INVALID
-    if isinstance(value, list):
-        result = []
-        for item in value:
-            item = _decode_item(key, item)
-            if item is not INVALID:
-                result.append(item)
-        return result
-    if isinstance(value, tuple):
-        items = []
-        for item in value:
-            item = _decode_item(key, item)
-            if item is INVALID:
-                return INVALID
-            items.append(item)
-        return tuple(items)
-    if isinstance(value, dict):
-        result = {}
-        for k, v in value.items():
-            k = _decode_item(key, k)
-            v = _decode_item(key, v)
-            if k is not INVALID and v is not INVALID:
-                result[k] = v
-        return result
-    return value
 
 
 def _mru_list(files):
@@ -159,14 +106,9 @@ def _mru_list(files):
 
 
 def _assign_preferences(values):
-    # Assign the normalized values to the live preferences object.  All
-    # strings are unicode now, so the __setattr__ comparisons against
-    # the (ascii-only) defaults cannot mix bytes and unicode.
+    # Assign the loaded values to the live preferences object.
     preferences = config.preferences
     for key, value in values.items():
-        value = _decode_item(key, value)
-        if value is INVALID:
-            continue
         if key == 'mru_files' and isinstance(value, list):
             value = _mru_list(value)
         setattr(preferences, key, value)
@@ -218,11 +160,8 @@ def load_user_preferences():
             Sketch.Scripts.__path__.append(user_scripts_dir)
     filename = os.path.join(config.user_config_dir, config.user_settings_file)
     if os.path.isfile(filename):
-        # Execute the file into an intermediate object and normalize
-        # the values before they reach the live preferences object
-        # (_decode_item).  The file is compiled as utf-8 source, so the
-        # values are strings already; the bytes normalization in
-        # _decode_item only triggers for hand-written b'...' literals.
+        # Execute the file (utf-8 source) into an intermediate object;
+        # its values are assigned to the live preferences object after.
         loaded = _LoadedPreferences()
         try:
             exec(compile(open(filename, 'rb').read(), filename, 'exec'),

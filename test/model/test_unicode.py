@@ -262,54 +262,58 @@ def _write_preferences_file(dirpath, lines):
         os.makedirs(dirpath)
     path = os.path.join(dirpath, 'preferences.py')
     with open(path, 'wb') as f:
-        # latin-1 so the \xff\xfe escapes become raw invalid-utf-8 bytes
-        f.write(''.join(lines).encode('latin-1'))
+        f.write(''.join(lines).encode('utf-8'))
     return path
 
 
-def test_preferences_load_converts_to_unicode():
-    # save_user_preferences writes plain utf-8 literals; the loader
-    # executes the file into an intermediate attribute bag and
-    # converts the values to unicode before they reach the live
-    # preferences object (devdocs/string-handling.md).  The load below
-    # runs with UnicodeWarning raised as an error: no mixed bytes/
-    # unicode comparison may happen anywhere on the path.
+def test_preferences_round_trip_non_ascii():
+    # save_user_preferences writes plain utf-8 literals (no u'...'
+    # prefixes); loading the file gives the same str values
+    # (devdocs/string-handling.md). image_dir is saved only if it came
+    # from the preferences file (config.image_dir_persistent).
     sk = testsupport.sketch()
     import os
     import sys
-    import warnings
     from Sketch.Base import config, configutil
 
     mru = [PREFS_U_NAME, 'plain.sk', '', '']
     prefs_dir = testsupport.output_dir('prefs')
+    path = os.path.join(prefs_dir, 'preferences.py')
     old_dir = config.user_config_dir
     old_file = config.user_settings_file
     old_mru = config.preferences.mru_files
     old_image_dir = config.preferences.image_dir
+    old_persistent = config.image_dir_persistent
     try:
         config.user_config_dir = prefs_dir
         config.user_settings_file = 'preferences.py'
         config.preferences.mru_files = mru
         config.preferences.image_dir = PREFS_U_DIR
-        configutil.save_user_preferences()
 
-        path = os.path.join(prefs_dir, 'preferences.py')
+        # image_dir not from the preferences file: not saved
+        config.image_dir_persistent = 0
+        configutil.save_user_preferences()
+        with open(path, 'rb') as f:
+            assert b'image_dir' not in f.read()
+
+        config.image_dir_persistent = 1
+        configutil.save_user_preferences()
         with open(path, 'rb') as f:
             data = f.read()
         assert data.startswith(b'#### -*- coding: utf-8 -*-\n')
         assert b"u'" not in data
         assert PREFS_U_NAME.encode('utf-8') in data
+        assert PREFS_U_DIR.encode('utf-8') in data
 
         # simulate a fresh start: defaults, then load
         config.preferences.mru_files = ['', '', '', '']
         config.preferences.image_dir = ''
-        with warnings.catch_warnings():
-            warnings.simplefilter('error', UnicodeWarning)
-            configutil.load_user_preferences()
+        config.image_dir_persistent = 0
+        configutil.load_user_preferences()
 
         assert config.preferences.mru_files == mru
         assert config.preferences.image_dir == PREFS_U_DIR
-        assert isinstance(config.preferences.mru_files[0], str)
+        assert config.image_dir_persistent
         # the runtime mru lookups work with non-ascii names
         configutil.add_mru_file('\u0444')
         assert config.preferences.mru_files[0] == '\u0444'
@@ -318,68 +322,7 @@ def test_preferences_load_converts_to_unicode():
         config.user_settings_file = old_file
         config.preferences.mru_files = old_mru
         config.preferences.image_dir = old_image_dir
-        if prefs_dir in sys.path:
-            sys.path.remove(prefs_dir)
-
-
-def test_preferences_undecodable_values_dropped():
-    # a hand-written (or old-format) preferences file may contain byte
-    # strings that are not valid utf-8: the loader warns on the
-    # console, skips the undecodable mru_files entries and resets
-    # image_dir to the current directory
-    sk = testsupport.sketch()
-    import os
-    import sys
-    from io import BytesIO
-    from Sketch.Base import config, configutil
-
-    prefs_dir = testsupport.output_dir('prefs')
-    old_dir = config.user_config_dir
-    old_file = config.user_settings_file
-    old_mru = config.preferences.mru_files
-    old_image_dir = config.preferences.image_dir
-    had_sample = hasattr(config.preferences, 'sample_text')
-    old_sample = getattr(config.preferences, 'sample_text', None)
-    try:
-        config.user_config_dir = prefs_dir
-        config.user_settings_file = 'preferences.py'
-        _write_preferences_file(prefs_dir, [
-            '#### -*- coding: utf-8 -*-\n',
-            "preferences.mru_files = ['good.sk', "
-            "'\\xff\\xfebad', 'also good.sk']\n",
-            "preferences.image_dir = '\\xff\\xfe'\n",
-            "preferences.sample_text = 'plain text'\n",
-        ])
-
-        import io as _io
-        buf = _io.StringIO()
-        old_stderr = sys.stderr
-        sys.stderr = buf
-        try:
-            configutil.load_user_preferences()
-        finally:
-            sys.stderr = old_stderr
-
-        # python3: the '\\xff\\xfe' escapes of the hand-written file
-        # produce valid str values ('ÿþbad') -- the py2 notion of
-        # "undecodable byte-string entries" does not exist for
-        # file-sourced values anymore (the whole file is utf-8; raw
-        # invalid bytes would fail the exec outright).  The values pass
-        # through and the mru list is padded to four entries.
-        assert config.preferences.mru_files == ['good.sk', 'ÿþbad',
-                                                'also good.sk', '']
-        assert config.preferences.image_dir == 'ÿþ'
-        assert config.preferences.sample_text == 'plain text'
-        assert isinstance(config.preferences.sample_text, str)
-    finally:
-        config.user_config_dir = old_dir
-        config.user_settings_file = old_file
-        config.preferences.mru_files = old_mru
-        config.preferences.image_dir = old_image_dir
-        if had_sample:
-            config.preferences.sample_text = old_sample
-        else:
-            config.preferences.__dict__.pop('sample_text', None)
+        config.image_dir_persistent = old_persistent
         if prefs_dir in sys.path:
             sys.path.remove(prefs_dir)
 
