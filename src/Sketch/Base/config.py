@@ -481,7 +481,8 @@ class ProgramDefaults(connector.Publisher):
                         "Sketch.Scripts.select_same_fill_color", "Sketch.Scripts.select_same_line_color",
                         "Sketch.Scripts.average_points", "Sketch.Scripts.TeX",
                         "Sketch.Scripts.transform", "Sketch.Scripts.curvetext",
-                        "Sketch.Scripts.pathutils", "Sketch.Scripts.fit_page"
+                        "Sketch.Scripts.pathutils", "Sketch.Scripts.fit_page",
+                        "Sketch.Scripts.image_tools"
                         ]
 
     #   UI font. If None, used Tk default. In modern Tk, it usually adapts to the desktop

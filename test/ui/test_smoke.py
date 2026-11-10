@@ -74,6 +74,13 @@ def test_open_about_box():
     run_ui('smoke_about.py')
 
 
+def test_image_tools_scripts(tmp_path):
+    """The Extract Image and Replace Image scripts run from the script
+    registry on an image inside a mask group."""
+    run_ui('smoke_image_tools.py',
+           script_env={'SKENCIL_TEST_OUT': str(tmp_path)})
+
+
 def test_open_plugin_dialog():
     """Opening the Autoshapes plugin dialog must not crash (py3
     regression guard: the icon palettes go through PIL putpalette,
