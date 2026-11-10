@@ -270,7 +270,7 @@ def test_preferences_round_trip_non_ascii():
     # save_user_preferences writes plain utf-8 literals (no u'...'
     # prefixes); loading the file gives the same str values
     # (devdocs/string-handling.md). image_dir is saved only if it came
-    # from the preferences file (config.image_dir_persistent).
+    # from the preferences file (config.persistent_dirs).
     sk = testsupport.sketch()
     import os
     import sys
@@ -283,7 +283,7 @@ def test_preferences_round_trip_non_ascii():
     old_file = config.user_settings_file
     old_mru = config.preferences.mru_files
     old_image_dir = config.preferences.image_dir
-    old_persistent = config.image_dir_persistent
+    old_persistent = config.persistent_dirs
     try:
         config.user_config_dir = prefs_dir
         config.user_settings_file = 'preferences.py'
@@ -291,12 +291,12 @@ def test_preferences_round_trip_non_ascii():
         config.preferences.image_dir = PREFS_U_DIR
 
         # image_dir not from the preferences file: not saved
-        config.image_dir_persistent = 0
+        config.persistent_dirs = ()
         configutil.save_user_preferences()
         with open(path, 'rb') as f:
             assert b'image_dir' not in f.read()
 
-        config.image_dir_persistent = 1
+        config.persistent_dirs = ('image_dir',)
         configutil.save_user_preferences()
         with open(path, 'rb') as f:
             data = f.read()
@@ -308,12 +308,12 @@ def test_preferences_round_trip_non_ascii():
         # simulate a fresh start: defaults, then load
         config.preferences.mru_files = ['', '', '', '']
         config.preferences.image_dir = ''
-        config.image_dir_persistent = 0
+        config.persistent_dirs = ()
         configutil.load_user_preferences()
 
         assert config.preferences.mru_files == mru
         assert config.preferences.image_dir == PREFS_U_DIR
-        assert config.image_dir_persistent
+        assert config.persistent_dirs == ('image_dir',)
         # the runtime mru lookups work with non-ascii names
         configutil.add_mru_file('\u0444')
         assert config.preferences.mru_files[0] == '\u0444'
@@ -322,7 +322,7 @@ def test_preferences_round_trip_non_ascii():
         config.user_settings_file = old_file
         config.preferences.mru_files = old_mru
         config.preferences.image_dir = old_image_dir
-        config.image_dir_persistent = old_persistent
+        config.persistent_dirs = old_persistent
         if prefs_dir in sys.path:
             sys.path.remove(prefs_dir)
 

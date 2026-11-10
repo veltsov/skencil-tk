@@ -169,7 +169,8 @@ def load_user_preferences():
         except:
             warn_tb(USER, "Cannot read the preferences file")
         else:
-            config.image_dir_persistent = 'image_dir' in loaded.__dict__
+            config.persistent_dirs = tuple(
+                key for key in config.document_dirs if key in loaded.__dict__)
             _assign_preferences(loaded.__dict__)
     _load_userhooks()
 
@@ -252,7 +253,7 @@ def save_user_preferences():
     for key, value in items:
         if key in defaults and defaults[key] == value:
             continue
-        if key == 'image_dir' and not config.image_dir_persistent:
+        if key in config.document_dirs and key not in config.persistent_dirs:
             continue
         lines.append('preferences.%s = %s\n' % (key, save_repr(value)))
     try:

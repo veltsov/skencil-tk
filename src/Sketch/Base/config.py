@@ -102,12 +102,14 @@ user_config_dir = ''
 # the user's home directory. Set on startup
 user_home_dir = ''
 
-# whether preferences.image_dir was given in the preferences file.  If
-# so, it is remembered across sessions as before; otherwise it is reset
-# to the document's directory (or the current directory for a new
-# document) whenever a document is loaded or created, and it is not
-# written to the preferences file.  Set on startup
-image_dir_persistent = 0
+# the directory preferences that follow the current document.  Those
+# given in the preferences file (listed in persistent_dirs, set on
+# startup) are remembered across sessions; the others are reset to the
+# document's directory (or the current directory for a new document)
+# whenever a document is loaded or created, and they are not written
+# to the preferences file.
+document_dirs = ('image_dir', 'pattern_dir')
+persistent_dirs = ()
 
 
 #
