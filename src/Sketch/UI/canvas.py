@@ -502,6 +502,9 @@ class SketchCanvas(SketchView, CursorStack, WidgetWithModes):
 
     def ButtonPressEvent(self, event):
         # handle button press event
+        # take the keyboard focus back from a field of a docked panel
+        # (in the same toplevel)
+        self.focus_set()
         self.begin_transaction()
         self.expect_release_event = 1
         self.last_event = event

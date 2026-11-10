@@ -41,6 +41,37 @@ def check():
     first, last = sidebar.canvas.yview()
     assert last == 1.0, (first, last)
 
+    # Tab cycles through the fields of the docked panels; a click on the
+    # canvas takes the focus back
+    from Sketch.UI.sidebar import focus_fields
+    fields = []
+    for dock in sidebar.docks:
+        fields.extend(focus_fields(dock.body))
+    line_fields = focus_fields(win.dialogs['LinePanel'].top)
+    poly_fields = focus_fields(win.dialogs['RegularPolygon'].top)
+    assert line_fields and poly_fields
+    assert fields.index(line_fields[0]) < fields.index(poly_fields[0])
+    root.focus_force()
+    fields[0].focus_set()
+    root.update()
+    def focus():
+        return str(root.focus_get())
+    assert focus() == str(fields[0]), focus()
+    fields[0].event_generate('<Tab>')
+    root.update()
+    assert focus() == str(fields[1]), focus()
+    fields[1].event_generate('<<PrevWindow>>')
+    fields[0].event_generate('<<PrevWindow>>')
+    root.update()
+    assert focus() == str(fields[-1]), focus()
+    fields[-1].event_generate('<Tab>')
+    root.update()
+    assert focus() == str(fields[0]), focus()
+    win.canvas.event_generate('<ButtonPress-1>', x = 5, y = 5)
+    win.canvas.event_generate('<ButtonRelease-1>', x = 5, y = 5)
+    root.update()
+    assert focus() == str(win.canvas), focus()
+
     # collapse: only the title bar is left
     dock = win.dialogs['LayerPanel'].container
     height = dock.frame.winfo_height()

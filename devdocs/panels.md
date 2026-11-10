@@ -77,16 +77,31 @@ opens it again from its key, so unapplied field values are lost.
 The layout is saved by `MainWindow.Exit` only (not when the process is
 killed).
 
+## Keyboard focus
+
+The panel widgets have `takeFocus 0` (`*SKPanel*takeFocus` in
+`Resources/Misc/tkdefaults`), so Tk's standard traversal skips them.
+Tab / Shift-Tab (`<<PrevWindow>>`) are bound on the toplevel instead
+(`SideBar.traverse`, `WindowContainer.traverse`): they cycle through the
+enabled, shown input fields (Entry, Spinbox, Text; `sidebar.focus_fields`)
+of all docked panels, top to bottom, or of the panel window.  Outside
+the side bar Tk's traversal applies.  A Text field keeps Tab for itself;
+Ctrl-Tab leaves it.
+
+A docked field is in the same toplevel as the canvas, so the window
+manager does not give the focus back to the canvas: the canvas takes the
+focus on every button press (`SketchCanvas.ButtonPressEvent`).
+
 ## Tests
 
 `test/ui/scripts/smoke_sidebar.py`: stacking, scrollbar, collapse,
-grip, close, hide/show, plugin panel reuse, non-dockable panels,
+grip, Tab traversal and canvas focus, close, hide/show, plugin panel
+reuse, non-dockable panels,
 layout save/restore, undock/dock, switching docking.
 `smoke_links.py` resizes the side bar when the panel is docked.
 
 ## Open items
 
-- Keyboard traversal (Tab) in docked panels is counterintuitive.
 - Moving a panel does not keep unapplied field values (a
   `get_state`/`set_state` hook per panel would).
 - No drag-and-drop docking or reordering; order follows opening order.

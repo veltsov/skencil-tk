@@ -47,6 +47,44 @@ from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
 
 
+#
+#	Keyboard traversal
+#
+# The widgets of the panels do not take the focus with Tk's standard
+# traversal (`*SKPanel*takeFocus: 0'). Tab and Shift-Tab cycle through
+# the input fields of the panels instead: of all docked panels in the
+# side bar, of the panel in a window.
+
+_field_classes = ('Entry', 'Spinbox', 'Text')
+
+def focus_fields(widget):
+    # The enabled input fields below WIDGET that are shown, in the order
+    # of creation
+    fields = []
+    for child in widget.winfo_children():
+        if not child.winfo_viewable():
+            continue
+        if child.winfo_class() in _field_classes:
+            if str(child.cget('state')) != 'disabled':
+                fields.append(child)
+        else:
+            fields.extend(focus_fields(child))
+    return fields
+
+def cycle_focus(fields, current, step):
+    # Move the focus from CURRENT to the next (STEP 1) or the previous
+    # (STEP -1) of FIELDS
+    if not fields:
+        return
+    names = [str(field) for field in fields]
+    if str(current) in names:
+        index = (names.index(str(current)) + step) % len(fields)
+    else:
+        index = step > 0 and 0 or len(fields) - 1
+    # tk::TabToWindow also selects the text of an entry
+    fields[index].tk.call('tk::TabToWindow', fields[index]._w)
+
+
 class WindowContainer:
 
     # The panel is a toplevel window. Its position relative to the main
@@ -99,9 +137,15 @@ class WindowContainer:
             button.pack(side = 'right', padx = 3)
         body = Frame(top, name = 'body', class_ = panel.class_name)
         body.pack(side = TOP, fill = 'both', expand = 1)
+        top.bind('<Tab>', lambda event: self.traverse(event, 1))
+        top.bind('<<PrevWindow>>', lambda event: self.traverse(event, -1))
 
         self.top = top
         self.body = body
+
+    def traverse(self, event, step):
+        cycle_focus(focus_fields(self.body), event.widget, step)
+        return 'break'
 
     def after_build(self):
         top = self.top
@@ -409,6 +453,10 @@ class SideBar(Frame):
 
         self.bind_all('<4>', self.wheel, add = 1)
         self.bind_all('<5>', self.wheel, add = 1)
+        top = self.winfo_toplevel()
+        top.bind('<Tab>', lambda event: self.traverse(event, 1), add = 1)
+        top.bind('<<PrevWindow>>', lambda event: self.traverse(event, -1),
+                 add = 1)
 
     def set_vbar(self, first, last):
         if float(first) <= 0.0 and float(last) >= 1.0:
@@ -439,6 +487,18 @@ class SideBar(Frame):
             self.canvas.yview_scroll(-1, 'units')
         else:
             self.canvas.yview_scroll(1, 'units')
+
+    def traverse(self, event, step):
+        # Tab in a docked panel: cycle through the fields of the docked
+        # panels. Elsewhere in the main window Tk's traversal applies.
+        if not str(event.widget).startswith(str(self.inner) + '.'):
+            return None
+        fields = []
+        for dock in self.docks:
+            if dock not in self.hidden:
+                fields.extend(focus_fields(dock.body))
+        cycle_focus(fields, event.widget, step)
+        return 'break'
 
     def update_visible(self):
         visible = len(self.docks) > len(self.hidden)
