@@ -287,6 +287,45 @@ class AbortTransactionError(SketchInternalError):
 SelectionMode = 0
 EditMode = 1
 
+class LinkGroup:
+
+    # The users of one linked file (see EditDocument.LinkGroups): the
+    # linked objects, the image tile patterns and the objects whose fill
+    # or line uses one of the patterns.
+
+    def __init__(self, filename, is_eps):
+        self.filename = filename
+        self.is_eps = is_eps
+        self.objects = []
+        self.patterns = []
+        self.pattern_owners = []
+        self.seen = set()
+
+    def add_pattern(self, pattern, owner = None):
+        if id(pattern) not in self.seen:
+            self.seen.add(id(pattern))
+            self.patterns.append(pattern)
+        if owner is not None and id(owner) not in self.seen:
+            self.seen.add(id(owner))
+            self.pattern_owners.append(owner)
+
+    def users(self):
+        # the objects using the file
+        return self.objects + self.pattern_owners
+
+    def datas(self):
+        # the distinct data objects of the file
+        result = []
+        for user in self.objects + self.patterns:
+            data = user.Data()
+            if data not in result:
+                result.append(data)
+        return result
+
+    def IsMissing(self):
+        return self.datas()[0].IsMissing()
+
+
 class EditDocument(SketchDocument, QueueingPublisher):
 
     drag_mask = Button1Mask # canvas sometimes has the doc as current
@@ -1883,28 +1922,49 @@ class EditDocument(SketchDocument, QueueingPublisher):
         return objects
 
     def LinkGroups(self):
-        # The linked objects grouped by file: a list of
-        # (filename, is_eps, objects) in document order.
+        # The users of linked files grouped by file: a list of LinkGroup
+        # in document order. Besides the linked objects, image tile
+        # patterns (of objects and of dynamic styles) using an image
+        # file are users of that file.
         groups = {}
         result = []
-        for obj in self.LinkedObjects():
-            key = (obj.Data().Filename(), not not obj.is_Eps)
+        def group(filename, is_eps):
+            key = (filename, is_eps)
             if key not in groups:
-                groups[key] = []
-                result.append(key + (groups[key],))
-            groups[key].append(obj)
+                groups[key] = LinkGroup(filename, is_eps)
+                result.append(groups[key])
+            return groups[key]
+        def add_pattern(pattern, owner = None):
+            if pattern is not None and pattern.is_Tiled \
+               and pattern.is_Image and pattern.Data().IsLinked():
+                group(pattern.Data().Filename(), False).add_pattern(pattern,
+                                                                    owner)
+        def add(obj):
+            if obj.has_links and obj.IsLinked():
+                group(obj.Data().Filename(), not not obj.is_Eps) \
+                    .objects.append(obj)
+            elif obj.has_properties:
+                properties = obj.Properties()
+                for name in ('fill_pattern', 'line_pattern'):
+                    add_pattern(getattr(properties, name, None), obj)
+        self.WalkHierarchy(add, all = 1)
+        for style in self.Styles():
+            for name in ('fill_pattern', 'line_pattern'):
+                add_pattern(style.__dict__.get(name))
         return result
 
-    def RelinkObjects(self, objects, filename, embed = 0):
-        # Link the external objects OBJECTS (all of the same kind) to the
-        # file FILENAME, or for images with EMBED true, embed the image of
-        # FILENAME. Undoable. Raise SketchError if FILENAME cannot be
-        # loaded.
+    def RelinkObjects(self, objects, filename, embed = 0, patterns = (),
+                      owners = ()):
+        # Link the external objects OBJECTS (all of the same kind) and
+        # the image tile PATTERNS to the file FILENAME, or for images with
+        # EMBED true, embed the image of FILENAME. OWNERS are the objects
+        # using the patterns (to be redrawn). Undoable. Raise SketchError
+        # if FILENAME cannot be loaded.
         from Sketch.Graphics import eps, image
-        if not objects:
+        if not objects and not patterns:
             return
         try:
-            if objects[0].is_Eps:
+            if objects and objects[0].is_Eps:
                 data = eps.load_eps(filename)
             else:
                 data = image.load_image(filename)
@@ -1921,6 +1981,10 @@ class EditDocument(SketchDocument, QueueingPublisher):
                     # the objects need not be selected: redraw them
                     self.add_undo(self.AddClearRect(obj.bounding_rect))
                     self.add_undo(obj.SetData(data))
+                    self.add_undo(self.AddClearRect(obj.bounding_rect))
+                for pattern in patterns:
+                    self.add_undo(pattern.SetData(data))
+                for obj in owners:
                     self.add_undo(self.AddClearRect(obj.bounding_rect))
                 self.add_undo(self.queue_edited())
                 self.selection.ResetRectangle()
@@ -1947,15 +2011,21 @@ class EditDocument(SketchDocument, QueueingPublisher):
             return isinstance(obj.parent, EditableCompound)
         return 1
 
-    def EmbedObjects(self, objects):
-        # Embed the linked external objects OBJECTS into the document:
-        # images get embedded image data, EPS files are replaced by
+    def CanEmbedPattern(self, pattern):
+        data = pattern.Data()
+        return data.IsLinked() and not data.IsMissing()
+
+    def EmbedObjects(self, objects, patterns = (), owners = ()):
+        # Embed the linked external objects OBJECTS and the image tile
+        # PATTERNS (used by OWNERS) into the document: images and
+        # patterns get embedded image data, EPS files are replaced by
         # objects imported from them with the PS import filter. Undoable.
         # Raise SketchError if an EPS file cannot be imported. Return the
         # messages of the import filter.
         from Sketch.Graphics import eps
         objects = [obj for obj in objects if self.CanEmbedObject(obj)]
-        if not objects:
+        patterns = [p for p in patterns if self.CanEmbedPattern(p)]
+        if not objects and not patterns:
             return ''
         # import first: errors leave the document unchanged
         templates = {}
@@ -1986,6 +2056,14 @@ class EditDocument(SketchDocument, QueueingPublisher):
                         if id(data) not in embedded:
                             embedded[id(data)] = data.AsEmbedded()
                         self.add_undo(obj.SetData(embedded[id(data)]))
+                for pattern in patterns:
+                    data = pattern.Data()
+                    if id(data) not in embedded:
+                        embedded[id(data)] = data.AsEmbedded()
+                    self.add_undo(pattern.SetData(embedded[id(data)]))
+                if patterns:
+                    for obj in owners:
+                        self.add_undo(self.AddClearRect(obj.bounding_rect))
                 if replaced:
                     selection = [(info, replaced.get(id(obj), obj))
                                  for info, obj in self.selection.GetInfo()]

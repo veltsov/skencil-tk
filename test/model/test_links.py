@@ -45,19 +45,34 @@ def write_png(path, color=(255, 0, 0)):
     PIL.Image.new('RGB', (8, 6), color).save(path)
 
 
-def make_document(dir):
-    """Save a document linking a.eps and b.png in DIR; return the
+def pattern_rectangle(data, x=0):
+    # a rectangle filled with the image tile pattern of DATA
+    from Sketch import Rectangle, Trafo, ImageTilePattern
+    rect = Rectangle(Trafo(50, 0, 0, 40, x, 0))
+    rect.SetProperties(fill_pattern=ImageTilePattern(data))
+    return rect
+
+
+def make_document(dir, pattern=0, image=1):
+    """Save a document linking a.eps and b.png in DIR (with PATTERN
+    true, also a rectangle filled with b.png as image tile pattern;
+    with IMAGE false, b.png is used by the pattern only); return the
     paths (sk, eps, png)."""
     testsupport.sketch()
     from Sketch import EditDocument, Trafo
-    from Sketch.Graphics import eps, image
+    from Sketch.Graphics import eps
+    from Sketch.Graphics import image as image_
     eps_file = os.path.join(str(dir), 'a.eps')
     png_file = os.path.join(str(dir), 'b.png')
     write_eps(eps_file)
     write_png(png_file)
     doc = EditDocument(create_layer=1)
     doc.Insert(eps.EpsImage(filename=eps_file, trafo=Trafo(*EPS_TRAFO)))
-    doc.Insert(image.Image(imagefile=png_file, trafo=Trafo(*PNG_TRAFO)))
+    if image:
+        doc.Insert(image_.Image(imagefile=png_file,
+                                trafo=Trafo(*PNG_TRAFO)))
+    if pattern:
+        doc.Insert(pattern_rectangle(image_.load_image(png_file)))
     sk_file = os.path.join(str(dir), 'links.sk')
     save_document(doc, sk_file)
     return sk_file, eps_file, png_file
@@ -99,8 +114,9 @@ def test_link_groups(linked):
     sk_file, eps_file, png_file = linked
     doc = testsupport.load_document(sk_file)
     groups = doc.LinkGroups()
-    assert [(name, is_eps, len(objs)) for name, is_eps, objs in groups] \
-           == [(eps_file, True, 1), (png_file, False, 1)]
+    assert [(g.filename, g.is_eps, len(g.objects), len(g.patterns))
+            for g in groups] \
+           == [(eps_file, True, 1, 0), (png_file, False, 1, 0)]
     assert not doc.meta.load_messages
 
 
@@ -282,6 +298,172 @@ def test_current_external_object(missing):
     assert doc.CurrentExternalObject(0) is png_obj
     doc.SelectObject([eps_obj, png_obj])
     assert doc.CurrentExternalObject(0) is None
+
+
+# ------------------------------------------------- image tile patterns
+
+@pytest.fixture
+def with_pattern(tmp_path):
+    clear_cache()
+    yield make_document(tmp_path, pattern=1)
+    clear_cache()
+
+
+def png_group(doc):
+    return [g for g in doc.LinkGroups() if not g.is_eps][0]
+
+
+def saved_text(doc, tmp_path, name='out.sk'):
+    out = os.path.join(str(tmp_path), name)
+    save_document(doc, out)
+    with open(out) as f:
+        return f.read()
+
+
+def test_pattern_link_group(with_pattern, tmp_path):
+    sk_file, eps_file, png_file = with_pattern
+    doc = testsupport.load_document(sk_file)
+    eps_obj, png_obj = linked_objects(doc)
+    group = png_group(doc)
+    assert group.filename == png_file
+    assert group.objects == [png_obj]
+    assert len(group.patterns) == 1 and len(group.pattern_owners) == 1
+    rect = group.pattern_owners[0]
+    assert rect.Properties().fill_pattern is group.patterns[0]
+    assert group.users() == [png_obj, rect]
+    # image and pattern share the data: one bm entry
+    assert group.datas() == [png_obj.Data()]
+    assert saved_text(doc, tmp_path).count('bm(') == 1
+
+
+def test_update_reaches_patterns(with_pattern, tmp_path):
+    # Updating the image file also updates the pattern using it (one
+    # bm id), and the document is redrawn
+    sk_file, eps_file, png_file = with_pattern
+    doc = testsupport.load_document(sk_file)
+    eps_obj, png_obj = linked_objects(doc)
+    pattern = png_group(doc).patterns[0]
+    PIL.Image.new('RGB', (4, 3), (0, 255, 0)).save(png_file)
+    from Sketch.Base.const import REDRAW
+    from Sketch.Graphics import external
+    alls = []
+    def redraw(all, rects=()):
+        alls.append(all)
+    doc.Subscribe(REDRAW, redraw)
+    try:
+        png_obj.UpdateLink()
+    finally:
+        doc.Unsubscribe(REDRAW, redraw)
+    assert png_obj.Data().Size() == (4, 3)
+    assert pattern.Data() is png_obj.Data()
+    assert 1 in alls
+    assert saved_text(doc, tmp_path).count('bm(') == 1
+    # also through Update All
+    old = png_obj.Data()
+    external.reload_all_images(documents=(doc,))
+    assert png_obj.Data() is not old and pattern.Data() is png_obj.Data()
+
+
+def test_update_pattern_only(tmp_path):
+    clear_cache()
+    sk_file, eps_file, png_file = make_document(tmp_path, pattern=1,
+                                                image=0)
+    try:
+        doc = testsupport.load_document(sk_file)
+        group = png_group(doc)
+        assert group.objects == [] and len(group.patterns) == 1
+        pattern = group.patterns[0]
+        PIL.Image.new('RGB', (4, 3), (0, 255, 0)).save(png_file)
+        for data in group.datas():
+            data.reload_file(documents=(doc,))
+        assert pattern.Data().Size() == (4, 3)
+    finally:
+        clear_cache()
+
+
+def test_relink_patterns(with_pattern):
+    sk_file, eps_file, png_file = with_pattern
+    doc = testsupport.load_document(sk_file)
+    eps_obj, png_obj = linked_objects(doc)
+    doc.SelectNone()
+    group = png_group(doc)
+    pattern = group.patterns[0]
+    rect = group.pattern_owners[0]
+    old = pattern.Data()
+    new_file = os.path.join(os.path.dirname(png_file), 'c.png')
+    write_png(new_file, (0, 0, 255))
+    rects = redrawn_rects(doc, lambda: doc.RelinkObjects(
+        group.objects, new_file, patterns=group.patterns,
+        owners=group.pattern_owners))
+    assert covers(rects, rect.bounding_rect)
+    assert pattern.Data().Filename() == new_file
+    assert pattern.Data() is png_obj.Data()
+    assert [g.filename for g in doc.LinkGroups()] == [eps_file, new_file]
+    rects = redrawn_rects(doc, doc.Undo)
+    assert covers(rects, rect.bounding_rect)
+    assert pattern.Data() is old and png_obj.Data() is old
+
+
+def test_embed_patterns(with_pattern, tmp_path):
+    sk_file, eps_file, png_file = with_pattern
+    doc = testsupport.load_document(sk_file)
+    group = png_group(doc)
+    pattern = group.patterns[0]
+    doc.EmbedObjects(group.objects, patterns=group.patterns,
+                     owners=group.pattern_owners)
+    assert pattern.Data().IsEmbedded()
+    assert pattern.Data() is group.objects[0].Data()
+    assert [g.is_eps for g in doc.LinkGroups()] == [True]
+    text = saved_text(doc, tmp_path)
+    assert 'b.png' not in text and text.count('bm(') == 1
+    doc.Undo()
+    assert pattern.Data().Filename() == png_file
+
+
+def test_missing_pattern_only(tmp_path):
+    clear_cache()
+    sk_file, eps_file, png_file = make_document(tmp_path, pattern=1,
+                                                image=0)
+    shutil.move(png_file, png_file + '.away')
+    clear_cache()
+    try:
+        doc = testsupport.load_document(sk_file)
+        assert 'b.png' in doc.meta.load_messages
+        group = png_group(doc)
+        assert group.IsMissing()
+        assert not doc.CanEmbedPattern(group.patterns[0])
+        new_file = os.path.join(str(tmp_path), 'c.png')
+        write_png(new_file)
+        doc.RelinkObjects(group.objects, new_file, patterns=group.patterns,
+                          owners=group.pattern_owners)
+        group = png_group(doc)
+        assert not group.IsMissing() and group.filename == new_file
+    finally:
+        clear_cache()
+
+
+def test_dynamic_style_pattern(with_pattern):
+    # a pattern of a dynamic style is one pattern used by all objects
+    # with that style
+    sk_file, eps_file, png_file = with_pattern
+    doc = testsupport.load_document(sk_file)
+    group = png_group(doc)
+    rect = group.pattern_owners[0]
+    doc.SelectObject(rect)
+    doc.CreateStyleFromSelection('tile', ['fill_pattern'])
+    other = pattern_rectangle(group.objects[0].Data(), x=100)
+    doc.Insert(other)
+    doc.SelectObject(other)
+    doc.AddStyle('tile')
+    group = png_group(doc)
+    style_pattern = doc.GetDynamicStyle('tile').fill_pattern
+    assert group.patterns == [style_pattern]
+    assert group.pattern_owners == [rect, other]
+    new_file = os.path.join(os.path.dirname(png_file), 'c.png')
+    write_png(new_file)
+    doc.RelinkObjects(group.objects, new_file, patterns=group.patterns,
+                      owners=group.pattern_owners)
+    assert other.Properties().fill_pattern.Data().Filename() == new_file
 
 
 def have_ps_import_tools():

@@ -1,6 +1,7 @@
 # --run-script payload: the document (argument) has missing linked
 # files (SKENCIL_TEST_LINKS_EPS, SKENCIL_TEST_LINKS_PNG point to where
-# they are now). Open the Links panel, check the rows and their popup
+# they are now); the image file is also used as the fill pattern of a
+# rectangle. Open the Links panel, check the rows and their popup
 # menu, relink, select, embed and toggle the automatic update through
 # the panel, replace files with the canvas commands, then quit.
 
@@ -24,6 +25,17 @@ def indicator(row):
     return bitmap
 
 
+def kinds(row):
+    # the kind icons and counts of a row, e.g. [('MiniImage', '1')]
+    labels = row.kind_labels
+    return [(os.path.basename(str(labels[i]['bitmap']))[:-4],
+             labels[i + 1]['text']) for i in range(0, len(labels), 2)]
+
+
+def kind_colors(row):
+    return set(str(label['foreground']) for label in row.kind_labels)
+
+
 def menu_labels(panel, idx):
     panel.context_idx = idx
     entries = panel.build_context_menu()
@@ -36,9 +48,13 @@ def check():
     win.CreateDialog('Sketch.UI.linksdlg', 'LinksPanel')
     panel = win.dialogs['LinksPanel']
     assert len(panel.rows) == 2, panel.rows
+    assert kinds(panel.rows[0]) == [('MiniEps', '1')], kinds(panel.rows[0])
+    assert kinds(panel.rows[1]) == [('MiniImage', '1'),
+                                    ('MiniPattern', '1')], \
+                                    kinds(panel.rows[1])
     for row in panel.rows:
         assert indicator(row) == 'warning', indicator(row)
-        assert str(row.kind['foreground']) == 'red'
+        assert kind_colors(row) == {'red'}
         assert str(row.update['bitmap']).endswith('MiniReload.xbm')
         assert not hasattr(row, 'embed') and not hasattr(row, 'browse')
     labels, entries = menu_labels(panel, 0)
@@ -84,14 +100,23 @@ def check():
     root.update()
     assert indicator(panel.rows[0]) == 'warning'
 
-    # Select Objects in the row popup
+    # Select Objects in the row popup: the image and the rectangle
+    # filled with it
+    rect = panel.groups[1].pattern_owners[0]
     labels, entries = menu_labels(panel, 1)
     assert entries[2].sensitivecb()
     panel.select_objects(1)
     root.update()
-    assert doc.CurrentObject() is png_obj
-    assert replace_image.InContext() and not replace_eps.InContext()
+    assert set(map(id, doc.SelectedObjects())) == {id(png_obj), id(rect)}
     assert indicator(panel.rows[1]) == 'arrow'
+    # the arrow also for the selected pattern owner alone
+    doc.SelectObject(rect)
+    root.update()
+    assert indicator(panel.rows[1]) == 'arrow'
+    assert indicator(panel.rows[0]) == 'warning'
+    doc.SelectObject(png_obj)
+    root.update()
+    assert replace_image.InContext() and not replace_eps.InContext()
 
     # relink both through the panel (as if typed in the entry)
     for idx, var in enumerate(('SKENCIL_TEST_LINKS_EPS',
@@ -102,8 +127,11 @@ def check():
         panel.relink(idx)
     root.update()
     assert [obj.IsMissing() for obj in doc.LinkedObjects()] == [0, 0]
+    # the pattern is relinked with the image
+    pattern = rect.Properties().fill_pattern
+    assert pattern.Data() is png_obj.Data()
     assert indicator(panel.rows[0]) == ''
-    assert str(panel.rows[0].kind['foreground']) != 'red'
+    assert 'red' not in kind_colors(panel.rows[1])
     labels, entries = menu_labels(panel, 0)
     assert entries[1].sensitivecb()
 
@@ -133,14 +161,24 @@ def check():
     assert asked == [(os.environ['SKENCIL_TEST_LINKS_PNG'], 0)], asked
     assert png_obj.Data().Filename() == new_png
     assert png_obj.IsLinked() and png_obj.Data().Size() == (5, 4)
+    # the pattern keeps its file: two rows now
+    assert pattern.Data().Filename() == os.environ['SKENCIL_TEST_LINKS_PNG']
+    root.update()
+    assert [kinds(row) for row in panel.rows[1:]] == [
+        [('MiniImage', '1')], [('MiniPattern', '1')]] or \
+        [kinds(row) for row in panel.rows[1:]] == [
+        [('MiniPattern', '1')], [('MiniImage', '1')]], \
+        [kinds(row) for row in panel.rows]
     doc.Undo()
+    root.update()
     assert png_obj.Data().Filename() == os.environ['SKENCIL_TEST_LINKS_PNG']
+    assert len(panel.rows) == 2
 
-    # embed the image through the panel ...
+    # embed the image through the panel (also the pattern) ...
     panel.embed(1)
     root.update()
     assert len(panel.rows) == 1
-    assert png_obj.IsEmbedded()
+    assert png_obj.IsEmbedded() and pattern.Data().IsEmbedded()
     # ... Replace Image keeps an embedded image embedded
     doc.SelectObject(png_obj)
     assert replace_image.InContext()

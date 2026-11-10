@@ -33,6 +33,7 @@ from Sketch.Base.const import SELECTION, LINKS
 
 import os
 import time
+import weakref
 
 instance_cache = dict() #SKCache()
 
@@ -45,6 +46,9 @@ class ExternalData:
 
     def __init__(self, filename = '', do_cache = 1):
         self.user_list = []
+        # the ImageTilePatterns using this data; weak, since patterns
+        # are copied with every change of the properties
+        self.pattern_users = weakref.WeakSet()
         if filename:
             self.filename = filename
             self.fstat = os.stat(filename)
@@ -81,7 +85,10 @@ class ExternalData:
     def RmUser(self, user):
         self.user_list.remove(user)
 
-    def reload_file(self, finalize = 1):
+    def reload_file(self, finalize = 1, documents = ()):
+        # Replace self by data newly read from the file in all objects
+        # and patterns using it. Patterns do not know their document:
+        # if some are changed, DOCUMENTS are redrawn completely.
         docs = []
         self.remove_from_cache()
         try:
@@ -98,6 +105,14 @@ class ExternalData:
                 doc.AddClearRect(oldrect)
                 doc.AddClearRect(obj.bounding_rect)
                 docs.append(doc)
+        patterns = list(self.pattern_users)
+        for pattern in patterns:
+            pattern.SetData(newdata)
+        if patterns:
+            for doc in documents:
+                if doc is not None:
+                    doc.view_redraw_all()
+                    docs.append(doc)
         if finalize:
             finalize_doc_change(docs)
         return docs
@@ -133,6 +148,7 @@ class MissingData(ExternalData):
 
     def __init__(self, filename):
         self.user_list = []
+        self.pattern_users = weakref.WeakSet()
         self.filename = filename
         self.insert_into_cache()
 
@@ -167,7 +183,7 @@ def can_reload_all_images():
     global instance_cache
     return len(instance_cache) > 0
 
-def reload_all_images(really_all = 1):
+def reload_all_images(really_all = 1, documents = ()):
     docs = []
     fnames = list(instance_cache.keys())
     for fname in fnames:
@@ -175,7 +191,8 @@ def reload_all_images(really_all = 1):
         if obj is None:
             continue
         if really_all or obj.need_reload():
-            docs.extend(obj.reload_file(finalize = 0))
+            docs.extend(obj.reload_file(finalize = 0,
+                                        documents = documents))
     finalize_doc_change(docs)
 
 
@@ -228,7 +245,7 @@ class ExternalGraphics(RectangularObject, GraphicsObject):
 
     def UpdateLink(self):
         if self.IsLinked():
-            self.data.reload_file()
+            self.data.reload_file(documents = (self.document,))
 
     def Hit(self, p, rect, device, clip = 0):
         width, height = self.data.Size()

@@ -355,7 +355,9 @@ tkwin_CreateImage(TkWinObject *self, PyObject *args)
 			  &data, &datalength, &width, &height, &bitmap_pad,
 			  &bytes_per_line))
 	return NULL;
-    newdata = PyMem_Malloc(bytes_per_line * height);
+    /* malloc, not PyMem_Malloc: XDestroyImage frees the data with
+       free() (small PyMem blocks come from pymalloc's pools) */
+    newdata = malloc(bytes_per_line * height);
     if (newdata == NULL)
 	return PyErr_NoMemory();
     if (data)
@@ -367,7 +369,7 @@ tkwin_CreateImage(TkWinObject *self, PyObject *args)
     if (ximage == NULL)
     {
 	PyErr_SetString(PyExc_RuntimeError, "XCreateImage failed");
-	PyMem_Free(newdata);
+	free(newdata);
 	return NULL;
     }
     return PaxImage_FromImage(ximage);

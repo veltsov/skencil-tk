@@ -1446,7 +1446,7 @@ class SketchMainWindow(Publisher):
 
     AddCmd('ReloadAllImages',_("Update All Links"), sensitive_cb = 'CanReloadAllImages')
     def ReloadAllImages(self):
-        external.reload_all_images()
+        external.reload_all_images(documents = (self.document,))
 
     def CanReloadAllImages(self):
         return external.can_reload_all_images()
@@ -1471,7 +1471,8 @@ class SketchMainWindow(Publisher):
 
     def check_image_reload(self):
         if not self.document.transaction and self.CanReloadAllImages():
-            external.reload_all_images(really_all = 0)
+            external.reload_all_images(really_all = 0,
+                                       documents = (self.document,))
         self.auto_reload_id = self.root.after(300,self.check_image_reload)
         
     #

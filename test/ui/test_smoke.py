@@ -47,8 +47,8 @@ def test_open_layer_dialog():
 
 def test_links_panel(tmp_path):
     """A document with missing linked files opens (with a warning);
-    the Links panel lists them and relinks, embeds and toggles the
-    automatic update."""
+    the Links panel lists them (also the image used as a fill pattern)
+    and relinks, embeds and toggles the automatic update."""
     import shutil
     sys_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                             '..', 'model')
@@ -56,7 +56,8 @@ def test_links_panel(tmp_path):
     sys.path.insert(0, sys_path)
     import test_links
     test_links.clear_cache()
-    sk_file, eps_file, png_file = test_links.make_document(tmp_path)
+    sk_file, eps_file, png_file = test_links.make_document(tmp_path,
+                                                           pattern=1)
     shutil.move(eps_file, eps_file + '.new')
     shutil.move(png_file, png_file + '.new')
     out, err = run_ui('smoke_links.py', args=[sk_file],

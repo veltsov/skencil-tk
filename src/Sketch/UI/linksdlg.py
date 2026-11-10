@@ -63,11 +63,14 @@ def ask_link_filename(main_window, filename, is_eps):
                                initialfile = os.path.basename(filename)) \
                                or None
 
-def relink_objects(main_window, objects, filename, embed = 0):
+def relink_objects(main_window, objects, filename, embed = 0,
+                   patterns = (), owners = ()):
     # document.RelinkObjects with the errors shown to the user. Return
     # true on success.
     try:
-        main_window.document.RelinkObjects(objects, filename, embed = embed)
+        main_window.document.RelinkObjects(objects, filename, embed = embed,
+                                           patterns = patterns,
+                                           owners = owners)
     except SketchError as value:
         main_window.application.MessageBox(
             title = _("Replace"),
@@ -89,24 +92,42 @@ def can_select(obj):
 class LinkRow:
 
     def __init__(self, panel, frame, idx, group):
-        filename, is_eps, objects = group
-        self.missing = objects[0].IsMissing()
+        self.missing = group.IsMissing()
         # the indicator: an arrow if objects of the row are selected,
         # else a warning if the file is missing
         self.indicator = Label(frame)
         self.foreground = self.indicator.cget('foreground')
-        if is_eps:
-            kind = _("EPS")
+        # the kind of the users: mini icons with the number of objects
+        self.kind = Frame(frame)
+        self.kind_labels = []
+        if group.is_eps:
+            kinds = [(pixmaps.MiniEps, len(group.objects))]
+            description = _("EPS objects: %d") % len(group.objects)
         else:
-            kind = _("Image")
-        if len(objects) > 1:
-            kind = '%s (%d)' % (kind, len(objects))
-        self.kind = Label(frame, text = kind, anchor = W)
+            # patterns of unused dynamic styles have no owners
+            patterns = len(group.pattern_owners) or len(group.patterns)
+            kinds = [(pixmaps.MiniImage, len(group.objects)),
+                     (pixmaps.MiniPattern, patterns)]
+            description = _("Images: %(images)d, pattern fills: %(patterns)d") \
+                          % {'images': len(group.objects),
+                             'patterns': patterns}
         if self.missing:
-            self.kind['foreground'] = 'red'
-            tooltips.AddDescription(self.kind, _("File not found"))
+            description = _("File not found") + '\n' + description
+        for bitmap, count in kinds:
+            if count:
+                self.kind_labels.append(Label(self.kind, bitmap = bitmap))
+                self.kind_labels.append(Label(self.kind, text = str(count)))
+        for i, label in enumerate(self.kind_labels):
+            # a gap after each count
+            label.pack(side = LEFT, padx = (0, 4 * (i % 2)))
+            if self.missing:
+                label['foreground'] = 'red'
+        for widget in [self.kind] + self.kind_labels:
+            tooltips.AddDescription(widget, description)
+            widget.bind('<ButtonPress-3>',
+                        lambda event: panel.popup_context_menu(event, idx))
         self.entry = Entry(frame, width = 40)
-        self.entry.insert(0, filename)
+        self.entry.insert(0, group.filename)
         self.entry.xview(END)
         self.entry.bind('<Return>', lambda event: panel.relink(idx))
         self.entry.bind('<KP_Enter>', lambda event: panel.relink(idx))
@@ -204,9 +225,10 @@ class LinksPanel(SketchPanel):
     def Update(self, *args):
         self.groups = groups = self.document.LinkGroups()
         signature = []
-        for filename, is_eps, objects in groups:
-            signature.append((filename, is_eps, objects[0].IsMissing(),
-                              len(objects)))
+        for group in groups:
+            signature.append((group.filename, group.is_eps,
+                              group.IsMissing(), len(group.objects),
+                              len(group.patterns), len(group.pattern_owners)))
         if signature != self.signature:
             self.signature = signature
             self.create_widget_list()
@@ -226,7 +248,7 @@ class LinksPanel(SketchPanel):
                 add(obj)
         for row, group in zip(self.rows, self.groups):
             on = 0
-            for obj in group[2]:
+            for obj in group.users():
                 if id(obj) in selected:
                     on = 1
                     break
@@ -301,10 +323,10 @@ class LinksPanel(SketchPanel):
         self.main_window.application.MessageBox(title = title,
                                                 message = message)
 
-    def context_objects(self):
+    def context_group(self):
         if self.context_idx < len(self.groups):
-            return self.groups[self.context_idx][2]
-        return []
+            return self.groups[self.context_idx]
+        return None
 
     def update_all(self):
         self.main_window.ReloadAllImages()
@@ -321,10 +343,13 @@ class LinksPanel(SketchPanel):
         return filename
 
     def set_link(self, idx, filename):
-        oldname, is_eps, objects = self.groups[idx]
-        if not filename or filename == oldname:
+        # all users of the file are changed
+        group = self.groups[idx]
+        if not filename or filename == group.filename:
             return
-        if not relink_objects(self.main_window, objects, filename):
+        if not relink_objects(self.main_window, group.objects, filename,
+                              patterns = group.patterns,
+                              owners = group.pattern_owners):
             self.signature = None
             self.Update()
 
@@ -333,33 +358,42 @@ class LinksPanel(SketchPanel):
             self.set_link(idx, self.resolve(self.rows[idx].entry.get()))
 
     def replace(self, idx):
-        filename, is_eps, objects = self.groups[idx]
-        newname = ask_link_filename(self.main_window, filename, is_eps)
+        group = self.groups[idx]
+        newname = ask_link_filename(self.main_window, group.filename,
+                                    group.is_eps)
         if newname:
             self.set_link(idx, newname)
 
     def update_link(self, idx):
         idx = int(idx)
-        filename, is_eps, objects = self.groups[idx]
-        data = objects[0].Data()
-        if data.IsMissing() and not os.path.exists(filename):
+        group = self.groups[idx]
+        if group.IsMissing() and not os.path.exists(group.filename):
             self.message(_("Update"),
                          _("File not found:\n%s")
-                         % util.as_display_name(filename))
+                         % util.as_display_name(group.filename))
             return
-        data.reload_file()
+        for data in group.datas():
+            data.reload_file(documents = (self.document,))
         self.Update()
 
     def can_embed(self):
-        for obj in self.context_objects():
-            if self.document.CanEmbedObject(obj):
-                return 1
+        group = self.context_group()
+        if group is not None:
+            for obj in group.objects:
+                if self.document.CanEmbedObject(obj):
+                    return 1
+            for pattern in group.patterns:
+                if self.document.CanEmbedPattern(pattern):
+                    return 1
         return 0
 
     def embed(self, idx):
-        filename, is_eps, objects = self.groups[idx]
+        group = self.groups[idx]
+        filename = group.filename
         try:
-            messages = self.document.EmbedObjects(objects)
+            messages = self.document.EmbedObjects(
+                group.objects, patterns = group.patterns,
+                owners = group.pattern_owners)
         except SketchError as value:
             self.message(_("Embed"),
                          _("Cannot embed %(filename)s:\n%(message)s")
@@ -371,13 +405,15 @@ class LinksPanel(SketchPanel):
                          _("Warnings from the import filter:\n") + messages)
 
     def can_select(self):
-        for obj in self.context_objects():
-            if can_select(obj):
-                return 1
+        group = self.context_group()
+        if group is not None:
+            for obj in group.users():
+                if can_select(obj):
+                    return 1
         return 0
 
     def select_objects(self, idx):
-        filename, is_eps, objects = self.groups[idx]
-        objects = [obj for obj in objects if can_select(obj)]
+        objects = [obj for obj in self.groups[idx].users()
+                   if can_select(obj)]
         if objects:
             self.document.SelectObject(objects, SelectSet)

@@ -645,6 +645,20 @@ class ImageTilePattern(Pattern):
                 trafo = Trafo(1, 0, 0, -1, 0, 0)
             self.trafo = trafo
         self.data = data
+        if data is not None:
+            # a weak user of DATA: updating the linked file reaches it
+            data.pattern_users.add(self)
+
+    def Data(self):
+        return self.data
+
+    def SetData(self, data):
+        undo = (self.SetData, self.data)
+        if self.data is not None:
+            self.data.pattern_users.discard(self)
+        self.data = data
+        data.pattern_users.add(self)
+        return undo
 
     def set_transformation(self, trafo):
         undo = (self.set_transformation, self.trafo)

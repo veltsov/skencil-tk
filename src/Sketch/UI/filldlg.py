@@ -546,14 +546,12 @@ class ImageTilePatternFrame(PatternFrame):
     def update_from_image(self, obj):
         if obj is not None:
             if obj.is_Image:
-                # XXX data is no public attribute
-                self.SetPattern(ImageTilePattern(obj.data))
+                self.SetPattern(ImageTilePattern(obj.Data()))
                 self.issue(CHANGED)
             elif obj.has_properties:
                 pattern = obj.Properties().fill_pattern
                 if pattern.__class__ == ImageTilePattern:
-                    # XXX data is no public attribute
-                    self.SetPattern(ImageTilePattern(pattern.data))
+                    self.SetPattern(ImageTilePattern(pattern.Data()))
                     self.issue(CHANGED)
 
 

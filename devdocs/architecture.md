@@ -214,6 +214,16 @@ Python modules that are also user-callable scripts (Scripts menu /
   `external.instance_cache`, keyed by file name. Update All Links and
   the automatic update (`mainwindow.check_image_reload`, mtime/inode
   polling) reload the cached data; `finalize_doc_change` issues `LINKS`.
+- Image tile patterns (`ImageTilePattern`, `pit()` in `.sk`) share the
+  `ImageData` with images of the same `bm()` id. Objects are users of
+  their data in `ExternalData.user_list`; patterns are weak users in
+  `ExternalData.pattern_users` (a `WeakSet`: patterns are copied with
+  every change of the properties), registered in `ImageTilePattern`'s
+  constructor and `SetData` (undoable, changes the pattern in place --
+  patterns are not shared between objects except through a dynamic
+  style). `ExternalData.reload_file(documents = ...)` moves both kinds
+  of users to the new data; patterns do not know their document, so
+  the given documents are redrawn completely when patterns changed.
 - A linked file missing on `.sk` load does not abort the load:
   `skloader` uses a `MissingEpsData` / `MissingImageData`
   (`external.MissingData`) and adds a load message ("Linked file not
@@ -225,8 +235,11 @@ Python modules that are also user-callable scripts (Scripts menu /
   the SVG export skips it). A tile pattern with a missing image draws
   as an empty fill. A missing image as the mask of a mask group does
   not clip.
-- `EditDocument.LinkGroups()` lists the linked objects by file (the
-  Links panel rows); `RelinkObjects()` sets new data (undoable, the
+- `EditDocument.LinkGroups()` lists the users of the linked files by
+  file as `LinkGroup`s (the Links panel rows): the linked `objects`,
+  the linked image tile `patterns` of the objects' fill/line and of the
+  dynamic styles, and the `pattern_owners` (the objects using them;
+  `users()` = objects + owners). `RelinkObjects()` sets new data (undoable, the
   trafo is kept, so a placeholder gets the file's real size anchored at
   its lower left corner); `EmbedObjects()` embeds images
   (`ImageData.AsEmbedded`) and replaces EPS objects by the objects
@@ -236,10 +249,17 @@ Python modules that are also user-callable scripts (Scripts menu /
   BoundingBox by a `MaskGroup` if the content exceeds it). EPS objects
   are embeddable only when their parent is an `EditableCompound`.
   The EPS context menu entry is the object command `EmbedEps`.
+  `RelinkObjects` and `EmbedObjects` take the patterns (and their
+  owners, for the redraw) of a group as well.
 - The Links panel (`UI/linksdlg.py`): per row an indicator (arrow if
-  objects of the row are selected, else a warning if the file is
-  missing), the kind, the editable file name and an Update icon; the
-  row popup has Replace…, Embed, Select Objects and Update.
+  users of the row are selected, else a warning if the file is
+  missing), the kind (mini icons `MiniEps`/`MiniImage`/`MiniPattern`
+  with the number of users, red if missing), the editable file name
+  and an Update icon; the row popup has Replace…, Embed, Select Objects
+  and Update. The panel actions act on all users of the file (images
+  and pattern fills); single objects are changed with Replace Image…
+  and the fill panel (which applies a copy of its pattern to the
+  selected objects only).
 - Replace Image… / Replace EPS… in the object context menus are
   main-window commands (`ReplaceImage`, `ReplaceEps` →
   `ReplaceObjectFile`), since they ask for a file; they change only the
