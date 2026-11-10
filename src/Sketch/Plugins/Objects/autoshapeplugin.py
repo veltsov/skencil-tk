@@ -73,6 +73,7 @@ class ShapeBtn(tkinter.Button):
 
 class AutoshapeDlg(SketchPanel):
     title = _('Auto Shapes')
+    resize_policy = 'elastic'
     receivers = SketchPanel.receivers[:]
 
     def __init__(self, master, main_window, doc):

@@ -325,6 +325,10 @@ class PluginPanel(PropertyPanel,PluginDlg):
         self.info = info
         self.title = info.menu_text
         self.vars = []
+        # a multi-line text field absorbs the height of a docked panel
+        for name, type, value, prange, label in info.parameters:
+            if type == 'text' and (prange is None or prange[1] != 1):
+                self.resize_policy = 'elastic'
         name = 'dlg' + info.class_name
         PropertyPanel.__init__(self, master, main_window, doc, name = name)
 

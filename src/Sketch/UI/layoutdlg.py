@@ -23,7 +23,8 @@ from Sketch.Graphics.pagelayout import PageLayout, Portrait, Landscape
 
 from tkinter import Frame, Label, StringVar, IntVar, DoubleVar
 from tkinter import RIGHT, BOTTOM, X, BOTH, LEFT, TOP, W, E, DISABLED, NORMAL
-from Sketch.UI.tkext import UpdatedButton, MyEntry, MyOptionMenu, UpdatedRadiobutton
+from Sketch.UI.tkext import UpdatedButton, MyEntry, MyOptionMenu, UpdatedRadiobutton, \
+     FlowFrame
 
 from Sketch.UI.lengthvar import LengthVar, create_unit_menu
 from Sketch.UI.sketchdlg import SketchPanel
@@ -84,15 +85,21 @@ class LayoutPanel(SketchPanel):
         self.var_height = LengthVar(10, unit,var_height_number,var_height_unit)
         label = Label(size_frame, text = _("Page size:"))
         label.pack(side = TOP, anchor = W)
-        label = Label(size_frame, text = _("Width"))
+        # the height goes to the next line when the panel is narrow
+        flow = FlowFrame(size_frame)
+        flow.pack(side = TOP, fill = X)
+        width_frame = Frame(flow)
+        label = Label(width_frame, text = _("Width"))
         label.pack(side = LEFT, anchor = E)
-        self.widthentry = MyEntry(size_frame, textvariable = var_width_number,
+        self.widthentry = MyEntry(width_frame, textvariable = var_width_number,
                                   command = self.var_width.UpdateNumber,
                                   width = 6)
         self.widthentry.pack(side = LEFT, expand = 1, fill = X, anchor = E)
-        label = Label(size_frame, text = _("Height"))
+        flow.Add(width_frame, expand = 1)
+        height_frame = Frame(flow)
+        label = Label(height_frame, text = _("Height"))
         label.pack(side = LEFT, anchor = E)
-        self.heightentry = MyEntry(size_frame, textvariable =var_height_number,
+        self.heightentry = MyEntry(height_frame, textvariable =var_height_number,
                                    command = self.var_height.UpdateNumber,
                                    width = 6)
         self.heightentry.pack(side = LEFT, expand = 1, fill = X, anchor = E)
@@ -101,10 +108,11 @@ class LayoutPanel(SketchPanel):
             x.UpdateUnit(arg)
             y.UpdateUnit(arg)
 
-        optmenu = create_unit_menu(size_frame, CallBoth,
+        optmenu = create_unit_menu(height_frame, CallBoth,
                                    variable = var_width_unit,
                                    indicatoron = 0, width = 3)
         optmenu.pack(side = LEFT, expand = 1, fill = X, anchor = W)
+        flow.Add(height_frame, expand = 1)
 
 
 

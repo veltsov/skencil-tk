@@ -37,6 +37,7 @@ from Sketch.UI.lengthvar import LengthVar, create_unit_menu
 class GuidePanel(SketchPanel):
 
     title = _("Guide Lines")
+    resize_policy = 'elastic'
     receivers = SketchPanel.receivers[:]
 
     def __init__(self, master, canvas, doc):

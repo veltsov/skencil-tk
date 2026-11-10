@@ -951,6 +951,87 @@ class HSeparator(Frame):
         lightline.pack(side = TOP, fill = X)
 
 
+class FlowFrame(Frame):
+
+    # A frame that arranges the widgets added with Add() in rows from
+    # left to right, starting a new row when the width is exhausted.
+    # The widgets must be children of the FlowFrame. The requested width
+    # is the natural width: the widest row of NATURAL widgets, all in one
+    # row if NATURAL is None; the requested height is the height of the
+    # rows for the current width.
+
+    def __init__(self, master, natural = None, **kw):
+        Frame.__init__(*(self, master), **kw)
+        self.natural = natural
+        self.items = []
+        self.rows = []
+        self.layout = None
+        self.pack_propagate(0)
+        self.bind('<Configure>', self.configured)
+
+    def Add(self, widget, expand = 0):
+        self.items.append((widget, expand))
+        self.after_idle(self.arrange)
+
+    def configured(self, event):
+        self.arrange(event.width)
+
+    def natural_width(self):
+        widths = [widget.winfo_reqwidth() for widget, expand in self.items]
+        step = self.natural or len(widths) or 1
+        return max([sum(widths[i:i + step])
+                    for i in range(0, len(widths), step)] or [1])
+
+    def split(self, width):
+        rows = []
+        row = []
+        used = 0
+        for item in self.items:
+            item_width = item[0].winfo_reqwidth()
+            if row and used + item_width > width:
+                rows.append(row)
+                row = []
+                used = 0
+            row.append(item)
+            used = used + item_width
+        if row:
+            rows.append(row)
+        return rows
+
+    def arrange(self, width = None):
+        if not self.winfo_exists():
+            return
+        natural = self.natural_width()
+        if width is None:
+            width = self.winfo_width()
+        if width <= 1:
+            width = natural
+        rows = self.split(width)
+        layout = [len(row) for row in rows]
+        if layout != self.layout:
+            self.layout = layout
+            for widget, expand in self.items:
+                widget.pack_forget()
+            for frame in self.rows:
+                frame.destroy()
+            self.rows = []
+            for row in rows:
+                frame = Frame(self)
+                # the row frames are created after the widgets, keep
+                # them below them in the stacking order
+                frame.lower()
+                frame.pack(side = TOP, fill = X)
+                for widget, expand in row:
+                    widget.pack(in_ = frame, side = LEFT, expand = expand,
+                                fill = expand and X or None)
+                self.rows.append(frame)
+        height = 0
+        for row in rows:
+            height = height + max([widget.winfo_reqheight()
+                                   for widget, expand in row])
+        self.configure(width = natural, height = max(height, 1))
+
+
 def MakeMethodCommand(method, *args):
     obj = method.__self__
     name = method.__name__

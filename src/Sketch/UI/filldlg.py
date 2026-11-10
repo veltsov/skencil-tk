@@ -557,6 +557,7 @@ class ImageTilePatternFrame(PatternFrame):
 class FillPanel(StylePropertyPanel):
 
     title = _("Fill Style")
+    resize_policy = 'elastic'
 
     def __init__(self, master, main_window, doc):
         StylePropertyPanel.__init__(self, master, main_window, doc,

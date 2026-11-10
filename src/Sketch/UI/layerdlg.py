@@ -193,11 +193,20 @@ class LayerPanel(SketchPanel):
         canvas.pack(expand = 1, fill = BOTH)
 
         self.frame = frame = Frame(canvas, name = 'list')
-        canvas.create_window(0, 0, window = frame, anchor = NW)
+        # the name column takes the width the panel has to spare
+        frame.columnconfigure(0, weight = 1)
+        self.list_window = canvas.create_window(0, 0, window = frame,
+                                                anchor = NW)
+        canvas.bind('<Configure>', self.canvas_resized)
         sb_vert['command'] = (canvas, 'yview')
         canvas['yscrollcommand'] = (sb_vert, 'set')
 
         self.active_var = IntVar(top)
+
+    def canvas_resized(self, event):
+        self.canvas.itemconfigure(self.list_window,
+                                  width = max(event.width,
+                                              self.frame.winfo_reqwidth()))
 
     def init_from_doc(self):
         self.Update(LAYER_ORDER)

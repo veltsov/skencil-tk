@@ -77,6 +77,7 @@ def get_from_list(item, list):
 class FontPanel(StylePropertyPanel):
 
     title = _("Fonts")
+    resize_policy = 'elastic'
 
     def __init__(self, master, main_window, doc):
         self.family_to_fonts = font.make_family_to_fonts()
@@ -92,42 +93,37 @@ class FontPanel(StylePropertyPanel):
     def build_dlg(self):
         top = self.top
 
-        buttons = self.create_std_buttons(top)
-        buttons.grid(row = 3, column = 4, columnspan = 2, sticky = "news")
-
-        self.sample = FontPreview(top)
-        self.sample.grid(column = 0, row = 3, columnspan = 4, sticky = "news")
-        # XXX: the background color of the sample text should be
-        # configurable
-
+        # One column: the family list on top takes the height the panel
+        # has to spare, the style list and the size below it, then the
+        # sample and the buttons.
         label = Label(top, text = _("Font Family:"), anchor = W)
-        label.grid(column = 0, row = 0, columnspan = 2, sticky = "ew")
+        label.grid(column = 0, row = 0, columnspan = 4, sticky = "ew")
         sb_vert = Scrollbar(top, takefocus = 0)
-        sb_vert.grid(column = 1, row = 1, rowspan = 2, sticky = "news")
+        sb_vert.grid(column = 3, row = 1, sticky = "news")
         family_list = UpdatedListbox(top, name = 'families', height = 8)
-        family_list.grid(column = 0, row = 1, rowspan = 2, sticky = "news")
+        family_list.grid(column = 0, row = 1, columnspan = 3, sticky = "news")
         family_list.Subscribe(SELECTION, self.family_selected)
         sb_vert['command'] = (family_list, 'yview')
         family_list['yscrollcommand'] = (sb_vert, 'set')
         self.family_list = family_list
 
         label = Label(top, text = _("Font Style:"), anchor = W)
-        label.grid(column = 2, row = 0, sticky = "ew")
+        label.grid(column = 0, row = 2, columnspan = 2, sticky = "ew")
         sb_vert = Scrollbar(top, takefocus = 0)
-        sb_vert.grid(column = 3, row = 1, rowspan = 2, sticky = "news")
+        sb_vert.grid(column = 1, row = 3, rowspan = 2, sticky = "news")
         self.font_attr_list = UpdatedListbox(top, name = 'weights', height = 4,
                                              width = 15)
-        self.font_attr_list.grid(column = 2, row = 1, rowspan = 2,
+        self.font_attr_list.grid(column = 0, row = 3, rowspan = 2,
                                  sticky = "news")
         self.font_attr_list.Subscribe(SELECTION, self.attr_selected)
         sb_vert['command'] = (self.font_attr_list, 'yview')
         self.font_attr_list['yscrollcommand'] = (sb_vert, 'set')
 
         label = Label(top, text = _("Size:"), anchor = W)
-        label.grid(column = 4, row = 0, columnspan = 2, sticky = "ew")
+        label.grid(column = 2, row = 2, columnspan = 2, sticky = "ew")
 
         frame = Frame(top)
-        frame.grid(column = 4, row = 1, columnspan = 2, sticky = 'ew')
+        frame.grid(column = 2, row = 3, columnspan = 2, sticky = 'ew')
         self.var_size = DoubleVar(top)
         scroll = MiniScroller(frame, variable = self.var_size,
                               min = 0.0, max = None, step = 1)
@@ -138,18 +134,25 @@ class FontPanel(StylePropertyPanel):
         self.size_entry.pack(side = LEFT, expand = 1, fill = BOTH)
 
         sb_vert = Scrollbar(top, takefocus = 0)
-        sb_vert.grid(column = 5, row = 2, sticky = "news")
+        sb_vert.grid(column = 3, row = 4, sticky = "news")
         self.size_list = UpdatedListbox(top, name = 'sizes', width = 4,
                                         height = 5)
-        self.size_list.grid(column = 4, row = 2, sticky = "news")
+        self.size_list.grid(column = 2, row = 4, sticky = "news")
         self.size_list.Subscribe(SELECTION, self.size_selected)
         self.size_list.SetList(std_sizes)
         sb_vert['command'] = (self.size_list, 'yview')
         self.size_list['yscrollcommand'] = (sb_vert, 'set')
 
-        top.columnconfigure(0, weight = 1000)
-        top.columnconfigure(4, weight = 1)
-        top.rowconfigure(2, weight = 1)
+        self.sample = FontPreview(top)
+        self.sample.grid(column = 0, row = 5, columnspan = 4, sticky = "news")
+        # XXX: the background color of the sample text should be
+        # configurable
+
+        buttons = self.create_std_buttons(top)
+        buttons.grid(column = 0, row = 6, columnspan = 4, sticky = "news")
+
+        top.columnconfigure(0, weight = 1)
+        top.rowconfigure(1, weight = 1)
 
     def init_from_doc(self):
         object = self.document.CurrentObject()

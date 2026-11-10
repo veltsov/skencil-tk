@@ -19,7 +19,7 @@
 from Sketch.UI import sketchdlg
 from tkinter import Frame
 from tkinter import BOTTOM, X, BOTH, TOP, CENTER
-from Sketch.UI.tkext import UpdatedButton, CommandButton
+from Sketch.UI.tkext import UpdatedButton, CommandButton, FlowFrame
 
 from Sketch import _
 
@@ -35,21 +35,21 @@ class CurvePanel(CommandPanel):
                               name = 'curvedlg')
 
     def build_dlg(self):
-        names = (('ContAngle', 'CloseNodes', 'OpenNodes'),
-                 ('ContSmooth', 'InsertNodes', 'DeleteNodes'),
-                 ('ContSymmetrical', 'SegmentsToLines', 'SegmentsToCurve'))
+        names = ('ContAngle', 'CloseNodes', 'OpenNodes',
+                 'ContSmooth', 'InsertNodes', 'DeleteNodes',
+                 'ContSymmetrical', 'SegmentsToLines', 'SegmentsToCurve')
 
         top = self.top
-        frame = Frame(top)
+        # three buttons per row in a window, as many as fit when docked
+        frame = FlowFrame(top, natural = 3)
         frame.pack(side = TOP, expand = 1, fill = BOTH)
 
         # XXX This dialog should have its own ObjectCommand objects
         cmds = self.main_window.canvas.commands.PolyBezierEditor
-        for i in range(len(names)):
-            for j in range(len(names[i])):
-                button = CommandButton(frame, getattr(cmds, names[i][j]),
-                                       highlightthickness = 0)
-                button.grid(column = j, row = i)
+        for name in names:
+            button = CommandButton(frame, getattr(cmds, name),
+                                   highlightthickness = 0)
+            frame.Add(button)
 
         frame = Frame(top)
         frame.pack(side = BOTTOM, expand = 0, fill = X)

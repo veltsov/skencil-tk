@@ -35,7 +35,7 @@
 
 from Sketch.Base import config
 
-from tkinter import Toplevel, Frame, Label, Canvas, Scrollbar, BitmapImage
+from tkinter import Toplevel, Frame, Label, Canvas, Scrollbar, BitmapImage, Menu
 from tkinter import TOP, X
 
 from Sketch.UI import tkext
@@ -146,6 +146,19 @@ static unsigned char close_bits[] = {
    0xc6, 0x00, 0x83, 0x01, 0x00, 0x00};
 """
 
+_title_colors = None
+
+def title_colors(master):
+    # The colors of the title bar: those of a highlighted menu item, as
+    # Tk has them (the option database included)
+    global _title_colors
+    if _title_colors is None:
+        menu = Menu(master)
+        _title_colors = (menu.cget('activebackground'),
+                         menu.cget('activeforeground'))
+        menu.destroy()
+    return _title_colors
+
 _images = {}
 
 def _image(name, master):
@@ -153,7 +166,8 @@ def _image(name, master):
     if image is None:
         data = {'expanded': _expanded_bits, 'collapsed': _collapsed_bits,
                 'close': _close_bits}[name]
-        image = _images[name] = BitmapImage(master = master, data = data)
+        image = _images[name] = BitmapImage(master = master, data = data,
+                                            foreground = title_colors(master)[1])
     return image
 
 
@@ -174,14 +188,17 @@ class DockContainer:
         frame.columnconfigure(0, weight = 1)
         frame.rowconfigure(1, weight = 1)
 
-        bar = Frame(frame, name = 'titlebar')
+        background, foreground = title_colors(frame)
+        bar = Frame(frame, name = 'titlebar', background = background)
         bar.grid(row = 0, column = 0, sticky = 'ew')
         self.toggle = Label(bar, image = _image('expanded', frame),
-                            name = 'collapse')
+                            name = 'collapse', background = background)
         self.toggle.pack(side = 'left', padx = 3)
-        label = Label(bar, text = panel.title, anchor = 'w', name = 'title')
+        label = Label(bar, text = panel.title, anchor = 'w', name = 'title',
+                      background = background, foreground = foreground)
         label.pack(side = 'left', fill = X, expand = 1)
-        close = Label(bar, image = _image('close', frame), name = 'close')
+        close = Label(bar, image = _image('close', frame), name = 'close',
+                      background = background)
         close.pack(side = 'right', padx = 3)
         for widget in (self.toggle, label):
             widget.bind('<ButtonRelease-1>', self.toggle_collapsed)
@@ -192,8 +209,8 @@ class DockContainer:
         body.tk.call('bind', body._w, '<Destroy>',
                      tkext.MakeMethodCommand(panel.destroyed) + ('%W',))
 
-        grip = Frame(frame, name = 'grip', height = 5,
-                     cursor = 'sb_v_double_arrow')
+        grip = Frame(frame, name = 'grip', height = 6, relief = 'raised',
+                     borderwidth = 1, cursor = 'sb_v_double_arrow')
         grip.bind('<ButtonPress-1>', self.grip_press)
         grip.bind('<B1-Motion>', self.grip_motion)
         grip.bind('<Double-ButtonPress-1>', self.grip_reset)

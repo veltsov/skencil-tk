@@ -59,6 +59,21 @@ def check():
     root.update()
     assert dock.body.winfo_height() == dock.body.winfo_reqheight()
 
+    # drag the grip of an elastic panel
+    win.CreateDialog('Sketch.UI.guidedlg', 'GuidePanel')
+    root.update()
+    dock = win.dialogs['GuidePanel'].container
+    assert dock.grip.winfo_ismapped()
+    height = dock.body.winfo_height()
+    dock.grip.event_generate('<ButtonPress-1>', x = 2, y = 2)
+    dock.grip.event_generate('<Motion>', x = 2, y = 52, state = 0x100)
+    dock.grip.event_generate('<ButtonRelease-1>', x = 2, y = 52)
+    root.update()
+    assert dock.body.winfo_height() == height + 50, \
+           (height, dock.body.winfo_height())
+    assert not win.dialogs['AlignPanel'].container.grip.winfo_ismapped()
+    win.dialogs['GuidePanel'].close_dlg()
+
     # hide and show all
     win.HideDialogs()
     root.update()
@@ -68,6 +83,7 @@ def check():
     assert str(sidebar) in [str(w) for w in win.panes.panes()]
 
     # close through the title bar and through the panel
+    dock = win.dialogs['LayerPanel'].container
     dock.frame.nametowidget('titlebar.close').event_generate(
         '<ButtonRelease-1>')
     win.dialogs['GridPanel'].close_dlg()
