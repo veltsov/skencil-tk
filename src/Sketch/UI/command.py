@@ -121,6 +121,11 @@ class Command(Publisher):
         return self.value == self.value_on
 
     def InContext(self):
+        # whether to show the command in a context menu
+        if self.in_context_cb:
+            method = self.get_method(self.in_context_cb)
+            if method:
+                return method()
         return 1
 
     def set_bitmap(self, bitmap):
@@ -148,6 +153,7 @@ class CommandClass:
     sensitive_cb = None
     sensitive = 1
     value_cb = None
+    in_context_cb = None
     value = 0
     value_on = 1
     value_off = 0
@@ -157,7 +163,8 @@ class CommandClass:
     invoke_with_keystroke = 0
 
 
-    callable_attributes = ('name_cb', 'sensitive_cb', 'value_cb')
+    callable_attributes = ('name_cb', 'sensitive_cb', 'value_cb',
+                           'in_context_cb')
 
     def __init__(self, name, command, subscribe_to = None, args = (),
                  is_check = 0, **rest):

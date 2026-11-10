@@ -58,7 +58,8 @@ _builtin = ['NewDocument', 'Open', 'Save',
             ]
 
 _small = ['MiniEyeOpen', 'MiniEyeClosed', 'MiniPrintOn', 'MiniPrintOff',
-          'MiniLockOpen', 'MiniLockClosed', 'MiniOutlineOn', 'MiniOutlineOff']
+          'MiniLockOpen', 'MiniLockClosed', 'MiniOutlineOn', 'MiniOutlineOff',
+          'MiniReload', 'MiniArrowRight']
 
 _small_dir = 'New12'
 

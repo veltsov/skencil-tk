@@ -31,7 +31,8 @@ import PIL.Image, PIL.ImageChops
 from Sketch import _, RegisterCommands
 from Sketch.UI.command import AddCmd
 
-from Sketch.Graphics.external import ExternalData, get_cached, ExternalGraphics
+from Sketch.Graphics.external import ExternalData, MissingData, get_cached, \
+     ExternalGraphics
 
 
 # PIL 'raw' encoder/decoder names for the internal representation:
@@ -144,15 +145,41 @@ class ImageData(ExternalData):
 
 
 
+class MissingImageData(MissingData):
+
+    mode = 'RGB'
+
+    @property
+    def size(self):
+        return self.Size()
+
+    def AsEmbedded(self):
+        return self
+
+    def new_from_file(self):
+        return load_image(self.filename)
+
+
 def load_image(filename, cache = 1):
     if isinstance(filename, str):
         image = get_cached(filename)
-        if image:
+        if isinstance(image, ImageData):
             return image
     image = PIL.Image.open(filename)
     if not isinstance(filename, str):
         filename = ''
     return ImageData(image, filename = filename, cache = cache)
+
+def load_image_or_missing(filename):
+    # Return the data of the linked image file FILENAME, or a
+    # placeholder MissingImageData if the file does not exist.
+    try:
+        return load_image(filename)
+    except FileNotFoundError:
+        data = get_cached(filename)
+        if not isinstance(data, MissingImageData):
+            data = MissingImageData(filename)
+        return data
 
 class Image(ExternalGraphics):
 
@@ -173,11 +200,18 @@ class Image(ExternalGraphics):
                                   duplicate = duplicate)
 
     def DrawShape(self, device, rect = None, clip = 0):
-        device.DrawImage(self.data, self.trafo, clip)
+        if self.data.IsMissing():
+            device.DrawMissingLink(self.data, self.trafo)
+        else:
+            device.DrawImage(self.data, self.trafo, clip)
 
     def Info(self):
         width, height = self.data.Size()
         x, y = self.trafo.offset()
+        if self.data.IsMissing():
+            filename = os.path.basename(self.data.Filename())
+            return _("Missing Linked Image `%(filename)s' "
+                     "at (%(x)d, %(y)d)") % locals()
         if self.IsEmbedded():
             return _("Embedded Image %(width)d x %(height)d "
                      "at (%(x)d, %(y)d)") % locals()
@@ -192,7 +226,7 @@ class Image(ExternalGraphics):
     def Embed(self):
         return self.SetData(self.data.AsEmbedded())
     AddCmd(commands, 'EmbedImage', _("Embed Image"), Embed,
-           sensitive_cb = 'IsLinked')
+           sensitive_cb = 'IsLinkedAndPresent')
 
     def CallImageFunction(self, function, args = ()):
         if type(args) != type(()):
@@ -200,11 +234,14 @@ class Image(ExternalGraphics):
         data = getattr(self.data, function)(*args)
         return self.SetData(data)
     AddCmd(commands, 'GrayscaleImage', _("Grayscale Image"),
-           CallImageFunction, args = ('Convert', 'L'))
+           CallImageFunction, args = ('Convert', 'L'),
+           sensitive_cb = 'IsPresent')
     AddCmd(commands, 'InvertImage', _("Invert Image"), CallImageFunction,
-           args = 'Invert')
+           args = 'Invert', sensitive_cb = 'IsPresent')
 
-    context_commands = ('EmbedImage', 'GrayscaleImage', 'InvertImage')
+    # ReplaceImage is a command of the main window (it asks for a file)
+    context_commands = ('ReplaceImage', 'EmbedImage', 'GrayscaleImage',
+                        'InvertImage')
 
 RegisterCommands(Image)
 

@@ -26,11 +26,14 @@ import PIL.Image
 from Sketch.Lib import dscparser, util
 from Sketch.Graphics.image import RasterImage, image_from_pil
 IsEpsFileStart = dscparser.IsEpsFileStart
-from Sketch import _, Point
+from Sketch import _, Point, NullUndo, SketchError, RegisterCommands
 from Sketch.Base import config
+from Sketch.Base.warn import warn, USER
+from Sketch.UI.command import AddCmd
 
 from Sketch.Graphics.base import GraphicsObject
-from Sketch.Graphics.external import ExternalData, get_cached, ExternalGraphics
+from Sketch.Graphics.external import ExternalData, MissingData, get_cached, \
+     ExternalGraphics
 
 
 def render_preview(filename, startx, starty, width, height, resolution = None):
@@ -119,11 +122,49 @@ class EpsData(ExternalData):
     def new_from_file(self):
         return load_eps(self.filename)
 
+class _NoDSCInfo:
+    DocumentNeededResources = []
+
+class MissingEpsData(MissingData):
+
+    info = _NoDSCInfo()
+    image = None
+
+    def Start(self):
+        return (0, 0)
+
+    def new_from_file(self):
+        return load_eps(self.filename)
+
 def load_eps(filename):
     eps = get_cached(filename)
-    if eps:
+    if isinstance(eps, EpsData):
         return eps
     return EpsData(filename)
+
+def import_eps_objects(data):
+    # Import the EPS file of DATA as vector objects with the PS import
+    # filter. Return (group, messages); the group's coordinates are
+    # those of an EpsImage with identity transformation (the lower left
+    # corner of the BoundingBox at the origin).
+    from Sketch.Plugins.Filters.Lib import psimport
+    group, messages = psimport.import_ps_group(data.Filename())
+    if group is None:
+        raise SketchError(_("%s contains no objects")
+                          % util.as_display_name(data.Filename()))
+    return group, messages
+
+def load_eps_or_missing(filename):
+    # Return the data of the linked EPS file FILENAME, or a placeholder
+    # MissingEpsData if the file does not exist. Other errors (e.g. no
+    # BoundingBox) are raised.
+    try:
+        return load_eps(filename)
+    except FileNotFoundError:
+        data = get_cached(filename)
+        if not isinstance(data, MissingEpsData):
+            data = MissingEpsData(filename)
+        return data
 
 
 class EpsImage(ExternalGraphics):
@@ -131,23 +172,33 @@ class EpsImage(ExternalGraphics):
     has_edit_mode = 0
     is_Eps = 1
 
-    def __init__(self, filename = '', trafo = None, duplicate = None):
+    def __init__(self, filename = '', trafo = None, duplicate = None,
+                 data = None):
         if duplicate is None:
-            if not filename:
-                raise ValueError('filename must be provided')
-            data = load_eps(filename)
+            if data is None:
+                if not filename:
+                    raise ValueError('filename must be provided')
+                data = load_eps(filename)
         else:
             data = None
         ExternalGraphics.__init__(self, data, trafo,
                                   duplicate = duplicate)
 
+    commands = ExternalGraphics.commands[:]
+
     def DrawShape(self, device, rect = None):
-        device.DrawEps(self.data, self.trafo)
+        if self.data.IsMissing():
+            device.DrawMissingLink(self.data, self.trafo)
+        else:
+            device.DrawEps(self.data, self.trafo)
 
     def Info(self):
         filename = os.path.basename(self.data.Filename())
         width, height = self.data.Size()
         x, y = self.trafo.offset()
+        if self.data.IsMissing():
+            return _("Missing EpsFile `%(filename)s' "
+                     "at (%(x)d, %(y)d)") % locals()
         return _("EpsFile `%(filename)s' %(width)d x %(height)d "
                  "at (%(x)d, %(y)d)") % locals()
 
@@ -156,6 +207,40 @@ class EpsImage(ExternalGraphics):
 
     def PSNeededResources(self):
         return self.data.info.DocumentNeededResources
+
+    def EmbeddedCopy(self, template):
+        # Return the objects of TEMPLATE (see import_eps_objects) placed
+        # like self, clipped to the BoundingBox if they extend beyond it
+        # (like the EPS when printed).
+        from Sketch import Rectangle, MaskGroup, Rect, Trafo
+        from Sketch.Plugins.Filters.Lib.svgimport.clip import \
+             empty_properties
+        width, height = self.data.Size()
+        group = template.Duplicate()
+        group.Transform(self.trafo)
+        if not Rect(-0.5, -0.5, width + 0.5, height + 0.5) \
+               .contains_rect(template.coord_rect):
+            mask = Rectangle(self.trafo(Trafo(width, 0, 0, height, 0, 0)),
+                             properties = empty_properties())
+            group = MaskGroup([mask, group])
+        return group
+
+    def Embed(self):
+        # replaces self in the document by the imported vector objects;
+        # the undo information is recorded by the document's transaction
+        try:
+            self.document.EmbedObjects([self])
+        except SketchError as value:
+            warn(USER, _("Cannot embed %(filename)s:\n%(message)s")
+                 % {'filename': self.data.Filename(), 'message': value})
+        return NullUndo
+    AddCmd(commands, 'EmbedEps', _("Embed EPS"), Embed,
+           sensitive_cb = 'IsLinkedAndPresent')
+
+    # ReplaceEps is a command of the main window (it asks for a file)
+    context_commands = ('ReplaceEps', 'EmbedEps')
+
+RegisterCommands(EpsImage)
 
 
 

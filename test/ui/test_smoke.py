@@ -45,6 +45,27 @@ def test_open_layer_dialog():
     run_ui('smoke_dialog.py', args=[testsupport.data_path('tarr.sk')])
 
 
+def test_links_panel(tmp_path):
+    """A document with missing linked files opens (with a warning);
+    the Links panel lists them and relinks, embeds and toggles the
+    automatic update."""
+    import shutil
+    sys_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            '..', 'model')
+    import sys
+    sys.path.insert(0, sys_path)
+    import test_links
+    test_links.clear_cache()
+    sk_file, eps_file, png_file = test_links.make_document(tmp_path)
+    shutil.move(eps_file, eps_file + '.new')
+    shutil.move(png_file, png_file + '.new')
+    out, err = run_ui('smoke_links.py', args=[sk_file],
+                          script_env={
+                              'SKENCIL_TEST_LINKS_EPS': eps_file + '.new',
+                              'SKENCIL_TEST_LINKS_PNG': png_file + '.new'})
+    assert b'LINKS-OK' in out, (out, err)
+
+
 def test_open_about_box():
     """File->About must not crash (py3 regression guard: tkinter has no
     __version__ attribute there, so building the version string used to

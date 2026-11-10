@@ -37,7 +37,7 @@ import sys
 from functools import reduce
 
 from Sketch.Base.warn import pdebug, warn, warn_tb, USER, INTERNAL
-from Sketch import SketchInternalError
+from Sketch import SketchInternalError, SketchError
 
 
 from Sketch import _
@@ -55,6 +55,7 @@ from Sketch.Graphics import color, selinfo, pagelayout
 from Sketch.Graphics.base import Protocols
 from Sketch.Graphics.layer import Layer, GuideLayer, GridLayer
 from Sketch.Graphics.group import Group
+from Sketch.Graphics.compound import EditableCompound
 from Sketch.Graphics.bezier import CombineBeziers
 from Sketch.Graphics.properties import EmptyProperties
 from Sketch.Graphics.pattern import SolidPattern
@@ -1867,6 +1868,135 @@ class EditDocument(SketchDocument, QueueingPublisher):
         if self.CanReloadImage():
             object = self.selection.GetObjects()[0]
             object.UpdateLink()
+
+    #
+    #   Links to external files (the Links panel)
+    #
+
+    def LinkedObjects(self):
+        # all objects of the document linked to an external file
+        objects = []
+        def add(obj):
+            if obj.has_links and obj.IsLinked():
+                objects.append(obj)
+        self.WalkHierarchy(add, all = 1)
+        return objects
+
+    def LinkGroups(self):
+        # The linked objects grouped by file: a list of
+        # (filename, is_eps, objects) in document order.
+        groups = {}
+        result = []
+        for obj in self.LinkedObjects():
+            key = (obj.Data().Filename(), not not obj.is_Eps)
+            if key not in groups:
+                groups[key] = []
+                result.append(key + (groups[key],))
+            groups[key].append(obj)
+        return result
+
+    def RelinkObjects(self, objects, filename, embed = 0):
+        # Link the external objects OBJECTS (all of the same kind) to the
+        # file FILENAME, or for images with EMBED true, embed the image of
+        # FILENAME. Undoable. Raise SketchError if FILENAME cannot be
+        # loaded.
+        from Sketch.Graphics import eps, image
+        if not objects:
+            return
+        try:
+            if objects[0].is_Eps:
+                data = eps.load_eps(filename)
+            else:
+                data = image.load_image(filename)
+                if embed:
+                    data = data.AsEmbedded()
+        except SketchError:
+            raise
+        except Exception as value:
+            raise SketchError(str(value))
+        self.begin_transaction(_("Change Link"))
+        try:
+            try:
+                for obj in objects:
+                    # the objects need not be selected: redraw them
+                    self.add_undo(self.AddClearRect(obj.bounding_rect))
+                    self.add_undo(obj.SetData(data))
+                    self.add_undo(self.AddClearRect(obj.bounding_rect))
+                self.add_undo(self.queue_edited())
+                self.selection.ResetRectangle()
+            except:
+                self.abort_transaction()
+        finally:
+            self.end_transaction()
+
+    def CurrentExternalObject(self, is_eps):
+        # the selected object if it is a single EpsImage (IS_EPS true) or
+        # Image -- linked, missing or embedded -- whose file can be
+        # replaced, None otherwise
+        obj = self.CurrentObject()
+        if obj is not None and obj.has_links \
+           and (obj.is_Eps if is_eps else obj.is_Image):
+            return obj
+        return None
+
+    def CanEmbedObject(self, obj):
+        if not obj.has_links or not obj.IsLinked() or obj.IsMissing():
+            return 0
+        if obj.is_Eps:
+            # the EPS is replaced by the imported objects
+            return isinstance(obj.parent, EditableCompound)
+        return 1
+
+    def EmbedObjects(self, objects):
+        # Embed the linked external objects OBJECTS into the document:
+        # images get embedded image data, EPS files are replaced by
+        # objects imported from them with the PS import filter. Undoable.
+        # Raise SketchError if an EPS file cannot be imported. Return the
+        # messages of the import filter.
+        from Sketch.Graphics import eps
+        objects = [obj for obj in objects if self.CanEmbedObject(obj)]
+        if not objects:
+            return ''
+        # import first: errors leave the document unchanged
+        templates = {}
+        messages = []
+        for obj in objects:
+            if obj.is_Eps:
+                filename = obj.Data().Filename()
+                if filename not in templates:
+                    templates[filename], msg = eps.import_eps_objects(
+                        obj.Data())
+                    if msg:
+                        messages.append(msg)
+        self.begin_transaction(_("Embed"))
+        try:
+            try:
+                embedded = {}
+                replaced = {}
+                for obj in objects:
+                    data = obj.Data()
+                    # the objects need not be selected: redraw them
+                    self.add_undo(self.AddClearRect(obj.bounding_rect))
+                    if obj.is_Eps:
+                        group = obj.EmbeddedCopy(templates[data.Filename()])
+                        self.add_undo(obj.parent.ReplaceChild(obj, group))
+                        replaced[id(obj)] = group
+                        self.add_undo(self.AddClearRect(group.bounding_rect))
+                    else:
+                        if id(data) not in embedded:
+                            embedded[id(data)] = data.AsEmbedded()
+                        self.add_undo(obj.SetData(embedded[id(data)]))
+                if replaced:
+                    selection = [(info, replaced.get(id(obj), obj))
+                                 for info, obj in self.selection.GetInfo()]
+                    self.__set_selection(selection, SelectSet)
+                self.add_undo(self.queue_edited())
+                self.selection.ResetRectangle()
+            except:
+                self.abort_transaction()
+        finally:
+            self.end_transaction()
+        return '\n'.join(messages)
                     
     #
     #	Clone (under construction...)

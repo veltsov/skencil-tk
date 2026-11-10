@@ -103,6 +103,7 @@ REDRAW = 'REDRAW'
 STYLE = 'STYLE'
 UNDO = 'UNDO'
 GUIDE_LINES = 'GUIDE_LINES'
+LINKS = 'LINKS'
 
 
 # graphics object

@@ -42,6 +42,9 @@ def sk2ps(filename, psfilename, **psargs):
     # convert the SK file FILENAME into a PostScript file PSFILENAME.
     # Any keyword arguments are passed to the PostScript device class.
     doc = load.load_drawing(filename)
+    if doc.meta.load_messages:
+        # e.g. missing linked files (skipped in the output)
+        sys.stderr.write('sk2ps: %s\n' % doc.meta.load_messages)
     bbox = doc.BoundingRect(visible = psargs.get('visible', 0),
                             printable = psargs.get('printable', 1))
     psargs['bounding_box'] = tuple(bbox)

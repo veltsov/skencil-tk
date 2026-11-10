@@ -596,6 +596,8 @@ class SketchMainWindow(Publisher):
 #	   'CreateDialog', args = ('export', 'ExportPanel'))
     AddCmd('CreateCurveDialog', _("Curve Commands..."),
            'CreateDialog', args = ('Sketch.UI.curvedlg', 'CurvePanel'), key_stroke = 'F9')
+    AddCmd('CreateLinksDialog', _("Links..."),
+           'CreateDialog', args = ('Sketch.UI.linksdlg', 'LinksPanel'))
     AddCmd('CreateGuideDialog', _("Guide Lines..."),
            'CreateDialog', args = ('Sketch.UI.guidedlg', 'GuidePanel'))
     AddCmd('CreatePrintDialog', _("Print..."),
@@ -974,6 +976,7 @@ class SketchMainWindow(Publisher):
                     cmds.CreateLayerDialog,
                     cmds.CreateAlignDialog,
                     cmds.CreateGridDialog,
+                    cmds.CreateLinksDialog,
                     None,
                     cmds.CreateLineStyleDialog,
                     cmds.CreateFillStyleDialog,
@@ -1414,6 +1417,33 @@ class SketchMainWindow(Publisher):
     AddDocCmd('ReloadImage', _("Update Linked Image"),
               sensitive_cb = 'CanReloadImage', key_stroke = ('Ctrl+L','C-l'))
 
+    # Replace the file of the selected image or EPS object (also of a
+    # placeholder of a missing file); an embedded image stays embedded.
+    # In the context menus of these objects only (in_context_cb).
+    AddCmd('ReplaceImage', _("Replace Image..."), 'ReplaceObjectFile',
+           args = 0, subscribe_to = SELECTION,
+           sensitive_cb = 'IsImageCurrent', in_context_cb = 'IsImageCurrent')
+    AddCmd('ReplaceEps', _("Replace EPS..."), 'ReplaceObjectFile',
+           args = 1, subscribe_to = SELECTION,
+           sensitive_cb = 'IsEpsCurrent', in_context_cb = 'IsEpsCurrent')
+
+    def IsImageCurrent(self):
+        return self.document.CurrentExternalObject(0) is not None
+
+    def IsEpsCurrent(self):
+        return self.document.CurrentExternalObject(1) is not None
+
+    def ReplaceObjectFile(self, is_eps):
+        from Sketch.UI import linksdlg
+        obj = self.document.CurrentExternalObject(is_eps)
+        if obj is None:
+            return
+        filename = linksdlg.ask_link_filename(self, obj.Data().Filename(),
+                                              is_eps)
+        if filename:
+            linksdlg.relink_objects(self, [obj], filename,
+                                    embed = obj.IsEmbedded())
+
     AddCmd('ReloadAllImages',_("Update All Links"), sensitive_cb = 'CanReloadAllImages')
     def ReloadAllImages(self):
         external.reload_all_images()
@@ -1433,6 +1463,8 @@ class SketchMainWindow(Publisher):
             self.auto_reload_id = None
         else:
             self.start_image_monitoring()
+        # e.g. the check button in the Links panel follows the command
+        self.commands.ToggleAutoReload.Update()
 
     def start_image_monitoring(self):
         self.auto_reload_id = self.root.after(2000,self.check_image_reload)

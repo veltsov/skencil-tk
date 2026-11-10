@@ -240,7 +240,7 @@ class PostScriptDevice(CommonDevice):
             self.needed_resources.update(obj.PSNeededResources())
 
     def handle_writes_to_embedded_eps(self, obj):
-        if obj.is_Eps:
+        if obj.is_Eps and not obj.Data().IsMissing():
             data = obj.Data()
             # we only need to investigate this if we've not processed it yet
             if id(data) not in self.loaded_eps_files:

@@ -395,6 +395,12 @@ class CommonDevice:
 
     outline_mode = 0
 
+    def DrawMissingLink(self, data, trafo):
+        # Placeholder of an object whose linked file is missing (see
+        # external.MissingData). Drawn only on screen; export devices
+        # skip it.
+        pass
+
     def draw_arrow(self, arrow, width, pos, dir, rect = None):
         self.PushTrafo()
         self.Translate(pos.x, pos.y)
@@ -1167,6 +1173,25 @@ class GraphicsDevice(SimpleGC, CommonDevice):
             self.PopClip()
 
 
+    # color of the missing link placeholder (None: the current line
+    # properties, e.g. for the inverting and hit test devices)
+    missing_link_color = StandardColors.red
+
+    def DrawMissingLink(self, data, trafo):
+        w, h = data.Size()
+        if self.missing_link_color is None or self.IsOutlineActive():
+            self.properties.ExecuteLine(self)
+        else:
+            self.SetLineColor(self.missing_link_color)
+            self.gc.line_width = 0
+            self.gc.line_style = X.LineSolid
+        self.PushTrafo()
+        self.Concat(trafo)
+        self.DrawRectangle(Point(0, 0), Point(w, h))
+        self.DrawLineXY(0, 0, w, h)
+        self.DrawLineXY(0, h, w, 0)
+        self.PopTrafo()
+
     def DrawEps(self, data, trafo):
         if not data.image or self.IsOutlineActive():
             w, h = data.Size()
@@ -1281,6 +1306,7 @@ dummyLineStyle = DummyAttr(SolidLine(color_0))
 
 class InvertingDevice(GraphicsDevice):
 
+    missing_link_color = None
     normal_line_style = X.LineSolid
     handle_line_style = X.LineOnOffDash
     caret_line_style = X.LineSolid
@@ -1432,6 +1458,7 @@ hit_properties.AddStyle(SolidLine(color_1, width = 3))
 
 class HitTestDevice(GraphicsDevice):
 
+    missing_link_color = None
     outline_style = hit_properties
 
     def __init__(self):

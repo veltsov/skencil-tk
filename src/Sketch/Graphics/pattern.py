@@ -659,6 +659,9 @@ class ImageTilePattern(Pattern):
         return self.set_transformation(trafo(self.trafo))
 
     def Execute(self, device, rect):
+        if self.data.IsMissing():
+            # the linked image file is missing: draw as empty fill
+            return
         device.TileImage(self.data,
                          Translation(rect.left, rect.top)(self.trafo))
 

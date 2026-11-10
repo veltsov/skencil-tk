@@ -29,7 +29,7 @@ from Sketch.Base import main
 from Sketch.Graphics.base import GraphicsObject, RectangularObject
 from Sketch.Graphics.properties import EmptyProperties
 
-from Sketch.Base.const import SELECTION
+from Sketch.Base.const import SELECTION, LINKS
 
 import os
 import time
@@ -63,6 +63,9 @@ class ExternalData:
     def IsLinked(self):
         return not self.IsEmbedded()
 
+    def IsMissing(self):
+        return 0
+
     def insert_into_cache(self):
         self.stored_in_cache = 1
         instance_cache[self.filename] = self
@@ -91,9 +94,10 @@ class ExternalData:
             doc = obj.document
             oldrect = obj.bounding_rect
             obj.SetData(newdata)
-            doc.AddClearRect(oldrect)
-            doc.AddClearRect(obj.bounding_rect)
-            docs.append(doc)
+            if doc is not None:
+                doc.AddClearRect(oldrect)
+                doc.AddClearRect(obj.bounding_rect)
+                docs.append(doc)
         if finalize:
             finalize_doc_change(docs)
         return docs
@@ -115,6 +119,33 @@ class ExternalData:
     #    new_from_file() make new external data object from the same filename
 
 
+# size of the placeholder of a missing linked file, in the units of the
+# object's local frame (pt for EPS, pixels for images)
+MISSING_SIZE = (100, 100)
+
+class MissingData(ExternalData):
+
+    # Stands in for the data of a linked file that does not exist (yet).
+    # The link (the file name) is kept, so the document saves unchanged;
+    # the objects using it draw a placeholder on screen and nothing on
+    # export devices. It is cached like real data, so updating the links
+    # (also automatically) replaces it as soon as the file appears.
+
+    def __init__(self, filename):
+        self.user_list = []
+        self.filename = filename
+        self.insert_into_cache()
+
+    def IsMissing(self):
+        return 1
+
+    def Size(self):
+        return MISSING_SIZE
+
+    def need_reload(self):
+        return os.path.exists(self.filename)
+
+
 def get_cached(filename):
     if filename in instance_cache:
         return instance_cache[filename]
@@ -129,6 +160,7 @@ def finalize_doc_change(docs):
                 doc.selection.ResetRectangle()
                 doc.issue(SELECTION)
             doc.reset_clear()
+            doc.issue(LINKS)
             seen_docs.append(doc)
 
 def can_reload_all_images():
@@ -137,9 +169,11 @@ def can_reload_all_images():
 
 def reload_all_images(really_all = 1):
     docs = []
-    fnames = instance_cache.keys()
+    fnames = list(instance_cache.keys())
     for fname in fnames:
-        obj = instance_cache[fname]
+        obj = instance_cache.get(fname)
+        if obj is None:
+            continue
         if really_all or obj.need_reload():
             docs.extend(obj.reload_file(finalize = 0))
     finalize_doc_change(docs)
@@ -182,6 +216,15 @@ class ExternalGraphics(RectangularObject, GraphicsObject):
 
     def IsLinked(self):
         return self.data.IsLinked()
+
+    def IsMissing(self):
+        return self.data.IsMissing()
+
+    def IsPresent(self):
+        return not self.data.IsMissing()
+
+    def IsLinkedAndPresent(self):
+        return self.data.IsLinked() and not self.data.IsMissing()
 
     def UpdateLink(self):
         if self.IsLinked():

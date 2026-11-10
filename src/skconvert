@@ -161,6 +161,9 @@ def main():
         doc = load.load_drawing(infile, options = in_values)
     except SketchError as exc:
         fail(exc)
+    if doc.meta.load_messages:
+        # e.g. missing linked files (skipped in the output)
+        sys.stderr.write('skconvert: %s\n' % doc.meta.load_messages)
     # unset options get their defaults (options = None would mean the
     # stored options of the document)
     info(doc, outfile, options = values)

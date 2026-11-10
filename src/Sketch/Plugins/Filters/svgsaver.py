@@ -523,6 +523,10 @@ class SVGSaver:
             return group
         if obj.is_SimpleText:
             return self.save_simple_text(parent, obj)
+        if obj.has_links and obj.data.IsMissing():
+            warn(USER, _("SVG export: linked file %s is missing; "
+                         "object skipped"), obj.data.Filename())
+            return None
         if obj.is_Image:
             return self.save_image(parent, obj)
         if obj.is_Eps:
@@ -605,7 +609,8 @@ class SVGSaver:
         # like MaskGroup.DrawShape: the fill of the mask is painted
         # below the masked objects, its outline on top of them
         if mask.is_Image:
-            self.save_image(group, mask)
+            if not mask.data.IsMissing():
+                self.save_image(group, mask)
         elif mask.has_properties and obj.mask_fill is not None \
                  and obj.mask_fill.HasFill():
             self.save_shape(group, mask, obj.mask_fill)
@@ -878,6 +883,8 @@ class SVGSaver:
         if pattern.is_Hatching:
             return self.hatching(pattern, rect, local)
         if pattern.is_Tiled:
+            if pattern.data.IsMissing():
+                return 'none'
             return 'url(#%s)' % self.image_tile(pattern, rect, local)
         return '#000000'
 

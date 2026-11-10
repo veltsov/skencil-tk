@@ -30,7 +30,7 @@ import os, sys
 
 from Sketch.Base.warn import warn, INTERNAL, pdebug, warn_tb
 
-from Sketch import SketchLoadError, SketchError
+from Sketch import _, SketchLoadError, SketchError
 from Sketch.Base import load, const, plugins
 from Sketch import CreateRGBColor, SolidPattern, HatchingPattern,EmptyPattern,\
      LinearGradient, ConicalGradient, RadialGradient, ImageTilePattern, \
@@ -39,6 +39,7 @@ from Sketch import CreateRGBColor, SolidPattern, HatchingPattern,EmptyPattern,\
      GetFont
 
 from Sketch.Base.load import GenericLoader
+from Sketch.Lib import util
 from Sketch.Lib.util import decode_sk_string
 
 from Sketch.Graphics import pagelayout, plugobj, blendgroup, text, image, eps,\
@@ -361,7 +362,11 @@ class SKLoader(GenericLoader):
             # file names are unicode in the model (K2; see
             # devdocs/string-handling.md)
             filename = decode_sk_string(filename)
-            data = image.load_image(os.path.join(self.directory, filename))
+            filename = os.path.join(self.directory, filename)
+            data = image.load_image_or_missing(filename)
+            if data.IsMissing():
+                self.add_message(_("Linked file not found: %s")
+                                 % util.as_display_name(filename))
         self.id_dict[id] = data
 
     functions.append('eps')
@@ -378,7 +383,11 @@ class SKLoader(GenericLoader):
                 filename = os.path.join(self.directory, filename)
             else:
                 filename = os.path.join(os.getcwd(), filename)
-        self.append_object(eps.EpsImage(filename = filename, trafo = trafo))
+        data = eps.load_eps_or_missing(filename)
+        if data.IsMissing():
+            self.add_message(_("Linked file not found: %s")
+                             % util.as_display_name(filename))
+        self.append_object(eps.EpsImage(trafo = trafo, data = data))
 
     functions.append('B')
     def B(self, *args, **kw):

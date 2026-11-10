@@ -55,7 +55,7 @@ The `Sketch` package is unusual and central to understanding the code:
   with `curveop.py` boolean ops), `text.py` (glyph-index text, see
   `devdocs/glyph-text.md`), `image.py` (`RasterImage`/`ImageData`, PIL
   as boundary codec), `eps.py`, `external.py` (linked images with
-  automatic reloading — see `reloaddlg.py`).
+  automatic reloading — see `reloaddlg.py`, and *Linked files* below).
 - Properties: `properties.py` (`Style`, `FillStyle`, `LineStyle`,
   `PropertyStack`), `color.py`, `pattern.py` (solid, hatching, gradients,
   image tiles), `dashes.py`, `arrow.py`, `font.py`, `gradient.py`,
@@ -85,7 +85,7 @@ The `Sketch` package is unusual and central to understanding the code:
   `fontdlg.py`, `curvedlg.py`, `guidedlg.py`, `griddlg.py`,
   `layoutdlg.py`, `layerdlg.py`, `aligndlg.py`, `blenddlg.py`,
   `gradientedit.py`, `optiondlg.py`, `export.py`, `printdlg.py`,
-  `plugindlg.py`, `reloaddlg.py`.
+  `plugindlg.py`, `reloaddlg.py`, `linksdlg.py` (Windows → Links).
 - `skpixmaps.py` — loads pixmaps from `Resources/Pixmaps`.
 - `prompt.py` — the command-line prompt window (has `exec`).
 - `command.py` — command infrastructure (`RegisterCommands`).
@@ -206,6 +206,49 @@ Python modules that are also user-callable scripts (Scripts menu /
   (e.g. `CHANGED`).
 - Files are loaded via `Sketch/Base/load.py` → plugin loader → document;
   saved via the corresponding saver plugin.
+
+## Linked files
+
+- `ExternalGraphics` objects (`EpsImage`, `Image`) share an
+  `ExternalData` (`EpsData`, `ImageData`) from the global
+  `external.instance_cache`, keyed by file name. Update All Links and
+  the automatic update (`mainwindow.check_image_reload`, mtime/inode
+  polling) reload the cached data; `finalize_doc_change` issues `LINKS`.
+- A linked file missing on `.sk` load does not abort the load:
+  `skloader` uses a `MissingEpsData` / `MissingImageData`
+  (`external.MissingData`) and adds a load message ("Linked file not
+  found"). Missing data keeps the file name (saved unchanged), has the
+  placeholder size `external.MISSING_SIZE` in the object's local frame,
+  and is cached, so it is replaced as soon as the file appears.
+  Objects draw it with `device.DrawMissingLink`: a crossed rectangle on
+  `GraphicsDevice`, nothing on export devices (`CommonDevice` no-op;
+  the SVG export skips it). A tile pattern with a missing image draws
+  as an empty fill. A missing image as the mask of a mask group does
+  not clip.
+- `EditDocument.LinkGroups()` lists the linked objects by file (the
+  Links panel rows); `RelinkObjects()` sets new data (undoable, the
+  trafo is kept, so a placeholder gets the file's real size anchored at
+  its lower left corner); `EmbedObjects()` embeds images
+  (`ImageData.AsEmbedded`) and replaces EPS objects by the objects
+  imported with the PS import filter (`eps.import_eps_objects` →
+  `psimport.import_ps_group`; its frame is the `EpsImage` local frame,
+  so `EpsImage.EmbeddedCopy` just applies the trafo, clipping to the
+  BoundingBox by a `MaskGroup` if the content exceeds it). EPS objects
+  are embeddable only when their parent is an `EditableCompound`.
+  The EPS context menu entry is the object command `EmbedEps`.
+- The Links panel (`UI/linksdlg.py`): per row an indicator (arrow if
+  objects of the row are selected, else a warning if the file is
+  missing), the kind, the editable file name and an Update icon; the
+  row popup has Replace…, Embed, Select Objects and Update.
+- Replace Image… / Replace EPS… in the object context menus are
+  main-window commands (`ReplaceImage`, `ReplaceEps` →
+  `ReplaceObjectFile`), since they ask for a file; they change only the
+  selected object (`RelinkObjects(..., embed = obj.IsEmbedded())`, so an
+  embedded image stays embedded) and share the file dialog
+  `linksdlg.ask_link_filename` with the panel. They are listed in the
+  `context_commands` of `Image`/`EpsImage` and shown only for these
+  objects through the command attribute `in_context_cb`
+  (`UI/command.py`: `Command.InContext`).
 
 ## Distribution / packaging
 
