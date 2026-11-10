@@ -509,7 +509,6 @@ class ImageTilePatternFrame(PatternFrame):
 
         file = os.path.join(config.std_res_dir, config.preferences.pattern)
         try:
-            file = open(file)
             tile = load_image(file)
         except:
             warn_tb(INTERNAL, "Cannot load %s", file)
