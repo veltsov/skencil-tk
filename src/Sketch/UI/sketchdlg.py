@@ -86,64 +86,33 @@ class SketchPanel(Publisher):
     title = 'Skencil'		# The window title
     class_name = 'SKPanel'	# the class_name for resources
 
-    x_correction = 0
-    y_correction = 0
-
     def __init__(self, master, main_window, doc, **kw):
         self.master = master
         self.main_window = main_window
         self.document = None
 
-        kw['class'] = self.class_name
-        top = Toplevel(*(master,), **kw)
-        top.title(self.title)
-        self.pref_pos_name = 'dlg_pos_' + self.__class__.__name__
-        if config.preferences.panel_use_coordinates:
-            posx, posy = config.get_preference(self.pref_pos_name, (0.1, 0.1))
-            # avoid confusing behaviour of panels if the position is negative
-            # or > 1:
-            posx = max(min(posx, 1), 0)
-            posy = max(min(posy, 1), 0)
-
-            posx = master.winfo_rootx() + int(posx * master.winfo_width())
-            posy = master.winfo_rooty() + int(posy * master.winfo_height())
-            top.geometry('%+d%+d' % (posx, posy))
-
-        top.transient(master)
-        top.group(master)
-        top.iconname(self.title)
-        top.iconbitmap(pixmaps.Icon)
-        top.iconmask(pixmaps.Icon_mask)
-        top.protocol('WM_DELETE_WINDOW',
-                     tkext.MakeMethodCommand(self.close_dlg))
-        # the following is a workaround for a Tkinter bug. Tkinter 1.63
-        # doesn't like bindings for the Destroy event.
-        top.tk.call('bind', top._w, '<Destroy>',
-                    tkext.MakeMethodCommand(self.destroyed) + ('%W',))
-
-        self.top = top
+        self.container = self.create_container(master, **kw)
+        self.top = self.container.body
         self.build_dlg()
         self.SetDocument(doc)
 
         self.main_window.Subscribe(DOCUMENT, self.doc_changed)
 
-        if config.preferences.panel_use_coordinates \
-           and config.preferences.panel_correct_wm:
-            if not top.winfo_ismapped():
-                top.wait_visibility()
-            self.x_correction = posx - top.winfo_rootx()
-            self.y_correction = posy - top.winfo_rooty()
+        self.container.after_build()
+
+    def create_container(self, master, **kw):
+        from Sketch.UI.sidebar import WindowContainer
+        return WindowContainer(self, master, **kw)
 
     if __debug__:
         def __del__(self):
             pdebug('__del__', '__del__', self)
 
     def deiconify_and_raise(self):
-        self.top.deiconify()
-        self.top.tkraise()
+        self.container.show_raise()
 
     def withdraw(self):
-        self.top.withdraw()
+        self.container.withdraw()
 
     def doc_changed(self, doc):
         self.SetDocument(doc)
@@ -172,15 +141,7 @@ class SketchPanel(Publisher):
 
     def save_prefs(self):
         # Save preferences. Called when dialog is closed.
-        master = self.master
-        top = self.top
-        width = float(master.winfo_width())
-        height = float(master.winfo_height())
-        posx = (top.winfo_rootx() + self.x_correction - master.winfo_rootx())\
-             / width
-        posy = (top.winfo_rooty() + self.y_correction - master.winfo_rooty())\
-             / height
-        setattr(config.preferences, self.pref_pos_name, (posx, posy))
+        self.container.save_prefs()
 
     def close_dlg(self):
         self.issue(CLOSED, self)
@@ -194,7 +155,7 @@ class SketchPanel(Publisher):
         self.main_window = None
         Publisher.Destroy(self)
         self.save_prefs()
-        self.top.destroy()
+        self.container.destroy()
         self.master = None
         from Sketch.Modules import pax
         pax.unregister_object(self)
