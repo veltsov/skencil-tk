@@ -666,8 +666,23 @@ class SketchMainWindow(Publisher):
         config.preferences.panel_floating = floating
         def move():
             dialog.close_dlg()
-            self.OpenPanel(key)
+            self.reopen_panels([key])
         self.root.after_idle(move)
+
+    # true while panels are reopened (at startup, when moved between the
+    # side bar and a window): they get their collapsed state back
+    restoring_panels = 0
+
+    def reopen_panels(self, keys):
+        self.restoring_panels = 1
+        try:
+            for key in keys:
+                try:
+                    self.OpenPanel(key)
+                except:
+                    warn_tb(INTERNAL, 'cannot open panel %s', key)
+        finally:
+            self.restoring_panels = 0
 
     def panel_opened(self, dialog, key):
         # KEY identifies the panel in the preferences panel_layout and
@@ -675,10 +690,15 @@ class SketchMainWindow(Publisher):
         dialog.layout_key = key
         state = config.preferences.panel_states.get(key)
         if state is not None:
+            if not self.restoring_panels:
+                # opened by the user: shown expanded, in its height
+                state = (state[0], 0)
             try:
                 dialog.container.set_state(state)
             except:
                 warn_tb(INTERNAL, 'cannot restore the state of panel %s', key)
+            if not self.restoring_panels:
+                dialog.deiconify_and_raise()
 
     def remember_panel_state(self, dialog):
         key = getattr(dialog, 'layout_key', None)
@@ -707,24 +727,24 @@ class SketchMainWindow(Publisher):
         return dialogs
 
     def save_panel_layout(self):
+        # Only the docked panels are opened again at startup; of the
+        # windows, only the position is remembered (as without docking)
         if not config.preferences.panel_docking:
             return
         keys = []
-        for dialog in self.open_panels():
+        for dialog in self.sidebar.Panels():
             self.remember_panel_state(dialog)
             key = getattr(dialog, 'layout_key', None)
-            if key is not None and dialog.dockable:
+            if key is not None:
                 keys.append(key)
         config.preferences.panel_layout = keys
 
     def restore_panel_layout(self):
         if not config.preferences.panel_docking:
             return
-        for key in config.preferences.panel_layout:
-            try:
-                self.OpenPanel(key)
-            except:
-                warn_tb(INTERNAL, 'cannot open panel %s', key)
+        floating = config.preferences.panel_floating
+        self.reopen_panels([key for key in config.preferences.panel_layout
+                            if key not in floating])
         self.sidebar.canvas.yview_moveto(0)
 
     def RedockPanels(self):
@@ -738,8 +758,7 @@ class SketchMainWindow(Publisher):
             if key is not None and dialog.dockable:
                 keys.append(key)
                 dialog.close_dlg()
-        for key in keys:
-            self.OpenPanel(key)
+        self.reopen_panels(keys)
 
     AddCmd('SetOptions', _("Options..."))
     def SetOptions(self):

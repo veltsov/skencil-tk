@@ -393,9 +393,10 @@ class ProgramDefaults(connector.Publisher):
     window_geometry = None
     window_maximized = 0
 
-    #	The panels open when Skencil was closed, the docked ones from top
-    #	to bottom first: a list of panel keys ('<module>.<class>' or
-    #	'plugin:<class_name>'). They are opened again at startup.
+    #	The docked panels open when Skencil was closed, from top to
+    #	bottom: a list of panel keys ('<module>.<class>' or
+    #	'plugin:<class_name>'). They are opened again at startup (panel
+    #	windows are not, as without docking).
     panel_layout = []
 
     #	The panels that open as windows although docking is on (moved

@@ -154,6 +154,19 @@ def check():
     assert win.dialogs['LinePanel'].container.collapsed
     assert not win.dialogs['AlignPanel'].container.collapsed
 
+    # opened from the menu, a panel is expanded: an open one and one
+    # that was collapsed when it was closed
+    win.CreateDialog('Sketch.UI.linedlg', 'LinePanel')
+    assert not win.dialogs['LinePanel'].container.collapsed
+    win.dialogs['LinePanel'].container.set_collapsed(1)
+    win.dialogs['RegularPolygon'].container.set_collapsed(1)
+    win.dialogs['RegularPolygon'].close_dlg()
+    assert config.preferences.panel_states['plugin:RegularPolygon'][1]
+    win.CreatePluginDialog(info)
+    root.update()
+    assert not win.dialogs['RegularPolygon'].container.collapsed
+    assert [dialog.layout_key for dialog in sidebar.Panels()] == keys
+
     # undock a panel with the button in its title bar and dock it again
     # with the button in the window; the choice is saved
     dock = win.dialogs['StylePanel'].container
@@ -166,9 +179,9 @@ def check():
         'Sketch.UI.styledlg.StylePanel']
     assert [dialog.layout_key for dialog in sidebar.Panels()] == \
            [keys[0], keys[1], keys[3]]
+    # the panel windows are not opened again at startup
     win.save_panel_layout()
-    assert config.preferences.panel_layout == \
-           [keys[0], keys[1], keys[3], keys[2]]
+    assert config.preferences.panel_layout == [keys[0], keys[1], keys[3]]
     panel.close_dlg()
     win.OpenPanel(keys[2])
     root.update()

@@ -63,8 +63,8 @@ Each open panel has a `layout_key`: `'<module>.<class>'` for
 |---|---|
 | `panel_docking` | docking on (default): panels docked unless in `panel_floating`; off: all panels are windows, without Dock buttons (`panel_floating`, `panel_layout`, `panel_states` are kept for when it is switched on again) |
 | `panel_floating` | keys of panels the user undocked; they open as windows |
-| `panel_layout` | keys of the panels open at Exit, docked ones top to bottom first; reopened at startup (`MainWindow.Run`) |
-| `panel_states` | key → `(body height or None, collapsed)` of docked panels, updated on close and at Exit |
+| `panel_layout` | keys of the docked panels open at Exit, top to bottom; reopened at startup (`MainWindow.Run`). Panel windows are not reopened, only their position is remembered, as without docking |
+| `panel_states` | key → `(body height or None, collapsed)` of docked panels, updated on close and at Exit. The height is restored whenever the panel is opened; the collapsed state only at startup and when the panel moves (`reopen_panels`) — opened from the menu, a panel is expanded |
 | `sidebar_width` | width of the side bar |
 | `window_geometry`, `window_maximized` | main window, saved at Exit, restored at startup unless `--geometry` is given; a saved size larger than the screen opens maximized |
 
