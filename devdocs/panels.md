@@ -61,7 +61,7 @@ Each open panel has a `layout_key`: `'<module>.<class>'` for
 
 | Preference | Meaning |
 |---|---|
-| `panel_docking` | docking on (default) / all panels as windows |
+| `panel_docking` | docking on (default): panels docked unless in `panel_floating`; off: all panels are windows, without Dock buttons (`panel_floating`, `panel_layout`, `panel_states` are kept for when it is switched on again) |
 | `panel_floating` | keys of panels the user undocked; they open as windows |
 | `panel_layout` | keys of the panels open at Exit, docked ones top to bottom first; reopened at startup (`MainWindow.Run`) |
 | `panel_states` | key → `(body height or None, collapsed)` of docked panels, updated on close and at Exit |

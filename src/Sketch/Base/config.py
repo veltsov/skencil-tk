@@ -378,7 +378,9 @@ class ProgramDefaults(connector.Publisher):
     panel_correct_wm = 1
 
     #	If true, the panels are docked in a side bar at the right of the
-    #	main window instead of being separate windows.
+    #	main window, each can be moved to a window and back
+    #	(panel_floating). If false, all panels are windows, without the
+    #	Dock buttons.
     panel_docking = 1
 
     #	The width of the side bar in pixels

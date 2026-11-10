@@ -186,19 +186,31 @@ def check():
     assert panel.container.body.winfo_height() == 150
     keys = [keys[0], keys[1], keys[3], keys[2]]
 
-    # switch to windows and back: the panels move, in their order
+    # switch to windows and back: the panels move, in their order; with
+    # docking off, the windows have no Dock button; switched on again,
+    # the panel the user undocked stays a window
+    win.SetPanelDocked(win.dialogs['AlignPanel'], 0)
+    root.update()
+    floating = ['Sketch.UI.aligndlg.AlignPanel']
+    assert config.preferences.panel_floating == floating
+    docked = keys[1:]
     config.preferences.panel_docking = 0
     win.RedockPanels()
     root.update()
     assert not sidebar.docks
     assert len(win.dialogs) == 5
     for dialog in win.dialogs.values():
-        assert dialog.top.winfo_toplevel() != root
+        top = dialog.top.winfo_toplevel()
+        assert top != root
+        assert 'titlebar' not in top.children, dialog
+    assert config.preferences.panel_floating == floating
     config.preferences.panel_docking = 1
     win.RedockPanels()
     root.update()
-    assert [dialog.layout_key for dialog in sidebar.Panels()] == keys
+    assert [dialog.layout_key for dialog in sidebar.Panels()] == docked
     assert win.dialogs['LinePanel'].container.collapsed
+    top = win.dialogs['AlignPanel'].top.winfo_toplevel()
+    assert top != root and 'titlebar' in top.children
 
     for dialog in list(win.dialogs.values()):
         dialog.close_dlg()

@@ -729,9 +729,9 @@ class SketchMainWindow(Publisher):
 
     def RedockPanels(self):
         # Reopen the open panels after panel_docking has changed: the
-        # docked ones in their order, then the windows. The panels moved
-        # out of the side bar individually are docked again.
-        config.preferences.panel_floating = []
+        # docked ones in their order, then the windows. With docking on
+        # again, the panels moved out of the side bar by the user stay
+        # windows (panel_floating is kept).
         keys = []
         for dialog in self.open_panels():
             key = getattr(dialog, 'layout_key', None)
