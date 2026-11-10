@@ -379,10 +379,17 @@ class ProgramDefaults(connector.Publisher):
 
     #	If true, the panels are docked in a side bar at the right of the
     #	main window instead of being separate windows.
-    panel_docking = 0
+    panel_docking = 1
 
     #	The width of the side bar in pixels
     sidebar_width = 280
+
+    #	The geometry of the main window when Skencil was closed:
+    #	(width, height, x, y) or None, and whether it was maximized. It
+    #	is restored at startup unless a geometry is given on the command
+    #	line.
+    window_geometry = None
+    window_maximized = 0
 
     #	The docked panels open when Skencil was closed, from top to
     #	bottom: a list of panel keys ('<module>.<class>' or

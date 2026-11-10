@@ -16,6 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307	USA
 
 import os
+import re
 import sys
 
 from Sketch.Base.warn import pdebug
@@ -217,7 +218,7 @@ class SketchApplication(TkApplication, Publisher):
         tooltips.Init(self.root)
         self.main_window.UpdateCommands()
         # Enter Main Loop
-        if self.geometry is None:
+        if self.geometry is None and not self.restore_window_geometry():
             width = self.root.winfo_reqwidth()
             height = self.root.winfo_reqheight()
             if width < 800 : width = 800
@@ -225,11 +226,64 @@ class SketchApplication(TkApplication, Publisher):
             posx = (self.root.winfo_screenwidth() - width)//2
             posy = (self.root.winfo_screenheight() - height)//2
             self.root.geometry('%dx%d%+d%+d' % (width, height, posx, posy))
+        self.normal_geometry = None
+        self.root.bind('<Configure>', self.root_configured, '+')
         self.main_window.Run()
 
     def Exit(self):
+        self.save_window_geometry()
         pixmaps.clear_cache()
         self.root.destroy()
+
+    #
+    #	The geometry of the main window is saved at exit and restored
+    #	at startup (unless given on the command line)
+    #
+
+    def is_maximized(self):
+        return int(self.root.wm_attributes('-zoomed'))
+
+    def root_configured(self, event):
+        # remember the geometry of the window when it is not maximized,
+        # to be restored when it is no longer maximized
+        if event.widget is self.root and not self.is_maximized():
+            self.normal_geometry = self.root.geometry()
+
+    def save_window_geometry(self):
+        preferences = config.preferences
+        maximized = self.is_maximized()
+        geometry = self.normal_geometry
+        if not maximized:
+            geometry = self.root.geometry()
+        match = geometry and re.match(r'(\d+)x(\d+)([+-]-?\d+)([+-]-?\d+)$',
+                                      geometry)
+        if match:
+            preferences.window_geometry = tuple(map(int, match.groups()))
+        preferences.window_maximized = maximized
+
+    def restore_window_geometry(self):
+        # Return true if a saved geometry was restored. A window that
+        # does not fit on the screen is maximized.
+        preferences = config.preferences
+        if not preferences.window_geometry:
+            return 0
+        width, height, posx, posy = preferences.window_geometry
+        root = self.root
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        if width > screen_width or height > screen_height:
+            width = min(width, screen_width)
+            height = min(height, screen_height)
+            posx = posy = 0
+            maximized = 1
+        else:
+            posx = max(0, min(posx, screen_width - width))
+            posy = max(0, min(posy, screen_height - height))
+            maximized = preferences.window_maximized
+        root.geometry('%dx%d%+d%+d' % (width, height, posx, posy))
+        if maximized:
+            root.wm_attributes('-zoomed', 1)
+        return 1
 
     def init_tk(self, screen_name = None, geometry = None):
         TkApplication.init_tk(self, screen_name = screen_name,

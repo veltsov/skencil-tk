@@ -63,22 +63,30 @@ def check():
     # missing file: Embed is not possible
     assert not entries[1].sensitivecb()
 
-    # the file name fields take the width of the panel
+    # the file name fields take the width of the panel (of the side bar
+    # when the panel is docked)
     root.update()
-    top = panel.top
     entry = panel.rows[0].entry
-    w0, h0 = top.winfo_width(), top.winfo_height()
+    if panel.top.winfo_toplevel() is root:
+        w0 = win.sidebar.winfo_width()
+        def resize(width):
+            win.panes.paneconfigure(win.sidebar, width = width)
+    else:
+        top = panel.top
+        w0, h0 = top.winfo_width(), top.winfo_height()
+        def resize(width):
+            top.geometry('%dx%d' % (width, h0))
     e0 = entry.winfo_width()
-    top.geometry('%dx%d' % (w0 + 200, h0))
+    resize(w0 + 200)
     root.update()
     e1 = entry.winfo_width()
     assert abs(e1 - (e0 + 200)) <= 4, (e0, e1)
-    top.geometry('%dx%d' % (w0 - 100, h0))
+    resize(w0 - 100)
     root.update()
     e2 = entry.winfo_width()
     assert abs(e2 - (e0 - 100)) <= 4, (e0, e2)
     assert panel.rows[0].update.winfo_ismapped()
-    top.geometry('%dx%d' % (w0, h0))
+    resize(w0)
     root.update()
 
     # the canvas commands Replace Image/EPS: in the context menu of the
