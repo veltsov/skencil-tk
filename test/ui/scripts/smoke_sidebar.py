@@ -123,6 +123,38 @@ def check():
     assert win.dialogs['LinePanel'].container.collapsed
     assert not win.dialogs['AlignPanel'].container.collapsed
 
+    # undock a panel with the button in its title bar and dock it again
+    # with the button in the window; the choice is saved
+    dock = win.dialogs['StylePanel'].container
+    dock.frame.nametowidget('titlebar.undock').event_generate(
+        '<ButtonRelease-1>')
+    root.update()
+    panel = win.dialogs['StylePanel']
+    assert panel.top.winfo_toplevel() != root
+    assert config.preferences.panel_floating == [
+        'Sketch.UI.styledlg.StylePanel']
+    assert [dialog.layout_key for dialog in sidebar.Panels()] == \
+           [keys[0], keys[1], keys[3]]
+    win.save_panel_layout()
+    assert config.preferences.panel_layout == \
+           [keys[0], keys[1], keys[3], keys[2]]
+    panel.close_dlg()
+    win.OpenPanel(keys[2])
+    root.update()
+    panel = win.dialogs['StylePanel']
+    assert panel.top.winfo_toplevel() != root
+    panel.top.winfo_toplevel().nametowidget('titlebar.dock').event_generate(
+        '<ButtonRelease-1>')
+    root.update()
+    panel = win.dialogs['StylePanel']
+    assert panel.top.winfo_toplevel() == root
+    assert config.preferences.panel_floating == []
+    # docked again at the end
+    assert [dialog.layout_key for dialog in sidebar.Panels()] == \
+           [keys[0], keys[1], keys[3], keys[2]]
+    assert panel.container.body.winfo_height() == 150
+    keys = [keys[0], keys[1], keys[3], keys[2]]
+
     # switch to windows and back: the panels move, in their order
     config.preferences.panel_docking = 0
     win.RedockPanels()

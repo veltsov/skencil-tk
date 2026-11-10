@@ -41,7 +41,8 @@ from Sketch.Base import config
 from tkinter import Toplevel, Frame, Label, Canvas, Scrollbar, BitmapImage, Menu
 from tkinter import TOP, X
 
-from Sketch.UI import tkext
+from Sketch import _
+from Sketch.UI import tkext, tooltips
 from Sketch.UI import skpixmaps
 pixmaps = skpixmaps.PixmapTk
 
@@ -50,11 +51,14 @@ class WindowContainer:
 
     # The panel is a toplevel window. Its position relative to the main
     # window is stored in the preference dlg_pos_<panel class>.
+    #
+    # DOCK, if given, is called to move the panel to the side bar; the
+    # window then has a strip at the top with a button for that.
 
     x_correction = 0
     y_correction = 0
 
-    def __init__(self, panel, master, **kw):
+    def __init__(self, panel, master, dock = None, **kw):
         self.master = master
         title = panel.title
 
@@ -87,8 +91,17 @@ class WindowContainer:
         top.tk.call('bind', top._w, '<Destroy>',
                     tkext.MakeMethodCommand(panel.destroyed) + ('%W',))
 
+        if dock is not None:
+            bar = Frame(top, name = 'titlebar',
+                        background = title_colors(top)[0])
+            bar.pack(side = TOP, fill = X)
+            button = title_button(bar, 'dock', dock, _("Dock"))
+            button.pack(side = 'right', padx = 3)
+        body = Frame(top, name = 'body', class_ = panel.class_name)
+        body.pack(side = TOP, fill = 'both', expand = 1)
+
         self.top = top
-        self.body = top
+        self.body = body
 
     def after_build(self):
         top = self.top
@@ -132,28 +145,71 @@ class WindowContainer:
 #	Docked panels
 #
 
-# 9x9 bitmaps for the buttons in the title bar of a docked panel
+# 9x9 bitmaps for the buttons in the title bars
 
-_expanded_bits = """#define expanded_width 9
-#define expanded_height 9
-static unsigned char expanded_bits[] = {
-   0x00, 0x00, 0x00, 0x00, 0xff, 0x01, 0xfe, 0x00, 0x7c, 0x00, 0x38, 0x00,
-   0x10, 0x00, 0x00, 0x00, 0x00, 0x00};
-"""
+_bitmaps = {
+    'expanded': ('.........',
+                 '.........',
+                 '#########',
+                 '.#######.',
+                 '..#####..',
+                 '...###...',
+                 '....#....',
+                 '.........',
+                 '.........'),
+    'collapsed': ('..#......',
+                  '..##.....',
+                  '..###....',
+                  '..####...',
+                  '..#####..',
+                  '..####...',
+                  '..###....',
+                  '..##.....',
+                  '..#......'),
+    'close': ('##.....##',
+              '.##...##.',
+              '..##.##..',
+              '...###...',
+              '...###...',
+              '..##.##..',
+              '.##...##.',
+              '##.....##',
+              '.........'),
+    # a window popping out of another one
+    'undock': ('...######',
+               '...#....#',
+               '...#....#',
+               '######..#',
+               '#....#..#',
+               '#....####',
+               '#....#...',
+               '#....#...',
+               '######...'),
+    # a window with a side bar
+    'dock': ('#########',
+             '#....####',
+             '#....####',
+             '#....####',
+             '#....####',
+             '#....####',
+             '#....####',
+             '#....####',
+             '#########'),
+    }
 
-_collapsed_bits = """#define collapsed_width 9
-#define collapsed_height 9
-static unsigned char collapsed_bits[] = {
-   0x04, 0x00, 0x0c, 0x00, 0x1c, 0x00, 0x3c, 0x00, 0x7c, 0x00, 0x3c, 0x00,
-   0x1c, 0x00, 0x0c, 0x00, 0x04, 0x00};
-"""
-
-_close_bits = """#define close_width 9
-#define close_height 9
-static unsigned char close_bits[] = {
-   0x83, 0x01, 0xc6, 0x00, 0x6c, 0x00, 0x38, 0x00, 0x38, 0x00, 0x6c, 0x00,
-   0xc6, 0x00, 0x83, 0x01, 0x00, 0x00};
-"""
+def _xbm_data(name, rows):
+    width = len(rows[0])
+    data = []
+    for row in rows:
+        bits = 0
+        for i in range(width):
+            if row[i] == '#':
+                bits = bits | (1 << i)
+        for i in range(0, width, 8):
+            data.append('0x%02x' % ((bits >> i) & 0xff))
+    return ('#define %s_width %d\n#define %s_height %d\n'
+            'static unsigned char %s_bits[] = { %s };\n'
+            % (name, width, name, len(rows), name, ', '.join(data)))
 
 _title_colors = None
 
@@ -173,21 +229,31 @@ _images = {}
 def _image(name, master):
     image = _images.get(name)
     if image is None:
-        data = {'expanded': _expanded_bits, 'collapsed': _collapsed_bits,
-                'close': _close_bits}[name]
-        image = _images[name] = BitmapImage(master = master, data = data,
+        image = _images[name] = BitmapImage(master = master,
+                                            data = _xbm_data(name,
+                                                             _bitmaps[name]),
                                             foreground = title_colors(master)[1])
     return image
+
+def title_button(bar, name, command, tooltip):
+    background = title_colors(bar)[0]
+    button = Label(bar, image = _image(name, bar), name = name,
+                   background = background)
+    button.bind('<ButtonRelease-1>', lambda event: command())
+    tooltips.AddDescription(button, tooltip)
+    return button
 
 
 class DockContainer:
 
     # The panel is a frame in the side bar: a title bar with the collapse
-    # toggle, the title and the close button, the body and a grip at the
-    # bottom to change the height of the body (only for panels with an
-    # elastic layout).
+    # toggle, the title, the undock and the close buttons, the body and a
+    # grip at the bottom to change the height of the body (only for
+    # panels with an elastic layout).
+    #
+    # UNDOCK, if given, is called to move the panel to a window.
 
-    def __init__(self, panel, sidebar, **kw):
+    def __init__(self, panel, sidebar, undock = None, **kw):
         self.panel = panel
         self.sidebar = sidebar
         self.collapsed = 0
@@ -207,12 +273,13 @@ class DockContainer:
         label = Label(bar, text = panel.title, anchor = 'w', name = 'title',
                       background = background, foreground = foreground)
         label.pack(side = 'left', fill = X, expand = 1)
-        close = Label(bar, image = _image('close', frame), name = 'close',
-                      background = background)
+        close = title_button(bar, 'close', panel.close_dlg, _("Close"))
         close.pack(side = 'right', padx = 3)
+        if undock is not None:
+            button = title_button(bar, 'undock', undock, _("Undock"))
+            button.pack(side = 'right', padx = 3)
         for widget in (self.toggle, label):
             widget.bind('<ButtonRelease-1>', self.toggle_collapsed)
-        close.bind('<ButtonRelease-1>', lambda event: panel.close_dlg())
 
         body = Frame(frame, name = 'body', class_ = panel.class_name)
         body.grid(row = 1, column = 0, sticky = 'news')

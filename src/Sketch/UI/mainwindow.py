@@ -550,10 +550,15 @@ class SketchMainWindow(Publisher):
             # relative import inside the exec)
             dlgmodule = import_module(module)
             dlgclass = getattr(dlgmodule, dlgname)
-            dialog = dlgclass(self.root, self, self.document)
+            key = module + '.' + dlgname
+            self.opening_key = key
+            try:
+                dialog = dlgclass(self.root, self, self.document)
+            finally:
+                self.opening_key = None
             dialog.Subscribe(CLOSED, self.__dlg_closed, dlgname)
             self.dialogs[dlgname] = dialog
-            self.panel_opened(dialog, module + '.' + dlgname)
+            self.panel_opened(dialog, key)
 
     def HideDialogs(self):
         for dialog in self.dialogs.values():
@@ -625,18 +630,44 @@ class SketchMainWindow(Publisher):
         if info.class_name in self.dialogs:
             self.dialogs[info.class_name].deiconify_and_raise()
             return
-        if info.HasCustomDialog():
-            dialog = info.CreateCustomDialog(self.root, self, self.document)
-        else:
-            from Sketch.UI.plugindlg import PluginPanel
-            dialog = PluginPanel(self.root, self, self.document, info)
+        key = 'plugin:' + info.class_name
+        self.opening_key = key
+        try:
+            if info.HasCustomDialog():
+                dialog = info.CreateCustomDialog(self.root, self,
+                                                 self.document)
+            else:
+                from Sketch.UI.plugindlg import PluginPanel
+                dialog = PluginPanel(self.root, self, self.document, info)
+        finally:
+            self.opening_key = None
         dialog.Subscribe(CLOSED, self.__dlg_closed, info.class_name)
         self.dialogs[info.class_name] = dialog
-        self.panel_opened(dialog, 'plugin:' + info.class_name)
+        self.panel_opened(dialog, key)
 
     #
     #	The layout of the docked panels
     #
+
+    opening_key = None
+
+    def DockNewPanel(self):
+        # Whether the panel being opened goes to the side bar (docking is
+        # on): unless the user has moved it to a window
+        return self.opening_key not in config.preferences.panel_floating
+
+    def SetPanelDocked(self, dialog, docked):
+        # Move DIALOG to the side bar or to a window. Called from the
+        # title bar of the panel, so the panel is rebuilt later.
+        key = dialog.layout_key
+        floating = [k for k in config.preferences.panel_floating if k != key]
+        if not docked:
+            floating.append(key)
+        config.preferences.panel_floating = floating
+        def move():
+            dialog.close_dlg()
+            self.OpenPanel(key)
+        self.root.after_idle(move)
 
     def panel_opened(self, dialog, key):
         # KEY identifies the panel in the preferences panel_layout and
@@ -667,12 +698,22 @@ class SketchMainWindow(Publisher):
             module, name = key.rsplit('.', 1)
             self.CreateDialog(module, name)
 
+    def open_panels(self):
+        # the open panels: the docked ones from top to bottom first
+        dialogs = self.sidebar.Panels()
+        for dialog in self.dialogs.values():
+            if dialog not in dialogs:
+                dialogs.append(dialog)
+        return dialogs
+
     def save_panel_layout(self):
+        if not config.preferences.panel_docking:
+            return
         keys = []
-        for dialog in self.sidebar.Panels():
+        for dialog in self.open_panels():
             self.remember_panel_state(dialog)
             key = getattr(dialog, 'layout_key', None)
-            if key is not None:
+            if key is not None and dialog.dockable:
                 keys.append(key)
         config.preferences.panel_layout = keys
 
@@ -688,13 +729,11 @@ class SketchMainWindow(Publisher):
 
     def RedockPanels(self):
         # Reopen the open panels after panel_docking has changed: the
-        # docked ones in their order, then the windows
-        dialogs = self.sidebar.Panels()
-        for dialog in self.dialogs.values():
-            if dialog not in dialogs:
-                dialogs.append(dialog)
+        # docked ones in their order, then the windows. The panels moved
+        # out of the side bar individually are docked again.
+        config.preferences.panel_floating = []
         keys = []
-        for dialog in dialogs:
+        for dialog in self.open_panels():
             key = getattr(dialog, 'layout_key', None)
             if key is not None and dialog.dockable:
                 keys.append(key)

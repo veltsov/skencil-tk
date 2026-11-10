@@ -72,7 +72,7 @@ def check():
         def resize(width):
             win.panes.paneconfigure(win.sidebar, width = width)
     else:
-        top = panel.top
+        top = panel.top.winfo_toplevel()
         w0, h0 = top.winfo_width(), top.winfo_height()
         def resize(width):
             top.geometry('%dx%d' % (width, h0))

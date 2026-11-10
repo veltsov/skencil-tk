@@ -105,11 +105,18 @@ class SketchPanel(Publisher):
 
     def create_container(self, master, **kw):
         from Sketch.UI.sidebar import WindowContainer, DockContainer
-        sidebar = getattr(self.main_window, 'sidebar', None)
-        if config.preferences.panel_docking and self.dockable \
-           and sidebar is not None:
-            return DockContainer(self, sidebar, **kw)
-        return WindowContainer(self, master, **kw)
+        main_window = self.main_window
+        sidebar = getattr(main_window, 'sidebar', None)
+        if not config.preferences.panel_docking or not self.dockable \
+           or sidebar is None:
+            return WindowContainer(self, master, **kw)
+        # with docking, each panel can be moved between the side bar and
+        # a window
+        if main_window.DockNewPanel():
+            return DockContainer(self, sidebar, undock = lambda:
+                                 main_window.SetPanelDocked(self, 0), **kw)
+        return WindowContainer(self, master, dock = lambda:
+                               main_window.SetPanelDocked(self, 1), **kw)
 
     if __debug__:
         def __del__(self):
