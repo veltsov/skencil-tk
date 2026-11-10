@@ -134,6 +134,19 @@ class OptionDialog:
 
 
         #
+        #	Panels
+        #
+
+        self.var_docking = IntVar(top)
+        self.var_docking.set(preferences.panel_docking)
+        frame = self.make_frame()
+        check = UpdatedCheckbutton(frame,
+                                   text = _("Dock panels in the main window"),
+                                   variable = self.var_docking)
+        check.pack(side = LEFT, expand = 1, anchor = W)
+
+
+        #
         #	Gradient Patterns
         #
 
@@ -182,6 +195,12 @@ class OptionDialog:
 
         # default unit
         preferences.default_unit = self.default_unit
+
+        # panels: the open panels move at once
+        docking = self.var_docking.get()
+        if docking != preferences.panel_docking:
+            preferences.panel_docking = docking
+            self.main_window.main_window.RedockPanels()
 
         #
         self.close_dlg()

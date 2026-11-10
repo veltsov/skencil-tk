@@ -384,6 +384,15 @@ class ProgramDefaults(connector.Publisher):
     #	The width of the side bar in pixels
     sidebar_width = 280
 
+    #	The docked panels open when Skencil was closed, from top to
+    #	bottom: a list of panel keys ('<module>.<class>' or
+    #	'plugin:<class_name>'). They are opened again at startup.
+    panel_layout = []
+
+    #	The state of the docked panels when they were closed last: maps
+    #	panel keys to (height of the panel body or None, collapsed)
+    panel_states = {}
+
     #
     #	Blend Panel
     #

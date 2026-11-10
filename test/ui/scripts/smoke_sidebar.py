@@ -1,8 +1,9 @@
 # --run-script payload: with docked panels, open several panels in the
 # side bar (also a plugin panel twice), check the scrollbar, collapse,
 # resize and close them, check that a non-dockable panel opens as a
-# window and that the side bar disappears with the last panel, then
-# quit.
+# window, save and restore the layout, switch between windows and
+# docked panels and check that the side bar disappears with the last
+# panel, then quit.
 
 import os
 import sys
@@ -95,6 +96,46 @@ def check():
     win.CreateDialog('Sketch.UI.printdlg', 'PrintPanel')
     assert win.dialogs['PrintPanel'].top.winfo_toplevel() != root
     assert len(sidebar.docks) == 4
+
+    # the layout is saved and restored: order, heights, collapsed
+    keys = [dialog.layout_key for dialog in sidebar.Panels()]
+    assert keys == ['Sketch.UI.aligndlg.AlignPanel',
+                    'Sketch.UI.linedlg.LinePanel',
+                    'Sketch.UI.styledlg.StylePanel',
+                    'plugin:RegularPolygon'], keys
+    win.dialogs['StylePanel'].container.set_height(150)
+    win.dialogs['LinePanel'].container.set_collapsed(1)
+    win.save_panel_layout()
+    assert config.preferences.panel_layout == keys
+    from Sketch.Base.configutil import save_repr
+    for name in ('panel_layout', 'panel_states'):
+        value = getattr(config.preferences, name)
+        assert eval(save_repr(value)) == value, value
+    for dialog in list(win.dialogs.values()):
+        if dialog.dockable:
+            dialog.close_dlg()
+    root.update()
+    assert not sidebar.docks
+    win.restore_panel_layout()
+    root.update()
+    assert [dialog.layout_key for dialog in sidebar.Panels()] == keys
+    assert win.dialogs['StylePanel'].container.body.winfo_height() == 150
+    assert win.dialogs['LinePanel'].container.collapsed
+    assert not win.dialogs['AlignPanel'].container.collapsed
+
+    # switch to windows and back: the panels move, in their order
+    config.preferences.panel_docking = 0
+    win.RedockPanels()
+    root.update()
+    assert not sidebar.docks
+    assert len(win.dialogs) == 5
+    for dialog in win.dialogs.values():
+        assert dialog.top.winfo_toplevel() != root
+    config.preferences.panel_docking = 1
+    win.RedockPanels()
+    root.update()
+    assert [dialog.layout_key for dialog in sidebar.Panels()] == keys
+    assert win.dialogs['LinePanel'].container.collapsed
 
     for dialog in list(win.dialogs.values()):
         dialog.close_dlg()

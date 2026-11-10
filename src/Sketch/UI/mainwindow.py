@@ -553,6 +553,7 @@ class SketchMainWindow(Publisher):
             dialog = dlgclass(self.root, self, self.document)
             dialog.Subscribe(CLOSED, self.__dlg_closed, dlgname)
             self.dialogs[dlgname] = dialog
+            self.panel_opened(dialog, module + '.' + dlgname)
 
     def HideDialogs(self):
         for dialog in self.dialogs.values():
@@ -565,6 +566,7 @@ class SketchMainWindow(Publisher):
     AddCmd('ShowDialogs', _("Show Dialogs"))
 
     def __dlg_closed(self, dialog, name):
+        self.remember_panel_state(dialog)
         try:
             del self.dialogs[name]
         except:
@@ -630,6 +632,75 @@ class SketchMainWindow(Publisher):
             dialog = PluginPanel(self.root, self, self.document, info)
         dialog.Subscribe(CLOSED, self.__dlg_closed, info.class_name)
         self.dialogs[info.class_name] = dialog
+        self.panel_opened(dialog, 'plugin:' + info.class_name)
+
+    #
+    #	The layout of the docked panels
+    #
+
+    def panel_opened(self, dialog, key):
+        # KEY identifies the panel in the preferences panel_layout and
+        # panel_states and for OpenPanel
+        dialog.layout_key = key
+        state = config.preferences.panel_states.get(key)
+        if state is not None:
+            try:
+                dialog.container.set_state(state)
+            except:
+                warn_tb(INTERNAL, 'cannot restore the state of panel %s', key)
+
+    def remember_panel_state(self, dialog):
+        key = getattr(dialog, 'layout_key', None)
+        state = dialog.container.get_state()
+        if key is not None and state is not None:
+            states = dict(config.preferences.panel_states)
+            states[key] = state
+            config.preferences.panel_states = states
+
+    def OpenPanel(self, key):
+        # Open the panel identified by KEY (see panel_opened)
+        if key.startswith('plugin:'):
+            info = plugins.object_plugins.get(key[len('plugin:'):])
+            if info is not None:
+                self.CreatePluginDialog(info)
+        else:
+            module, name = key.rsplit('.', 1)
+            self.CreateDialog(module, name)
+
+    def save_panel_layout(self):
+        keys = []
+        for dialog in self.sidebar.Panels():
+            self.remember_panel_state(dialog)
+            key = getattr(dialog, 'layout_key', None)
+            if key is not None:
+                keys.append(key)
+        config.preferences.panel_layout = keys
+
+    def restore_panel_layout(self):
+        if not config.preferences.panel_docking:
+            return
+        for key in config.preferences.panel_layout:
+            try:
+                self.OpenPanel(key)
+            except:
+                warn_tb(INTERNAL, 'cannot open panel %s', key)
+        self.sidebar.canvas.yview_moveto(0)
+
+    def RedockPanels(self):
+        # Reopen the open panels after panel_docking has changed: the
+        # docked ones in their order, then the windows
+        dialogs = self.sidebar.Panels()
+        for dialog in self.dialogs.values():
+            if dialog not in dialogs:
+                dialogs.append(dialog)
+        keys = []
+        for dialog in dialogs:
+            key = getattr(dialog, 'layout_key', None)
+            if key is not None and dialog.dockable:
+                keys.append(key)
+                dialog.close_dlg()
+        for key in keys:
+            self.OpenPanel(key)
 
     AddCmd('SetOptions', _("Options..."))
     def SetOptions(self):
@@ -671,6 +742,7 @@ class SketchMainWindow(Publisher):
                 directory = ''
             self.LoadFromFile(filename, directory = directory)
             self.filename = ''
+        self.restore_panel_layout()
         if self.run_script:
             from Sketch.Scripting.script import Context
             dict = {'context': Context()}
@@ -685,6 +757,7 @@ class SketchMainWindow(Publisher):
     def Exit(self):
         if self.save_doc_if_edited(_("Exit")) != tkext.Cancel:
             self.commands = None
+            self.save_panel_layout()
             self.application.Exit()
 
     def build_window(self):

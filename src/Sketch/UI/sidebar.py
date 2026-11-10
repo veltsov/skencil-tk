@@ -30,6 +30,9 @@
 #	show_raise()		make the panel visible and bring it to front
 #	withdraw()		hide the panel
 #	save_prefs()		store the geometry in the preferences
+#	get_state()		the state to restore when the panel is opened
+#				again (None if there is nothing to restore)
+#	set_state(state)	restore the state returned by get_state
 #	destroy()		destroy the container and the body
 #
 
@@ -102,6 +105,12 @@ class WindowContainer:
 
     def withdraw(self):
         self.top.withdraw()
+
+    def get_state(self):
+        return None
+
+    def set_state(self, state):
+        pass
 
     def save_prefs(self):
         master = self.master
@@ -179,6 +188,7 @@ class DockContainer:
     # elastic layout).
 
     def __init__(self, panel, sidebar, **kw):
+        self.panel = panel
         self.sidebar = sidebar
         self.collapsed = 0
         self.height = None	# None: the natural height of the body
@@ -276,6 +286,16 @@ class DockContainer:
     def withdraw(self):
         self.sidebar.HidePanel(self)
 
+    def get_state(self):
+        # (height of the body or None, collapsed)
+        return (self.height, self.collapsed)
+
+    def set_state(self, state):
+        height, collapsed = state
+        if height is not None and self.elastic:
+            self.set_height(height)
+        self.set_collapsed(collapsed)
+
     def save_prefs(self):
         pass
 
@@ -283,6 +303,7 @@ class DockContainer:
         self.sidebar.RemovePanel(self)
         self.frame.destroy()
         self.sidebar = None
+        self.panel = None
 
 
 class SideBar(Frame):
@@ -383,6 +404,10 @@ class SideBar(Frame):
         if dock not in self.hidden:
             self.hidden.append(dock)
             self.repack()
+
+    def Panels(self):
+        # the panels in the side bar, from top to bottom
+        return [dock.panel for dock in self.docks]
 
     def ShowPanel(self, dock):
         if dock in self.hidden:

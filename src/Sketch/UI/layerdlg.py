@@ -159,6 +159,7 @@ class LayerInfo:
 class LayerPanel(SketchPanel):
 
     title = _("Layers")
+    resize_policy = 'elastic'
     receivers = SketchPanel.receivers[:]
 
     def __init__(self, master, main_window, doc):

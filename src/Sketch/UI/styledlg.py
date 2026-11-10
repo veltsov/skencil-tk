@@ -41,6 +41,7 @@ from Sketch.UI.sketchdlg import PropertyPanel, SKModal
 class StylePanel(PropertyPanel):
 
     title = _("Styles")
+    resize_policy = 'elastic'
     receivers = PropertyPanel.receivers[:]
 
     def __init__(self, master, main_window, doc):
