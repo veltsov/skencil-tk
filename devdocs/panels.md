@@ -1,6 +1,6 @@
 # Panels: Windows and the Side Bar
 
-Status: implemented on the `sidebar-panels` branch.  The non-modal
+Status: implemented (merged from the `sidebar-panels` branch).  The non-modal
 panels (Windows menu, plugin object panels) open either docked in a
 side bar at the right of the main window (default) or as separate
 windows.  Modal dialogs (`SKModal`) are not affected.
