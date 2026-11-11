@@ -298,6 +298,24 @@ def check():
     win.save_panel_layout()
     assert config.preferences.panel_layout == order
 
+    # the wheel scrolls the side bar only when the panels do not fit
+    def wheel(widget, button):
+        widget.event_generate('<ButtonPress-%d>' % button, x = 5, y = 5)
+        widget.event_generate('<ButtonRelease-%d>' % button, x = 5, y = 5)
+        root.update()
+    sidebar.canvas.yview_moveto(0)
+    root.update()
+    title = sidebar.docks[0].frame.nametowidget('titlebar.title')
+    wheel(title, 5)
+    assert sidebar.canvas.canvasy(0) > 0
+    for dock in sidebar.docks[1:]:
+        dock.panel.close_dlg()
+    root.update()
+    assert sidebar.canvas.canvasy(0) == 0
+    for button in (5, 4, 4):
+        wheel(title, button)
+        assert sidebar.canvas.canvasy(0) == 0, button
+
     for dialog in list(win.dialogs.values()):
         dialog.close_dlg()
     root.update()

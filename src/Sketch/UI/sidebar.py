@@ -485,9 +485,24 @@ class SideBar(Frame):
     def inner_configured(self, event):
         self.canvas.configure(scrollregion = (0, 0, self.inner.winfo_width(),
                                               self.inner.winfo_height()))
+        self.keep_top()
 
     def canvas_configured(self, event):
         self.canvas.itemconfigure(self.window, width = event.width)
+        self.keep_top()
+
+    def fits(self):
+        return self.inner.winfo_height() <= self.canvas.winfo_height()
+
+    def keep_top(self):
+        # when the panels fit, the first one is at the top (the canvas
+        # would scroll a region smaller than the window)
+        if self.fits() and self.canvas.canvasy(0) != 0:
+            self.canvas.yview_moveto(0)
+
+    def scroll(self, units):
+        if not self.fits():
+            self.canvas.yview_scroll(units, 'units')
 
     def wheel(self, event):
         # scroll the side bar with the mouse wheel, except over widgets
@@ -501,9 +516,9 @@ class SideBar(Frame):
                                                       'Canvas'):
             return
         if event.num == 4:
-            self.canvas.yview_scroll(-1, 'units')
+            self.scroll(-1)
         else:
-            self.canvas.yview_scroll(1, 'units')
+            self.scroll(1)
 
     def traverse(self, event, step):
         # Tab in a docked panel: cycle through the fields of the docked
@@ -568,6 +583,8 @@ class SideBar(Frame):
     drag_scroll = None		# the after id of the autoscroll
     drag_pointer = None		# (dock, x_root, y_root) of the last motion
     scroll_zone = 20
+    marker_color = 'red'
+    marker_width = 6
 
     def drop_position(self, x_root, y_root):
         # the index in self.docks to move the dragged panel to and the y
@@ -589,19 +606,17 @@ class SideBar(Frame):
     def DragMotion(self, dock, x_root, y_root):
         self.drag_pointer = (dock, x_root, y_root)
         if self.drag_marker is None:
-            # a line in the title colors, visible on a title bar too
-            background, foreground = title_colors(self)
             self.drag_marker = Frame(self.inner, name = 'dropmarker',
-                                     background = background)
-            Frame(self.drag_marker, background = foreground,
-                  height = 1).place(x = 0, y = 2, relwidth = 1)
+                                     background = self.marker_color)
         position = self.drop_position(x_root, y_root)
         if position is None:
             self.drag_marker.place_forget()
         else:
             height = self.inner.winfo_height()
-            y = min(max(position[1] - 2, 0), height - 5)
-            self.drag_marker.place(x = 0, y = y, relwidth = 1, height = 5)
+            width = self.marker_width
+            y = min(max(position[1] - width // 2, 0), height - width)
+            self.drag_marker.place(x = 0, y = y, relwidth = 1,
+                                   height = width)
             self.drag_marker.lift()
         # scroll when the pointer is near the top or bottom edge
         y = y_root - self.canvas.winfo_rooty()
@@ -617,7 +632,7 @@ class SideBar(Frame):
         self.drag_scroll = None
         dock, x_root, y_root = self.drag_pointer
         y = y_root - self.canvas.winfo_rooty()
-        self.canvas.yview_scroll(-1 if y < self.scroll_zone else 1, 'units')
+        self.scroll(-1 if y < self.scroll_zone else 1)
         self.update_idletasks()
         self.DragMotion(dock, x_root, y_root)
 

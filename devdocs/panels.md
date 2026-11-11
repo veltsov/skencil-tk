@@ -54,7 +54,7 @@ those of a highlighted menu item, read from a temporary `Menu`
 A click on the title collapses/expands the panel; dragging the title
 (more than `drag_threshold` pixels) moves the panel within the side bar
 (`DockContainer.title_*` → `SideBar.DragMotion`/`DragEnd`/`MovePanel`).
-A line in the title colors (`dropmarker`, placed over the panels) marks
+A red line (`dropmarker`, placed over the panels) marks
 the gap it goes to, the side bar scrolls when the pointer is near its top
 or bottom edge, and releasing outside the side bar cancels.  Dragging
 does not dock or undock (the buttons and the menu do).
