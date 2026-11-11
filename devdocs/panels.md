@@ -38,7 +38,8 @@ Container interface: `body`, `after_build()`, `show_raise()`,
   `'elastic'`: the layout absorbs any height (lists, text fields); the
   docked panel gets a grip at the bottom (drag: height, double click:
   natural height).  Elastic: Layers, Styles, Fill, Fonts, Guide Lines,
-  Auto Shapes, plugin panels with a multi-line text parameter (LaTeX).
+  Auto Shapes, Multiline Text, plugin panels with a multi-line text
+  parameter (LaTeX).
 
 Width is always given by the side bar.  Layout rules for panels: grid
 with `weight` on the stretching column/row, lists with scrollbars that
@@ -51,7 +52,8 @@ Docked: collapse toggle (left), title, Undock, Close (right).  Colors:
 those of a highlighted menu item, read from a temporary `Menu`
 (`sidebar.title_colors`).  Bitmaps are ASCII art in `sidebar._bitmaps`.
 
-A click on the title collapses/expands the panel; dragging the title
+Only the toggle collapses/expands the panel (a click on the title does
+nothing: it happened by accident); dragging the title
 (more than `drag_threshold` pixels) moves the panel within the side bar
 (`DockContainer.title_*` → `SideBar.DragMotion`/`DragEnd`/`MovePanel`).
 A red line (`dropmarker`, placed over the panels) marks

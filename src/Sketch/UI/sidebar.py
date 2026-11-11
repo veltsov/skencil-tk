@@ -294,7 +294,11 @@ class DockContainer:
         bar.grid(row = 0, column = 0, sticky = 'ew')
         self.toggle = Label(bar, image = _image('expanded', frame),
                             name = 'collapse', background = background)
-        self.toggle.pack(side = 'left', padx = 3)
+        # the room around the triangle is part of the label and takes the
+        # click: the whole height of the bar and a wider label (padx is
+        # ignored for an image; the width of an image label is in pixels)
+        self.toggle.configure(width = 25)
+        self.toggle.pack(side = 'left', fill = 'y')
         label = Label(bar, text = panel.title, anchor = 'w', name = 'title',
                       background = background, foreground = foreground)
         label.pack(side = 'left', fill = X, expand = 1)
@@ -304,8 +308,8 @@ class DockContainer:
             button = title_button(bar, 'undock', undock, _("Undock"))
             button.pack(side = 'right', padx = 3)
         self.toggle.bind('<ButtonRelease-1>', self.toggle_collapsed)
-        # the title moves the panel in the side bar by dragging; a click
-        # collapses or expands it
+        # the title moves the panel in the side bar by dragging (only the
+        # toggle collapses: a click on the title happens by accident)
         self.drag_from = None
         for widget in (bar, label):
             widget.bind('<ButtonPress-1>', self.title_press)
@@ -393,8 +397,6 @@ class DockContainer:
             for widget in self.titlebar.winfo_children() + [self.titlebar]:
                 widget['cursor'] = ''
             self.sidebar.DragEnd(self, event.x_root, event.y_root)
-        else:
-            self.toggle_collapsed()
 
     def grip_press(self, event):
         self.drag_start = (event.y_root, self.body.winfo_height())

@@ -188,6 +188,7 @@ class MultilineTextDlg(SketchPanel):
 
     title = _("Multiline Text")
     class_name = "MultilineTextPanel"
+    resize_policy = 'elastic'
     receivers = SketchPanel.receivers[:]
 
     def __init__(self, master, main_window, doc):

@@ -289,11 +289,11 @@ def check():
     drag(sidebar.docks[1], sidebar.winfo_rootx() - 50,
          sidebar.docks[0].frame.winfo_rooty() + 2)
     assert [dialog.layout_key for dialog in sidebar.Panels()] == order
-    # a click still collapses
+    # a click on the title does not collapse
     dock = sidebar.docks[0]
     collapsed = dock.collapsed
     drag(dock, x, dock.frame.nametowidget('titlebar.title').winfo_rooty() + 3)
-    assert dock.collapsed != collapsed
+    assert dock.collapsed == collapsed
     # the order is saved
     win.save_panel_layout()
     assert config.preferences.panel_layout == order
@@ -303,8 +303,11 @@ def check():
         widget.event_generate('<ButtonPress-%d>' % button, x = 5, y = 5)
         widget.event_generate('<ButtonRelease-%d>' % button, x = 5, y = 5)
         root.update()
+    for dock in sidebar.docks:
+        dock.set_collapsed(0)
     sidebar.canvas.yview_moveto(0)
     root.update()
+    assert not sidebar.fits()
     title = sidebar.docks[0].frame.nametowidget('titlebar.title')
     wheel(title, 5)
     assert sidebar.canvas.canvasy(0) > 0
