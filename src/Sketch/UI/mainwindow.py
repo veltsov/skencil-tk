@@ -665,6 +665,13 @@ class SketchMainWindow(Publisher):
         if not docked:
             floating.append(key)
         config.preferences.panel_floating = floating
+        if docked:
+            # docked in the height it had there; collapsed if the window
+            # is shaded (or minimized), expanded otherwise
+            collapsed = int(dialog.top.winfo_toplevel().state() == 'iconic')
+            states = dict(config.preferences.panel_states)
+            states[key] = (states.get(key, (None, 0))[0], collapsed)
+            config.preferences.panel_states = states
         def move():
             dialog.close_dlg()
             self.reopen_panels([key])
@@ -686,14 +693,14 @@ class SketchMainWindow(Publisher):
             self.restoring_panels = 0
 
     def undocked_panels(self):
-        # the panel windows the user undocked that are shown (docking is
-        # on); hidden ones (Hide Dialogs) are not offered
+        # the panel windows the user undocked (docking is on), shown or
+        # shaded (iconic); hidden ones (Hide Dialogs) are not offered
         if not config.preferences.panel_docking:
             return []
         docked = self.sidebar.Panels()
         return [dialog for dialog in self.dialogs.values()
                 if dialog.dockable and dialog not in docked
-                and dialog.top.winfo_toplevel().state() == 'normal']
+                and dialog.top.winfo_toplevel().state() != 'withdrawn']
 
     def make_dock_menu(self):
         panels = sorted(self.undocked_panels(), key = lambda p: p.title)

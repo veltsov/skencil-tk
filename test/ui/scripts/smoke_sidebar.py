@@ -238,6 +238,12 @@ def check():
     win.ShowDialogs()
     root.update()
     assert len(win.undocked_panels()) == 2
+    # a shaded window (iconic for Tk) is offered and docks collapsed
+    line = win.dialogs['LinePanel']
+    # (under Xvfb there is no WM to shade it)
+    line.top.winfo_toplevel().state = lambda: 'iconic'
+    root.update()
+    assert line in win.undocked_panels()
     entries = win.make_dock_menu()
     assert entries[-1].rest['label'] == 'All', entries
     entries[-1]._call_cmd()
@@ -248,6 +254,8 @@ def check():
            ['Sketch.UI.aligndlg.AlignPanel', 'Sketch.UI.linedlg.LinePanel'] \
            or [dialog.layout_key for dialog in sidebar.Panels()][-2:] == \
            ['Sketch.UI.linedlg.LinePanel', 'Sketch.UI.aligndlg.AlignPanel']
+    assert win.dialogs['LinePanel'].container.collapsed
+    assert not win.dialogs['AlignPanel'].container.collapsed
 
     for dialog in list(win.dialogs.values()):
         dialog.close_dlg()
