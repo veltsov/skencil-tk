@@ -51,6 +51,14 @@ Docked: collapse toggle (left), title, Undock, Close (right).  Colors:
 those of a highlighted menu item, read from a temporary `Menu`
 (`sidebar.title_colors`).  Bitmaps are ASCII art in `sidebar._bitmaps`.
 
+A click on the title collapses/expands the panel; dragging the title
+(more than `drag_threshold` pixels) moves the panel within the side bar
+(`DockContainer.title_*` → `SideBar.DragMotion`/`DragEnd`/`MovePanel`).
+A line in the title colors (`dropmarker`, placed over the panels) marks
+the gap it goes to, the side bar scrolls when the pointer is near its top
+or bottom edge, and releasing outside the side bar cancels.  Dragging
+does not dock or undock (the buttons and the menu do).
+
 An undocked panel window has no extra decoration: it goes back to the
 side bar through Windows/Dock Dialog, a submenu rebuilt each time it is
 opened (`MainWindow.make_dock_menu`, `UpdatedMenu` with `auto_rebuild`)
@@ -107,11 +115,13 @@ focus on every button press (`SketchCanvas.ButtonPressEvent`).
 `test/ui/scripts/smoke_sidebar.py`: stacking, scrollbar, collapse,
 grip, Tab traversal and canvas focus, close, hide/show, plugin panel
 reuse, non-dockable panels,
-layout save/restore, undock/dock, switching docking.
+layout save/restore, undock/dock, switching docking, reordering by
+dragging.
 `smoke_links.py` resizes the side bar when the panel is docked.
 
 ## Open items
 
 - Moving a panel does not keep unapplied field values (a
   `get_state`/`set_state` hook per panel would).
-- No drag-and-drop docking or reordering; order follows opening order.
+- No docking or undocking by dragging (by choice: panel windows have no
+  app-drawn handle).

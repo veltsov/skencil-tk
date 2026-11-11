@@ -257,6 +257,47 @@ def check():
     assert win.dialogs['LinePanel'].container.collapsed
     assert not win.dialogs['AlignPanel'].container.collapsed
 
+    # drag a panel by its title bar to another place in the side bar
+    def drag(dock, x_root, y_root):
+        label = dock.frame.nametowidget('titlebar.title')
+        x0 = label.winfo_rootx() + 5
+        y0 = label.winfo_rooty() + 3
+        label.event_generate('<ButtonPress-1>', x = 5, y = 3,
+                             rootx = x0, rooty = y0)
+        for y in (y0 + (y_root - y0) // 2, y_root):
+            label.event_generate('<B1-Motion>', x = 5, y = 3,
+                                 rootx = x_root, rooty = y, state = 0x100)
+        label.event_generate('<ButtonRelease-1>', x = 5, y = 3,
+                             rootx = x_root, rooty = y_root)
+        root.update()
+    root.update()
+    sidebar.canvas.yview_moveto(0)
+    root.update()
+    order = [dialog.layout_key for dialog in sidebar.Panels()]
+    first = sidebar.docks[0]
+    x = sidebar.winfo_rootx() + 20
+    # the last panel above the first one
+    last = sidebar.docks[-1]
+    collapsed = last.collapsed
+    drag(last, x, first.frame.winfo_rooty() + 2)
+    assert [dialog.layout_key for dialog in sidebar.Panels()] == \
+           [order[-1]] + order[:-1], sidebar.Panels()
+    assert last.collapsed == collapsed
+    assert not sidebar.drag_marker.winfo_ismapped()
+    # released outside the side bar: nothing moves
+    order = [dialog.layout_key for dialog in sidebar.Panels()]
+    drag(sidebar.docks[1], sidebar.winfo_rootx() - 50,
+         sidebar.docks[0].frame.winfo_rooty() + 2)
+    assert [dialog.layout_key for dialog in sidebar.Panels()] == order
+    # a click still collapses
+    dock = sidebar.docks[0]
+    collapsed = dock.collapsed
+    drag(dock, x, dock.frame.nametowidget('titlebar.title').winfo_rooty() + 3)
+    assert dock.collapsed != collapsed
+    # the order is saved
+    win.save_panel_layout()
+    assert config.preferences.panel_layout == order
+
     for dialog in list(win.dialogs.values()):
         dialog.close_dlg()
     root.update()

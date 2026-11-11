@@ -303,8 +303,15 @@ class DockContainer:
         if undock is not None:
             button = title_button(bar, 'undock', undock, _("Undock"))
             button.pack(side = 'right', padx = 3)
-        for widget in (self.toggle, label):
-            widget.bind('<ButtonRelease-1>', self.toggle_collapsed)
+        self.toggle.bind('<ButtonRelease-1>', self.toggle_collapsed)
+        # the title moves the panel in the side bar by dragging; a click
+        # collapses or expands it
+        self.drag_from = None
+        for widget in (bar, label):
+            widget.bind('<ButtonPress-1>', self.title_press)
+            widget.bind('<B1-Motion>', self.title_motion)
+            widget.bind('<ButtonRelease-1>', self.title_release)
+        self.titlebar = bar
 
         body = Frame(frame, name = 'body', class_ = panel.class_name)
         body.grid(row = 1, column = 0, sticky = 'news')
@@ -359,6 +366,35 @@ class DockContainer:
             body.configure(width = body.winfo_reqwidth(), height = height)
             body.pack_propagate(0)
             body.grid_propagate(0)
+
+    drag_threshold = 5
+
+    def title_press(self, event):
+        self.drag_from = event.y_root
+        self.dragging = 0
+
+    def title_motion(self, event):
+        if self.drag_from is None:
+            return
+        if not self.dragging:
+            if abs(event.y_root - self.drag_from) < self.drag_threshold:
+                return
+            self.dragging = 1
+            for widget in self.titlebar.winfo_children() + [self.titlebar]:
+                widget['cursor'] = 'fleur'
+        self.sidebar.DragMotion(self, event.x_root, event.y_root)
+
+    def title_release(self, event):
+        if self.drag_from is None:
+            return
+        self.drag_from = None
+        if self.dragging:
+            self.dragging = 0
+            for widget in self.titlebar.winfo_children() + [self.titlebar]:
+                widget['cursor'] = ''
+            self.sidebar.DragEnd(self, event.x_root, event.y_root)
+        else:
+            self.toggle_collapsed()
 
     def grip_press(self, event):
         self.drag_start = (event.y_root, self.body.winfo_height())
@@ -512,6 +548,89 @@ class SideBar(Frame):
         if dock not in self.hidden:
             self.hidden.append(dock)
             self.repack()
+
+    def MovePanel(self, dock, index):
+        # move DOCK in front of the panel at INDEX of the panels before
+        # the move (len(self.docks): to the end)
+        old = self.docks.index(dock)
+        if index > old:
+            index = index - 1
+        if index != old:
+            self.docks.remove(dock)
+            self.docks.insert(index, dock)
+            self.repack()
+
+    # Dragging a panel by its title bar (DockContainer.title_*): a line
+    # marks where it goes; near the top and bottom edges the side bar
+    # scrolls. Released outside the side bar, the panel stays.
+
+    drag_marker = None
+    drag_scroll = None		# the after id of the autoscroll
+    drag_pointer = None		# (dock, x_root, y_root) of the last motion
+    scroll_zone = 20
+
+    def drop_position(self, x_root, y_root):
+        # the index in self.docks to move the dragged panel to and the y
+        # coordinate of the gap in self.inner, or None outside the side bar
+        x = x_root - self.winfo_rootx()
+        y = y_root - self.canvas.winfo_rooty()
+        if not (0 <= x < self.winfo_width()
+                and 0 <= y < self.canvas.winfo_height()):
+            return None
+        y = y_root - self.inner.winfo_rooty()
+        shown = [dock for dock in self.docks if dock not in self.hidden]
+        for dock in shown:
+            top = dock.frame.winfo_y()
+            if y < top + dock.frame.winfo_height() // 2:
+                return self.docks.index(dock), top
+        last = shown[-1].frame
+        return len(self.docks), last.winfo_y() + last.winfo_height()
+
+    def DragMotion(self, dock, x_root, y_root):
+        self.drag_pointer = (dock, x_root, y_root)
+        if self.drag_marker is None:
+            # a line in the title colors, visible on a title bar too
+            background, foreground = title_colors(self)
+            self.drag_marker = Frame(self.inner, name = 'dropmarker',
+                                     background = background)
+            Frame(self.drag_marker, background = foreground,
+                  height = 1).place(x = 0, y = 2, relwidth = 1)
+        position = self.drop_position(x_root, y_root)
+        if position is None:
+            self.drag_marker.place_forget()
+        else:
+            height = self.inner.winfo_height()
+            y = min(max(position[1] - 2, 0), height - 5)
+            self.drag_marker.place(x = 0, y = y, relwidth = 1, height = 5)
+            self.drag_marker.lift()
+        # scroll when the pointer is near the top or bottom edge
+        y = y_root - self.canvas.winfo_rooty()
+        if position is not None and (y < self.scroll_zone or
+                y > self.canvas.winfo_height() - self.scroll_zone):
+            if self.drag_scroll is None:
+                self.drag_scroll = self.after(50, self.drag_autoscroll)
+        elif self.drag_scroll is not None:
+            self.after_cancel(self.drag_scroll)
+            self.drag_scroll = None
+
+    def drag_autoscroll(self):
+        self.drag_scroll = None
+        dock, x_root, y_root = self.drag_pointer
+        y = y_root - self.canvas.winfo_rooty()
+        self.canvas.yview_scroll(-1 if y < self.scroll_zone else 1, 'units')
+        self.update_idletasks()
+        self.DragMotion(dock, x_root, y_root)
+
+    def DragEnd(self, dock, x_root, y_root):
+        if self.drag_scroll is not None:
+            self.after_cancel(self.drag_scroll)
+            self.drag_scroll = None
+        if self.drag_marker is not None:
+            self.drag_marker.place_forget()
+        self.drag_pointer = None
+        position = self.drop_position(x_root, y_root)
+        if position is not None:
+            self.MovePanel(dock, position[0])
 
     def Panels(self):
         # the panels in the side bar, from top to bottom
