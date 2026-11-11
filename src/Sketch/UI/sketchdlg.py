@@ -112,11 +112,11 @@ class SketchPanel(Publisher):
             return WindowContainer(self, master, **kw)
         # with docking, each panel can be moved between the side bar and
         # a window
+        # (back to the side bar through Windows/Dock Dialog)
         if main_window.DockNewPanel():
             return DockContainer(self, sidebar, undock = lambda:
                                  main_window.SetPanelDocked(self, 0), **kw)
-        return WindowContainer(self, master, dock = lambda:
-                               main_window.SetPanelDocked(self, 1), **kw)
+        return WindowContainer(self, master, **kw)
 
     if __debug__:
         def __del__(self):

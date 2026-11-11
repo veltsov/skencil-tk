@@ -393,11 +393,20 @@ class UpdatedMenu:
 
 class MenuCascade(MenuEntry):
 
-    def __init__(self, text, entries, **kw):
+    # SENSITIVECB, if given, tells whether the cascade entry is enabled;
+    # the other keyword arguments are passed to the UpdatedMenu of the
+    # submenu (e.g. auto_rebuild)
+
+    def __init__(self, text, entries, sensitivecb = None, **kw):
         self.entries = entries
         self.label = text
         self.submenu = None
+        self.sensitivecb = sensitivecb
         self.kwargs = kw
+
+    def Update(self):
+        if self.sensitivecb is not None and self.menu is not None:
+            self['state'] = self.sensitivecb() and NORMAL or DISABLED
 
     def AddToMenu(self, menu):
         if menu:

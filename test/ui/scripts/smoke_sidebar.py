@@ -168,7 +168,7 @@ def check():
     assert [dialog.layout_key for dialog in sidebar.Panels()] == keys
 
     # undock a panel with the button in its title bar and dock it again
-    # with the button in the window; the choice is saved
+    # with Windows/Dock Dialog; the choice is saved
     dock = win.dialogs['StylePanel'].container
     dock.frame.nametowidget('titlebar.undock').event_generate(
         '<ButtonRelease-1>')
@@ -186,10 +186,14 @@ def check():
     win.OpenPanel(keys[2])
     root.update()
     panel = win.dialogs['StylePanel']
-    assert panel.top.winfo_toplevel() != root
-    panel.top.winfo_toplevel().nametowidget('titlebar.dock').event_generate(
-        '<ButtonRelease-1>')
+    top = panel.top.winfo_toplevel()
+    assert top != root and 'titlebar' not in top.children
+    assert win.undocked_panels() == [panel]
+    entries = win.make_dock_menu()
+    assert [entry.rest['label'] for entry in entries] == ['Styles'], entries
+    entries[0]._call_cmd()
     root.update()
+    assert not win.undocked_panels()
     panel = win.dialogs['StylePanel']
     assert panel.top.winfo_toplevel() == root
     assert config.preferences.panel_floating == []
@@ -200,7 +204,7 @@ def check():
     keys = [keys[0], keys[1], keys[3], keys[2]]
 
     # switch to windows and back: the panels move, in their order; with
-    # docking off, the windows have no Dock button; switched on again,
+    # docking off, Dock Dialog has nothing to dock; switched on again,
     # the panel the user undocked stays a window
     win.SetPanelDocked(win.dialogs['AlignPanel'], 0)
     root.update()
@@ -215,15 +219,28 @@ def check():
     for dialog in win.dialogs.values():
         top = dialog.top.winfo_toplevel()
         assert top != root
-        assert 'titlebar' not in top.children, dialog
+    assert not win.undocked_panels()
     assert config.preferences.panel_floating == floating
     config.preferences.panel_docking = 1
     win.RedockPanels()
     root.update()
     assert [dialog.layout_key for dialog in sidebar.Panels()] == docked
     assert win.dialogs['LinePanel'].container.collapsed
-    top = win.dialogs['AlignPanel'].top.winfo_toplevel()
-    assert top != root and 'titlebar' in top.children
+    assert win.undocked_panels() == [win.dialogs['AlignPanel']]
+    # several undocked panels: Dock Dialog has an entry for all of them
+    win.SetPanelDocked(win.dialogs['LinePanel'], 0)
+    root.update()
+    assert len(win.undocked_panels()) == 2
+    entries = win.make_dock_menu()
+    assert entries[-1].rest['label'] == 'All', entries
+    entries[-1]._call_cmd()
+    root.update()
+    assert not win.undocked_panels()
+    assert config.preferences.panel_floating == []
+    assert [dialog.layout_key for dialog in sidebar.Panels()][-2:] == \
+           ['Sketch.UI.aligndlg.AlignPanel', 'Sketch.UI.linedlg.LinePanel'] \
+           or [dialog.layout_key for dialog in sidebar.Panels()][-2:] == \
+           ['Sketch.UI.linedlg.LinePanel', 'Sketch.UI.aligndlg.AlignPanel']
 
     for dialog in list(win.dialogs.values()):
         dialog.close_dlg()

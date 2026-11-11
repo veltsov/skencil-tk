@@ -89,14 +89,11 @@ class WindowContainer:
 
     # The panel is a toplevel window. Its position relative to the main
     # window is stored in the preference dlg_pos_<panel class>.
-    #
-    # DOCK, if given, is called to move the panel to the side bar; the
-    # window then has a strip at the top with a button for that.
 
     x_correction = 0
     y_correction = 0
 
-    def __init__(self, panel, master, dock = None, **kw):
+    def __init__(self, panel, master, **kw):
         self.master = master
         title = panel.title
 
@@ -129,12 +126,6 @@ class WindowContainer:
         top.tk.call('bind', top._w, '<Destroy>',
                     tkext.MakeMethodCommand(panel.destroyed) + ('%W',))
 
-        if dock is not None:
-            bar = Frame(top, name = 'titlebar',
-                        background = title_colors(top)[0])
-            bar.pack(side = TOP, fill = X)
-            button = title_button(bar, 'dock', dock, _("Dock"))
-            button.pack(side = 'right', padx = 3)
         body = Frame(top, name = 'body', class_ = panel.class_name)
         body.pack(side = TOP, fill = 'both', expand = 1)
         top.bind('<Tab>', lambda event: self.traverse(event, 1))
@@ -189,7 +180,7 @@ class WindowContainer:
 #	Docked panels
 #
 
-# 9x9 bitmaps for the buttons in the title bars
+# 9x9 bitmaps for the buttons in the title bar
 
 _bitmaps = {
     'expanded': ('.........',
@@ -229,16 +220,6 @@ _bitmaps = {
                '#....#...',
                '#....#...',
                '######...'),
-    # a window with a side bar
-    'dock': ('#########',
-             '#....####',
-             '#....####',
-             '#....####',
-             '#....####',
-             '#....####',
-             '#....####',
-             '#....####',
-             '#########'),
     }
 
 def _xbm_data(name, rows):

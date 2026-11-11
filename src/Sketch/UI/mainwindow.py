@@ -658,7 +658,8 @@ class SketchMainWindow(Publisher):
 
     def SetPanelDocked(self, dialog, docked):
         # Move DIALOG to the side bar or to a window. Called from the
-        # title bar of the panel, so the panel is rebuilt later.
+        # title bar of the panel or from the menu, so the panel is
+        # rebuilt later.
         key = dialog.layout_key
         floating = [k for k in config.preferences.panel_floating if k != key]
         if not docked:
@@ -683,6 +684,26 @@ class SketchMainWindow(Publisher):
                     warn_tb(INTERNAL, 'cannot open panel %s', key)
         finally:
             self.restoring_panels = 0
+
+    def undocked_panels(self):
+        # the open panels moved to windows by the user (docking is on)
+        if not config.preferences.panel_docking:
+            return []
+        docked = self.sidebar.Panels()
+        return [dialog for dialog in self.dialogs.values()
+                if dialog.dockable and dialog not in docked]
+
+    def make_dock_menu(self):
+        panels = sorted(self.undocked_panels(), key = lambda p: p.title)
+        entries = [(panel.title, self.SetPanelDocked, (panel, 1))
+                   for panel in panels]
+        if len(panels) > 1:
+            entries = entries + [None, (_("All"), self.DockAllPanels)]
+        return list(map(MakeCommand, entries))
+
+    def DockAllPanels(self):
+        for dialog in self.undocked_panels():
+            self.SetPanelDocked(dialog, 1)
 
     def panel_opened(self, dialog, key):
         # KEY identifies the panel in the preferences panel_layout and
@@ -1125,9 +1146,13 @@ class SketchMainWindow(Publisher):
 
     def make_window_menu(self):
         cmds = self.commands
+        # the submenu lists the panels undocked by the user at the time
+        dock = ((_("Dock Dialog"), {'auto_rebuild': self.make_dock_menu,
+                                    'sensitivecb': self.undocked_panels}),)
         return list(map(MakeCommand,
                    [cmds.HideDialogs,
                     cmds.ShowDialogs,
+                    list(dock),
                     None,
                     cmds.CreateLayerDialog,
                     cmds.CreateAlignDialog,

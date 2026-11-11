@@ -47,11 +47,19 @@ take the extra height, one column rather than side-by-side groups
 
 ## Title bars
 
-Docked: collapse toggle (left), title, Undock, Close (right).  An
-undocked window (docking on) gets a strip with a Dock button above the
-body.  Colors: those of a highlighted menu item, read from a temporary
-`Menu` (`sidebar.title_colors`).  Bitmaps are ASCII art in
-`sidebar._bitmaps`.
+Docked: collapse toggle (left), title, Undock, Close (right).  Colors:
+those of a highlighted menu item, read from a temporary `Menu`
+(`sidebar.title_colors`).  Bitmaps are ASCII art in `sidebar._bitmaps`.
+
+An undocked panel window has no extra decoration: it goes back to the
+side bar through Windows/Dock Dialog, a submenu rebuilt each time it is
+opened (`MainWindow.make_dock_menu`, `UpdatedMenu` with `auto_rebuild`)
+that lists the undocked panels by title, plus "All" when there are
+several; the cascade is disabled when there is nothing to dock
+(`MenuCascade` with `sensitivecb`).  The window manager's minimize
+button is not an option: panel windows are transient (dialogs, without
+minimize in most window managers) and X11 has no protocol to intercept
+minimizing.
 
 ## Docking, keys and preferences
 
@@ -61,7 +69,7 @@ Each open panel has a `layout_key`: `'<module>.<class>'` for
 
 | Preference | Meaning |
 |---|---|
-| `panel_docking` | docking on (default): panels docked unless in `panel_floating`; off: all panels are windows, without Dock buttons (`panel_floating`, `panel_layout`, `panel_states` are kept for when it is switched on again) |
+| `panel_docking` | docking on (default): panels docked unless in `panel_floating`; off: all panels are windows, without the Undock button, Dock Dialog disabled (`panel_floating`, `panel_layout`, `panel_states` are kept for when it is switched on again) |
 | `panel_floating` | keys of panels the user undocked; they open as windows |
 | `panel_layout` | keys of the docked panels open at Exit, top to bottom; reopened at startup (`MainWindow.Run`). Panel windows are not reopened, only their position is remembered, as without docking |
 | `panel_states` | key → `(body height or None, collapsed)` of docked panels, updated on close and at Exit. The height is restored whenever the panel is opened; the collapsed state only at startup and when the panel moves (`reopen_panels`) — opened from the menu, a panel is expanded |
@@ -70,7 +78,7 @@ Each open panel has a `layout_key`: `'<module>.<class>'` for
 
 The container is chosen when a panel is created: `MainWindow` sets
 `opening_key` around the construction and `DockNewPanel()` answers
-from `panel_floating`.  Moving a panel (Undock/Dock buttons,
+from `panel_floating`.  Moving a panel (Undock button, Dock Dialog,
 `SetPanelDocked`; the Options checkbox, `RedockPanels`) closes it and
 opens it again from its key, so unapplied field values are lost.
 
