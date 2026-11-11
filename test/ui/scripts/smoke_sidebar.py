@@ -231,6 +231,13 @@ def check():
     win.SetPanelDocked(win.dialogs['LinePanel'], 0)
     root.update()
     assert len(win.undocked_panels()) == 2
+    # hidden panel windows are not offered
+    win.HideDialogs()
+    root.update()
+    assert not win.undocked_panels()
+    win.ShowDialogs()
+    root.update()
+    assert len(win.undocked_panels()) == 2
     entries = win.make_dock_menu()
     assert entries[-1].rest['label'] == 'All', entries
     entries[-1]._call_cmd()

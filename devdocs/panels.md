@@ -54,7 +54,8 @@ those of a highlighted menu item, read from a temporary `Menu`
 An undocked panel window has no extra decoration: it goes back to the
 side bar through Windows/Dock Dialog, a submenu rebuilt each time it is
 opened (`MainWindow.make_dock_menu`, `UpdatedMenu` with `auto_rebuild`)
-that lists the undocked panels by title, plus "All" when there are
+that lists the shown undocked panel windows by title (not those hidden
+by Hide Dialogs), plus "All" when there are
 several; the cascade is disabled when there is nothing to dock
 (`MenuCascade` with `sensitivecb`).  The window manager's minimize
 button is not an option: panel windows are transient (dialogs, without

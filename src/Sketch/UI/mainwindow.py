@@ -686,12 +686,14 @@ class SketchMainWindow(Publisher):
             self.restoring_panels = 0
 
     def undocked_panels(self):
-        # the open panels moved to windows by the user (docking is on)
+        # the panel windows the user undocked that are shown (docking is
+        # on); hidden ones (Hide Dialogs) are not offered
         if not config.preferences.panel_docking:
             return []
         docked = self.sidebar.Panels()
         return [dialog for dialog in self.dialogs.values()
-                if dialog.dockable and dialog not in docked]
+                if dialog.dockable and dialog not in docked
+                and dialog.top.winfo_toplevel().state() == 'normal']
 
     def make_dock_menu(self):
         panels = sorted(self.undocked_panels(), key = lambda p: p.title)
