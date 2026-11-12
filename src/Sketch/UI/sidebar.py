@@ -39,7 +39,7 @@
 from Sketch.Base import config
 
 from tkinter import Toplevel, Frame, Label, Canvas, Scrollbar, BitmapImage, Menu
-from tkinter import TOP, X
+from tkinter import TOP, X, CENTER
 
 from Sketch import _
 from Sketch.UI import tkext, tooltips
@@ -263,7 +263,8 @@ def _image(name, master):
 def title_button(bar, name, command, tooltip):
     background = title_colors(bar)[0]
     button = Label(bar, image = _image(name, bar), name = name,
-                   background = background)
+                   background = background,
+                   width = 15, anchor = CENTER)
     button.bind('<ButtonRelease-1>', lambda event: command())
     tooltips.AddDescription(button, tooltip)
     return button
@@ -293,11 +294,11 @@ class DockContainer:
         bar = Frame(frame, name = 'titlebar', background = background)
         bar.grid(row = 0, column = 0, sticky = 'ew')
         self.toggle = Label(bar, image = _image('expanded', frame),
-                            name = 'collapse', background = background)
+                            name = 'collapse', background = background,
+                            width = 20, anchor = CENTER)
         # the room around the triangle is part of the label and takes the
         # click: the whole height of the bar and a wider label (padx is
         # ignored for an image; the width of an image label is in pixels)
-        self.toggle.configure(width = 25)
         self.toggle.pack(side = 'left', fill = 'y')
         label = Label(bar, text = panel.title, anchor = 'w', name = 'title',
                       background = background, foreground = foreground)
@@ -586,7 +587,7 @@ class SideBar(Frame):
     drag_pointer = None		# (dock, x_root, y_root) of the last motion
     scroll_zone = 20
     marker_color = 'red'
-    marker_width = 6
+    marker_width = 3
 
     def drop_position(self, x_root, y_root):
         # the index in self.docks to move the dragged panel to and the y
